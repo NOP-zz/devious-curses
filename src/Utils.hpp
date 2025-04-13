@@ -1,0 +1,216 @@
+#pragma once
+
+#include <random>
+#include <string>
+#include <ranges>
+#include <cctype>
+
+using namespace SKSE;
+
+namespace DCURSES {
+	namespace Util {
+		double randomDouble(double min, double max) {
+			if (min >= max) {
+				return min;
+			}
+			auto seed1 = (unsigned int)std::chrono::system_clock::now().time_since_epoch().count();
+			std::mt19937 e2(seed1);
+			std::uniform_real_distribution<> dist(min, max);
+			double x = dist(e2);
+			//log::trace("random: {}", x);
+			return x;
+		}
+		double randomDouble(double max) {
+			return randomDouble(0, max);
+		}
+		double randomDouble() {
+			return randomDouble(0, 100);
+		}
+
+		int randomInt(int min, int max) {
+			if (min >= max) {
+				return min;
+			}
+			auto seed1 = (unsigned int)std::chrono::system_clock::now().time_since_epoch().count();
+			std::mt19937 e2(seed1);
+			std::uniform_int_distribution<> dist(min, max);
+			int x = dist(e2);
+			//log::trace("random: {}", x);
+			return x;
+		}
+		int randomInt(int max) {
+			return randomInt(0, max - 1);
+		}
+		int randomInt() {
+			return randomInt(0, 99);
+		}
+
+		int ColorScale(int color, double mult) {
+			int r = (color & 0xff0000) >> 4*4;
+			int g = (color & 0x00ff00) >> 2*4;
+			int b = color & 0x0000ff;
+
+			int r1 = std::min(static_cast<int>(r * mult), 0xff);
+			int g1 = std::min(static_cast<int>(g * mult), 0xff);
+			int b1 = std::min(static_cast<int>(b * mult), 0xff);
+
+			int result = r1 << 4*4 | g1 << 2*4 | b1;
+
+			log::trace("Color: {:x} = {:x}{:x}{:x} -> {:x}{:x}{:x} = {:x}", color, r, g, b, r1, g1, b1, result);
+
+			return result;
+		}
+
+		using _GetFormEditorID = const char* (*)(std::uint32_t);
+		inline std::string GetFormEditorId(const RE::TESForm* a_form) {
+			switch (a_form->GetFormType()) {
+			case RE::FormType::Keyword:
+			case RE::FormType::LocationRefType:
+			case RE::FormType::Action:
+			case RE::FormType::MenuIcon:
+			case RE::FormType::Global:
+			case RE::FormType::HeadPart:
+			case RE::FormType::Race:
+			case RE::FormType::Sound:
+			case RE::FormType::Script:
+			case RE::FormType::Navigation:
+			case RE::FormType::Cell:
+			case RE::FormType::WorldSpace:
+			case RE::FormType::Land:
+			case RE::FormType::NavMesh:
+			case RE::FormType::Dialogue:
+			case RE::FormType::Quest:
+			case RE::FormType::Idle:
+			case RE::FormType::AnimatedObject:
+			case RE::FormType::ImageAdapter:
+			case RE::FormType::VoiceType:
+			case RE::FormType::Ragdoll:
+			case RE::FormType::DefaultObject:
+			case RE::FormType::MusicType:
+			case RE::FormType::StoryManagerBranchNode:
+			case RE::FormType::StoryManagerQuestNode:
+			case RE::FormType::StoryManagerEventNode:
+			case RE::FormType::SoundRecord:
+				return std::string(a_form->GetFormEditorID());
+			default:
+			{
+				static auto tweaks = GetModuleHandle(L"po3_Tweaks");
+				static auto func = reinterpret_cast<_GetFormEditorID>(GetProcAddress(tweaks, "GetFormEditorID"));
+				if (func) {
+					return func(a_form->formID);
+				}
+				return {};
+			}
+			}
+		}
+
+		std::string tolower(std::string string) {
+			std::transform(string.begin(), string.end(), string.begin(),
+				[](unsigned char c) { return (char)std::tolower(c); });
+			return string;
+		}
+
+		std::string trim(const std::string in) {
+			size_t lindex = 0;
+			size_t rindex = in.size() - 1;
+			while (std::isspace(in[lindex])) {
+				lindex += 1;
+			}
+			while (std::isspace(in[rindex])) {
+				rindex -= 1;
+			}
+			return in.substr(lindex, rindex - lindex + 1);
+		}
+
+		std::vector<std::string> split(const std::string& s, const std::string& delimiter) {
+			std::vector<std::string> tokens;
+			size_t index = 0;
+			size_t pos = 0;
+			std::string token;
+			while ((pos = s.find(delimiter, index)) != std::string::npos) {
+				token = s.substr(index, index + pos);
+				tokens.push_back(trim(token));
+				index = pos + delimiter.length();
+			}
+			token = s.substr(index);
+			tokens.push_back(trim(token));
+
+			return tokens;
+		}
+
+		size_t findMatchingParen(const std::string& str, size_t index) {
+			int counter = 1;
+			for (size_t i = index + 1; i < str.size(); i++) {
+				if (str[i] == '(') counter++;
+				if (str[i] == ')') counter--;
+				if (counter == 0) {
+					return i;
+				}
+			}
+			return str.size() - 1;
+		}
+
+		bool testFormComp(const std::string& comp, RE::TESForm* form) {
+			//log::trace("{}", comp);
+			if (comp == "") return true;
+			if (!form) return false;
+
+			if (comp.contains('(')) {
+				size_t i1 = comp.find('(');
+				size_t i2 = findMatchingParen(comp, i1);
+				std::string p1 = comp.substr(0, i1);
+				std::string p2 = testFormComp(comp.substr(i1 + 1, i2 - i1 - 1), form) ? "valueTrue" : "valueFalse";
+				std::string p3 = comp.substr(i2 + 1);
+				return testFormComp(p1 + p2 + p3, form);
+			}
+			else if (comp.contains('|')) {
+				auto tokens = split(comp, "|");
+				for (auto token : tokens) {
+					if (testFormComp(token, form)) {
+						return true;
+					}
+				}
+				return false;
+			}
+			else if (comp.contains('&')) {
+				auto tokens = split(comp, "&");
+				for (auto token : tokens) {
+					if (!testFormComp(token, form)) {
+						return false;
+					}
+				}
+				return true;
+			}
+			else if (comp.starts_with('!')) {
+				return !testFormComp(comp.substr(1), form);
+			}
+			else {
+				if (comp == "valueTrue") return true;
+				else if (comp == "valueFalse") return false;
+				return
+					tolower(form->GetName()).find(tolower(comp)) != std::string::npos ||
+					tolower(GetFormEditorId(form)).find(tolower(comp)) != std::string::npos;
+			}
+		}
+
+		bool FormEditorIdContains(RE::TESForm* a_form, std::string substring) {
+			return tolower(GetFormEditorId(a_form)).find(tolower(substring)) != std::string::npos;
+		}
+
+		RE::TESObjectREFR* GetClosestRefr(RE::Actor* actor) {
+			if (!actor) return nullptr;
+			RE::TESObjectREFR* ref = nullptr;
+			actor->GetParentCell()->ForEachReference([&](RE::TESObjectREFR& akRef) {
+				RE::TESObjectREFR* refr = &akRef;
+
+				if (actor->GetPosition().GetDistance(refr->GetPosition()) < ref->GetPosition().GetDistance(refr->GetPosition()) && actor != ref && actor->GetPosition().GetDistance(refr->GetPosition()) > 100.0) {
+					ref = refr;
+				}
+
+				return RE::BSContainer::ForEachResult::kContinue;
+			});
+
+			return ref;
+		}
+	}
+}

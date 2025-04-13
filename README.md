@@ -1,93 +1,107 @@
-# Devious Curses
+> 📜 other templates available at https://github.com/SkyrimScripting/SKSE_Templates
 
+# SKSE "Hello, world!"
 
+Very simple C++ SKSE plugin for Skyrim!
 
-## Getting started
+---
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+- [SKSE "Hello, world!"](#skse-hello-world)
+- [What does it do?](#what-does-it-do)
+- [CommonLibSSE NG](#commonlibsse-ng)
+- [Requirements](#requirements)
+  - [Opening the project](#opening-the-project)
+- [Project setup](#project-setup)
+  - [Finding Your "`mods`" Folder](#finding-your-mods-folder)
+- [Setup your own repository](#setup-your-own-repository)
+- [Sharing is Caring](#sharing-is-caring)
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+# What does it do?
 
-## Add your files
+After running Skyrim, once at the Main Menu, press the `~` key to open the game console.
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+You will see that we printed `"Hello, world!"` to the console at the Main Menu 🐉
 
-```
-cd existing_repo
-git remote add origin https://gitlab.com/cybercheese/devious-curses.git
-git branch -M main
-git push -uf origin main
-```
+# CommonLibSSE NG
 
-## Integrate with your tools
+Because this uses [CommonLibSSE NG](https://github.com/CharmedBaryon/CommonLibSSE-NG), it supports Skyrim SE, AE, GOG, and VR.
 
-- [ ] [Set up project integrations](https://gitlab.com/cybercheese/devious-curses/-/settings/integrations)
+[CommonLibSSE NG](https://github.com/CharmedBaryon/CommonLibSSE-NG) is a fork of the popular [powerof3 fork](https://github.com/powerof3/CommonLibSSE) of the _original_ `CommonLibSSE` library created by [Ryan McKenzie](https://github.com/Ryan-rsm-McKenzie) in [2018](https://github.com/Ryan-rsm-McKenzie/CommonLibSSE/commit/224773c424bdb8e36c761810cdff0fcfefda5f4a).
 
-## Collaborate with your team
+# Requirements
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+- [Visual Studio 2022](https://visualstudio.microsoft.com/) (_the free Community edition_)
+- [`vcpkg`](https://github.com/microsoft/vcpkg)
+  - 1. Clone the repository using git OR [download it as a .zip](https://github.com/microsoft/vcpkg/archive/refs/heads/master.zip)
+  - 2. Go into the `vcpkg` folder and double-click on `bootstrap-vcpkg.bat`
+  - 3. Edit your system or user Environment Variables and add a new one:
+    - Name: `VCPKG_ROOT`  
+      Value: `C:\path\to\wherever\your\vcpkg\folder\is`
 
-## Test and Deploy
+<img src="https://raw.githubusercontent.com/SkyrimDev/Images/main/images/screenshots/Setting%20Environment%20Variables/VCPKG_ROOT.png" height="150">
 
-Use the built-in continuous integration in GitLab.
+## Opening the project
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+Once you have Visual Studio 2022 installed, you can open this folder in basically any C++ editor, e.g. [VS Code](https://code.visualstudio.com/) or [CLion](https://www.jetbrains.com/clion/) or [Visual Studio](https://visualstudio.microsoft.com/)
+- > _for VS Code, if you are not automatically prompted to install the [C++](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools) and [CMake Tools](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cmake-tools) extensions, please install those and then close VS Code and then open this project as a folder in VS Code_
 
-***
+You may need to click `OK` on a few windows, but the project should automatically run CMake!
 
-# Editing this README
+It will _automatically_ download [CommonLibSSE NG](https://github.com/CharmedBaryon/CommonLibSSE-NG) and everything you need to get started making your new plugin!
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+# Project setup
 
-## Suggestions for a good README
+By default, when this project compiles it will output a `.dll` for your SKSE plugin into the `build/` folder.
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+If you want to configure this project to output your plugin files
+into your Skyrim Special Edition's "`Data`" folder:
 
-## Name
-Choose a self-explaining name for your project.
+- Set the `SKYRIM_FOLDER` environment variable to the path of your Skyrim installation  
+  e.g. `C:\Program Files (x86)\Steam\steamapps\common\Skyrim Special Edition`
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+<img src="https://raw.githubusercontent.com/SkyrimDev/Images/main/images/screenshots/Setting%20Environment%20Variables/SKYRIM_FOLDER.png" height="150">
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+If you want to configure this project to output your plugin files
+into your "`mods`" folder:  
+(_for Mod Organizer 2 or Vortex_)
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+- Set the `SKYRIM_MODS_FOLDER` environment variable to the path of your mods folder:  
+  e.g. `C:\Users\<user>\AppData\Local\ModOrganizer\Skyrim Special Edition\mods`  
+  e.g. `C:\Users\<user>\AppData\Roaming\Vortex\skyrimse\mods`
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+<img src="https://raw.githubusercontent.com/SkyrimDev/Images/main/images/screenshots/Setting%20Environment%20Variables/SKYRIM_MODS_FOLDER.png" height="150">
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+## Finding Your "`mods`" Folder
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+In Mod Organizer 2:
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+> Click the `...` next to "Mods" to get the full folder path
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+<img src="https://raw.githubusercontent.com/SkyrimDev/Images/main/images/screenshots/MO2/MO2SettingsModsFolder.png" height="150">
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+In Vortex:
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+<img src="https://raw.githubusercontent.com/SkyrimDev/Images/main/images/screenshots/Vortex/VortexSettingsModsFolder.png" height="150">
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+# Setup your own repository
 
-## License
-For open source projects, say how it is licensed.
+If you clone this template on GitHub, please:
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+- Go into `LICENSE` and change the year and change `<YOUR NAME HERE>` to your name.
+- Go into `CODE_OF_CONDUCT.md` and change `<YOUR CONTACT INFO HERE>` to your contact information.
+
+The `LICENSE` defaults to using the [MIT License](https://choosealicense.com/licenses/mit/), a permissive license which is used by many popular Skyrim mods (_including [CommonLibSSE](https://github.com/Ryan-rsm-McKenzie/CommonLibSSE)_).
+
+The `CODE_OF_CONDUCT.md` defaults to using the [Contributor Covenant](https://www.contributor-covenant.org/), the most popular code of conduct for open source communities.
+
+If you'd like to know more about open source licenses, see:
+- [Licensing a repository](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/licensing-a-repository)
+- [Choose an open source license](https://choosealicense.com/)
+
+# Sharing is Caring
+
+**If you use this template, PLEASE release your project as a public open source project.** 💖
+
+**Please do not release your SKSE plugin on Nexus/etc without making the source code available** \*
+
+> \* _You do you. But please help our community by sharing your source `<3`_
