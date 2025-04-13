@@ -2,6 +2,7 @@
 
 #include "../include/form_ids.h"
 
+
 using namespace SKSE;
 
 namespace DCURSES {
@@ -79,14 +80,24 @@ namespace DCURSES {
         GetVM()->DispatchStaticCall("DCursesLib", "StartSex", RE::MakeFunctionArguments<RE::Actor*>(std::move(aggressor)), result);
     }
 
-    void SetArousal(RE::Actor* actor, float arousal) {
+    void SetArousal(RE::Actor* actor, int arousal) {
+        RE::TESForm* aroused = RE::TESDataHandler::GetSingleton()->LookupForm(0x4290f, "SexLabAroused.esm");
+        RE::VMHandle hand = GetHP()->GetHandleForObject(RE::FormType::Quest, aroused);
+        RE::BSTSmartPointer<RE::BSScript::Object> arousedObject;
+        GetVM()->FindBoundObject(hand, "slaFrameworkScr", arousedObject);
+
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> result;
-        GetVM()->DispatchStaticCall("OSLAroused_ModInterface", "SetArousal", RE::MakeFunctionArguments<RE::Actor*, float, std::string>(std::move(actor), std::move(arousal), "Devious Curses"), result);
+        GetVM()->DispatchMethodCall(arousedObject, "SetActorExposure", RE::MakeFunctionArguments<RE::Actor*, int>(std::move(actor), std::move(arousal)), result);
     }
 
-    void ModifyArousal(RE::Actor* actor, float arousal) {
+    void ModifyArousal(RE::Actor* actor, int arousal) {
+        RE::TESForm* aroused = RE::TESDataHandler::GetSingleton()->LookupForm(0x4290f, "SexLabAroused.esm");
+        RE::VMHandle hand = GetHP()->GetHandleForObject(RE::FormType::Quest, aroused);
+        RE::BSTSmartPointer<RE::BSScript::Object> arousedObject;
+        GetVM()->FindBoundObject(hand, "slaFrameworkScr", arousedObject);
+
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> result;
-        GetVM()->DispatchStaticCall("OSLAroused_ModInterface", "ModifyArousal", RE::MakeFunctionArguments<RE::Actor*, float, std::string>(std::move(actor), std::move(arousal), "Devious Curses"), result);
+        GetVM()->DispatchMethodCall(arousedObject, "UpdateActorExposure", RE::MakeFunctionArguments<RE::Actor*, int, std::string>(std::move(actor), std::move(arousal), std::move("")), result);
     }
 
     void LockDevice(RE::Actor* akActor, RE::TESObjectARMO* deviceInventory, bool force = false) {

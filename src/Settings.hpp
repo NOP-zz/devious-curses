@@ -21,7 +21,8 @@ namespace DCURSES {
 		//Flag flag_LewdMarks					//ESP:LewdMarksSlaveTats.esp, CheckSTNG()
 		//Flag flag_SimpleSlavery				//ESP:SimpleSlavery.esp
 		//Flag flag_SSEnabled					//VAR:eventSimpleSlaveryWeight > 0, ESP:SimpleSlavery.esp
-		//Page Main
+		//Flag flag_SGO							//ESP:Sgo4IF.esp
+		//Page Main								
 		//Header Chances
 		float baseChance = 6.5;					//Base Event Chance//How likely are you to trigger a trap before modifiers.//{1}%//(0,100,0.1)
 		float containerModifier = 1;			//Container Modifier//Modifier for containers.//{1}x//(0,10,0.1)
@@ -203,7 +204,7 @@ namespace DCURSES {
 		int sexChance = 50;						//Chance//How likely a potential actor will have sex with the player.//{0}%//(0,100,1)																					?:? flag_enable_random_sex
 		int sexChanceCreature = 30;				//Creature Chance//How likely a potential creature actor will have sex with the player.//{0}%//(0,100,1)																?:? flag_enable_random_sex
 		//Header Arousal
-		int sexBaseArousal = 90;				//Base Arousal//Minimum arousal required before modifications.\nSetting this above 100 will require modifications for any sex to occur.//{1}//(0,150,1)					?:? flag_enable_random_sex
+		int sexBaseArousal = 90;				//Base Arousal//Minimum arousal required before modifications.\nSetting this above 100 will require modifications for any sex to occur.//{0}//(0,150,1)					?:? flag_enable_random_sex
 		int sexArousalNightModifier = 5;		//Night Modifier//Modifier for arousal if it's night.//-{0}//(0,50,1)																									?:? flag_enable_random_sex
 		int sexArousalNudeModifier = 15;		//Nude Modifier//Modifier for arousal if the player is nude.//-{0}//(0,50,1)																							?:? flag_enable_random_sex
 		int sexArousalCollarModifier = 5;		//Collar Modifier//Modifier for arousal if a collar is worn.//-{0}//(0,50,1)																							?:? flag_enable_random_sex

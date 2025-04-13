@@ -408,6 +408,10 @@ Event OnPageReset(string page)
 	If eventSimpleSlaveryWeight > 0 && Game.GetModByName("SimpleSlavery.esp") != 255
 		flag_SSEnabled = 0
 	EndIf
+	int flag_SGO = 1
+	If Game.GetModByName("Sgo4IF.esp") != 255
+		flag_SGO = 0
+	EndIf
 	SetCursorFillMode(TOP_TO_BOTTOM)
 	If page == "" || page == "Main "
 		AddHeaderOption("Chances ")
@@ -599,7 +603,7 @@ Event OnPageReset(string page)
 		sexChanceOID = AddSliderOption("Chance  ", sexChance, "{0}%", flag_enable_random_sex)
 		sexChanceCreatureOID = AddSliderOption("Creature Chance  ", sexChanceCreature, "{0}%", flag_enable_random_sex)
 		AddHeaderOption("Arousal ")
-		sexBaseArousalOID = AddSliderOption("Base Arousal  ", sexBaseArousal, "{1}", flag_enable_random_sex)
+		sexBaseArousalOID = AddSliderOption("Base Arousal  ", sexBaseArousal, "{0}", flag_enable_random_sex)
 		sexArousalNightModifierOID = AddSliderOption("Night Modifier  ", sexArousalNightModifier, "-{0}", flag_enable_random_sex)
 		sexArousalNudeModifierOID = AddSliderOption("Nude Modifier  ", sexArousalNudeModifier, "-{0}", flag_enable_random_sex)
 		sexArousalCollarModifierOID = AddSliderOption("Collar Modifier  ", sexArousalCollarModifier, "-{0}", flag_enable_random_sex)
@@ -2760,7 +2764,7 @@ Event OnOptionSliderAccept(int option, float value)
 	Endif
 	If option == sexBaseArousalOID
 		sexBaseArousal = value as int
-		SetSliderOptionValue(option, value, "{1}")
+		SetSliderOptionValue(option, value, "{0}")
 		
 		Return
 	Endif

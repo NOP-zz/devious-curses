@@ -8,6 +8,7 @@
 #include "src/Consequences.hpp"
 #include "src/TESEvents.hpp"
 #include "src/QuestInteractions.hpp"
+#include "src/SGO.hpp"
 
 #include "include/DDNG_API.h"
 
@@ -83,6 +84,7 @@ namespace DCURSES {
     void P_Test(RE::StaticFunctionTag*) {
         log::trace("DCURSES test");
 
+        DoSGOGemEvent("TEST");
     }
 
     bool PapyrusFunctions(RE::BSScript::IVirtualMachine* ivm) {

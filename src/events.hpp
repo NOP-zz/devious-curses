@@ -3,6 +3,7 @@
 #include "tats.hpp"
 #include "devices.hpp"
 #include "Consequences.hpp"
+#include "SGO.hpp"
 
 #include "../include/DDNG_API.h"
 #include "../include/form_ids.h"
@@ -244,7 +245,7 @@ namespace DCURSES {
     void DoEvent(bool isBoss, std::string contName) {
         CloseContinerMenus();
         //DisableMenus();
-        int weightTotal = settings.eventStandardWeight + settings.eventSimpleSlaveryWeight + settings.eventLewdMarkWeight;
+        int weightTotal = settings.eventStandardWeight + settings.eventSimpleSlaveryWeight + settings.eventLewdMarkWeight;// +settings.eventSGOWeight;
         if (isBoss) {
             weightTotal -= settings.eventStandardBossReduction;
         }
@@ -257,6 +258,17 @@ namespace DCURSES {
         else if (r > settings.eventSimpleSlaveryWeight) {
             r -= settings.eventSimpleSlaveryWeight;
         }
+
+        /*
+        if (r < settings.eventSGOWeight && DoSGOEvent(contName)) {
+            UndressActor(RE::PlayerCharacter::GetSingleton());
+            //EnableMenus();
+            return;
+        }
+        else if (r > settings.eventSGOWeight) {
+            r -= settings.eventSGOWeight;
+        }
+        */
 
         if (r < settings.eventLewdMarkWeight && DoLewdMarkEvent()) {
             //EnableMenus();
@@ -630,7 +642,7 @@ namespace DCURSES {
                 counters.clock_LMEventTimer = 0;
                 switch (mark) {
                 case TAT_HEAT: {
-                    ModifyArousal(player, settings.LMHeatMod / 4.0f);
+                    ModifyArousal(player, settings.LMHeatMod / 4);
                     if (counters.LMContainersOpened >= 0) {
                         RemoveLewdMark(player, mark);
                         PlayerMessage("You feel a sense of calm as the heat mark fades from your body.");
@@ -646,7 +658,7 @@ namespace DCURSES {
                             for (auto const& actorHandle : *arr) {
                                 auto actorPtr = actorHandle.get();
                                 if (auto actor = actorPtr.get(); actor && actor->Is3DLoaded() && !actor->IsDead() && actor->GetPosition().GetDistance(playerPosition) <= settings.sexSearchRadius) {
-                                    ModifyArousal(actor, settings.LMAllureMod / 4.0f);
+                                    ModifyArousal(actor, settings.LMAllureMod / 4);
                                 }
                             }
                         }
@@ -746,6 +758,10 @@ namespace DCURSES {
             settings.eventSimpleSlaveryWeight = 0;
             SetMCMInt("eventSimpleSlaveryWeight", 0);
         }
+        /*if (RE::TESDataHandler::GetSingleton()->LookupModByName("Sgo4IF.esp") == nullptr) {
+            settings.eventSGOWeight = 0;
+            SetMCMInt("eventSGOWeight", 0);
+        }*/
         if (GetModuleHandle(L"SlaveTatsNG") == nullptr || RE::TESDataHandler::GetSingleton()->LookupModByName("LewdMarksSlaveTats.esp") == nullptr) {
             settings.eventLewdMarkWeight = 0;
             SetMCMInt("eventLewdMarkWeight", 0);
