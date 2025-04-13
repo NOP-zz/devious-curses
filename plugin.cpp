@@ -83,21 +83,6 @@ namespace DCURSES {
     void P_Test(RE::StaticFunctionTag*) {
         log::trace("DCURSES test");
 
-        auto player = RE::PlayerCharacter::GetSingleton();
-        
-        switch (counter) {
-        case 0: 
-            QITGInteraction1();
-            break;
-        case 1: 
-            QITGInteraction2();
-            break;
-        case 3: 
-            QITGInteraction3();
-            break;
-        }
-
-        counter++;
     }
 
     bool PapyrusFunctions(RE::BSScript::IVirtualMachine* ivm) {
@@ -159,7 +144,7 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
             DCURSES::StartPapyrusTimer();
             DCURSES::EventsStartup();
 
-            //log::trace("SlaveTatsNGTest {}", (size_t)GetModuleHandle(L"SlaveTatsNG"));
+            DCURSES::LoadMCMSettings();
             DCURSES::P_UpdateSKSE(nullptr);
             //DCURSES::counters.clock_lastSex = -10;
             break;

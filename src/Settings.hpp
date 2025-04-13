@@ -1,12 +1,15 @@
 #pragma once
 
 #include "Scripting.hpp"
+#include "Json.hpp"
 
 #include <stdlib.h>
 
 using namespace SKSE;
 
 typedef int color;
+
+constexpr auto SETTINGS_FILE = "Data/SKSE/Plugins/DeviousCurses.json";
 
 namespace DCURSES {
 
@@ -251,6 +254,344 @@ namespace DCURSES {
 
 	void RecalculateDeviceLists();
 
+	void SaveMCMSettings() {
+		std::ofstream o(SETTINGS_FILE);
+		nlohmann::json j = nlohmann::json{
+			//CODEGEN_START_TOJSON
+			{"eventScalingMod", settings.eventScalingMod},
+			{"minRestraints", settings.minRestraints},
+			{"maxRestraints", settings.maxRestraints},
+			{"bossAditionalRestraints", settings.bossAditionalRestraints},
+			{"restraintCap", settings.restraintCap},
+			{"minArousal", settings.minArousal},
+			{"beltWeight", settings.beltWeight},
+			{"braWeight", settings.braWeight},
+			{"plugsWeight", settings.plugsWeight},
+			{"lockingPlugsWeight", settings.lockingPlugsWeight},
+			{"inflatablePlugsWeight", settings.inflatablePlugsWeight},
+			{"nipplePiercingsWeight", settings.nipplePiercingsWeight},
+			{"vaginalPiercingsWeight", settings.vaginalPiercingsWeight},
+			{"corsetWeight", settings.corsetWeight},
+			{"beltedCorsetsWeight", settings.beltedCorsetsWeight},
+			{"slaveHarnessWeight", settings.slaveHarnessWeight},
+			{"chastityHarnessWeight", settings.chastityHarnessWeight},
+			{"armbinderWeight", settings.armbinderWeight},
+			{"elbowbinderWeight", settings.elbowbinderWeight},
+			{"yokeWeight", settings.yokeWeight},
+			{"shacklesWeight", settings.shacklesWeight},
+			{"straitjacketWeight", settings.straitjacketWeight},
+			{"straitjacketLegbinderWeight", settings.straitjacketLegbinderWeight},
+			{"petSuitWeight", settings.petSuitWeight},
+			{"collarWeight", settings.collarWeight},
+			{"armCuffsWeight", settings.armCuffsWeight},
+			{"legCuffsWeight", settings.legCuffsWeight},
+			{"gagWeight", settings.gagWeight},
+			{"ringGagWeight", settings.ringGagWeight},
+			{"largeGagWeight", settings.largeGagWeight},
+			{"largeRingGagWeight", settings.largeRingGagWeight},
+			{"blindfoldWeight", settings.blindfoldWeight},
+			{"hoodBothWeight", settings.hoodBothWeight},
+			{"hoodGagWeight", settings.hoodGagWeight},
+			{"hoodBlindWeight", settings.hoodBlindWeight},
+			{"hoodNoneWeight", settings.hoodNoneWeight},
+			{"catsuitWeight", settings.catsuitWeight},
+			{"hobbleSkirtWeight", settings.hobbleSkirtWeight},
+			{"hobbleSkirtDifficulty", settings.hobbleSkirtDifficulty},
+			{"bootsWeight", settings.bootsWeight},
+			{"glovesWeight", settings.glovesWeight},
+			{"mittensWeight", settings.mittensWeight},
+			{"maxHeldKeys", settings.maxHeldKeys},
+			{"restraintsKeyWeight", settings.restraintsKeyWeight},
+			{"chastityKeyWeight", settings.chastityKeyWeight},
+			{"piercingToolWeight", settings.piercingToolWeight},
+			{"eventStandardWeight", settings.eventStandardWeight},
+			{"eventStandardBossReduction", settings.eventStandardBossReduction},
+			{"eventSimpleSlaveryWeight", settings.eventSimpleSlaveryWeight},
+			{"eventSSMinRestraints", settings.eventSSMinRestraints},
+			{"eventLewdMarkWeight", settings.eventLewdMarkWeight},
+			{"LMAllureWeight", settings.LMAllureWeight},
+			{"LMAllureMod", settings.LMAllureMod},
+			{"LMAllureSex", settings.LMAllureSex},
+			{"LMHeatWeight", settings.LMHeatWeight},
+			{"LMHeatMod", settings.LMHeatMod},
+			{"LMHeatContainerCount", settings.LMHeatContainerCount},
+			{"LMBondageWeight", settings.LMBondageWeight},
+			{"LMBondageDeviceCount", settings.LMBondageDeviceCount},
+			{"LMNudityWeight", settings.LMNudityWeight},
+			{"LMNudityTalkTimes", settings.LMNudityTalkTimes},
+			{"consSexWeight", settings.consSexWeight},
+			{"consFineWeight", settings.consFineWeight},
+			{"consFineAmount", settings.consFineAmount},
+			{"consRandomBondageWeight", settings.consRandomBondageWeight},
+			{"consMercyWeight", settings.consMercyWeight},
+			{"sexCooldown", settings.sexCooldown},
+			{"sexChance", settings.sexChance},
+			{"sexChanceCreature", settings.sexChanceCreature},
+			{"sexBaseArousal", settings.sexBaseArousal},
+			{"sexArousalNightModifier", settings.sexArousalNightModifier},
+			{"sexArousalNudeModifier", settings.sexArousalNudeModifier},
+			{"sexArousalCollarModifier", settings.sexArousalCollarModifier},
+			{"sexArousalHeavyModifier", settings.sexArousalHeavyModifier},
+			{"sexArousalBlindModifier", settings.sexArousalBlindModifier},
+			{"sexArousalBootsModifier", settings.sexArousalBootsModifier},
+			{"sexArousalHobbleModifier", settings.sexArousalHobbleModifier},
+			{"sexArousalVisibleModifier", settings.sexArousalVisibleModifier},
+			{"sexArousalCreatureModifier", settings.sexArousalCreatureModifier},
+			{"sexArousalFollowerModifier", settings.sexArousalFollowerModifier},
+			{"sexArousalSpouseModifier", settings.sexArousalSpouseModifier},
+			{"sexArousalSummonModifier", settings.sexArousalSummonModifier},
+			{"sexRequiredPlayerArousal", settings.sexRequiredPlayerArousal},
+			{"sexRequiredPlayerTattoos", settings.sexRequiredPlayerTattoos},
+			{"sexChanceFollower", settings.sexChanceFollower},
+			{"sexChanceSpouse", settings.sexChanceSpouse},
+			{"sexChanceSummon", settings.sexChanceSummon},
+			{"baseChance", settings.baseChance},
+			{"containerModifier", settings.containerModifier},
+			{"bossContainerModifier", settings.bossContainerModifier},
+			{"deadBodyModifier", settings.deadBodyModifier},
+			{"pickpocketModifier", settings.pickpocketModifier},
+			{"doorModifier", settings.doorModifier},
+			{"lockedModifier", settings.lockedModifier},
+			{"lockDifficultyModifier", settings.lockDifficultyModifier},
+			{"arousalModifier", settings.arousalModifier},
+			{"keyLossChance", settings.keyLossChance},
+			{"keyChance", settings.keyChance},
+			{"keyBonus", settings.keyBonus},
+			{"keyPickpocketBonus", settings.keyPickpocketBonus},
+			{"LMBondageChance", settings.LMBondageChance},
+			{"playerHomeModifier", settings.playerHomeModifier},
+			{"cityModifier", settings.cityModifier},
+			{"townModifier", settings.townModifier},
+			{"banditModifier", settings.banditModifier},
+			{"draugrModifier", settings.draugrModifier},
+			{"lockedLocationBypass", settings.lockedLocationBypass},
+			{"theftLocationBypass", settings.theftLocationBypass},
+			{"dwarvenModifier", settings.dwarvenModifier},
+			{"falmerModifier", settings.falmerModifier},
+			{"forswornModifier", settings.forswornModifier},
+			{"vampireModifier", settings.vampireModifier},
+			{"warlockModifier", settings.warlockModifier},
+			{"dragonLairModifier", settings.dragonLairModifier},
+			{"apocryphaModifier", settings.apocryphaModifier},
+			{"wildernessModifier", settings.wildernessModifier},
+			{"rDeviceBaseChance", settings.rDeviceBaseChance},
+			{"consTriggerNude", settings.consTriggerNude},
+			{"consTriggerRestrained", settings.consTriggerRestrained},
+			{"consTriggerSex", settings.consTriggerSex},
+			{"sexArousalTattooModifier", settings.sexArousalTattooModifier},
+			{"sexSearchRadius", settings.sexSearchRadius},
+			{"onlyLockedDoors", settings.onlyLockedDoors},
+			{"eventScaling", settings.eventScaling},
+			{"bossOnlyHeavy", settings.bossOnlyHeavy},
+			{"beltPlugs", settings.beltPlugs},
+			{"noBeltPiercing", settings.noBeltPiercing},
+			{"plugsDontCount", settings.plugsDontCount},
+			{"allowLegShackles", settings.allowLegShackles},
+			{"keyForgiveness", settings.keyForgiveness},
+			{"enableMagicKeys", settings.enableMagicKeys},
+			{"preferRelevantKeys", settings.preferRelevantKeys},
+			{"vanishingKeys", settings.vanishingKeys},
+			{"lockSlaveTats", settings.lockSlaveTats},
+			{"LMNudityChestOnly", settings.LMNudityChestOnly},
+			{"useLocationModifiers", settings.useLocationModifiers},
+			{"noMessageBoxes", settings.noMessageBoxes},
+			{"bossChestUseModelPath", settings.bossChestUseModelPath},
+			{"dragonHoard", settings.dragonHoard},
+			{"bossExtraGold", settings.bossExtraGold},
+			{"DisableGasMasks", settings.DisableGasMasks},
+			{"DisableCatsuits", settings.DisableCatsuits},
+			{"enableQuestInteractions", settings.enableQuestInteractions},
+			{"consAllowFollowers", settings.consAllowFollowers},
+			{"consRandomHeavyBondage", settings.consRandomHeavyBondage},
+			{"sexEnabled", settings.sexEnabled},
+			{"sexRandomEnabled", settings.sexRandomEnabled},
+			{"sexAllowMale", settings.sexAllowMale},
+			{"sexAllowFemale", settings.sexAllowFemale},
+			{"sexAllowFuta", settings.sexAllowFuta},
+			{"sexAllowCreature", settings.sexAllowCreature},
+			{"sexRequireAll", settings.sexRequireAll},
+			{"sexRequireBindings", settings.sexRequireBindings},
+			{"sexRequireCollar", settings.sexRequireCollar},
+			{"sexRequireHeavy", settings.sexRequireHeavy},
+			{"sexRequireNude", settings.sexRequireNude},
+			{"sexAlwaysAllowFollowers", settings.sexAlwaysAllowFollowers},
+			{"sexAlwaysAllowSpouse", settings.sexAlwaysAllowSpouse},
+			{"sexAlwaysAllowSummons", settings.sexAlwaysAllowSummons},
+			//CODEGEN_END_TOJSON
+		};
+		o << j << std::endl;
+	}
+
+	void LoadMCMSettings() {
+		if (!std::filesystem::exists(SETTINGS_FILE)) { return; }
+		if (std::filesystem::file_size(SETTINGS_FILE) < 10) { return; }
+		std::ifstream i(SETTINGS_FILE);
+		nlohmann::json j;
+		i >> j;
+
+		//CODEGEN_START_FROMJSON
+		SetMCMInt("eventScalingMod",static_cast<int>(j.value("eventScalingMod", 15)));
+		SetMCMInt("minRestraints",static_cast<int>(j.value("minRestraints", 1)));
+		SetMCMInt("maxRestraints",static_cast<int>(j.value("maxRestraints", 3)));
+		SetMCMInt("bossAditionalRestraints",static_cast<int>(j.value("bossAditionalRestraints", 2)));
+		SetMCMInt("restraintCap",static_cast<int>(j.value("restraintCap", 7)));
+		SetMCMInt("minArousal",static_cast<int>(j.value("minArousal", 10)));
+		SetMCMInt("beltWeight",static_cast<int>(j.value("beltWeight", 40)));
+		SetMCMInt("braWeight",static_cast<int>(j.value("braWeight", 30)));
+		SetMCMInt("plugsWeight",static_cast<int>(j.value("plugsWeight", 50)));
+		SetMCMInt("lockingPlugsWeight",static_cast<int>(j.value("lockingPlugsWeight", 30)));
+		SetMCMInt("inflatablePlugsWeight",static_cast<int>(j.value("inflatablePlugsWeight", 15)));
+		SetMCMInt("nipplePiercingsWeight",static_cast<int>(j.value("nipplePiercingsWeight", 50)));
+		SetMCMInt("vaginalPiercingsWeight",static_cast<int>(j.value("vaginalPiercingsWeight", 50)));
+		SetMCMInt("corsetWeight",static_cast<int>(j.value("corsetWeight", 40)));
+		SetMCMInt("beltedCorsetsWeight",static_cast<int>(j.value("beltedCorsetsWeight", 30)));
+		SetMCMInt("slaveHarnessWeight",static_cast<int>(j.value("slaveHarnessWeight", 50)));
+		SetMCMInt("chastityHarnessWeight",static_cast<int>(j.value("chastityHarnessWeight", 40)));
+		SetMCMInt("armbinderWeight",static_cast<int>(j.value("armbinderWeight", 30)));
+		SetMCMInt("elbowbinderWeight",static_cast<int>(j.value("elbowbinderWeight", 20)));
+		SetMCMInt("yokeWeight",static_cast<int>(j.value("yokeWeight", 10)));
+		SetMCMInt("shacklesWeight",static_cast<int>(j.value("shacklesWeight", 20)));
+		SetMCMInt("straitjacketWeight",static_cast<int>(j.value("straitjacketWeight", 30)));
+		SetMCMInt("straitjacketLegbinderWeight",static_cast<int>(j.value("straitjacketLegbinderWeight", 15)));
+		SetMCMInt("petSuitWeight",static_cast<int>(j.value("petSuitWeight", 10)));
+		SetMCMInt("collarWeight",static_cast<int>(j.value("collarWeight", 60)));
+		SetMCMInt("armCuffsWeight",static_cast<int>(j.value("armCuffsWeight", 60)));
+		SetMCMInt("legCuffsWeight",static_cast<int>(j.value("legCuffsWeight", 60)));
+		SetMCMInt("gagWeight",static_cast<int>(j.value("gagWeight", 35)));
+		SetMCMInt("ringGagWeight",static_cast<int>(j.value("ringGagWeight", 45)));
+		SetMCMInt("largeGagWeight",static_cast<int>(j.value("largeGagWeight", 30)));
+		SetMCMInt("largeRingGagWeight",static_cast<int>(j.value("largeRingGagWeight", 30)));
+		SetMCMInt("blindfoldWeight",static_cast<int>(j.value("blindfoldWeight", 20)));
+		SetMCMInt("hoodBothWeight",static_cast<int>(j.value("hoodBothWeight", 20)));
+		SetMCMInt("hoodGagWeight",static_cast<int>(j.value("hoodGagWeight", 20)));
+		SetMCMInt("hoodBlindWeight",static_cast<int>(j.value("hoodBlindWeight", 20)));
+		SetMCMInt("hoodNoneWeight",static_cast<int>(j.value("hoodNoneWeight", 20)));
+		SetMCMInt("catsuitWeight",static_cast<int>(j.value("catsuitWeight", 30)));
+		SetMCMInt("hobbleSkirtWeight",static_cast<int>(j.value("hobbleSkirtWeight", 20)));
+		SetMCMInt("hobbleSkirtDifficulty",static_cast<int>(j.value("hobbleSkirtDifficulty", 50)));
+		SetMCMInt("bootsWeight",static_cast<int>(j.value("bootsWeight", 30)));
+		SetMCMInt("glovesWeight",static_cast<int>(j.value("glovesWeight", 30)));
+		SetMCMInt("mittensWeight",static_cast<int>(j.value("mittensWeight", 0)));
+		SetMCMInt("maxHeldKeys",static_cast<int>(j.value("maxHeldKeys", 3)));
+		SetMCMInt("restraintsKeyWeight",static_cast<int>(j.value("restraintsKeyWeight", 80)));
+		SetMCMInt("chastityKeyWeight",static_cast<int>(j.value("chastityKeyWeight", 50)));
+		SetMCMInt("piercingToolWeight",static_cast<int>(j.value("piercingToolWeight", 20)));
+		SetMCMInt("eventStandardWeight",static_cast<int>(j.value("eventStandardWeight", 100)));
+		SetMCMInt("eventStandardBossReduction",static_cast<int>(j.value("eventStandardBossReduction", 20)));
+		SetMCMInt("eventSimpleSlaveryWeight",static_cast<int>(j.value("eventSimpleSlaveryWeight", 0)));
+		SetMCMInt("eventSSMinRestraints",static_cast<int>(j.value("eventSSMinRestraints", 6)));
+		SetMCMInt("eventLewdMarkWeight",static_cast<int>(j.value("eventLewdMarkWeight", 10)));
+		SetMCMInt("LMAllureWeight",static_cast<int>(j.value("LMAllureWeight", 10)));
+		SetMCMInt("LMAllureMod",static_cast<int>(j.value("LMAllureMod", 5)));
+		SetMCMInt("LMAllureSex",static_cast<int>(j.value("LMAllureSex", 25)));
+		SetMCMInt("LMHeatWeight",static_cast<int>(j.value("LMHeatWeight", 10)));
+		SetMCMInt("LMHeatMod",static_cast<int>(j.value("LMHeatMod", 30)));
+		SetMCMInt("LMHeatContainerCount",static_cast<int>(j.value("LMHeatContainerCount", 50)));
+		SetMCMInt("LMBondageWeight",static_cast<int>(j.value("LMBondageWeight", 5)));
+		SetMCMInt("LMBondageDeviceCount",static_cast<int>(j.value("LMBondageDeviceCount", 8)));
+		SetMCMInt("LMNudityWeight",static_cast<int>(j.value("LMNudityWeight", 15)));
+		SetMCMInt("LMNudityTalkTimes",static_cast<int>(j.value("LMNudityTalkTimes", 35)));
+		SetMCMInt("consSexWeight",static_cast<int>(j.value("consSexWeight", 15)));
+		SetMCMInt("consFineWeight",static_cast<int>(j.value("consFineWeight", 10)));
+		SetMCMInt("consFineAmount",static_cast<int>(j.value("consFineAmount", 100)));
+		SetMCMInt("consRandomBondageWeight",static_cast<int>(j.value("consRandomBondageWeight", 10)));
+		SetMCMInt("consMercyWeight",static_cast<int>(j.value("consMercyWeight", 5)));
+		SetMCMInt("sexCooldown",static_cast<int>(j.value("sexCooldown", 30)));
+		SetMCMInt("sexChance",static_cast<int>(j.value("sexChance", 50)));
+		SetMCMInt("sexChanceCreature",static_cast<int>(j.value("sexChanceCreature", 30)));
+		SetMCMInt("sexBaseArousal",static_cast<int>(j.value("sexBaseArousal", 90)));
+		SetMCMInt("sexArousalNightModifier",static_cast<int>(j.value("sexArousalNightModifier", 5)));
+		SetMCMInt("sexArousalNudeModifier",static_cast<int>(j.value("sexArousalNudeModifier", 15)));
+		SetMCMInt("sexArousalCollarModifier",static_cast<int>(j.value("sexArousalCollarModifier", 5)));
+		SetMCMInt("sexArousalHeavyModifier",static_cast<int>(j.value("sexArousalHeavyModifier", 10)));
+		SetMCMInt("sexArousalBlindModifier",static_cast<int>(j.value("sexArousalBlindModifier", 5)));
+		SetMCMInt("sexArousalBootsModifier",static_cast<int>(j.value("sexArousalBootsModifier", 0)));
+		SetMCMInt("sexArousalHobbleModifier",static_cast<int>(j.value("sexArousalHobbleModifier", 0)));
+		SetMCMInt("sexArousalVisibleModifier",static_cast<int>(j.value("sexArousalVisibleModifier", 5)));
+		SetMCMInt("sexArousalCreatureModifier",static_cast<int>(j.value("sexArousalCreatureModifier", 0)));
+		SetMCMInt("sexArousalFollowerModifier",static_cast<int>(j.value("sexArousalFollowerModifier", 10)));
+		SetMCMInt("sexArousalSpouseModifier",static_cast<int>(j.value("sexArousalSpouseModifier", 20)));
+		SetMCMInt("sexArousalSummonModifier",static_cast<int>(j.value("sexArousalSummonModifier", 0)));
+		SetMCMInt("sexRequiredPlayerArousal",static_cast<int>(j.value("sexRequiredPlayerArousal", 0)));
+		SetMCMInt("sexRequiredPlayerTattoos",static_cast<int>(j.value("sexRequiredPlayerTattoos", 0)));
+		SetMCMInt("sexChanceFollower",static_cast<int>(j.value("sexChanceFollower", -1)));
+		SetMCMInt("sexChanceSpouse",static_cast<int>(j.value("sexChanceSpouse", -1)));
+		SetMCMInt("sexChanceSummon",static_cast<int>(j.value("sexChanceSummon", -1)));
+		SetMCMFloat("baseChance",static_cast<float>(j.value("baseChance", 6.5)));
+		SetMCMFloat("containerModifier",static_cast<float>(j.value("containerModifier", 1.0)));
+		SetMCMFloat("bossContainerModifier",static_cast<float>(j.value("bossContainerModifier", 2.0)));
+		SetMCMFloat("deadBodyModifier",static_cast<float>(j.value("deadBodyModifier", 1.3)));
+		SetMCMFloat("pickpocketModifier",static_cast<float>(j.value("pickpocketModifier", 1.3)));
+		SetMCMFloat("doorModifier",static_cast<float>(j.value("doorModifier", 1.0)));
+		SetMCMFloat("lockedModifier",static_cast<float>(j.value("lockedModifier", 2.0)));
+		SetMCMFloat("lockDifficultyModifier",static_cast<float>(j.value("lockDifficultyModifier", 1.3)));
+		SetMCMFloat("arousalModifier",static_cast<float>(j.value("arousalModifier", 1.4)));
+		SetMCMFloat("keyLossChance",static_cast<float>(j.value("keyLossChance", 80.0)));
+		SetMCMFloat("keyChance",static_cast<float>(j.value("keyChance", 7.0)));
+		SetMCMFloat("keyBonus",static_cast<float>(j.value("keyBonus", 1.0)));
+		SetMCMFloat("keyPickpocketBonus",static_cast<float>(j.value("keyPickpocketBonus", 2.0)));
+		SetMCMFloat("LMBondageChance",static_cast<float>(j.value("LMBondageChance", 5.0)));
+		SetMCMFloat("playerHomeModifier",static_cast<float>(j.value("playerHomeModifier", 0.0)));
+		SetMCMFloat("cityModifier",static_cast<float>(j.value("cityModifier", 0.0)));
+		SetMCMFloat("townModifier",static_cast<float>(j.value("townModifier", 0.0)));
+		SetMCMFloat("banditModifier",static_cast<float>(j.value("banditModifier", 1.1)));
+		SetMCMFloat("draugrModifier",static_cast<float>(j.value("draugrModifier", 1.2)));
+		SetMCMFloat("lockedLocationBypass",static_cast<float>(j.value("lockedLocationBypass", 0.6)));
+		SetMCMFloat("theftLocationBypass",static_cast<float>(j.value("theftLocationBypass", 1.1)));
+		SetMCMFloat("dwarvenModifier",static_cast<float>(j.value("dwarvenModifier", 1.2)));
+		SetMCMFloat("falmerModifier",static_cast<float>(j.value("falmerModifier", 1.3)));
+		SetMCMFloat("forswornModifier",static_cast<float>(j.value("forswornModifier", 1.1)));
+		SetMCMFloat("vampireModifier",static_cast<float>(j.value("vampireModifier", 1.5)));
+		SetMCMFloat("warlockModifier",static_cast<float>(j.value("warlockModifier", 1.5)));
+		SetMCMFloat("dragonLairModifier",static_cast<float>(j.value("dragonLairModifier", 2.0)));
+		SetMCMFloat("apocryphaModifier",static_cast<float>(j.value("apocryphaModifier", 2.0)));
+		SetMCMFloat("wildernessModifier",static_cast<float>(j.value("wildernessModifier", 0.9)));
+		SetMCMFloat("rDeviceBaseChance",static_cast<float>(j.value("rDeviceBaseChance", 1.5)));
+		SetMCMFloat("consTriggerNude",static_cast<float>(j.value("consTriggerNude", 15.0)));
+		SetMCMFloat("consTriggerRestrained",static_cast<float>(j.value("consTriggerRestrained", 50.0)));
+		SetMCMFloat("consTriggerSex",static_cast<float>(j.value("consTriggerSex", 10.0)));
+		SetMCMFloat("sexArousalTattooModifier",static_cast<float>(j.value("sexArousalTattooModifier", 1.0)));
+		SetMCMFloat("sexSearchRadius",static_cast<float>(j.value("sexSearchRadius", 2000.0)));
+		SetMCMBool("onlyLockedDoors",static_cast<bool>(j.value("onlyLockedDoors", true)));
+		SetMCMBool("eventScaling",static_cast<bool>(j.value("eventScaling", true)));
+		SetMCMBool("bossOnlyHeavy",static_cast<bool>(j.value("bossOnlyHeavy", true)));
+		SetMCMBool("beltPlugs",static_cast<bool>(j.value("beltPlugs", true)));
+		SetMCMBool("noBeltPiercing",static_cast<bool>(j.value("noBeltPiercing", false)));
+		SetMCMBool("plugsDontCount",static_cast<bool>(j.value("plugsDontCount", true)));
+		SetMCMBool("allowLegShackles",static_cast<bool>(j.value("allowLegShackles", false)));
+		SetMCMBool("keyForgiveness",static_cast<bool>(j.value("keyForgiveness", true)));
+		SetMCMBool("enableMagicKeys",static_cast<bool>(j.value("enableMagicKeys", true)));
+		SetMCMBool("preferRelevantKeys",static_cast<bool>(j.value("preferRelevantKeys", true)));
+		SetMCMBool("vanishingKeys",static_cast<bool>(j.value("vanishingKeys", true)));
+		SetMCMBool("lockSlaveTats",static_cast<bool>(j.value("lockSlaveTats", true)));
+		SetMCMBool("LMNudityChestOnly",static_cast<bool>(j.value("LMNudityChestOnly", false)));
+		SetMCMBool("useLocationModifiers",static_cast<bool>(j.value("useLocationModifiers", true)));
+		SetMCMBool("noMessageBoxes",static_cast<bool>(j.value("noMessageBoxes", false)));
+		SetMCMBool("bossChestUseModelPath",static_cast<bool>(j.value("bossChestUseModelPath", true)));
+		SetMCMBool("dragonHoard",static_cast<bool>(j.value("dragonHoard", true)));
+		SetMCMBool("bossExtraGold",static_cast<bool>(j.value("bossExtraGold", true)));
+		SetMCMBool("DisableGasMasks",static_cast<bool>(j.value("DisableGasMasks", false)));
+		SetMCMBool("DisableCatsuits",static_cast<bool>(j.value("DisableCatsuits", false)));
+		SetMCMBool("enableQuestInteractions",static_cast<bool>(j.value("enableQuestInteractions", true)));
+		SetMCMBool("consAllowFollowers",static_cast<bool>(j.value("consAllowFollowers", false)));
+		SetMCMBool("consRandomHeavyBondage",static_cast<bool>(j.value("consRandomHeavyBondage", false)));
+		SetMCMBool("sexEnabled",static_cast<bool>(j.value("sexEnabled", false)));
+		SetMCMBool("sexRandomEnabled",static_cast<bool>(j.value("sexRandomEnabled", false)));
+		SetMCMBool("sexAllowMale",static_cast<bool>(j.value("sexAllowMale", true)));
+		SetMCMBool("sexAllowFemale",static_cast<bool>(j.value("sexAllowFemale", true)));
+		SetMCMBool("sexAllowFuta",static_cast<bool>(j.value("sexAllowFuta", true)));
+		SetMCMBool("sexAllowCreature",static_cast<bool>(j.value("sexAllowCreature", false)));
+		SetMCMBool("sexRequireAll",static_cast<bool>(j.value("sexRequireAll", false)));
+		SetMCMBool("sexRequireBindings",static_cast<bool>(j.value("sexRequireBindings", true)));
+		SetMCMBool("sexRequireCollar",static_cast<bool>(j.value("sexRequireCollar", false)));
+		SetMCMBool("sexRequireHeavy",static_cast<bool>(j.value("sexRequireHeavy", false)));
+		SetMCMBool("sexRequireNude",static_cast<bool>(j.value("sexRequireNude", true)));
+		SetMCMBool("sexAlwaysAllowFollowers",static_cast<bool>(j.value("sexAlwaysAllowFollowers", true)));
+		SetMCMBool("sexAlwaysAllowSpouse",static_cast<bool>(j.value("sexAlwaysAllowSpouse", true)));
+		SetMCMBool("sexAlwaysAllowSummons",static_cast<bool>(j.value("sexAlwaysAllowSummons", false)));
+		//CODEGEN_END_FROMJSON
+	}
+
 	void P_UpdateSKSE(RE::StaticFunctionTag*) {
 		//CODEGEN_START_UPDATE
 		settings.eventScalingMod = GetMCMSetting("eventScalingMod")->GetSInt();
@@ -413,6 +754,7 @@ namespace DCURSES {
 		settings.sexAlwaysAllowSpouse = GetMCMSetting("sexAlwaysAllowSpouse")->GetBool();
 		settings.sexAlwaysAllowSummons = GetMCMSetting("sexAlwaysAllowSummons")->GetBool();
 		//CODEGEN_END_UPDATE
+		SaveMCMSettings();
 		RecalculateDeviceLists();
 	}
 
@@ -429,10 +771,5 @@ namespace DCURSES {
 		ivm->RegisterFunction("CheckSTNG", "DCurses_MCM", P_CheckSTNG);
 		return true;
 	}
-
-
-	// GLOBAL
-	//struct SettingsInternal::Settings settings = SettingsInternal::Settings();
-	//SettingsInternal::Clocks clocks = SettingsInternal::Clocks();
 
 }

@@ -62,7 +62,7 @@ if(DEFINED OUTPUT_FOLDER)
     # Copy the SKSE plugin .dll files into the SKSE/Plugins/ folder
     set(DLL_FOLDER "${OUTPUT_FOLDER}/SKSE/Plugins")
     set(PAP_FOLDER "${OUTPUT_FOLDER}/scripts")
-    set(SKYRIM_FOLDER "S:/SteamLibrary/steamapps/common/Skyrim Special Edition")
+    set(SKYRIM_FOLDER "S:/SteamLibrary/steamapps/common/Skyrim Special Edition") # Change this to your skyrim instalation location
     set(SCRIPTS_SOURCE "${CMAKE_SOURCE_DIR}/SourceScripts/")
 
     message(STATUS "SKSE plugin output folder: ${DLL_FOLDER}")

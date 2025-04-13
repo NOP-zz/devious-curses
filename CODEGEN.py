@@ -284,6 +284,34 @@ mid += ''.join(parseb(x[0]) for x in options)
 
 settings_raw = pre + mid + post
 
+index = settings_raw.split("//CODEGEN_START_TOJSON")[0].replace('\r', '').rfind('\n')
+indent = settings_raw.split("//CODEGEN_START_TOJSON")[0][index:]
+pre = settings_raw.split("//CODEGEN_START_TOJSON")[0] + "//CODEGEN_START_TOJSON"
+post = f"{indent}//CODEGEN_END_TOJSON" + settings_raw.split("//CODEGEN_END_TOJSON")[1]
+
+parse = lambda x: f'{indent}{{"{x}", settings.{x}}},'
+mid = ''.join(parse(x[0]) for x in sliders)
+mid += ''.join(parse(x[0]) for x in fsliders)
+mid += ''.join(parse(x[0]) for x in options)
+
+settings_raw = pre + mid + post
+
+index = settings_raw.split("//CODEGEN_START_FROMJSON")[0].replace('\r', '').rfind('\n')
+indent = settings_raw.split("//CODEGEN_START_FROMJSON")[0][index:]
+pre = settings_raw.split("//CODEGEN_START_FROMJSON")[0] + "//CODEGEN_START_FROMJSON"
+post = f"{indent}//CODEGEN_END_FROMJSON" + settings_raw.split("//CODEGEN_END_FROMJSON")[1]
+
+parse = lambda x, y: f'{indent}SetMCMInt("{x}",static_cast<int>(j.value("{x}", {y})));'
+mid = ''.join(parse(x[0], x[1]) for x in sliders)
+
+parsef = lambda x, y: f'{indent}SetMCMFloat("{x}",static_cast<float>(j.value("{x}", {y})));'
+mid += ''.join(parsef(x[0], x[1]) for x in fsliders)
+
+parseb = lambda x, y: f'{indent}SetMCMBool("{x}",static_cast<bool>(j.value("{x}", {y})));'
+mid += ''.join(parseb(x[0], x[1]) for x in options)
+
+settings_raw = pre + mid + post
+
 
 with open(r"src\Settings.hpp", "w") as f:
 	f.write(settings_raw)
