@@ -8,6 +8,7 @@
 #include "src/Consequences.hpp"
 #include "src/TESEvents.hpp"
 #include "src/QuestInteractions.hpp"
+#include "src/QLIEIntegration.hpp"
 #include "src/SGO.hpp"
 
 #include "include/DDNG_API.h"
@@ -130,6 +131,8 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
             DCURSES::jcontainers::JCWrapper::GetSingleton()->Init();
             DCURSES::RegisterEventSinks();
 
+            DCURSES::QLIEAttemptInit();
+
             break;
         }
         case SKSE::MessagingInterface::kNewGame:
@@ -143,11 +146,15 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
                 log::trace("Devious Devices NG loaded.");
             }
 
+            if (!DCURSES::QLIEAttemptRegisterEvent()) {
+                log::info("Quick Loot IE Not Loaded.");
+            }
+
             DCURSES::StartPapyrusTimer();
             DCURSES::EventsStartup();
 
             DCURSES::LoadMCMSettings();
-            DCURSES::P_UpdateSKSE(nullptr);
+            //DCURSES::P_UpdateSKSE(nullptr);
             //DCURSES::counters.clock_lastSex = -10;
             break;
         }
@@ -162,7 +169,9 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
                         DCURSES::jcontainers::JCWrapper::GetSingleton()->PreInit(root);
                 }
                 });
+
             break;
+
         }
         }
         

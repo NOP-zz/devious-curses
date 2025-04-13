@@ -392,8 +392,4 @@ namespace DCURSES {
 			SetObjectRefKnown(object->formID);
 		}
 	}
-
-	void QICheckMagicEffect(RE::TESObjectREFR* caster, RE::TESObjectREFR* target, RE::EffectSetting* effect) {
-		
-	}
 }

@@ -289,26 +289,7 @@ namespace DCURSES {
         //EnableMenus();
     }
 
-    void CalculateEventChance(RE::TESObjectREFR* activatedObject) {
-        if (!activatedObject) {
-            log::warn("OnObjectActivated called with a null object reference.");
-            return;
-        }
-
-        auto player = RE::PlayerCharacter::GetSingleton();
-
-        //log::trace("Worn items: {}", GetWornDeviceCount(GetPlayer()));
-        if (IsObjectRefKnown(activatedObject->formID)) {
-            if (settings.vanishingKeys && activatedObject != player) {
-                RemoveKeys(activatedObject);
-            }
-            //log::trace("object is known");
-            return;
-        }
-        else {
-            log::trace("Activated {} type {} refID {:x} baseID {:x}", activatedObject->GetName(), RE::FormTypeToString(activatedObject->GetFormType()), activatedObject->formID, activatedObject->GetBaseObject()->GetFormID());
-        }
-
+    struct ContainerData {
         bool isDeadActor = false;
         bool isPickpocket = false;
         bool isBoss = false;
@@ -317,25 +298,24 @@ namespace DCURSES {
         bool isLocked = false;
         bool isDragon = false;
         int lockLevel = 0;
+    };
+
+    ContainerData GetContainerData(RE::TESObjectREFR* activatedObject) {
+        ContainerData data;
+
+        auto player = RE::PlayerCharacter::GetSingleton();
 
         RE::Actor* actor = activatedObject->As<RE::Actor>();
         if (actor && actor->IsDead() && !actor->IsChild()) {
-            isDeadActor = true;
+            data.isDeadActor = true;
         }
         if (actor && !actor->IsDead() && !actor->IsChild() && player->IsSneaking() && actor->CanPickpocket()) {
-            isPickpocket = true;
-        }
-        if (actor && !actor->IsDead() && !actor->IsChild() && !player->IsSneaking() && actor->CanTalkToPlayer()) {
-            CheckConsequenceDialogue(actor);
-        }
-
-        if (isPickpocket && IsPickpocketTargetKnown(activatedObject->formID)) {
-            return;
+            data.isPickpocket = true;
         }
 
         //RE::BGSLocation* location = GetPlayerLocation();
         std::string editorId = Util::GetFormEditorId(activatedObject);
-        if (editorId.find("Boss") != std::string::npos) { isBoss = true; }
+        if (editorId.find("Boss") != std::string::npos) { data.isBoss = true; }
         RE::TESObjectCONT* container = activatedObject->GetObjectReference()->As<RE::TESObjectCONT>();
         if (container) {
             RE::TESModelTextureSwap* textSwap = container->GetAsModelTextureSwap();
@@ -343,14 +323,14 @@ namespace DCURSES {
             static std::string paths[] = { "DLC01\\SoulCairn\\sc_chest02.nif", "DLC01\\Clutter\\DLC01SnowElfChest.nif", "Clutter\\Ruins\\Ruins_LargeChest.nif", "DLC02\\Dungeons\\Apocrypha\\Animated\\ApoUrn\\ApoUrn02.nif", "Clutter\\Dwemer\\DweChest01.nif", "Clutter\\Falmer\\FalmerContainer02.nif" };
             if (settings.bossChestUseModelPath) {
                 for (auto const& path : paths) {
-                    if (model_path == path) { isBoss = true; }
+                    if (model_path == path) { data.isBoss = true; }
                 }
             }
 
             RE::TESObjectREFR::InventoryItemMap inventory = activatedObject->GetInventory();
             for (auto const& [k, v] : inventory) {
                 if (v.second->IsLeveled()) {
-                    isLeveled = true;
+                    data.isLeveled = true;
                 }
             }
 
@@ -364,7 +344,7 @@ namespace DCURSES {
 
         RE::TESObjectDOOR* door = activatedObject->GetObjectReference()->As<RE::TESObjectDOOR>();
         if (door) {
-            isDoor = true;
+            data.isDoor = true;
         }
 
         RE::REFR_LOCK* lockref = activatedObject->GetLock();
@@ -373,7 +353,7 @@ namespace DCURSES {
             RE::LOCK_LEVEL level = activatedObject->GetLockLevel();
             bool hasKey = false;
             if (level != RE::LOCK_LEVEL::kRequiresKey && level != RE::LOCK_LEVEL::kUnlocked) {
-                lockLevel = static_cast<int>(level) + 1;
+                data.lockLevel = static_cast<int>(level) + 1;
                 RE::TESObjectREFR::InventoryItemMap inventory = player->GetInventory();
                 for (auto const& [k, v] : inventory) {
                     if (lockref->key == k) {
@@ -382,9 +362,103 @@ namespace DCURSES {
                     }
                 }
                 if (!hasKey && level != RE::LOCK_LEVEL::kUnlocked) {
-                    isLocked = true;
+                    data.isLocked = true;
                 }
             }
+        }
+
+        if (data.isDeadActor && actor->GetRace()->HasKeywordString("ActorTypeDragon") && settings.dragonHoard) {
+            data.isDragon = true;
+        }
+
+        return data;
+    }
+
+    void PopulateContainer(RE::TESObjectREFR* activatedObject, ContainerData data) {
+        if (!activatedObject) {
+            log::warn("PopulateContainer called with a null object reference.");
+            return;
+        }
+
+        if (IsObjectPopulated(activatedObject->formID)) {
+            return;
+        }
+        else {
+            log::trace("Populating object {}", activatedObject->GetName());
+            SetObjectPopulated(activatedObject->formID);
+        }
+        auto player = RE::PlayerCharacter::GetSingleton();
+
+        if (settings.vanishingKeys && activatedObject != player) {
+            RemoveKeys(activatedObject);
+        }
+
+        RE::TESKey* addedKey = nullptr;
+        if (data.isLeveled || data.isPickpocket || (data.isDeadActor && !IsPickpocketTargetKnown(activatedObject->formID))) {
+            addedKey = GenerateKeys(activatedObject, false);
+            GenerateRandomDevices(activatedObject);
+        }
+
+        if (data.isLeveled && data.isBoss && settings.bossExtraGold) {
+            log::trace("Adding extra gold to boss chest.");
+            RE::TESForm* gold = RE::TESForm::LookupByID(std::stoi("0f", 0, 16));
+            activatedObject->AddObjectToContainer((RE::TESBoundObject*)gold, nullptr, (player->GetLevel()), nullptr);
+        }
+
+        if (data.isDragon) {
+            log::trace("Actor is dragon and dragon hoards are on.");
+            RE::TESForm* gold = RE::TESForm::LookupByID(std::stoi("0f", 0, 16));
+            activatedObject->AddObjectToContainer((RE::TESBoundObject*)gold, nullptr, static_cast<int>(player->GetLevel() * 80.0 * Util::randomDouble(0.3, 1) + Util::randomDouble(50, 200)), nullptr);
+        }
+
+        if (data.isBoss) {
+            RE::TESKey* magicKey = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESKey>(MAGIC_KEY, "Devious Curses.esp");
+            double c2 = 10.0 + GetWornDeviceCount(player) * 0.75;
+            double r2 = Util::randomDouble();
+            log::trace("Magic Key: {} ({})", c2, r2);
+            if (GetItemCount(player, magicKey) == 0 && !addedKey && r2 < c2) {
+                activatedObject->AddObjectToContainer((RE::TESBoundObject*)magicKey, nullptr, 1, nullptr);
+            }
+        }
+        else if (data.isDeadActor) {
+            RE::TESObjectMISC* solvent = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectMISC>(TATTOO_CHARM, "Devious Curses.esp");
+            double c2 = 5.0 + GetTattooCount(player) * 0.5;
+            double r2 = Util::randomDouble();
+            log::trace("Solvent: {} ({})", c2, r2);
+            if (GetItemCount(player, solvent) == 0 && !addedKey && r2 < c2) {
+                activatedObject->AddObjectToContainer((RE::TESBoundObject*)solvent, nullptr, 1, nullptr);
+            }
+        }
+    }
+
+    void CalculateEventChance(RE::TESObjectREFR* activatedObject) {
+        if (!activatedObject) {
+            log::warn("OnObjectActivated called with a null object reference.");
+            return;
+        }
+
+        auto player = RE::PlayerCharacter::GetSingleton();
+
+        //log::trace("Worn items: {}", GetWornDeviceCount(GetPlayer()));
+        if (IsObjectRefKnown(activatedObject->formID)) {
+            //log::trace("object is known");
+            return;
+        }
+        else {
+            log::trace("Activated {} type {} refID {:x} baseID {:x}", activatedObject->GetName(), RE::FormTypeToString(activatedObject->GetFormType()), activatedObject->formID, activatedObject->GetBaseObject()->GetFormID());
+        }
+
+        auto data = GetContainerData(activatedObject);
+
+        PopulateContainer(activatedObject, data);
+
+        RE::Actor* actor = activatedObject->As<RE::Actor>();
+        if (actor && !actor->IsDead() && !actor->IsChild() && !player->IsSneaking() && actor->CanTalkToPlayer()) {
+            CheckConsequenceDialogue(actor);
+        }
+
+        if (data.isPickpocket && IsPickpocketTargetKnown(activatedObject->formID)) {
+            return;
         }
 
         /*
@@ -396,39 +470,24 @@ namespace DCURSES {
         */
 
 
-        if (isDeadActor || isLeveled || isDoor) {
+        if (data.isDeadActor || data.isLeveled || data.isDoor) {
             SetObjectRefKnown(activatedObject->formID);
         }
-        else if (isPickpocket) {
+        else if (data.isPickpocket) {
             SetPickpocketTargetKnown(activatedObject->formID);
         }
 
-        RE::TESKey* addedKey = nullptr;
-        if (isLeveled || isPickpocket || (isDeadActor && !IsPickpocketTargetKnown(activatedObject->formID))) {
-            addedKey = GenerateKeys(activatedObject, false);
-            GenerateRandomDevices(activatedObject);
-        }
         //else if (isDeadActor && IsPickpocketTargetKnown(activatedObject->formID) && settings.vanishingKeys) {
         //    RemoveKeys(actor);
         //}
 
-        if (isDoor && !isLocked && settings.onlyLockedDoors) {
+        if (data.isDoor && !data.isLocked && settings.onlyLockedDoors) {
             log::trace("No event: Only locked doors.");
             return;
         }
 
-        if (isDeadActor && actor->GetRace()->HasKeywordString("ActorTypeDragon") && settings.dragonHoard) {
-            isDragon = true;
-        }
-
         //RE::TESFaction* arousalFaction = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("03FC36", 0, 16), "SexLabAroused.esm");
         int playerArousal = GetActorArousal(player);
-
-        if (isLeveled && isBoss && settings.bossExtraGold) {
-            log::trace("Adding extra gold to boss chest.");
-            RE::TESForm* gold = RE::TESForm::LookupByID(std::stoi("0f", 0, 16));
-            activatedObject->AddObjectToContainer((RE::TESBoundObject*)gold, nullptr, (player->GetLevel()), nullptr);
-        }
 
         float chance = settings.baseChance;
         std::string logMessage = "modifiers: ";
@@ -440,23 +499,23 @@ namespace DCURSES {
         }
 
 
-        if (isDeadActor) {
+        if (data.isDeadActor) {
             chance *= settings.deadBodyModifier;
             logMessage += "(dead) ";
         }
-        else if (isLeveled) {
+        else if (data.isLeveled) {
             counters.LMContainersOpened += 1;
             log::info("Heat mark: {}", counters.LMContainersOpened);
             chance *= settings.containerModifier;
             logMessage += "(container) ";
         }
-        else if (isDoor) {
-            if (!settings.onlyLockedDoors || isLocked) {
+        else if (data.isDoor) {
+            if (!settings.onlyLockedDoors || data.isLocked) {
                 chance *= settings.doorModifier;
                 logMessage += "(door) ";
             }
         }
-        else if (isPickpocket) {
+        else if (data.isPickpocket) {
             chance *= settings.pickpocketModifier;
             logMessage += "(pickpocket) ";
         }
@@ -464,14 +523,14 @@ namespace DCURSES {
             return;
         }
 
-        if (isBoss) {
+        if (data.isBoss) {
             chance *= settings.bossContainerModifier;
             logMessage += "(boss) ";
         }
-        if (isLocked) {
+        if (data.isLocked) {
             chance *= settings.lockedModifier;
-            if (lockLevel >= 0 && settings.lockDifficultyModifier > 1.0) {
-                float modifier = (settings.lockDifficultyModifier - 1) * (lockLevel / 5.0f) + 1;
+            if (data.lockLevel >= 0 && settings.lockDifficultyModifier > 1.0) {
+                float modifier = (settings.lockDifficultyModifier - 1) * (data.lockLevel / 5.0f) + 1;
                 chance *= modifier;
                 logMessage += fmt::format("(locked {:.2f}) ", modifier);
             }
@@ -558,15 +617,15 @@ namespace DCURSES {
             }
         }
 
-        if (isLocked && locationChance < settings.lockedLocationBypass) {
+        if (data.isLocked && locationChance < settings.lockedLocationBypass) {
             locationChance = settings.lockedLocationBypass;
             locationMessage += " [L]";
         }
-        if (isDragon && locationChance < 1.0) {
+        if (data.isDragon && locationChance < 1.0) {
             locationChance = 1.0;
             locationMessage += " [D]";
         }
-        if ((player->WouldBeStealing(activatedObject) || isPickpocket) && locationChance < settings.theftLocationBypass) {
+        if ((player->WouldBeStealing(activatedObject) || data.isPickpocket) && locationChance < settings.theftLocationBypass) {
             locationChance = settings.theftLocationBypass;
             locationMessage += " [T]";
         }
@@ -574,7 +633,7 @@ namespace DCURSES {
         chance *= locationChance;
         logMessage += fmt::format("({} {}) ", locationMessage, locationChance);
 
-        if (isDragon) {
+        if (data.isDragon) {
             chance *= settings.bossContainerModifier * 1.2f;
             //chance *= actor->GetLevel() / 75.0f + 1;
             logMessage += "(dragon) ";
@@ -585,12 +644,7 @@ namespace DCURSES {
             chance *= eventScaling;
         }
 
-        if (isDragon) {
-            log::trace("Actor is dragon and dragon hoards are on.");
-            RE::TESForm* gold = RE::TESForm::LookupByID(std::stoi("0f", 0, 16));
-            activatedObject->AddObjectToContainer((RE::TESBoundObject*)gold, nullptr, static_cast<int>(player->GetLevel() * 80.0 * Util::randomDouble(0.3, 1) + Util::randomDouble(50, 200)), nullptr);
-        }
-        else if (GetWornDeviceCount(player) > settings.restraintCap) {
+        if (!data.isDragon && GetWornDeviceCount(player) > settings.restraintCap) {
             log::trace("No event: Too many devices.");
             chance = 0.0;
         }
@@ -605,29 +659,11 @@ namespace DCURSES {
         logMessage = fmt::format("Event: {} total: {:.2f}% ({:.2f})", logMessage, chance, r);
         log::info("{}", logMessage);
         if (r < chance) {
-            DoEvent(isBoss || isDragon, activatedObject->GetName());
+            DoEvent(data.isBoss || data.isDragon, activatedObject->GetName());
             counters.SinceLastEvent = 0;
         }
         else {
             counters.SinceLastEvent++;
-            if (isBoss) {
-                RE::TESKey* magicKey = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESKey>(MAGIC_KEY, "Devious Curses.esp");
-                double c2 = 10.0 + GetWornDeviceCount(player) * 0.75;
-                double r2 = Util::randomDouble();
-                log::trace("Magic Key: {} ({})", c2, r2);
-                if (GetItemCount(player, magicKey) == 0 && !addedKey && r2 < c2) {
-                    activatedObject->AddObjectToContainer((RE::TESBoundObject*)magicKey, nullptr, 1, nullptr);
-                }
-            }
-            else if (isDeadActor) {
-                RE::TESObjectMISC* solvent = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectMISC>(TATTOO_CHARM, "Devious Curses.esp");
-                double c2 = 5.0 + GetTattooCount(player) * 0.5;
-                double r2 = Util::randomDouble();
-                log::trace("Solvent: {} ({})", c2, r2);
-                if (GetItemCount(player, solvent) == 0 && !addedKey && r2 < c2) {
-                    activatedObject->AddObjectToContainer((RE::TESBoundObject*)solvent, nullptr, 1, nullptr);
-                }
-            }
         }
     }
 

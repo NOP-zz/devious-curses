@@ -7,31 +7,6 @@
 using namespace SKSE;
 
 namespace DCURSES {
-    class MagicEffectApplyEventSink : public RE::BSTEventSink<RE::TESMagicEffectApplyEvent> {
-        virtual RE::BSEventNotifyControl ProcessEvent(const RE::TESMagicEffectApplyEvent* effectEvent, RE::BSTEventSource<RE::TESMagicEffectApplyEvent>*) override {
-            if (!effectEvent) return RE::BSEventNotifyControl::kContinue;
-            auto caster = effectEvent->caster.get();
-            auto target = effectEvent->target.get();
-            auto form = RE::TESForm::LookupByID(effectEvent->magicEffect);
-            auto mgef = form->As<RE::EffectSetting>();
-            if (caster && target && mgef) {
-                QICheckMagicEffect(caster, target, mgef);
-            }
-
-            return RE::BSEventNotifyControl::kContinue;
-        }
-    public:
-        static void RegisterEvent() {
-            static MagicEffectApplyEventSink eventSink;
-            auto ScriptEventSource = RE::ScriptEventSourceHolder::GetSingleton();
-            if (!ScriptEventSource) {
-                return;
-            }
-            ScriptEventSource->AddEventSink(&eventSink);
-
-            log::trace("Attached magic effect event sink.");
-        }
-    };
 
     class QuestStageEventSink : public RE::BSTEventSink<RE::TESQuestStageEvent> {
         virtual RE::BSEventNotifyControl ProcessEvent(const RE::TESQuestStageEvent* questEvent, RE::BSTEventSource<RE::TESQuestStageEvent>*) override {
@@ -157,6 +132,5 @@ namespace DCURSES {
         EquipEventSink::RegisterEvent();
         //LocationEventSink::RegisterEvent();
         QuestStageEventSink::RegisterEvent();
-        MagicEffectApplyEventSink::RegisterEvent();
     }
 }

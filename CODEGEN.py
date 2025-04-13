@@ -301,13 +301,13 @@ indent = settings_raw.split("//CODEGEN_START_FROMJSON")[0][index:]
 pre = settings_raw.split("//CODEGEN_START_FROMJSON")[0] + "//CODEGEN_START_FROMJSON"
 post = f"{indent}//CODEGEN_END_FROMJSON" + settings_raw.split("//CODEGEN_END_FROMJSON")[1]
 
-parse = lambda x, y: f'{indent}SetMCMInt("{x}",static_cast<int>(j.value("{x}", {y})));'
+parse = lambda x, y: f'{indent}settings.{x} = static_cast<int>(j.value("{x}", {y}));{indent}SetMCMInt("{x}",settings.{x});'
 mid = ''.join(parse(x[0], x[1]) for x in sliders)
 
-parsef = lambda x, y: f'{indent}SetMCMFloat("{x}",static_cast<float>(j.value("{x}", {y})));'
+parsef = lambda x, y: f'{indent}settings.{x} = static_cast<float>(j.value("{x}", {y}));{indent}SetMCMFloat("{x}",settings.{x});'
 mid += ''.join(parsef(x[0], x[1]) for x in fsliders)
 
-parseb = lambda x, y: f'{indent}SetMCMBool("{x}",static_cast<bool>(j.value("{x}", {y})));'
+parseb = lambda x, y: f'{indent}settings.{x} = static_cast<bool>(j.value("{x}", {y}));{indent}SetMCMBool("{x}",settings.{x});'
 mid += ''.join(parseb(x[0], x[1]) for x in options)
 
 settings_raw = pre + mid + post

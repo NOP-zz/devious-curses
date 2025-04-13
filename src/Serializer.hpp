@@ -32,12 +32,15 @@ namespace DCURSES {
     public:
         uint32_t eventList[REF_COUNT];
         size_t eventIndex = 0;
+        uint32_t populatedList[REF_COUNT];
+        size_t populatedIndex = 0;
         uint32_t pickpocketList[PICK_COUNT];
         size_t pickpocketIndex = 0;
         uint32_t consequenceList[CONS_COUNT];
         size_t consequenceIndex = 0;
 
         RefLists() {
+            for (int i = 0; i < REF_COUNT; i++) { populatedList[i] = 0; }
             for (int i = 0; i < REF_COUNT; i++) { eventList[i] = 0; }
             for (int i = 0; i < PICK_COUNT; i++) { pickpocketList[i] = 0; }
             for (int i = 0; i < CONS_COUNT; i++) { consequenceList[i] = 0; }
@@ -52,6 +55,15 @@ namespace DCURSES {
     bool IsObjectRefKnown(uint32_t refId) {
         for (int i = 0; i < REF_COUNT; i++) {
             if (refLists.eventList[i] == refId) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool IsObjectPopulated(uint32_t refId) {
+        for (int i = 0; i < REF_COUNT; i++) {
+            if (refLists.populatedList[i] == refId) {
                 return true;
             }
         }
@@ -80,6 +92,11 @@ namespace DCURSES {
         refLists.eventList[refLists.eventIndex] = refId;
         //log::trace("assigning form {} to index {}", refId, knownRefsIndex);
         refLists.eventIndex = (refLists.eventIndex + 1) % REF_COUNT;
+    }
+    void SetObjectPopulated(uint32_t refId) {
+        refLists.populatedList[refLists.populatedIndex] = refId;
+        //log::trace("assigning form {} to index {}", refId, knownRefsIndex);
+        refLists.populatedIndex = (refLists.populatedIndex + 1) % REF_COUNT;
     }
 
     void SetPickpocketTargetKnown(uint32_t refId) {
