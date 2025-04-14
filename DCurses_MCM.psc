@@ -325,6 +325,8 @@ Bool Property enableQuestInteractions = true Auto
 Int enableQuestInteractionsOID
 Bool Property enableSlowStrip = false Auto
 Int enableSlowStripOID
+Bool Property setAllDefaultSettings = false Auto
+Int setAllDefaultSettingsOID
 Bool Property consAllowFollowers = false Auto
 Int consAllowFollowersOID
 Bool Property consRandomHeavyBondage = false Auto
@@ -575,6 +577,7 @@ Event OnPageReset(string page)
 		DisableCatsuitsOID = AddToggleOption("Disable Catsuits  ", DisableCatsuits, 0)
 		enableQuestInteractionsOID = AddToggleOption("Quest Interactions  ", enableQuestInteractions, 0)
 		enableSlowStripOID = AddToggleOption("Slow Strip  ", enableSlowStrip, 0)
+		setAllDefaultSettingsOID = AddToggleOption("Return to Default [WARNING]  ", setAllDefaultSettings, 0)
 	Elseif page == "Consequences "
 		AddHeaderOption("Triggers ")
 		consTriggerNudeOID = AddSliderOption("Nudity  ", consTriggerNude, "{1}%", 0)
@@ -1126,6 +1129,10 @@ Event OnOptionHighlight(int option)
 		SetInfoText("Used to fix a rare bug where clothes stripping happens too fast.")
 		Return
 	Endif
+	If option == setAllDefaultSettingsOID
+		SetInfoText("If you exit the menu with this enabled all settings in the MCM will be reset to default.")
+		Return
+	Endif
 	If option == consTriggerNudeOID
 		SetInfoText("Chance for a consequence when talking to someone while nude.")
 		Return
@@ -1426,6 +1433,11 @@ Event OnOptionSelect(int option)
 	If option == enableSlowStripOID
 		enableSlowStrip = !enableSlowStrip
 		SetToggleOptionValue(enableSlowStripOID, enableSlowStrip)
+		Return
+	Endif
+	If option == setAllDefaultSettingsOID
+		setAllDefaultSettings = !setAllDefaultSettings
+		SetToggleOptionValue(setAllDefaultSettingsOID, setAllDefaultSettings)
 		Return
 	Endif
 	If option == consAllowFollowersOID

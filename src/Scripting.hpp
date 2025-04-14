@@ -59,6 +59,12 @@ namespace DCURSES {
         SetMCMSetting(name, var);
     }
 
+    void SetMCMString(std::string name, std::string value) {
+        RE::BSScript::Variable var;
+        var.SetString(value);
+        SetMCMSetting(name, var);
+    }
+
     int GetActorArousal(RE::Actor* actor) {
         auto faction = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("03fc36", 0, 16), "SexLabAroused.esm");
         return actor->GetFactionRank(faction, actor == RE::PlayerCharacter::GetSingleton());

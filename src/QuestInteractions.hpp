@@ -170,7 +170,7 @@ namespace DCURSES {
 		CloseContinerMenus();
 		auto player = RE::PlayerCharacter::GetSingleton();
 
-		UndressActor(player);
+		UndressAndUnequipActor(player);
 
 		DoStandardEvent(false, "", "white | (piercing & !chastity)", 8);
 
@@ -195,7 +195,7 @@ namespace DCURSES {
 		CloseContinerMenus();
 		auto player = RE::PlayerCharacter::GetSingleton();
 
-		UndressActor(player);
+		UndressAndUnequipActor(player);
 
 		auto hood = GetRandomDevice(&devices.hoodsBlockAll, {}, "red & (ebonite | rubber)");
 		if (hood.has_value()) LockDevice(player, hood.value().inv, true);
@@ -235,7 +235,7 @@ namespace DCURSES {
 	void QICInteraction1() {
 		auto player = RE::PlayerCharacter::GetSingleton();
 		
-		UndressActor(player);
+		UndressAndUnequipActor(player);
 
 		DoStandardEvent(false, "", "rope & !(white | red | black)", 8, {"zad_DeviousBelt"});
 
@@ -245,7 +245,7 @@ namespace DCURSES {
 	void QICInteraction2() {
 		auto player = RE::PlayerCharacter::GetSingleton();
 
-		UndressActor(player);
+		UndressAndUnequipActor(player);
 
 		DoStandardEvent(false, "", "iron | chain | rusty | ironpear | peargag", 15, { "zad_DeviousBelt" });
 

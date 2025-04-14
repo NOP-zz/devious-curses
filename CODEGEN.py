@@ -291,12 +291,16 @@ post = f"{indent}//CODEGEN_END_UPDATE" + settings_raw.split("//CODEGEN_END_UPDAT
 
 parse = lambda x: f'{indent}settings.{x} = GetMCMSetting("{x}")->GetSInt();'
 mid = ''.join(parse(x[0]) for x in sliders)
+mid += ''.join(parse(x[0]) for x in colors)
 
 parsef = lambda x: f'{indent}settings.{x} = GetMCMSetting("{x}")->GetFloat();'
 mid += ''.join(parsef(x[0]) for x in fsliders)
 
 parseb = lambda x: f'{indent}settings.{x} = GetMCMSetting("{x}")->GetBool();'
 mid += ''.join(parseb(x[0]) for x in options)
+
+parse = lambda x: f'{indent}settings.{x} = GetMCMSetting("{x}")->GetString();'
+mid += ''.join(parse(x[0]) for x in texts)
 
 settings_raw = pre + mid + post
 
@@ -309,6 +313,8 @@ parse = lambda x: f'{indent}{{"{x}", settings.{x}}},'
 mid = ''.join(parse(x[0]) for x in sliders)
 mid += ''.join(parse(x[0]) for x in fsliders)
 mid += ''.join(parse(x[0]) for x in options)
+mid += ''.join(parse(x[0]) for x in colors)
+mid += ''.join(parse(x[0]) for x in texts)
 
 settings_raw = pre + mid + post
 
@@ -319,12 +325,36 @@ post = f"{indent}//CODEGEN_END_FROMJSON" + settings_raw.split("//CODEGEN_END_FRO
 
 parse = lambda x, y: f'{indent}settings.{x} = static_cast<int>(j.value("{x}", {y}));{indent}SetMCMInt("{x}",settings.{x});'
 mid = ''.join(parse(x[0], x[1]) for x in sliders)
+mid += ''.join(parse(x[0], x[1]) for x in colors)
 
 parsef = lambda x, y: f'{indent}settings.{x} = static_cast<float>(j.value("{x}", {y}));{indent}SetMCMFloat("{x}",settings.{x});'
 mid += ''.join(parsef(x[0], x[1]) for x in fsliders)
 
 parseb = lambda x, y: f'{indent}settings.{x} = static_cast<bool>(j.value("{x}", {y}));{indent}SetMCMBool("{x}",settings.{x});'
 mid += ''.join(parseb(x[0], x[1]) for x in options)
+
+parset = lambda x, y: f'{indent}settings.{x} = j.value("{x}", {y});{indent}SetMCMString("{x}",settings.{x});'
+mid += ''.join(parset(x[0], x[1]) for x in texts)
+
+settings_raw = pre + mid + post
+
+index = settings_raw.split("//CODEGEN_START_RESET")[0].replace('\r', '').rfind('\n')
+indent = settings_raw.split("//CODEGEN_START_RESET")[0][index:]
+pre = settings_raw.split("//CODEGEN_START_RESET")[0] + "//CODEGEN_START_RESET"
+post = f"{indent}//CODEGEN_END_RESET" + settings_raw.split("//CODEGEN_END_RESET")[1]
+
+parse = lambda x, y: f'{indent}settings.{x} = {y};{indent}SetMCMInt("{x}",settings.{x});'
+mid = ''.join(parse(x[0], x[1]) for x in sliders)
+mid += ''.join(parse(x[0], x[1]) for x in colors)
+
+parsef = lambda x, y: f'{indent}settings.{x} = {y}f;{indent}SetMCMFloat("{x}",settings.{x});'
+mid += ''.join(parsef(x[0], x[1]) for x in fsliders)
+
+parseb = lambda x, y: f'{indent}settings.{x} = {y};{indent}SetMCMBool("{x}",settings.{x});'
+mid += ''.join(parseb(x[0], x[1]) for x in options)
+
+parset = lambda x, y: f'{indent}settings.{x} = {y};{indent}SetMCMString("{x}",settings.{x});'
+mid += ''.join(parset(x[0], x[1]) for x in texts)
 
 settings_raw = pre + mid + post
 

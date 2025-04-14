@@ -16,37 +16,65 @@ Plugs of endless hunger: plugs with allow, can only be removed after a lot of an
 
 namespace DCURSES {
 
-    void UndressActor(RE::Actor *akActor) {
-        if (!akActor) return;
+    bool UndressActor(RE::Actor* akActor, bool removeShield = true) {
+        if (!akActor) return false;
+
+        std::vector<RE::TESForm*> removes = std::vector<RE::TESForm*>();
+
+        if (settings.enableSlowStrip) {
+            SlowStrip(akActor);
+            return false;
+        }
+
+        for (uint32_t i = 1; i < (1 << 31); i = i << 1) {
+            typedef RE::BGSBipedObjectForm::BipedObjectSlot BOS;
+            RE::TESObjectARMO* equipped = akActor->GetWornArmor((BOS)i);
+            if (equipped == nullptr) { continue; }
+
+            BOS slotMask = equipped->GetSlotMask();
+
+            if ((equipped->GetArmorRating() <= 0.1 && (slotMask == BOS::kAmulet || slotMask == BOS::kRing || slotMask == BOS::kCirclet) || (i == (uint32_t)BOS::kShield) && !removeShield)) {
+                continue;
+            }
+            if (equipped->HasKeywordString("SexLabNoStrip")) {
+                continue;
+            }
+            //*didAnything = true;
+            //UnequipItem(akActor, equipped);
+            removes.push_back(equipped);
+        }
+
+        auto inventory = akActor->GetInventory();
+        for (auto const& [k, v] : inventory) {
+            if (v.second.get()->IsWorn()) {
+                RE::TESAmmo* ammo = k->As<RE::TESAmmo>();
+                if (!ammo) {
+                    continue;
+                }
+                //UnequipItem(akActor, ammo);
+                removes.push_back(ammo);
+            }
+        }
+
+        RE::BGSBipedObjectForm;
+
+        if (removes.size() > 0) {
+            log::trace("Undress removed {} items", removes.size());
+            SKSE::GetTaskInterface()->AddTask([removes, akActor] {
+                for (auto equipped : removes) {
+                    UnequipItem(akActor, equipped);
+                }
+            });
+            return true;
+        }
+
+        return false;
+    }
+
+    bool UndressAndUnequipActor(RE::Actor* akActor) {
+        if (!akActor) return false;
 
         SKSE::GetTaskInterface()->AddTask([akActor] {
-            if (settings.enableSlowStrip) {
-                SlowStrip(akActor);
-                return;
-            }
-
-            for (uint32_t i = 1; i < (1 << 31); i = i << 1) {
-                RE::TESObjectARMO* equipped = akActor->GetWornArmor((RE::BIPED_MODEL::BipedObjectSlot)i);
-                if (i == (uint32_t)RE::BIPED_MODEL::BipedObjectSlot::kAmulet || i == (uint32_t)RE::BIPED_MODEL::BipedObjectSlot::kRing || i == (uint32_t)RE::BIPED_MODEL::BipedObjectSlot::kCirclet) {
-                    continue;
-                }
-                if (equipped == nullptr) { continue; }
-                if (equipped->HasKeywordString("SexLabNoStrip")) {
-                    continue;
-                }
-                if (equipped)
-                UnequipItem(akActor, equipped);
-            }
-            auto inventory = akActor->GetInventory();
-            for (auto const& [k, v] : inventory) {
-                if (v.second.get()->IsWorn()) {
-                    RE::TESAmmo* ammo = k->As<RE::TESAmmo>();
-                    if (!ammo) {
-                        continue;
-                    }
-                    UnequipItem(akActor, ammo);
-                }
-            }
             auto rightHand = akActor->GetEquippedObject(false);
             //UnequipSpell(akActor, rightHand, 1);
             UnequipItem(akActor, rightHand);
@@ -55,6 +83,8 @@ namespace DCURSES {
             UnequipItem(akActor, leftHand);
             akActor->DrawWeaponMagicHands(false);
         });
+
+        return UndressActor(akActor);
     }
 
     void GenerateRandomDevices(RE::TESObjectREFR* activatedObject) {
@@ -99,7 +129,7 @@ namespace DCURSES {
                 log::trace("Not boss chest, no heavy restraints.");
             }
 
-            UndressActor(player);
+            UndressAndUnequipActor(player);
 
             int bailout = 10;
             int total = 0;
@@ -176,7 +206,7 @@ namespace DCURSES {
 
     bool DoSimpleSlaveryEvent(std::string contName) {
         auto player = RE::PlayerCharacter::GetSingleton();
-        UndressActor(player);
+        UndressAndUnequipActor(player);
         if (!RE::TESDataHandler::GetSingleton()->LookupModByName("SimpleSlavery.esp")) {
             return false;
         }
@@ -775,54 +805,61 @@ namespace DCURSES {
                 }}
             }
             if (mark == TAT_NUDITY) {
-                SKSE::GetTaskInterface()->AddTask([player] {
-                    bool didAnything = false;
-                    if (settings.LMNudityChestOnly) {
-                        RE::TESObjectARMO* equipped = player->GetWornArmor(RE::BIPED_MODEL::BipedObjectSlot::kBody);
-                        if (equipped != nullptr && !equipped->HasKeywordString("SexLabNoStrip")) {
-                            UnequipItem(player, equipped);
-                            didAnything = true;
-                        }
-                        if (!settings.LMNudityAditionalForms.empty()) {
-                            auto forms = Util::split(settings.LMNudityAditionalForms, ",");
-                            for (auto s : forms) {
-                                try {
-                                    int form = stoi(s);
-                                    equipped = player->GetWornArmor(form);
-                                    if (equipped != nullptr && !equipped->HasKeywordString("SexLabNoStrip")) {
-                                        UnequipItem(player, equipped);
-                                        didAnything = true;
-                                    }
-                                }
-                                catch (...) {
-                                    log::warn("Bad string in LMNudityAditionalForms: {}", settings.LMNudityAditionalForms);
-                                    break;
-                                }
+                typedef RE::BIPED_MODEL::BipedObjectSlot BOS;
+                bool didAnything = false;
 
-                            }
-                        }
+                if (settings.LMNudityChestOnly) {
+                    std::vector<RE::TESForm*> removes;
+
+                    RE::TESObjectARMO* equipped = player->GetWornArmor(BOS::kBody);
+                    if (equipped != nullptr && !equipped->HasKeywordString("SexLabNoStrip")) {
+                        //UnequipItem(player, equipped);
+                        removes.push_back(equipped);
                     }
-                    else {
-                        for (uint32_t i = 1; i < (1 << 31); i = i << 1) {
-                            RE::TESObjectARMO* equipped = player->GetWornArmor((RE::BIPED_MODEL::BipedObjectSlot)i);
-                            if (i == (uint32_t)RE::BIPED_MODEL::BipedObjectSlot::kAmulet || i == (uint32_t)RE::BIPED_MODEL::BipedObjectSlot::kRing || i == (uint32_t)RE::BIPED_MODEL::BipedObjectSlot::kShield) {
+                    if (!settings.LMNudityAditionalForms.empty()) {
+                        auto forms = Util::split(settings.LMNudityAditionalForms, ",");
+                        for (auto s : forms) {
+                            int form = -1;
+                            try {
+                                form = stoi(s);
+                            }
+                            catch (...) {
+                                log::warn("Bad string in LMNudityAditionalForms: {}", s);
                                 continue;
                             }
-                            if (equipped == nullptr) { continue; }
-                            if (equipped->HasKeywordString("SexLabNoStrip")) {
+
+                            if (form < 30 || form > 61) {
+                                log::warn("Bad string in LMNudityAditionalForms, Form must be in range 30 - 61: {}", form);
                                 continue;
                             }
-                            didAnything = true;
-                            UnequipItem(player, equipped);
+
+                            equipped = player->GetWornArmor(static_cast<BOS>(1 << (form - 30)));
+                            if (equipped != nullptr && !equipped->HasKeywordString("SexLabNoStrip")) {
+                                //UnequipItem(player, equipped);
+                                removes.push_back(equipped);
+                            }
+
                         }
                     }
-                    if (didAnything) {
-                        auto health = player->AsActorValueOwner()->GetActorValue(RE::ActorValue::kHealth);
-                        auto damage = ((health / 3) > 10) ? health / 3 : health - 10;
-                        player->AsActorValueOwner()->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kDamage, RE::ActorValue::kHealth, -damage);
-                        PlayerMessage("You feel a sharp pain as your clothes are riped from your body.");
+                    if (removes.size() > 0) {
+                        log::trace("Lewd Mark removed {} items", removes.size());
+                        didAnything = true;
+                        SKSE::GetTaskInterface()->AddTask([player, removes] {
+                            for (auto equipped : removes) {
+                                UnequipItem(player, equipped);
+                            }
+                        });
                     }
-                });
+                }
+                else {
+                    didAnything = UndressActor(player, false);
+                }
+                if (didAnything) {
+                    auto health = player->AsActorValueOwner()->GetActorValue(RE::ActorValue::kHealth);
+                    auto damage = ((health / 3) > 10) ? health / 3 : health - 10;
+                    player->AsActorValueOwner()->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kDamage, RE::ActorValue::kHealth, -damage);
+                    PlayerMessage("You feel a sharp pain as your clothes are riped from your body.");
+                }
             }
         }
     }
