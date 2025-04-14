@@ -175,6 +175,7 @@ namespace DCURSES {
 		bool DisableGasMasks = false;			//Disable Gas Masks//Gas masks will be removed from this mod completely.
 		bool DisableCatsuits = false;			//Disable Catsuits//Catsuits will be removed from this mod completely.
 		bool enableQuestInteractions = true;	//Quest Interactions//Enable interactions with vanilla quests. This might include sex with NPCs, equipped devices, added tattoos, and more.
+		bool enableSlowStrip = false;			//Slow Strip//Used to fix a rare bug where clothes stripping happens too fast.
 		//Page Consequences
 		//Header Triggers
 		float consTriggerNude = 15.0;			//Nudity//Chance for a consequence when talking to someone while nude.//{1}%//(0,100,0.1)
@@ -402,6 +403,7 @@ namespace DCURSES {
 			{"DisableGasMasks", settings.DisableGasMasks},
 			{"DisableCatsuits", settings.DisableCatsuits},
 			{"enableQuestInteractions", settings.enableQuestInteractions},
+			{"enableSlowStrip", settings.enableSlowStrip},
 			{"consAllowFollowers", settings.consAllowFollowers},
 			{"consRandomHeavyBondage", settings.consRandomHeavyBondage},
 			{"sexEnabled", settings.sexEnabled},
@@ -717,6 +719,8 @@ namespace DCURSES {
 		SetMCMBool("DisableCatsuits",settings.DisableCatsuits);
 		settings.enableQuestInteractions = static_cast<bool>(j.value("enableQuestInteractions", true));
 		SetMCMBool("enableQuestInteractions",settings.enableQuestInteractions);
+		settings.enableSlowStrip = static_cast<bool>(j.value("enableSlowStrip", false));
+		SetMCMBool("enableSlowStrip",settings.enableSlowStrip);
 		settings.consAllowFollowers = static_cast<bool>(j.value("consAllowFollowers", false));
 		SetMCMBool("consAllowFollowers",settings.consAllowFollowers);
 		settings.consRandomHeavyBondage = static_cast<bool>(j.value("consRandomHeavyBondage", false));
@@ -897,6 +901,7 @@ namespace DCURSES {
 		settings.DisableGasMasks = GetMCMSetting("DisableGasMasks")->GetBool();
 		settings.DisableCatsuits = GetMCMSetting("DisableCatsuits")->GetBool();
 		settings.enableQuestInteractions = GetMCMSetting("enableQuestInteractions")->GetBool();
+		settings.enableSlowStrip = GetMCMSetting("enableSlowStrip")->GetBool();
 		settings.consAllowFollowers = GetMCMSetting("consAllowFollowers")->GetBool();
 		settings.consRandomHeavyBondage = GetMCMSetting("consRandomHeavyBondage")->GetBool();
 		settings.sexEnabled = GetMCMSetting("sexEnabled")->GetBool();

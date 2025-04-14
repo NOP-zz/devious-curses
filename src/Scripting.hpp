@@ -80,6 +80,12 @@ namespace DCURSES {
         GetVM()->DispatchStaticCall("DCursesLib", "StartSex", RE::MakeFunctionArguments<RE::Actor*>(std::move(aggressor)), result);
     }
 
+    void SlowStrip(RE::Actor* actor) {
+        //consLastSexTarget = aggressor;
+        RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> result;
+        GetVM()->DispatchStaticCall("DCursesLib", "SlowStrip", RE::MakeFunctionArguments<RE::Actor*>(std::move(actor)), result);
+    }
+
     void SetArousal(RE::Actor* actor, int arousal) {
         RE::TESForm* aroused = RE::TESDataHandler::GetSingleton()->LookupForm(0x4290f, "SexLabAroused.esm");
         RE::VMHandle hand = GetHP()->GetHandleForObject(RE::FormType::Quest, aroused);

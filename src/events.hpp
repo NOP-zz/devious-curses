@@ -19,6 +19,11 @@ namespace DCURSES {
     void UndressActor(RE::Actor* akActor) {
         if (!akActor) return;
 
+        if (settings.enableSlowStrip) {
+            SlowStrip(akActor);
+            return;
+        }
+
         for (uint32_t i = 1; i < (1 << 31); i = i << 1) {
             RE::TESObjectARMO* equipped = akActor->GetWornArmor((RE::BIPED_MODEL::BipedObjectSlot)i);
             if (i == (uint32_t)RE::BIPED_MODEL::BipedObjectSlot::kAmulet || i == (uint32_t)RE::BIPED_MODEL::BipedObjectSlot::kRing || i == (uint32_t)RE::BIPED_MODEL::BipedObjectSlot::kCirclet) {

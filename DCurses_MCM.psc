@@ -323,6 +323,8 @@ Bool Property DisableCatsuits = false Auto
 Int DisableCatsuitsOID
 Bool Property enableQuestInteractions = true Auto
 Int enableQuestInteractionsOID
+Bool Property enableSlowStrip = false Auto
+Int enableSlowStripOID
 Bool Property consAllowFollowers = false Auto
 Int consAllowFollowersOID
 Bool Property consRandomHeavyBondage = false Auto
@@ -565,6 +567,7 @@ Event OnPageReset(string page)
 		DisableGasMasksOID = AddToggleOption("Disable Gas Masks  ", DisableGasMasks, 0)
 		DisableCatsuitsOID = AddToggleOption("Disable Catsuits  ", DisableCatsuits, 0)
 		enableQuestInteractionsOID = AddToggleOption("Quest Interactions  ", enableQuestInteractions, 0)
+		enableSlowStripOID = AddToggleOption("Slow Strip  ", enableSlowStrip, 0)
 	Elseif page == "Consequences "
 		AddHeaderOption("Triggers ")
 		consTriggerNudeOID = AddSliderOption("Nudity  ", consTriggerNude, "{1}%", 0)
@@ -1108,6 +1111,10 @@ Event OnOptionHighlight(int option)
 		SetInfoText("Enable interactions with vanilla quests. This might include sex with NPCs, equipped devices, added tattoos, and more.")
 		Return
 	Endif
+	If option == enableSlowStripOID
+		SetInfoText("Used to fix a rare bug where clothes stripping happens too fast.")
+		Return
+	Endif
 	If option == consTriggerNudeOID
 		SetInfoText("Chance for a consequence when talking to someone while nude.")
 		Return
@@ -1402,6 +1409,11 @@ Event OnOptionSelect(int option)
 	If option == enableQuestInteractionsOID
 		enableQuestInteractions = !enableQuestInteractions
 		SetToggleOptionValue(enableQuestInteractionsOID, enableQuestInteractions)
+		Return
+	Endif
+	If option == enableSlowStripOID
+		enableSlowStrip = !enableSlowStrip
+		SetToggleOptionValue(enableSlowStripOID, enableSlowStrip)
 		Return
 	Endif
 	If option == consAllowFollowersOID
