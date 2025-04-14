@@ -34,6 +34,7 @@ namespace DCURSES {
                 if (equipped->HasKeywordString("SexLabNoStrip")) {
                     continue;
                 }
+                if (equipped)
                 UnequipItem(akActor, equipped);
             }
             auto inventory = akActor->GetInventory();
@@ -774,34 +775,54 @@ namespace DCURSES {
                 }}
             }
             if (mark == TAT_NUDITY) {
-                bool didAnything = false;
-                if (settings.LMNudityChestOnly) {
-                    RE::TESObjectARMO* equipped = player->GetWornArmor(RE::BIPED_MODEL::BipedObjectSlot::kBody);
-                    if (equipped != nullptr && !equipped->HasKeywordString("SexLabNoStrip")) {
-                        UnequipItem(player, equipped);
-                        didAnything = true;
-                    }
-                }
-                else {
-                    for (uint32_t i = 1; i < (1 << 31); i = i << 1) {
-                        RE::TESObjectARMO* equipped = player->GetWornArmor((RE::BIPED_MODEL::BipedObjectSlot)i);
-                        if (i == (uint32_t)RE::BIPED_MODEL::BipedObjectSlot::kAmulet || i == (uint32_t)RE::BIPED_MODEL::BipedObjectSlot::kRing || i == (uint32_t)RE::BIPED_MODEL::BipedObjectSlot::kShield) {
-                            continue;
+                SKSE::GetTaskInterface()->AddTask([player] {
+                    bool didAnything = false;
+                    if (settings.LMNudityChestOnly) {
+                        RE::TESObjectARMO* equipped = player->GetWornArmor(RE::BIPED_MODEL::BipedObjectSlot::kBody);
+                        if (equipped != nullptr && !equipped->HasKeywordString("SexLabNoStrip")) {
+                            UnequipItem(player, equipped);
+                            didAnything = true;
                         }
-                        if (equipped == nullptr) { continue; }
-                        if (equipped->HasKeywordString("SexLabNoStrip")) {
-                            continue;
+                        if (!settings.LMNudityAditionalForms.empty()) {
+                            auto forms = Util::split(settings.LMNudityAditionalForms, ",");
+                            for (auto s : forms) {
+                                try {
+                                    int form = stoi(s);
+                                    equipped = player->GetWornArmor(form);
+                                    if (equipped != nullptr && !equipped->HasKeywordString("SexLabNoStrip")) {
+                                        UnequipItem(player, equipped);
+                                        didAnything = true;
+                                    }
+                                }
+                                catch (...) {
+                                    log::warn("Bad string in LMNudityAditionalForms: {}", settings.LMNudityAditionalForms);
+                                    break;
+                                }
+
+                            }
                         }
-                        didAnything = true;
-                        UnequipItem(player, equipped);
                     }
-                }
-                if (didAnything) {
-                    auto health = player->AsActorValueOwner()->GetActorValue(RE::ActorValue::kHealth);
-                    auto damage = ((health / 3) > 10) ? health / 3 : health - 10;
-                    player->AsActorValueOwner()->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kDamage, RE::ActorValue::kHealth, -damage);
-                    PlayerMessage("You feel a sharp pain as your clothes are riped from your body.");
-                }
+                    else {
+                        for (uint32_t i = 1; i < (1 << 31); i = i << 1) {
+                            RE::TESObjectARMO* equipped = player->GetWornArmor((RE::BIPED_MODEL::BipedObjectSlot)i);
+                            if (i == (uint32_t)RE::BIPED_MODEL::BipedObjectSlot::kAmulet || i == (uint32_t)RE::BIPED_MODEL::BipedObjectSlot::kRing || i == (uint32_t)RE::BIPED_MODEL::BipedObjectSlot::kShield) {
+                                continue;
+                            }
+                            if (equipped == nullptr) { continue; }
+                            if (equipped->HasKeywordString("SexLabNoStrip")) {
+                                continue;
+                            }
+                            didAnything = true;
+                            UnequipItem(player, equipped);
+                        }
+                    }
+                    if (didAnything) {
+                        auto health = player->AsActorValueOwner()->GetActorValue(RE::ActorValue::kHealth);
+                        auto damage = ((health / 3) > 10) ? health / 3 : health - 10;
+                        player->AsActorValueOwner()->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kDamage, RE::ActorValue::kHealth, -damage);
+                        PlayerMessage("You feel a sharp pain as your clothes are riped from your body.");
+                    }
+                });
             }
         }
     }

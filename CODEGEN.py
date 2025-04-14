@@ -11,6 +11,7 @@ sliders = [] # List of pairs [[name, default, format, ranemin, rangemax, step, r
 fsliders = [] # List of pairs [[name, default, format, ranemin, rangemax, step, rel]...]
 options = [] # List of pairs [[name, default, rel]...]
 colors = [] # List of pairs [[name, default, rel]...]
+texts = [] # List of pairs [[name, default, rel]...]
 page_data = [] # List of pairs [[pagename, [lines]]]
 descriptions = [] # List of pairs [[name, description]...]
 
@@ -90,6 +91,15 @@ def processLine(line, page_lines):
 		colors.append([var_name, var_def, rel])
 		descriptions.append([var_name, desc])
 		page_lines.append(f'{var_name}OID = AddColorOption("{title}  ", {var_name}, {flag})')
+	elif line.startswith("text "):
+		if len(line.split("//")) != 3:
+			print(f'Error on line: {line}')
+		var, title, desc = line.split("//")
+		var_name = var.strip().split(" ")[1]
+		var_def = var.strip().split(" ")[3][:-1]
+		texts.append([var_name, var_def, rel])
+		descriptions.append([var_name, desc])
+		page_lines.append(f'{var_name}OID = AddInputOption("{title}  ", {var_name}, {flag})')
 
 	return page_lines
 
@@ -184,24 +194,13 @@ Event OnConfigClose()
 EndEvent
 """
 
-UpdateSKSE = ""
-
-parse = lambda x, y: f'\n\tUpdateDCursesSKSE_{y}("{x[0]}", {x[0]})'
-UpdateSKSE += """\n\nFunction UpdateSKSE()
-	Debug.trace("DCurses MCM updating SKSE")"""
-UpdateSKSE += ''.join([parse(x, "Int") for x in sliders])
-UpdateSKSE += ''.join([parse(x, "Float") for x in fsliders])
-UpdateSKSE += ''.join([parse(x, "Bool") for x in options])
-UpdateSKSE += ''.join([parse(x, "Int") for x in colors])
-UpdateSKSE += "\nEndFunction"
-
-
 Defs = ""
 
 Defs += ''.join([f'\nInt Property {x[0]} = {x[1]} Auto\nInt {x[0]}OID' for x in sliders])
 Defs += ''.join([f'\nFloat Property {x[0]} = {x[1]} Auto\nInt {x[0]}OID' for x in fsliders])
 Defs += ''.join([f'\nBool Property {x[0]} = {x[1]} Auto\nInt {x[0]}OID' for x in options])
 Defs += ''.join([f'\nInt Property {x[0]} = {x[1]} Auto\nInt {x[0]}OID' for x in colors])
+Defs += ''.join([f'\nString Property {x[0]} = {x[1]} Auto\nInt {x[0]}OID' for x in texts])
 
 Highlights = ""
 
@@ -234,6 +233,21 @@ SliderAccept += ''.join([parse(x) for x in sliders])
 SliderAccept += ''.join([parsef(x) for x in fsliders])
 SliderAccept += "\nEndEvent"
 
+InputOpen = ""
+
+parse = lambda x: f'\n\tIf option == {x[0]}OID\n\t\tSetInputDialogStartText({x[0]})\n\t\tReturn\n\tEndif'
+InputOpen += "\n\nEvent OnOptionInputOpen(int option)"
+InputOpen += ''.join([parse(x) for x in texts])
+InputOpen += "\nEndEvent"
+
+InputAccept = ""
+
+parse = lambda x: f'\n\tIf option == {x[0]}OID\n\t\t{x[0]} = value\n\t\tSetInputOptionValue(option, value)\n\t\t{"ForcePageReset()\n\t\t" if x[2] else ""}Return\n\tEndif'
+InputAccept += """\n\nEvent OnOptionInputAccept(int option, string value)
+"""
+InputAccept += ''.join([parse(x) for x in texts])
+InputAccept += "\nEndEvent"
+
 ColorOpen = ""
 
 parse = lambda x: f'\n\tIf option == {x[0]}OID\n\t\tSetColorDialogStartColor({x[0]})\n\t\tSetColorDialogDefaultColor({x[1]})\n\t\tReturn\n\tEndif'
@@ -258,6 +272,8 @@ with open("DCurses_MCM.psc", "w") as f:
 	f.write(Options)
 	f.write(SliderOpen)
 	f.write(SliderAccept)
+	f.write(InputOpen)
+	f.write(InputAccept)
 	f.write(ColorOpen)
 	f.write(ColorAccept)
 

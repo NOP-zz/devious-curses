@@ -365,6 +365,8 @@ Int Property LMBondageColor = 0x7908cf Auto
 Int LMBondageColorOID
 Int Property LMNudityColor = 0xd676cb Auto
 Int LMNudityColorOID
+String Property LMNudityAditionalForms = "" Auto
+Int LMNudityAditionalFormsOID
 
 Function Initialize()
 	Pages = new String[9]
@@ -532,8 +534,13 @@ Event OnPageReset(string page)
 		LMBondageDeviceCountOID = AddSliderOption("Device Count  ", LMBondageDeviceCount, "{0}", flag_LewdMarks)
 		LMBondageColorOID = AddColorOption("Color  ", LMBondageColor, flag_LewdMarks)
 		AddHeaderOption("Nudity ")
+		int flag_LMStripBody = 1
+		If LMNudityChestOnly && flag_LewdMarks == 0
+			flag_LMStripBody = 0
+		EndIf
 		LMNudityWeightOID = AddSliderOption("Nudity Mark  ", LMNudityWeight, "{0}", flag_LewdMarks)
 		LMNudityChestOnlyOID = AddToggleOption("Chest Only  ", LMNudityChestOnly, flag_LewdMarks)
+		LMNudityAditionalFormsOID = AddInputOption("Strip Slots  ", LMNudityAditionalForms, flag_LMStripBody)
 		LMNudityTalkTimesOID = AddSliderOption("Dialogue Times  ", LMNudityTalkTimes, "{0}", flag_LewdMarks)
 		LMNudityColorOID = AddColorOption("Color  ", LMNudityColor, flag_LewdMarks)
 	Elseif page == "Locations "
@@ -1007,6 +1014,10 @@ Event OnOptionHighlight(int option)
 		SetInfoText("With this enabled only chest armor will be checked and removed. Otherwise all armor will be unequipped.")
 		Return
 	Endif
+	If option == LMNudityAditionalFormsOID
+		SetInfoText("A comma separated list of additional slots to strip. Will not strip devices.\nFor example: 46,47,49,52.")
+		Return
+	Endif
 	If option == LMNudityTalkTimesOID
 		SetInfoText("How many times you have to talk to different characters before the mark will fade.")
 		Return
@@ -1369,6 +1380,7 @@ Event OnOptionSelect(int option)
 	If option == LMNudityChestOnlyOID
 		LMNudityChestOnly = !LMNudityChestOnly
 		SetToggleOptionValue(LMNudityChestOnlyOID, LMNudityChestOnly)
+		ForcePageReset()
 		Return
 	Endif
 	If option == useLocationModifiersOID
@@ -3055,6 +3067,22 @@ Event OnOptionSliderAccept(int option, float value)
 	If option == sexSearchRadiusOID
 		sexSearchRadius = value
 		SetSliderOptionValue(option, value, "{0}")
+		Return
+	Endif
+EndEvent
+
+Event OnOptionInputOpen(int option)
+	If option == LMNudityAditionalFormsOID
+		SetInputDialogStartText(LMNudityAditionalForms)
+		Return
+	Endif
+EndEvent
+
+Event OnOptionInputAccept(int option, string value)
+
+	If option == LMNudityAditionalFormsOID
+		LMNudityAditionalForms = value
+		SetInputOptionValue(option, value)
 		Return
 	Endif
 EndEvent

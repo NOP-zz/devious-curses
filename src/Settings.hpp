@@ -8,6 +8,7 @@
 using namespace SKSE;
 
 typedef int color;
+typedef std::string text;
 
 constexpr auto SETTINGS_FILE = "Data/SKSE/Plugins/DeviousCurses.json";
 
@@ -140,8 +141,10 @@ namespace DCURSES {
 		int LMBondageDeviceCount = 8;			//Device Count//How many devices need to be equipped before the mark will fade.//{0}//(1,50,1)								?:? flag_LewdMarks
 		color LMBondageColor = 0x7908cf;		//Color//Color for mark.																									?:? flag_LewdMarks
 		//Header Nudity
+		//Flag flag_LMStripBody					//VAR:LMNudityChestOnly, flag_LewdMarks == 0
 		int LMNudityWeight = 15;				//Nudity Mark//With this mark you will be unable to wear any clothes.//{0}//(0,500,1)										?:? flag_LewdMarks
-		bool LMNudityChestOnly = false;			//Chest Only//With this enabled only chest armor will be checked and removed. Otherwise all armor will be unequipped.		?:? flag_LewdMarks
+		bool LMNudityChestOnly = false;			//Chest Only//With this enabled only chest armor will be checked and removed. Otherwise all armor will be unequipped.		?:? flag_LewdMarks **RELOAD
+		text LMNudityAditionalForms = "";		//Strip Slots//A comma separated list of additional slots to strip. Will not strip devices.\nFor example: 46,47,49,52.		?:? flag_LMStripBody
 		int LMNudityTalkTimes = 35;				//Dialogue Times//How many times you have to talk to different characters before the mark will fade.//{0}//(3,100,1)		?:? flag_LewdMarks
 		color LMNudityColor = 0xd676cb;			//Color//Color for mark.																									?:? flag_LewdMarks
 		//Page Locations
@@ -427,7 +430,7 @@ namespace DCURSES {
 
 	void LoadMCMSettings() {
 		std::ifstream i(SETTINGS_FILE);
-		nlohmann::json j;
+		nlohmann::json j = nlohmann::json::parse("{}");
 		if (std::filesystem::exists(SETTINGS_FILE) && std::filesystem::file_size(SETTINGS_FILE) > 10) {
 			i >> j;
 		}
