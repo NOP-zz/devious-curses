@@ -1,22 +1,24 @@
 #pragma once
 
 #include "../include/quicklootAPI.h"
+#include "../include/quicklootAPI_OLD.h"
 
 namespace DCURSES {
 	void QLIEAttemptInit() {
 		if (GetModuleHandle(L"QuickLootIE") == nullptr) {
 			return;
 		}
-		QuickLoot::QuickLootAPI::Init();
+
+		if (!QuickLoot::API::QuickLootAPI::Init("DeviousCurses")) {
+			QuickLoot::QuickLootAPI::Init();
+		}
 	}
 
-	void QLIETakeItemCallback(QuickLoot::TakingItemEvent* e) {
-		log::trace("QILE Trigger");
+	void QLIETakeItemCallback(QuickLoot::API::TakingItemEvent* e) {
 		CalculateEventChance(e->container);
 	}
 
-	void QLIEOpenContainerCallback(QuickLoot::OpeningLootMenuEvent* e) {
-		log::trace("QILE Trigger");
+	void QLIEOpenContainerCallback(QuickLoot::API::OpeningLootMenuEvent* e) {
 		auto data = GetContainerData(e->container);
 		PopulateContainer(e->container, data);
 	}
@@ -25,14 +27,19 @@ namespace DCURSES {
 		if (GetModuleHandle(L"QuickLootIE") == nullptr) {
 			return false;
 		}
-		if (!QuickLoot::QuickLootAPI::IsReady()) {
-			return false;
+		if (QuickLoot::API::QuickLootAPI::IsReady()) {
+			QuickLoot::API::QuickLootAPI::RegisterTakeItemHandler((QuickLoot::API::TakeItemHandler)QLIETakeItemCallback);
+			QuickLoot::API::QuickLootAPI::RegisterOpeningLootMenuHandler((QuickLoot::API::OpeningLootMenuHandler)QLIEOpenContainerCallback);
+			return true;
+		}
+		else if (QuickLoot::QuickLootAPI::IsReady()) {
+			QuickLoot::QuickLootAPI::RegisterTakeItemHandler((QuickLoot::TakeItemHandler)QLIETakeItemCallback);
+			QuickLoot::QuickLootAPI::RegisterOpeningLootMenuHandler((QuickLoot::OpeningLootMenuHandler)QLIEOpenContainerCallback);
+			return true;
 		}
 
 		//using TakingItemHandler = EventHandler<TakingItemEvent>;
 
-		QuickLoot::QuickLootAPI::RegisterTakeItemHandler((QuickLoot::TakeItemHandler)QLIETakeItemCallback);
-		QuickLoot::QuickLootAPI::RegisterOpeningLootMenuHandler((QuickLoot::OpeningLootMenuHandler)QLIEOpenContainerCallback);
-		return true;
+		return false;
 	}
 }

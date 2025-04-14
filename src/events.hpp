@@ -16,42 +16,44 @@ Plugs of endless hunger: plugs with allow, can only be removed after a lot of an
 
 namespace DCURSES {
 
-    void UndressActor(RE::Actor* akActor) {
+    void UndressActor(RE::Actor *akActor) {
         if (!akActor) return;
 
-        if (settings.enableSlowStrip) {
-            SlowStrip(akActor);
-            return;
-        }
+        SKSE::GetTaskInterface()->AddTask([akActor] {
+            if (settings.enableSlowStrip) {
+                SlowStrip(akActor);
+                return;
+            }
 
-        for (uint32_t i = 1; i < (1 << 31); i = i << 1) {
-            RE::TESObjectARMO* equipped = akActor->GetWornArmor((RE::BIPED_MODEL::BipedObjectSlot)i);
-            if (i == (uint32_t)RE::BIPED_MODEL::BipedObjectSlot::kAmulet || i == (uint32_t)RE::BIPED_MODEL::BipedObjectSlot::kRing || i == (uint32_t)RE::BIPED_MODEL::BipedObjectSlot::kCirclet) {
-                continue;
-            }
-            if (equipped == nullptr) { continue; }
-            if (equipped->HasKeywordString("SexLabNoStrip")) {
-                continue;
-            }
-            UnequipItem(akActor, equipped);
-        }
-        auto inventory = akActor->GetInventory();
-        for (auto const& [k, v] : inventory) {
-            if (v.second.get()->IsWorn()) {
-                RE::TESAmmo* ammo = k->As<RE::TESAmmo>();
-                if (!ammo) {
+            for (uint32_t i = 1; i < (1 << 31); i = i << 1) {
+                RE::TESObjectARMO* equipped = akActor->GetWornArmor((RE::BIPED_MODEL::BipedObjectSlot)i);
+                if (i == (uint32_t)RE::BIPED_MODEL::BipedObjectSlot::kAmulet || i == (uint32_t)RE::BIPED_MODEL::BipedObjectSlot::kRing || i == (uint32_t)RE::BIPED_MODEL::BipedObjectSlot::kCirclet) {
                     continue;
                 }
-                UnequipItem(akActor, ammo);
+                if (equipped == nullptr) { continue; }
+                if (equipped->HasKeywordString("SexLabNoStrip")) {
+                    continue;
+                }
+                UnequipItem(akActor, equipped);
             }
-        }
-        auto rightHand = akActor->GetEquippedObject(false);
-        //UnequipSpell(akActor, rightHand, 1);
-        UnequipItem(akActor, rightHand);
-        auto leftHand = akActor->GetEquippedObject(true);
-        //UnequipSpell(akActor, leftHand, 0);
-        UnequipItem(akActor, leftHand);
-        akActor->DrawWeaponMagicHands(false);
+            auto inventory = akActor->GetInventory();
+            for (auto const& [k, v] : inventory) {
+                if (v.second.get()->IsWorn()) {
+                    RE::TESAmmo* ammo = k->As<RE::TESAmmo>();
+                    if (!ammo) {
+                        continue;
+                    }
+                    UnequipItem(akActor, ammo);
+                }
+            }
+            auto rightHand = akActor->GetEquippedObject(false);
+            //UnequipSpell(akActor, rightHand, 1);
+            UnequipItem(akActor, rightHand);
+            auto leftHand = akActor->GetEquippedObject(true);
+            //UnequipSpell(akActor, leftHand, 0);
+            UnequipItem(akActor, leftHand);
+            akActor->DrawWeaponMagicHands(false);
+        });
     }
 
     void GenerateRandomDevices(RE::TESObjectREFR* activatedObject) {
@@ -77,91 +79,98 @@ namespace DCURSES {
             RemoveKeys(player);
         }
         ForceThirdPerson();
-        std::vector<std::string> usedKeys = GetKeywordsCantEquip(player);
-        for (auto kw : skipKeywords) {
-            usedKeys.push_back(kw);
-        }
-        int count = Util::randomInt(settings.minRestraints, settings.maxRestraints);
-        if (countOverride > 0) {
-            count = countOverride;
-        }
-        if (isBoss) {
-            count += settings.bossAditionalRestraints;
-        }
-        else if (settings.bossOnlyHeavy && countOverride <= 0) {
-            usedKeys.push_back("zad_DeviousHeavyBondage");
-            log::trace("Not boss chest, no heavy restraints.");
-        }
-        UndressActor(player);
-        int bailout = 10;
-        int total = 0;
-        std::optional<DeviceData> doLast = std::nullopt;
-        for (int i = 0; i < count && bailout > 0; i++) {
-            //log::trace("I: {}, B: {}", i, bailout);
-            auto dev = GetRandomEquipableDevice(player, usedKeys, editorIdRequires);
-            if (!dev) {
-                bailout--;
-                i--;
-                continue;
-            }
-            auto rend = dev.value().rend;
-            auto inv = dev.value().inv;
 
-            if (settings.beltPlugs && rend->HasKeywordString("zad_DeviousBelt")) {
-                if (std::find(usedKeys.begin(), usedKeys.end(), "zad_DeviousPlugAnal") == usedKeys.end()) {
-                    std::optional<DeviceData> plug;
-                    plug = GetRandomDevice(&devices.plugsABasic, usedKeys, editorIdRequires);
-                    if (!plug) {
-                        plug = GetRandomDevice(&devices.plugsABasic);
+        SKSE::GetTaskInterface()->AddTask([isBoss, contName, editorIdRequires, countOverride, skipKeywords, player] {
+
+            std::vector<std::string> usedKeys = GetKeywordsCantEquip(player);
+            for (auto kw : skipKeywords) {
+                usedKeys.push_back(kw);
+            }
+            int count = Util::randomInt(settings.minRestraints, settings.maxRestraints);
+            if (countOverride > 0) {
+                count = countOverride;
+            }
+            if (isBoss) {
+                count += settings.bossAditionalRestraints;
+            }
+            else if (settings.bossOnlyHeavy && countOverride <= 0) {
+                usedKeys.push_back("zad_DeviousHeavyBondage");
+                log::trace("Not boss chest, no heavy restraints.");
+            }
+
+            UndressActor(player);
+
+            int bailout = 10;
+            int total = 0;
+            std::optional<DeviceData> doLast = std::nullopt;
+            for (int i = 0; i < count && bailout > 0; i++) {
+                log::trace("I: {}, C: {}, B: {}", i, count, bailout);
+                log::trace("player exists: {}", player != nullptr);
+                auto dev = GetRandomEquipableDevice(player, usedKeys, editorIdRequires);
+                if (!dev) {
+                    bailout--;
+                    i--;
+                    continue;
+                }
+                auto rend = dev.value().rend;
+                auto inv = dev.value().inv;
+
+                if (settings.beltPlugs && rend->HasKeywordString("zad_DeviousBelt")) {
+                    if (std::find(usedKeys.begin(), usedKeys.end(), "zad_DeviousPlugAnal") == usedKeys.end()) {
+                        std::optional<DeviceData> plug;
+                        plug = GetRandomDevice(&devices.plugsABasic, usedKeys, editorIdRequires);
+                        if (!plug) {
+                            plug = GetRandomDevice(&devices.plugsABasic);
+                        }
+                        if (plug) {
+                            LockDevice(player, plug.value().inv);
+                            total += 1;
+                        }
                     }
-                    if (plug) {
-                        LockDevice(player, plug.value().inv);
-                        total += 1;
+                    if (std::find(usedKeys.begin(), usedKeys.end(), "zad_DeviousPlugVaginal") == usedKeys.end()) {
+                        std::optional<DeviceData> plug;
+                        plug = GetRandomDevice(&devices.plugsVBasic, usedKeys, editorIdRequires);
+                        if (!plug) {
+                            plug = GetRandomDevice(&devices.plugsVBasic);
+                        }
+                        if (plug) {
+                            LockDevice(player, plug.value().inv);
+                            total += 1;
+                        }
                     }
                 }
-                if (std::find(usedKeys.begin(), usedKeys.end(), "zad_DeviousPlugVaginal") == usedKeys.end()) {
-                    std::optional<DeviceData> plug;
-                    plug = GetRandomDevice(&devices.plugsVBasic, usedKeys, editorIdRequires);
-                    if (!plug) {
-                        plug = GetRandomDevice(&devices.plugsVBasic);
-                    }
-                    if (plug) {
-                        LockDevice(player, plug.value().inv);
-                        total += 1;
-                    }
+                if (settings.plugsDontCount && (rend->HasKeywordString("zad_DeviousPlugVaginal") || rend->HasKeywordString("zad_DeviousPlugAnal"))) {
+                    i--;
                 }
+                for (auto const& key : GetDeviceKeywords(rend, true)) {
+                    usedKeys.push_back(key);
+                }
+                if (rend->HasKeywordString("zad_DeviousHeavyBondage")) {
+                    doLast = dev;
+                }
+                else {
+                    LockDevice(player, inv);
+                }
+                total += 1;
             }
-            if (settings.plugsDontCount && (rend->HasKeywordString("zad_DeviousPlugVaginal") || rend->HasKeywordString("zad_DeviousPlugAnal"))) {
-                i--;
-            }
-            for (auto const& key : GetDeviceKeywords(rend, true)) {
-                usedKeys.push_back(key);
-            }
-            if (rend->HasKeywordString("zad_DeviousHeavyBondage")) {
-                doLast = dev;
-            }
-            else {
+
+            if (doLast.has_value()) {
+                auto inv = doLast.value().inv;
                 LockDevice(player, inv);
             }
-            total += 1;
-        }
 
-        if (doLast.has_value()) {
-            auto inv = doLast.value().inv;
-            LockDevice(player, inv);
-        }
+            std::string msg = "";
+            for (auto const& i : usedKeys) { msg += (i + ", "); }
+            msg.pop_back(); msg.pop_back();
+            log::trace("usedKeys: {}", msg);
 
-        std::string msg = "";
-        for (auto const& i : usedKeys) { msg += (i + ", "); }
-        msg.pop_back(); msg.pop_back();
-        log::trace("usedKeys: {}", msg);
-
-        if (bailout == 0) {
-            log::trace("Ran out of devices to equip.");
-        }
-        if (total > 0 && !contName.empty()) {
-            PlayerMessage(fmt::format("As you touch the {} you see restraints magically appear and wrap themselves around you!", contName));
-        }
+            if (bailout == 0) {
+                log::trace("Ran out of devices to equip.");
+            }
+            if (total > 0 && !contName.empty()) {
+                PlayerMessage(fmt::format("As you touch the {} you see restraints magically appear and wrap themselves around you!", contName));
+            }
+        });
     }
 
     bool DoSimpleSlaveryEvent(std::string contName) {
@@ -404,36 +413,38 @@ namespace DCURSES {
             GenerateRandomDevices(activatedObject);
         }
 
-        if (data.isLeveled && data.isBoss && settings.bossExtraGold) {
-            log::trace("Adding extra gold to boss chest.");
-            RE::TESForm* gold = RE::TESForm::LookupByID(std::stoi("0f", 0, 16));
-            activatedObject->AddObjectToContainer((RE::TESBoundObject*)gold, nullptr, (player->GetLevel()), nullptr);
-        }
-
-        if (data.isDragon) {
-            log::trace("Actor is dragon and dragon hoards are on.");
-            RE::TESForm* gold = RE::TESForm::LookupByID(std::stoi("0f", 0, 16));
-            activatedObject->AddObjectToContainer((RE::TESBoundObject*)gold, nullptr, static_cast<int>(player->GetLevel() * 80.0 * Util::randomDouble(0.3, 1) + Util::randomDouble(50, 200)), nullptr);
-        }
-
-        if (data.isBoss) {
-            RE::TESKey* magicKey = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESKey>(MAGIC_KEY, "Devious Curses.esp");
-            double c2 = 10.0 + GetWornDeviceCount(player) * 0.75;
-            double r2 = Util::randomDouble();
-            log::trace("Magic Key: {} ({})", c2, r2);
-            if (GetItemCount(player, magicKey) == 0 && !addedKey && r2 < c2) {
-                activatedObject->AddObjectToContainer((RE::TESBoundObject*)magicKey, nullptr, 1, nullptr);
+        SKSE::GetTaskInterface()->AddTask([data, activatedObject, player, addedKey] {
+            if (data.isLeveled && data.isBoss && settings.bossExtraGold) {
+                log::trace("Adding extra gold to boss chest.");
+                RE::TESForm* gold = RE::TESForm::LookupByID(std::stoi("0f", 0, 16));
+                activatedObject->AddObjectToContainer((RE::TESBoundObject*)gold, nullptr, (player->GetLevel()), nullptr);
             }
-        }
-        else if (data.isDeadActor) {
-            RE::TESObjectMISC* solvent = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectMISC>(TATTOO_CHARM, "Devious Curses.esp");
-            double c2 = 5.0 + GetTattooCount(player) * 0.5;
-            double r2 = Util::randomDouble();
-            log::trace("Solvent: {} ({})", c2, r2);
-            if (GetItemCount(player, solvent) == 0 && !addedKey && r2 < c2) {
-                activatedObject->AddObjectToContainer((RE::TESBoundObject*)solvent, nullptr, 1, nullptr);
+
+            if (data.isDragon) {
+                log::trace("Actor is dragon and dragon hoards are on.");
+                RE::TESForm* gold = RE::TESForm::LookupByID(std::stoi("0f", 0, 16));
+                activatedObject->AddObjectToContainer((RE::TESBoundObject*)gold, nullptr, static_cast<int>(player->GetLevel() * 80.0 * Util::randomDouble(0.3, 1) + Util::randomDouble(50, 200)), nullptr);
             }
-        }
+
+            if (data.isBoss) {
+                RE::TESKey* magicKey = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESKey>(MAGIC_KEY, "Devious Curses.esp");
+                double c2 = 10.0 + GetWornDeviceCount(player) * 0.75;
+                double r2 = Util::randomDouble();
+                log::trace("Magic Key: {} ({})", c2, r2);
+                if (GetItemCount(player, magicKey) == 0 && !addedKey && r2 < c2) {
+                    activatedObject->AddObjectToContainer((RE::TESBoundObject*)magicKey, nullptr, 1, nullptr);
+                }
+            }
+            else if (data.isDeadActor) {
+                RE::TESObjectMISC* solvent = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectMISC>(TATTOO_CHARM, "Devious Curses.esp");
+                double c2 = 5.0 + GetTattooCount(player) * 0.5;
+                double r2 = Util::randomDouble();
+                log::trace("Solvent: {} ({})", c2, r2);
+                if (GetItemCount(player, solvent) == 0 && !addedKey && r2 < c2) {
+                    activatedObject->AddObjectToContainer((RE::TESBoundObject*)solvent, nullptr, 1, nullptr);
+                }
+            }
+        });
     }
 
     void CalculateEventChance(RE::TESObjectREFR* activatedObject) {
@@ -446,7 +457,9 @@ namespace DCURSES {
 
         //log::trace("Worn items: {}", GetWornDeviceCount(GetPlayer()));
         if (IsObjectRefKnown(activatedObject->formID)) {
-            //log::trace("object is known");
+            if (settings.vanishingKeys && activatedObject != player) {
+                RemoveKeys(activatedObject);
+            }
             return;
         }
         else {
@@ -455,7 +468,7 @@ namespace DCURSES {
 
         auto data = GetContainerData(activatedObject);
 
-        PopulateContainer(activatedObject, data);
+        PopulateContainer(std::move(activatedObject), data);
 
         RE::Actor* actor = activatedObject->As<RE::Actor>();
         if (actor && !actor->IsDead() && !actor->IsChild() && !player->IsSneaking() && actor->CanTalkToPlayer()) {
@@ -739,7 +752,6 @@ namespace DCURSES {
                             log::trace("Bondage mark found no items in inventory");
                             break;
                         }
-
                         auto device = equipable[Util::randomInt(static_cast<int>(equipable.size()))];
                         log::trace("Equipping device: {}", device->GetName());
                         counters.LMDevicesEquipped += 1;

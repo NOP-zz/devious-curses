@@ -426,11 +426,11 @@ namespace DCURSES {
 	}
 
 	void LoadMCMSettings() {
-		if (!std::filesystem::exists(SETTINGS_FILE)) { return; }
-		if (std::filesystem::file_size(SETTINGS_FILE) < 10) { return; }
 		std::ifstream i(SETTINGS_FILE);
 		nlohmann::json j;
-		i >> j;
+		if (std::filesystem::exists(SETTINGS_FILE) && std::filesystem::file_size(SETTINGS_FILE) > 10) {
+			i >> j;
+		}
 
 		//CODEGEN_START_FROMJSON
 		settings.eventScalingMod = static_cast<int>(j.value("eventScalingMod", 15));

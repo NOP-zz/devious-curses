@@ -143,7 +143,7 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
                 log::critical("Devious Devices NG not loaded. Expect CTD!");
             }
             else {
-                log::trace("Devious Devices NG loaded.");
+                log::trace("Devious Devices NG loaded: {}.", DeviousDevicesAPI::g_API->GetDatabase().size());
             }
 
             if (!DCURSES::QLIEAttemptRegisterEvent()) {
@@ -154,6 +154,7 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
             DCURSES::EventsStartup();
 
             DCURSES::LoadMCMSettings();
+            DCURSES::RecalculateDeviceLists();
             //DCURSES::P_UpdateSKSE(nullptr);
             //DCURSES::counters.clock_lastSex = -10;
             break;

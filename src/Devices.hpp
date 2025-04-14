@@ -938,24 +938,31 @@ namespace DCURSES {
 
 		double r = Util::randomDouble();
 		log::trace("key chance {:.2f}% ({:.2f})", chance, r);
+
 		if (r < chance || skipRand) {
 
 			double weightSum = restraintsWeight + chastityWeight + piercingWeight;
 
 			double roll = Util::randomDouble(weightSum);
 			if (roll < piercingWeight) {
-				activatedObject->AddObjectToContainer((RE::TESBoundObject*)piercingKey, nullptr, 1, nullptr);
-				counters.SinceLastKey = 0;
+				SKSE::GetTaskInterface()->AddTask([activatedObject, piercingKey] {
+					activatedObject->AddObjectToContainer((RE::TESBoundObject*)piercingKey, nullptr, 1, nullptr);
+					counters.SinceLastKey = 0;
+				});
 				return piercingKey;
 			}
 			else if (roll - piercingWeight < chastityWeight) {
-				activatedObject->AddObjectToContainer((RE::TESBoundObject*)chastityKey, nullptr, 1, nullptr);
-				counters.SinceLastKey = 0;
+				SKSE::GetTaskInterface()->AddTask([activatedObject, chastityKey] {
+					activatedObject->AddObjectToContainer((RE::TESBoundObject*)chastityKey, nullptr, 1, nullptr);
+					counters.SinceLastKey = 0;
+				});
 				return chastityKey;
 			}
 			else {
-				activatedObject->AddObjectToContainer((RE::TESBoundObject*)restraintsKey, nullptr, 1, nullptr);
-				counters.SinceLastKey = 0;
+				SKSE::GetTaskInterface()->AddTask([activatedObject, restraintsKey] {
+					activatedObject->AddObjectToContainer((RE::TESBoundObject*)restraintsKey, nullptr, 1, nullptr);
+					counters.SinceLastKey = 0;
+				});
 				return restraintsKey;
 			}
 		}
@@ -975,19 +982,21 @@ namespace DCURSES {
 			return;
 		}
 
-		auto inventory = activatedObject->GetInventory();
-		for (auto const& [k, v] : inventory) {
+		SKSE::GetTaskInterface()->AddTask([activatedObject, restraintsKey, chastityKey, piercingKey] {
+			auto inventory = activatedObject->GetInventory();
+			for (auto const& [k, v] : inventory) {
 
-			if (k == restraintsKey) {
-				activatedObject->RemoveItem((RE::TESBoundObject*)restraintsKey, v.first, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+				if (k == restraintsKey) {
+					activatedObject->RemoveItem((RE::TESBoundObject*)restraintsKey, v.first, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+				}
+				if (k == chastityKey) {
+					activatedObject->RemoveItem((RE::TESBoundObject*)chastityKey, v.first, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+				}
+				if (k == piercingKey) {
+					activatedObject->RemoveItem((RE::TESBoundObject*)piercingKey, v.first, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+				}
 			}
-			if (k == chastityKey) {
-				activatedObject->RemoveItem((RE::TESBoundObject*)chastityKey, v.first, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
-			}
-			if (k == piercingKey) {
-				activatedObject->RemoveItem((RE::TESBoundObject*)piercingKey, v.first, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
-			}
-		}
+		});
 
 
 	}
@@ -1008,9 +1017,11 @@ namespace DCURSES {
 			}
 		}
 
-		for (auto &[dev, rend] : removes) {
-			UnlockDevice(actor, dev, rend, nullptr, destroyAll, true);
-		}
+		SKSE::GetTaskInterface()->AddTask([removes, actor, destroyAll] {
+			for (auto& [dev, rend] : removes) {
+				UnlockDevice(actor, dev, rend, nullptr, destroyAll, true);
+			}
+		});
 	}
 
 	bool ActorIsWearingDevice(RE::Actor* actor, RE::TESObjectARMO* device) {
