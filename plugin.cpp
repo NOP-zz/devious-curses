@@ -175,7 +175,7 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
 
         }
         case SKSE::MessagingInterface::kSaveGame: {
-            DCURSES::counters.clock_SexTimeout = -5;
+            DCURSES::counters.clock_SexTimeout = -2;
             DCURSES::SaveMCMSettings();
         }
         }

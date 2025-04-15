@@ -62,7 +62,7 @@ namespace DCURSES {
             auto actor = object->As<RE::Actor>();
             if (actor && actor == RE::PlayerCharacter::GetSingleton()) {
                 log::trace("Updating actors arousal");
-                counters.clock_SexTimeout = -5;
+                counters.clock_SexTimeout = -2;
                 //Callbacks::GetSingleton().ResetArousalDatabase();
                 //Callbacks::GetSingleton().InitializeAllActorsArousal();
             }

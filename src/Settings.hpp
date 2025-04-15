@@ -1312,7 +1312,7 @@ namespace DCURSES {
 			ResetMCMSettings();
 		}
 
-		counters.clock_lastSex = -5;
+		counters.clock_SexTimeout = -5;
 		SaveMCMSettings();
 		RecalculateDeviceLists();
 	}
