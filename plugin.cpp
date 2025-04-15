@@ -174,6 +174,10 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
             break;
 
         }
+        case SKSE::MessagingInterface::kSaveGame: {
+            DCURSES::counters.clock_SexTimeout = -5;
+            DCURSES::SaveMCMSettings();
+        }
         }
         
     });

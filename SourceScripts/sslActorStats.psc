@@ -1,106 +1,174 @@
 scriptname sslActorStats extends sslSystemLibrary
-;TODO: clean up some stat lookup stuff in sslActorAlias.
-	; [10:49 PM] ak86: hi, there is an error in sslActorAlias, script calls 
-	; float OwnLewd = Stats.GetSkillLevel(ActorRef, Stats.kLewd)
-	; that always return 0, should be
-	; float OwnLewd = Stats.GetSkillLevel(ActorRef, "Lewd")
-	; [10:54 PM] Jeffl: should be float OwnLewd = Stats._GetSkill(ActorRef, Stats.kLewd) actually, I think(edited)
-	; [10:55 PM] Jeffl: would have to double check, but yeah, it should be one or the other for sure. Thanks
-	; [10:57 PM] Jeffl: no nvm, you're right
-	; [10:58 PM] Jeffl: fixed in dev build now
-	; [10:59 PM] Jeffl: what lead you to finding that out of curiosity? Seems like an obscure bug to have come across by normal means
-	; [11:01 PM] ak86: was reported in my SexLab Separate Orgasm thread that Stats.GetSkillLevel﻿(ActorRef, Stats﻿.kLewd) is broken
-	; [11:02 PM] ak86: probably would never be found otherwise
-	; [11:03 PM] ak86: as its effects can only be seen in my mod
-	; [11:03 PM] Jeffl: bleh, you've made me look at the stat code for the first time in awhile
-	; [11:04 PM] Jeffl: seems like a mess, might be one of the major causes of start slowness happening right now. Going to add cleaning it up to the todo list x.x
+{
+	Internal Scripts for Statistics access and manipulation
+}
 
+String Function ParseTime(int time) global
+	If time < 0
+		return "--:--:--"
+	Endif
+	return ZeroFill((time / 3600) as int) + ":" + ZeroFill(((time / 60) % 60) as int) + ":" + ZeroFill(time % 60 as int)
+EndFunction
 
-import StorageUtil
-import PapyrusUtil
-import Utility
-import Math
+String Function ZeroFill(string num) global
+	If StringUtil.GetLength(num) == 1
+		return "0" + num
+	EndIf
+	return num
+EndFunction
 
-Keyword ActorTypeNPC
-Faction GenderFaction
+; *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* ;
+; ----------------------------------------------------------------------------- ;
+;        ██╗███╗   ██╗████████╗███████╗██████╗ ███╗   ██╗ █████╗ ██╗            ;
+;        ██║████╗  ██║╚══██╔══╝██╔════╝██╔══██╗████╗  ██║██╔══██╗██║            ;
+;        ██║██╔██╗ ██║   ██║   █████╗  ██████╔╝██╔██╗ ██║███████║██║            ;
+;        ██║██║╚██╗██║   ██║   ██╔══╝  ██╔══██╗██║╚██╗██║██╔══██║██║            ;
+;        ██║██║ ╚████║   ██║   ███████╗██║  ██║██║ ╚████║██║  ██║███████╗       ;
+;        ╚═╝╚═╝  ╚═══╝   ╚═╝   ╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝╚══════╝       ;
+; ----------------------------------------------------------------------------- ;
+; *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* ;
 
-; Titles
-string[] StatTitles
-string[] PureTitlesMale
-string[] PureTitlesFemale
-string[] LewdTitlesMale
-string[] LewdTitlesFemale
+float function CalcLevelFloat(float Total, float Curve = 0.85) global
+	if Total > 0.0
+		return Math.Sqrt((Math.Abs(Total) / 2.0) * Curve)
+	endIf
+	return 0.0
+endFunction
+int function CalcLevel(float Total, float Curve = 0.85) global
+	return CalcLevelFloat(Total, Curve) as int
+endFunction
 
-string[] SkillNames
+; *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* ;
+; ----------------------------------------------------------------------------- ;
+;               ██╗     ███████╗ ██████╗  █████╗  ██████╗██╗   ██╗              ;
+;               ██║     ██╔════╝██╔════╝ ██╔══██╗██╔════╝╚██╗ ██╔╝              ;
+;               ██║     █████╗  ██║  ███╗███████║██║      ╚████╔╝               ;
+;               ██║     ██╔══╝  ██║   ██║██╔══██║██║       ╚██╔╝                ;
+;               ███████╗███████╗╚██████╔╝██║  ██║╚██████╗   ██║                 ;
+;               ╚══════╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝ ╚═════╝   ╚═╝                 ;
+; ----------------------------------------------------------------------------- ;
+; *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* ;
+
+; Returns every String type statistic on every actor. This function is only used for backwards compatibility only
+; The implementation is not designed with this functionality in mind, thus its costly and unreliable (stat order is not fixed)
+String[] Function GetEveryStatisticID() native global
+; Uses old SkillNames[] ids and returns a result based on them 
+float Function GetLegacyStatistic(Actor akActor, int id) native global
+float[] Function GetAllLegycSkills(Actor akActor) native global
+; Sets a statistic based on the value. May fail silently if the statistic is no longer supported
+Function SetLegacyStatistic(Actor akActor, int id, float afValue) native global
+
+String[] Function SkillNames()
+	String[] SkillNames = new String[21]
+	SkillNames[0] =  "Foreplay"
+	SkillNames[1] =  "Vaginal"
+	SkillNames[2] =  "Anal"
+	SkillNames[3] =  "Oral"
+	SkillNames[4] =  "Pure"
+	SkillNames[5] =  "Lewd"
+	SkillNames[6] =  "Males"
+	SkillNames[7] =  "Females"
+	SkillNames[8] =  "Creatures"
+	SkillNames[9] =  "Masturbation"
+	SkillNames[10] = "Aggressor"
+	SkillNames[11] = "Victim"
+	SkillNames[12] = "SexCount"
+	SkillNames[13] = "PlayerSex"
+	SkillNames[14] = "Sexuality"
+	SkillNames[15] = "TimeSpent"
+	SkillNames[16] = "LastSex.RealTime"
+	SkillNames[17] = "LastSex.GameTime"
+	SkillNames[18] = "VaginalCount"
+	SkillNames[19] = "AnalCount"
+	SkillNames[20] = "OralCount"
+	return SkillNames
+EndFunction
+
+String Function GetSexualityTitle(Actor ActorRef) global
+	return sslConfigMenu.GetSexualityTitle(ActorRef)
+EndFunction
+
+String[] Function StatTitles() global
+	return sslConfigMenu.StatTitles()
+EndFunction
 
 ; ------------------------------------------------------- ;
 ; --- Manipulate Custom Stats                         --- ;
 ; ------------------------------------------------------- ;
 
 int function FindStat(string Stat)
-	return StringListFind(self, "Custom", Stat)
+	return GetEveryStatisticID().Find(Stat)
+endFunction
+int function GetNumStats()
+	return GetEveryStatisticID().Length
+endFunction
+string function GetNthStat(int i)
+	return GetEveryStatisticID()[i]
 endFunction
 
 int function RegisterStat(string Stat, string Value, string Prepend = "", string Append = "")
-	if FindStat(Stat) == -1
-		StringListAdd(self, "Custom", Stat, false)
-		SetStringValue(self, "Custom.Default."+Stat, Value)
-		SetStringValue(self, "Custom.Prepend."+Stat, Prepend)
-		SetStringValue(self, "Custom.Append."+Stat, Append)
-		SetStat(PlayerRef, Stat, Value)
-	endIf
+	If (FindStat(Stat) == -1)
+		SexLabStatistics.SetCustomStatStr(Game.GetPlayer(), Stat, Value)
+		SexLabStatistics.SetCustomStatStr(Game.GetPlayer(), "Custom.Default." + Stat, Value)
+		If (Prepend)
+			SexLabStatistics.SetCustomStatStr(Game.GetPlayer(), "Custom.Prepend." + Stat, Value)
+		EndIf
+		If (Append)
+			SexLabStatistics.SetCustomStatStr(Game.GetPlayer(), "Custom.Append." + Stat, Value)		
+		EndIf
+	EndIf
 	return FindStat(Stat)
 endFunction
 
-int function GetNumStats()
-	return StringListCount(self, "Custom")
-endFunction
-
-string function GetNthStat(int i)
-	return StringListGet(self, "Custom", i)
-endFunction
-
 function Alter(string Name, string NewName = "", string Value = "", string Prepend = "", string Append = "")
-	int i = FindStat(Name)
-	if i != -1
-		if NewName != ""
-			StringListSet(self, "Custom", i, NewName)
-			SetStringValue(self, "Custom.Default."+NewName, GetStringValue(self, "Custom.Default."+Name))
-			SetStringValue(self, "Custom.Prepend."+NewName, GetStringValue(self, "Custom.Prepend."+Name))
-			SetStringValue(self, "Custom.Append."+NewName, GetStringValue(self, "Custom.Append."+Name))
-			UnsetStringValue(self, "Custom.Default."+Name)
-			UnsetStringValue(self, "Custom.Prepend."+Name)
-			UnsetStringValue(self, "Custom.Append."+Name)
-			Name = NewName
-		endIf
-		if Value != ""
-			SetStringValue(self, "Custom.Default."+Name, Value)
-		endIf
-		if Prepend != ""
-			SetStringValue(self, "Custom.Prepend."+Name, Prepend)
-		endIf
-		if Append != ""
-			SetStringValue(self, "Custom.Append."+Name, Append)
-		endIf
+	If (FindStat(Name) == -1)
+		return
+	EndIf
+	If (NewName != "")
+		String v = SexLabStatistics.GetCustomStatStr(Game.GetPlayer(), Name)
+		String d = SexLabStatistics.GetCustomStatStr(Game.GetPlayer(), "Custom.Default." + Name)
+		String p = SexLabStatistics.GetCustomStatStr(Game.GetPlayer(), "Custom.Prepend." + Name)
+		String a = SexLabStatistics.GetCustomStatStr(Game.GetPlayer(), "Custom.Append." + Name)
+		SexLabStatistics.DeleteCustomStat(Game.GetPlayer(), Name)
+		SexLabStatistics.SetCustomStatStr(Game.GetPlayer(), NewName, v)
+		SexLabStatistics.SetCustomStatStr(Game.GetPlayer(), "Custom.Default." + NewName, d)
+		SexLabStatistics.SetCustomStatStr(Game.GetPlayer(), "Custom.Prepend." + NewName, p)
+		SexLabStatistics.SetCustomStatStr(Game.GetPlayer(), "Custom.Append." + NewName, a)
+		Name = NewName
+	EndIf
+	if Value != ""
+		SexLabStatistics.SetCustomStatStr(Game.GetPlayer(), "Custom.Default." + Name, Value)
+	endIf
+	if Prepend != ""
+		SexLabStatistics.SetCustomStatStr(Game.GetPlayer(), "Custom.Prepend." + Name, Prepend)
+	endIf
+	if Append != ""
+		SexLabStatistics.SetCustomStatStr(Game.GetPlayer(), "Custom.Append." + Name, Append)
 	endIf
 endFunction
 
 bool function ClearStat(Actor ActorRef, string Stat)
 	if HasStat(ActorRef, Stat)
-		UnsetStringValue(ActorRef, "sslActorStats.Custom."+Stat)
+		SexLabStatistics.DeleteCustomStat(ActorRef, Stat)
 		return true
 	endIf
 	return false
 endFunction
 
 function SetStat(Actor ActorRef, string Stat, string Value)
-	if FindStat(Stat) != -1
-		SetStringValue(ActorRef, "sslActorStats.Custom."+Stat, Value)
-	endIf
+	SexLabStatistics.SetCustomStatStr(ActorRef, Stat, Value)
 endFunction
-
+float function FloatAdjustBy(Actor ActorRef, string Stat, float Adjust)
+	if !HasStat(ActorRef, Stat)
+		return 0
+	endIf
+	float Value = GetStatFloat(ActorRef, Stat)
+	Value += Adjust
+	SetStat(ActorRef, Stat, (Value as string))
+	return Value
+endFunction
 int function AdjustBy(Actor ActorRef, string Stat, int Adjust)
-	if FindStat(Stat) == -1
+	if !HasStat(ActorRef, Stat)
 		return 0
 	endIf
 	int Value = GetStatInt(ActorRef, Stat)
@@ -110,50 +178,43 @@ int function AdjustBy(Actor ActorRef, string Stat, int Adjust)
 endFunction
 
 bool function HasStat(Actor ActorRef, string Stat)
-	return HasStringValue(ActorRef, "sslActorStats.Custom."+Stat)
+	return SexLabStatistics.HasCustomStat(ActorRef, Stat)
 endFunction
 
 string function GetStat(Actor ActorRef, string Stat)
 	if !HasStat(ActorRef, Stat)
 		return GetStatDefault(Stat)
 	endIf
-	return GetStringValue(ActorRef, "sslActorStats.Custom."+Stat)
+	return SexLabStatistics.GetCustomStatStr(ActorRef, Stat)
 endFunction
-
 string function GetStatString(Actor ActorRef, string Stat)
 	return GetStat(ActorRef, Stat)
 endFunction
-
 float function GetStatFloat(Actor ActorRef, string Stat)
 	return GetStat(ActorRef, Stat) as float
 endFunction
-
 int function GetStatInt(Actor ActorRef, string Stat)
 	return GetStat(ActorRef, Stat) as int
+endFunction
+
+string function GetStatDefault(string Stat)
+	return SexLabStatistics.GetCustomStatStr(Game.GetPlayer(), "Custom.Default." + Stat)
+endFunction
+string function GetStatPrepend(string Stat)
+	return SexLabStatistics.GetCustomStatStr(Game.GetPlayer(), "Custom.Prepend." + Stat)
+endFunction
+string function GetStatAppend(string Stat)
+	return SexLabStatistics.GetCustomStatStr(Game.GetPlayer(), "Custom.Append." + Stat)
+endFunction
+string function GetStatFull(Actor ActorRef, string Stat)
+	return GetStatPrepend(Stat) + GetStat(ActorRef, Stat) + GetStatAppend(Stat)
 endFunction
 
 int function GetStatLevel(Actor ActorRef, string Stat, float Curve = 0.85)
 	return CalcLevel(GetStatInt(ActorRef, Stat), Curve)
 endFunction
-
 string function GetStatTitle(Actor ActorRef, string Stat, float Curve = 0.85)
-	return StatTitles[ClampInt(CalcLevel(GetStatFloat(ActorRef, Stat), Curve), 0, 6)]
-endFunction
-
-string function GetStatDefault(string Stat)
-	return GetStringValue(self, "Custom.Default."+Stat, "0")
-endFunction
-
-string function GetStatPrepend(string Stat)
-	return GetStringValue(self, "Custom.Prepend."+Stat, "")
-endFunction
-
-string function GetStatAppend(string Stat)
-	return GetStringValue(self, "Custom.Append."+Stat, "")
-endFunction
-
-string function GetStatFull(Actor ActorRef, string Stat)
-	return GetStatPrepend(Stat) + GetStat(ActorRef, Stat) + GetStatAppend(Stat)
+	return StatTitles()[PapyrusUtil.ClampInt(CalcLevel(GetStatFloat(ActorRef, Stat), Curve), 0, 6)]
 endFunction
 
 ; ------------------------------------------------------- ;
@@ -169,80 +230,50 @@ int function CalcSexuality(bool IsFemale, int Males, int Females)
 	endIf
 endFunction
 
-float function CalcLevelFloat(float Total, float Curve = 0.85)
-	if Total > 0.0
-		return Math.Sqrt((Math.Abs(Total) / 2.0) * Curve)
-	endIf
-	return 0.0
-endFunction
-
-int function CalcLevel(float Total, float Curve = 0.85)
-	return CalcLevelFloat(Total, Curve) as int
-endFunction
-
-string function ZeroFill(string num)
-	if StringUtil.GetLength(num) == 1
-		return "0"+num
-	endIf
-	return num
-endFunction
-
-string function ParseTime(int time)
-	if time > 0
-		return ZeroFill(((time / 3600) as int))+":"+ZeroFill((((time / 60) % 60) as int))+":"+ZeroFill((time % 60 as int))
-	endIf
-	return "--:--:--"
-endFunction
-
 ; ------------------------------------------------------- ;
 ; --- Sex Skills                                      --- ;
 ; ------------------------------------------------------- ;
 
-bool function IsSkilled(Actor ActorRef) global native
+bool function IsSkilled(Actor ActorRef) global
+	return true
+EndFunction
 
-function _SeedActor(Actor ActorRef, float RealTime, float GameTime) global native
-; function _SeedActor2(Actor ActorRef, float RealTime, float GameTime) global native
+function _SeedActor(Actor ActorRef, float RealTime, float GameTime) global
+EndFunction
 function SeedActor(Actor ActorRef)
-	if ActorRef && ActorRef != PlayerRef && !IsSkilled(ActorRef)
-		if Config.SeedNPCStats && ActorRef.HasKeyword(ActorTypeNPC)
-			_SeedActor(ActorRef, SexLabUtil.GetCurrentGameRealTime(), Utility.GetCurrentGameTime())
-			Log(ActorRef.GetLeveledActorBase().GetName()+" Seeded Stats: "+GetSkills(ActorRef))
-		else
-			EmptyStats(ActorRef)
-			Log(ActorRef.GetLeveledActorBase().GetName()+" Init Empty Stats")
-		endIf
-		sslSystemConfig.StoreActor(ActorRef)
-	endIf
 endFunction
 
-float function _GetSkill(Actor ActorRef, int Stat) global native
+float function _GetSkill(Actor ActorRef, int Stat) global
+	return GetLegacyStatistic(ActorRef, Stat)
+EndFunction
 int function GetSkill(Actor ActorRef, string Skill)
-	SeedActor(ActorRef)
-	return _GetSkill(ActorRef, SkillNames.Find(Skill)) as int
+	return GetSkillFloat(ActorRef, Skill) as int
 endFunction
 float function GetSkillFloat(Actor ActorRef, string Skill)
-	SeedActor(ActorRef)
-	return _GetSkill(ActorRef, SkillNames.Find(Skill))
+	return GetLegacyStatistic(ActorRef, SkillNames().Find(Skill))
 endFunction
 
-function _SetSkill(Actor ActorRef, int Stat, float Value) global native
+function _SetSkil(Actor ActorRef, int Stat, float Value) global
+	SetLegacyStatistic(ActorRef, Stat, Value)
+EndFunction
 function SetSkill(Actor ActorRef, string Skill, int Amount)
-	SeedActor(ActorRef)
-	_SetSkill(ActorRef, SkillNames.Find(Skill), Amount as float)
+	SetLegacyStatistic(ActorRef, SkillNames().Find(Skill), Amount as float)
 endFunction
 function SetSkillFloat(Actor ActorRef, string Skill, float Amount)
-	SeedActor(ActorRef)
-	_SetSkill(ActorRef, SkillNames.Find(Skill), Amount)
+	SetLegacyStatistic(ActorRef, SkillNames().Find(Skill), Amount)
 endFunction
 
-float function _AdjustSkill(Actor ActorRef, int Stat, float By) global native
+float function _AdjustSkill(Actor ActorRef, int Stat, float By) global
+	float v = GetLegacyStatistic(ActorRef, Stat)
+	v += By
+	SetLegacyStatistic(ActorRef, Stat, v)
+	return v
+EndFunction
 function AdjustSkill(Actor ActorRef, string Skill, int Amount)
-	SeedActor(ActorRef)
-	_AdjustSkill(ActorRef, SkillNames.Find(Skill), Amount as float)
+	_AdjustSkill(ActorRef, SkillNames().Find(Skill), Amount as float)
 endfunction
 function AdjustSkillFloat(Actor ActorRef, string Skill, float Amount)
-	SeedActor(ActorRef)
-	_AdjustSkill(ActorRef, SkillNames.Find(Skill), Amount)
+	_AdjustSkill(ActorRef, SkillNames().Find(Skill), Amount)
 endFunction
 
 int function GetSkillLevel(Actor ActorRef, string Skill, float Curve = 0.85)
@@ -250,19 +281,15 @@ int function GetSkillLevel(Actor ActorRef, string Skill, float Curve = 0.85)
 endFunction
 
 string function GetSkillTitle(Actor ActorRef, string Skill, float Curve = 0.85)
-	return StatTitles[ClampInt(GetSkillLevel(ActorRef, Skill, Curve), 0, 6)]
+	return StatTitles()[PapyrusUtil.ClampInt(GetSkillLevel(ActorRef, Skill, Curve), 0, 6)]
 endFunction
-
 string function GetTitle(int Level)
-	return StatTitles[ClampInt(Level, 0, 6)]
+	return StatTitles()[PapyrusUtil.ClampInt(Level, 0, 6)]
 endFunction
 
-float[] function GetSkills(Actor ActorRef) global native
-;/ float[] function GetSkills(Actor ActorRef) global
-	float[] Output = new float[18]
-	_GetSkills(ActorRef, Output)
-	return Output
-endFunction /;
+float[] function GetSkills(Actor ActorRef) global
+	return GetAllLegycSkills(ActorRef)
+EndFunction
 
 float[] function GetSkillLevels(Actor ActorRef)
 	float[] Output = new float[6]
@@ -290,7 +317,7 @@ endFunction
 ; ------------------------------------------------------- ;
 
 int function GetPure(Actor ActorRef)
-	return _GetSkill(ActorRef, kPure) as int
+	return GetLegacyStatistic(ActorRef, kPure) as int
 endFunction
 
 int function GetPureLevel(Actor ActorRef)
@@ -298,15 +325,27 @@ int function GetPureLevel(Actor ActorRef)
 endFunction
 
 string function GetPureTitle(Actor ActorRef)
-	if ActorRef.GetLeveledActorBase().GetSex() == 1
-		return PureTitlesFemale[ClampInt(GetPureLevel(ActorRef), 0, 6)]
-	else
-		return PureTitlesMale[ClampInt(GetPureLevel(ActorRef), 0, 6)]
+	String[] titles = new string[7]
+	titles[0] = "$SSL_Neutral"
+	titles[1] = "$SSL_Unsullied"
+	if ActorRef.GetLeveledActorBase().GetSex() == 1	; female
+		titles[2] = "$SSL_PrimProper"
+		titles[3] = "$SSL_Virtuous"
+		titles[4] = "$SSL_EverFaithful"
+		titles[5] = "$SSL_Ladylike"
+		titles[6] = "$SSL_Saintly"
+	else	; male
+		titles[2] = "$SSL_CleanCut"
+		titles[3] = "$SSL_Virtuous"
+		titles[4] = "$SSL_EverFaithful"
+		titles[5] = "$SSL_Lordly"
+		titles[6] = "$SSL_Saintly"
 	endIf
+	return titles[PapyrusUtil.ClampInt(GetPureLevel(ActorRef), 0, 6)]
 endFunction
 
 int function GetLewd(Actor ActorRef)
-	return _GetSkill(ActorRef, kLewd) as int
+	return GetLegacyStatistic(ActorRef, kLewd) as int
 endFunction
 
 int function GetLewdLevel(Actor ActorRef)
@@ -314,19 +353,28 @@ int function GetLewdLevel(Actor ActorRef)
 endFunction
 
 string function GetLewdTitle(Actor ActorRef)
-	if ActorRef.GetLeveledActorBase().GetSex() == 1
-		return LewdTitlesFemale[ClampInt(GetLewdLevel(ActorRef), 0, 6)]
-	else
-		return LewdTitlesMale[ClampInt(GetLewdLevel(ActorRef), 0, 6)]
+	String[] titles = new string[7]
+	titles[0] = "$SSL_Neutral"
+	titles[1] = "$SSL_Experimenting"
+	titles[2] = "$SSL_UnusuallyHorny"
+	titles[3] = "$SSL_Promiscuous"
+	titles[4] = "$SSL_SexualDeviant"
+	if ActorRef.GetLeveledActorBase().GetSex() == 1	; female
+		titles[5] = "$SSL_Debaucherous"
+		titles[6] = "$SSL_Nymphomaniac"
+	else	; male
+		titles[5] = "$SSL_Depraved"
+		titles[6] = "$SSL_Hypersexual"
 	endIf
+	return titles[PapyrusUtil.ClampInt(GetLewdLevel(ActorRef), 0, 6)]
 endFunction
 
 bool function IsPure(Actor ActorRef)
-	return GetPurity(ActorRef) >= 0.0;GetPure(ActorRef) >= GetLewd(ActorRef)
+	return GetPurity(ActorRef) >= 0.0
 endFunction
 
 bool function IsLewd(Actor ActorRef)
-	return GetPurity(ActorRef) < 0.0 ;GetPure(ActorRef) < GetLewd(ActorRef)
+	return GetPurity(ActorRef) < 0.0
 endFunction
 
 float function GetPurity(Actor ActorRef)
@@ -396,8 +444,8 @@ endFunction
 
 function AddSex(Actor ActorRef, float TimeSpent = 0.0, bool WithPlayer = false, bool IsAggressive = false, int Males = 0, int Females = 0, int Creatures = 0)
 	_AdjustSkill(ActorRef, kTimeSpent, TimeSpent)
-	_SetSkill(ActorRef, kLastGameTime, Utility.GetCurrentGameTime())
-	_SetSkill(ActorRef, kLastRealTime, SexLabUtil.GetCurrentGameRealTime())
+	SetLegacyStatistic(ActorRef, kLastGameTime, Utility.GetCurrentGameTime())
+	SetLegacyStatistic(ActorRef, kLastRealTime, SexLabUtil.GetCurrentGameRealTime())
 
 	int ActorCount = (Males + Females + Creatures)
 	if ActorCount > 1
@@ -408,7 +456,7 @@ function AddSex(Actor ActorRef, float TimeSpent = 0.0, bool WithPlayer = false, 
 		_AdjustSkill(ActorRef, kFemales, Females)
 		_AdjustSkill(ActorRef, kCreatures, Creatures)
 		_AdjustSkill(ActorRef, kSexCount, 1)
-		if ActorRef != PlayerRef
+		if ActorRef != Game.GetPlayer()
 			if !IsAggressive
 				AdjustSexuality(ActorRef, Males * 2, Females * 2)
 			else
@@ -418,52 +466,52 @@ function AddSex(Actor ActorRef, float TimeSpent = 0.0, bool WithPlayer = false, 
 	else
 		_AdjustSkill(ActorRef, kMasturbation, 1)
 	endIf
-	if WithPlayer && ActorRef != PlayerRef
+	if WithPlayer && ActorRef != Game.GetPlayer()
 		_AdjustSkill(ActorRef, kPlayerSex, 1)
-		FormListAdd(PlayerRef, "SexPartners", ActorRef, false)
+		SexLabStatistics.AddEncounter(Game.GetPlayer(), ActorRef, 0)
 	endIf
 endFunction
 
 int function SexCount(Actor ActorRef)
-	return _GetSkill(ActorRef, kSexCount) as int
+	return GetLegacyStatistic(ActorRef, kSexCount) as int
 endFunction
 
 bool function HadSex(Actor ActorRef)
-	return _GetSkill(ActorRef, kSexCount) >= 1.0
+	return GetLegacyStatistic(ActorRef, kSexCount) >= 1.0
 endFunction
 
 int function PlayerSexCount(Actor ActorRef)
-	return _GetSkill(ActorRef, kPlayerSex) as int
+	return GetLegacyStatistic(ActorRef, kPlayerSex) as int
 endFunction
 
 bool function HadPlayerSex(Actor ActorRef)
-	return _GetSkill(ActorRef, kPlayerSex) >= 1.0
+	return GetLegacyStatistic(ActorRef, kPlayerSex) >= 1.0
 endFunction
 
 Actor function LastSexPartner(Actor ActorRef)
-	return LastActorInList(ActorRef, "SexPartners")
+	return SexLabStatistics.GetMostRecentEncounter(ActorRef, 0)
 endFunction
 bool function HasHadSexTogether(Actor ActorRef1, Actor ActorRef2)
-	return ActorRef1 && ActorRef2 && (FormListHas(ActorRef1, "SexPartners", ActorRef2) || FormListHas(ActorRef2, "SexPartners", ActorRef1))
+	return SexLabStatistics.GetAllEncounters(ActorRef1).Find(ActorRef2) > -1
 endfunction
 
 Actor function LastAggressor(Actor ActorRef)
-	return LastActorInList(ActorRef, "WasVictimOf")
+	return SexLabStatistics.GetMostRecentEncounter(ActorRef, 1)
 endFunction
 bool function WasVictimOf(Actor VictimRef, Actor AggressorRef)
-	return VictimRef && AggressorRef && (FormListHas(VictimRef, "WasVictimOf", AggressorRef) || FormListHas(AggressorRef, "WasAggressorTo", VictimRef))
+	return SexLabStatistics.GetAllEncounteredAssailants(VictimRef).Find(AggressorRef) > -1
 endFunction
 
 Actor function LastVictim(Actor ActorRef)
-	return LastActorInList(ActorRef, "WasAggressorTo")
+	return SexLabStatistics.GetMostRecentEncounter(ActorRef, 2)
 endFunction
 bool function WasAggressorTo(Actor AggressorRef, Actor VictimRef)
-	return AggressorRef && VictimRef && (FormListHas(AggressorRef, "WasAggressorTo", VictimRef) || FormListHas(VictimRef, "WasVictimOf", AggressorRef))
+	return SexLabStatistics.GetAllEncounteredVictims(AggressorRef).Find(VictimRef) > -1
 endFunction
 
 Form[] function CleanActorList(Actor ActorRef, string List)
-	FormListRemove(ActorRef, List, none, true)
-	Form[] ActorList = FormListToArray(ActorRef, List)
+	StorageUtil.FormListRemove(ActorRef, List, none, true)
+	Form[] ActorList = StorageUtil.FormListToArray(ActorRef, List)
 	if ActorList && ActorList.Length > 0
 		bool cleaned = false
 		int[] Types  = new int[3]
@@ -474,17 +522,16 @@ Form[] function CleanActorList(Actor ActorRef, string List)
 		while i > 0
 			i -= 1
 			if !ActorList[i] || Types.Find(ActorList[i].GetType()) == -1
-				FormListRemoveAt(ActorRef, List, i)
+				StorageUtil.FormListRemoveAt(ActorRef, List, i)
 				cleaned = true
 			endIf
 		endWhile
 		if cleaned
-			return FormListToArray(ActorRef, List)
+			return StorageUtil.FormListToArray(ActorRef, List)
 		endIf
 	endIf
 	return ActorList
 endfunction
-
 Actor function LastActorInList(Actor ActorRef, string List)
 	if ActorRef
 		Form[] ActorList = CleanActorList(ActorRef, List)
@@ -496,64 +543,56 @@ Actor function LastActorInList(Actor ActorRef, string List)
 endFunction
 
 Actor function MostUsedPlayerSexPartner()
-	Form[] SexPartners = CleanActorList(PlayerRef, "SexPartners")
-	Actor PartnerRef
-	int PartnerNum
-	int i = SexPartners.Length
-	while i > 0
-		i -= 1
-		int Num = PlayerSexCount(SexPartners[i] as Actor)
-		if Num > PartnerNum
-			PartnerRef = SexPartners[i] as Actor
-			PartnerNum = Num
-		endIf
-	endWhile
-	return PartnerRef
+	Actor[] list = SexLabStatistics.GetAllEncounters(Game.GetPlayer())
+	Actor ret = none
+	int max = 0
+	int i = 0
+	While (i < list.Length)
+		int met = SexLabStatistics.GetTimesMet(Game.GetPlayer(), list[i])
+		If (met > max)
+			max = met
+			ret = list[i]
+		EndIf
+		i += 1
+	EndWhile
+	return ret
 endFunction
-
 Actor function MostUsedPlayerSexPartner2()
-	Form[] SexPartners = CleanActorList(PlayerRef, "SexPartners")
-	Actor PartnerRef
-	int PartnerNum
-	int i = SexPartners.Length
-	while i > 0
-		i -= 1
-		int Num = PlayerSexCount(SexPartners[i] as Actor)
-		if Num > PartnerNum
-			PartnerRef = SexPartners[i] as Actor
-			PartnerNum = Num
-		endIf
-	endWhile
-	return PartnerRef
+	return MostUsedPlayerSexPartner()	; Original code was 1:1 the same as above
 endFunction
-
-Actor[] function MostUsedPlayerSexPartners(int MaxActors = 5) ; Based on Stats.MostUsedPlayerSexPartner()
-	Form[] SexPartners = Stats.CleanActorList(PlayerRef, "SexPartners")
-	Actor[] PartnerRef = PapyrusUtil.ActorArray(MaxActors)
-	int[] PartnerNum = PapyrusUtil.IntArray(MaxActors)
-	int i = SexPartners.Length
-	int r
-	int[] Num = new int[2]
-	Actor[] Ref = new Actor[2]
-
-	while i > 0
-		i -= 1
-		r = 0
-		Ref[0] = SexPartners[i] as Actor
-		Num[0] = Stats.PlayerSexCount(Ref[0])
-		while r < MaxActors && Num[0] > 0
-			if Num[0] >= PartnerNum[r]
-				Ref[1] = PartnerRef[r]
-				Num[1] = PartnerNum[r]
-				PartnerRef[r] = Ref[0]
-				PartnerNum[r] = Num[0]
-				Ref[0] = Ref[1]
-				Num[0] = Num[1]
-			endIf
-			r += 1
-		endWhile
-	endWhile
-	return PartnerRef
+Actor[] function MostUsedPlayerSexPartners(int MaxActors = 5)
+	Actor[] act = SexLabStatistics.GetAllEncounters(Game.GetPlayer())
+	If (act.Length >= MaxActors)
+		return act
+	EndIf
+	int[] timesmet = Utility.CreateIntArray(act.Length)
+	int k = 0
+	While (k < act.Length)
+		timesmet[k] = SexLabStatistics.GetTimesMet(Game.GetPlayer(), act[k])
+		k += 1
+	EndWhile
+	; Sort times met s.t. highest is at [0]
+  int i = 1
+  While(i < act.Length)
+    Actor it = act[i]
+    int _it = timesmet[i]
+    int n = i - 1
+    While(n >= 0 && _it >= timesmet[n])
+      act[n + 1] = act[n]
+      timesmet[n + 1] = timesmet[n]
+      n -= 1
+    EndWhile
+    act[n + 1] = it
+    timesmet[n + 1] = _it
+    i += 1
+  EndWhile
+	Actor[] ret = PapyrusUtil.ActorArray(MaxActors)
+	int j = 0
+	While (j < ret.Length)
+		ret[j] = act[j]
+		j += 1
+	EndWhile
+	return ret
 endFunction
 
 ; ------------------------------------------------------- ;
@@ -562,7 +601,7 @@ endFunction
 
 function AdjustSexuality(Actor ActorRef, int Males, int Females)
 	bool IsFemale = GetGender(ActorRef) == 1
-	float Ratio = _GetSkill(ActorRef, kSexuality)
+	float Ratio = GetLegacyStatistic(ActorRef, kSexuality)
 	if Ratio == 0.0
 		Ratio = 80.0
 	endIf
@@ -571,43 +610,24 @@ function AdjustSexuality(Actor ActorRef, int Males, int Females)
 	else
 		Ratio += (Females - Males)
 	endIf
-	_SetSkill(ActorRef, kSexuality, ClampFloat(Ratio, 1.0, 100.0) as float)
+	SetLegacyStatistic(ActorRef, kSexuality, PapyrusUtil.ClampFloat(Ratio, 1.0, 100.0) as float)
 endFunction
 
 int function GetSexuality(Actor ActorRef)
-	float Ratio = _GetSkill(ActorRef, kSexuality)
-	if Ratio > 0.0
-		return Ratio as int
-	else
-		return 100
-	endIf
-endFunction
-
-string function GetSexualityTitle(Actor ActorRef)
-	float ratio = _GetSkill(ActorRef, kSexuality)
-	; Return sexuality title
-	if ratio >= 65.0 || ratio == 0.0
-		return "$SSL_Heterosexual"
-	elseif ratio < 65.0 && ratio > 35.0
-		return "$SSL_Bisexual"
-	elseif GetGender(ActorRef) == 1
-		return "$SSL_Lesbian"
-	else
-		return "$SSL_Gay"
-	endIf
+	return GetLegacyStatistic(ActorRef, kSexuality) as int
 endFunction
 
 bool function IsStraight(Actor ActorRef)
-	return _GetSkill(ActorRef, kSexuality) >= 65.0
+	return GetLegacyStatistic(ActorRef, kSexuality) >= 65.0
 endFunction
 
 bool function IsBisexual(Actor ActorRef)
-	float ratio = _GetSkill(ActorRef, kSexuality)
+	float ratio = GetLegacyStatistic(ActorRef, kSexuality)
 	return ratio < 65.0 && ratio > 35.0
 endFunction
 
 bool function IsGay(Actor ActorRef)
-	return _GetSkill(ActorRef, kSexuality) <= 35.0
+	return GetLegacyStatistic(ActorRef, kSexuality) <= 35.0
 endFunction
 
 ; ------------------------------------------------------- ;
@@ -616,7 +636,7 @@ endFunction
 
 ; Last sex - Game time1 - float days
 float function LastSexGameTime(Actor ActorRef)
-	return _GetSkill(ActorRef, kLastGameTime)
+	return GetLegacyStatistic(ActorRef, kLastGameTime)
 endFunction
 
 float function DaysSinceLastSex(Actor ActorRef)
@@ -641,7 +661,7 @@ endFunction
 
 ; Last sex - Real Time - float seconds
 float function LastSexRealTime(Actor ActorRef)
-	return _GetSkill(ActorRef, kLastRealTime)
+	return GetLegacyStatistic(ActorRef, kLastRealTime)
 endFunction
 
 float function SecondsSinceLastSexRealTime(Actor ActorRef)
@@ -667,17 +687,6 @@ endFunction
 string function LastSexTimerStringRealTime(Actor ActorRef)
 	return ParseTime(SecondsSinceLastSexRealTime(ActorRef) as int)
 endFunction
-
-;/ int function GetArousal(Actor ActorRef)
-	float Hours    = HoursSinceLastSexGameTime(ActorRef)
-	float Modifier = _GetSkill(ActorRef, kArousalModifier)
-	float Arousal  = (Hours * _GetSkill(ActorRef, kArousalRate))
-	if Modifier != 0.0
-		Arousal += Modifier
-		if Arousal >= 100 || Arousal <= 0
-			_SetSkill(ActorRef, kArousalModifier, 0.0)
-	endIf
-endFunction /;
 
 ; ------------------------------------------------------- ;
 ; --- Other Actor Info                                --- ;
@@ -709,278 +718,77 @@ endFunction
 ; --- System Use                                      --- ;
 ; ------------------------------------------------------- ;
 
-
-function RecordThread(Actor ActorRef, int Gender, int HadRelation, float StartedAt, float RealTime, float GameTime, bool WithPlayer, Actor VictimRef, int[] Genders, float[] SkillXP) global native
+function RecordThread(Actor ActorRef, int Gender, int HadRelation, float StartedAt, float RealTime, float GameTime, bool WithPlayer, Actor VictimRef, int[] Genders, float[] SkillXP) global
+  String msg = "Invalid call to internal legacy function \"Record Thread\""
+  Debug.MessageBox(msg)
+  Debug.TraceStack(msg)
+EndFunction
 function AddPartners(Actor ActorRef, Actor[] AllPositions, Actor[] Victims)
-	if !ActorRef || !AllPositions || AllPositions.Length < 2 || AllPositions.Find(none) != -1
+	if !ActorRef || AllPositions.Length < 2 || AllPositions.Find(none) != -1
 		return ; No Positions
 	endIf
-	bool IsVictim    = false
-	bool IsAggressor = false
-	if Victims && Victims.Length > 0
-		IsVictim     = Victims.Find(ActorRef) != -1
-		IsAggressor  = Victims.Find(ActorRef) == -1
-	endIf
-	Actor[] Positions = RemoveActor(AllPositions, ActorRef)
-	int PartnerCount  = Positions.Length
+	bool IsVictim = Victims.Find(ActorRef) > -1
+	bool IsAggressor = Victims.Length && !IsVictim
+	Actor[] Positions = PapyrusUtil.RemoveActor(AllPositions, ActorRef)
 
-	FormListRemove(ActorRef, "SexPartners", none, true)
-	FormListRemove(ActorRef, "WasVictimOf", none, true)
-	FormListRemove(ActorRef, "WasAggressorTo", none, true)
-	sslSystemConfig.StoreActor(ActorRef)
-	
-	int i = PartnerCount
-	while i
-		i -= 1
-		FormListRemove(ActorRef, "SexPartners", Positions[i], true)
-		FormListAdd(ActorRef, "SexPartners", Positions[i], false)
-	endWhile
-	if ActorRef != PlayerRef
-		TrimList(ActorRef, "SexPartners", 8)
-	endIf
-
-	if IsVictim
-		i = PartnerCount
-		while i
-			i -= 1
-			if Victims.Find(Positions[i]) == -1
-				FormListRemove(ActorRef, "WasVictimOf", Positions[i], true)
-				FormListAdd(ActorRef, "WasVictimOf", Positions[i], false)
-			endIf
-		endWhile
-		if ActorRef != PlayerRef
-			TrimList(ActorRef, "WasVictimOf", 8)
-		endIf
-
-	elseIf IsAggressor
-		i = PartnerCount
-		while i
-			i -= 1
-			if Victims.Find(Positions[i]) != -1
-				FormListRemove(ActorRef, "WasAggressorTo", Positions[i], true)
-				FormListAdd(ActorRef, "WasAggressorTo", Positions[i], false)
-			endIf
-		endWhile
-		if ActorRef != PlayerRef
-			TrimList(ActorRef, "WasAggressorTo", 8)
-		endIf
-
-	endIf
-endFunction
+	int i = 0
+	While (i < Positions.Length)
+		If (IsVictim && Victims.Find(Positions[i]) == -1)
+			SexLabStatistics.AddEncounter(ActorRef, Positions[i], 1)
+		ElseIf (IsAggressor && Victims.Find(Positions[i]) > -1)
+			SexLabStatistics.AddEncounter(ActorRef, Positions[i], 2)
+		Else
+			SexLabStatistics.AddEncounter(ActorRef, Positions[i], 0)
+		EndIf
+		i += 1
+	EndWhile
+EndFunction
 function TrimList(Actor ActorRef, string List, int count)
-	count = FormListCount(ActorRef, List) - count
+	count = StorageUtil.FormListCount(ActorRef, List) - count
 	while count > 0
 		count -= 1
-		FormListRemoveAt(ActorRef, List, 0)
+		StorageUtil.FormListRemoveAt(ActorRef, List, 0)
 	endwhile
 endFunction
 
-;/ function RecordThread(Actor ActorRef, bool HasPlayer, int Positions, int HighestRelation, float TotalTime, Actor VictimRef, float[] SkillXP, int[] Genders)
-	AddSkillXP(ActorRef, SkillXP[0], SkillXP[1], SkillXP[2], SkillXP[3])
-	AddPurityXP(ActorRef, SkillXP[4], SkillXP[5], VictimRef != none, VictimRef == ActorRef, Genders[2] > 0, Positions, HighestRelation)
-	AddSex(ActorRef, TotalTime, HasPlayer, VictimRef != none, Genders[0], Genders[1], Genders[2])
-endFunction /;
-
-function _ResetStats(Actor ActorRef) global native
+function _ResetStats(Actor ActorRef) global
+	SexLabStatistics.ResetStatistics(ActorRef)
+EndFunction
 function ResetStats(Actor ActorRef)
-	; Current primary storage
 	_ResetStats(ActorRef)
-	ClearCustomStats(ActorRef)
-	FormListClear(ActorRef, "SexPartners")
-	FormListClear(ActorRef, "WasVictimOf")
-	FormListClear(ActorRef, "WasAggressorTo")
-	; Legacy unused storage
-	FloatListClear(ActorRef, "SexLabSkills")
 endFunction
 
-; function _EmptyStats(Actor ActorRef) global native
 function EmptyStats(Actor ActorRef)
-	if ActorRef
-		ResetStats(ActorRef)
-		_SetSkill(ActorRef, kSexuality, 65)
-	endIf
 endFunction
 
-Actor[] function GetAllSkilledActors() global native
+Actor[] function GetAllSkilledActors()
+	return SexLabStatistics.GetAllTrackedActors()
+EndFunction
 function ClearNPCSexSkills()
-	Actor[] List = GetAllSkilledActors()
-	Log("ClearNPCSexSkills("+List.Length+") "+List)
-	int max = List.Length
-	int i = List.Length
-	while i > 0
-		i -= 1
-		if List[i] && List[i] != PlayerRef
-			Log("ClearNPCSexSkills("+(i + 1)+"/"+max+") "+List[i].GetLeveledActorBase().GetName())
-			ResetStats(List[i])
-		endIf
-	endWhile
-	Log("ClearNPCSexSkills - DONE")
-endFunction
-
-function Setup()
-	parent.Setup()
-
-	ActorTypeNPC  = Config.ActorTypeNPC
-	GenderFaction = Config.GenderFaction
-
-	StatTitles = new string[7]
-	StatTitles[0] = "$SSL_Unskilled"
-	StatTitles[1] = "$SSL_Novice"
-	StatTitles[2] = "$SSL_Apprentice"
-	StatTitles[3] = "$SSL_Journeyman"
-	StatTitles[4] = "$SSL_Expert"
-	StatTitles[5] = "$SSL_Master"
-	StatTitles[6] = "$SSL_GrandMaster"
-
-	PureTitlesMale = new string[7]
-	PureTitlesMale[0] = "$SSL_Neutral"
-	PureTitlesMale[1] = "$SSL_Unsullied"
-	PureTitlesMale[2] = "$SSL_CleanCut"
-	PureTitlesMale[3] = "$SSL_Virtuous"
-	PureTitlesMale[4] = "$SSL_EverFaithful"
-	PureTitlesMale[5] = "$SSL_Lordly"
-	PureTitlesMale[6] = "$SSL_Saintly"
-
-	LewdTitlesMale = new string[7]
-	LewdTitlesMale[0] = "$SSL_Neutral"
-	LewdTitlesMale[1] = "$SSL_Experimenting"
-	LewdTitlesMale[2] = "$SSL_UnusuallyHorny"
-	LewdTitlesMale[3] = "$SSL_Promiscuous"
-	LewdTitlesMale[4] = "$SSL_SexualDeviant"
-	LewdTitlesMale[5] = "$SSL_Depraved"
-	LewdTitlesMale[6] = "$SSL_Hypersexual"
-
-	PureTitlesFemale = new string[7]
-	PureTitlesFemale[0] = "$SSL_Neutral"
-	PureTitlesFemale[1] = "$SSL_Unsullied"
-	PureTitlesFemale[2] = "$SSL_PrimProper"
-	PureTitlesFemale[3] = "$SSL_Virtuous"
-	PureTitlesFemale[4] = "$SSL_EverFaithful"
-	PureTitlesFemale[5] = "$SSL_Ladylike"
-	PureTitlesFemale[6] = "$SSL_Saintly"
-
-	LewdTitlesFemale = new string[7]
-	LewdTitlesFemale[0] = "$SSL_Neutral"
-	LewdTitlesFemale[1] = "$SSL_Experimenting"
-	LewdTitlesFemale[2] = "$SSL_UnusuallyHorny"
-	LewdTitlesFemale[3] = "$SSL_Promiscuous"
-	LewdTitlesFemale[4] = "$SSL_SexualDeviant"
-	LewdTitlesFemale[5] = "$SSL_Debaucherous"
-	LewdTitlesFemale[6] = "$SSL_Nymphomaniac"
-
-	SkillNames = new string[21]
-	SkillNames[0] = "Foreplay"
-	SkillNames[1] = "Vaginal"
-	SkillNames[2] = "Anal"
-	SkillNames[3] = "Oral"
-	SkillNames[4] = "Pure"
-	SkillNames[5] = "Lewd"
-	SkillNames[6] = "Males"
-	SkillNames[7] = "Females"
-	SkillNames[8] = "Creatures"
-	SkillNames[9] = "Masturbation"
-	SkillNames[10] = "Aggressor"
-	SkillNames[11] = "Victim"
-	SkillNames[12] = "SexCount"
-	SkillNames[13] = "PlayerSex"
-	SkillNames[14] = "Sexuality"
-	SkillNames[15] = "TimeSpent"
-	SkillNames[16] = "LastSex.RealTime"
-	SkillNames[17] = "LastSex.GameTime"
-	SkillNames[18] = "VaginalCount"
-	SkillNames[19] = "AnalCount"
-	SkillNames[20] = "OralCount"
-
-	; v1.59b - Converted stats to use float lists instead of individual values
-	int i = FormListCount(none, "SexLab.SeededActors")
-	while i > 0
-		i -= 1
-		ClearLegacyStats(FormListGet(none, "SexLab.SeededActors", i))		
-	endWhile
-	FormListClear(none, "SexLab.SeededActors")
-
-	; Give player empty stats if not yet set
-	if !IsSkilled(PlayerRef)
-		EmptyStats(PlayerRef)
-	endIf
-endFunction
+	Actor[] list = GetAllSkilledActors()
+	int i = 0
+	While (i < list.Length)
+		If (list[i] != Game.GetPlayer())
+			SexLabStatistics.ResetStatistics(list[i])
+		EndIf
+		i += 1
+	EndWhile
+EndFunction
 
 function ClearCustomStats(Form FormRef)
-	int i = StringListCount(self, "Custom")
-	while i
-		i -= 1
-		UnsetStringValue(FormRef, "sslActorStats.Custom."+StringListGet(self, "Custom", i))
-	endWhile
+	; No longer supported, dont wish to have 3rd parties delete custom stats of another
 endFunction
-
-function UpgradeLegacyStats(Form FormRef, bool IsImportant)
-	if !FormRef
-		return
-	elseIf !IsImportant
-		ClearLegacyStats(FormRef)
-		ClearCustomStats(FormRef)
-		Log(SexLabUtil.StringIfElse(SexLabUtil.IsActor(FormRef), (FormRef as Actor).GetLeveledActorBase().GetName(), "None"), "Skills Removed")
-	elseIf !IsSkilled(FormRef as Actor)
-		Actor ActorRef = FormRef as Actor
-		int i = FloatListCount(ActorRef, "SexLabSkills")
-		while i
-			i -= 1
-			_SetSkill(ActorRef, i, FloatListGet(ActorRef, "SexLabSkills", i))
-		endWhile
-		ClearLegacyStats(ActorRef)
-		sslSystemConfig.StoreActor(ActorRef)
-		Log("UpgradeLegacyStats: ", ActorRef.GetLeveledActorBase().GetName()+" - "+GetSkills(ActorRef))
-	endIf
-endFunction
-
-function ClearLegacyStats(Form FormRef)
-	; 1.59b & 1.59c
-	FloatListClear(FormRef, "SexLabSkills")
-	FormListRemove(none, "SexLab.SkilledActors", FormRef, true)
-	; < 1.59b
-	int i = SkillNames.Length
-	while i > 0
-		i -= 1
-		UnsetIntValue(FormRef, "sslActorStats."+SkillNames[i])
-		UnsetFloatValue(FormRef, "sslActorStats."+SkillNames[i])
-	endwhile
-	UnsetFloatValue(FormRef, "sslActorStats.Purity")
-endFunction
-
-;/ function CleanDeadStats()
-	int i = FormListCount(none, "SexLab.SkilledActors")
-	while i
-		i -= 1
-		if FormListGet(none, "SexLab.SkilledActors", i) != none
-			Actor ActorRef = FormListGet(none, "SexLab.SkilledActors", i) as Actor
-			if ActorRef && ActorRef != PlayerRef && ActorRef.IsDead()
-				ResetStats(ActorRef)
-				FormListRemove(none, "SexLab.SkilledActors", ActorRef)
-				; Log("Skills Removed", ActorRef.GetLeveledActorBase().GetName())
-			endIf
-		else
-			FormListRemoveAt(none, "SexLab.SkilledActors", i)
-		endIf
-	endWhile
-endFunction /;
 
 int function GetGender(Actor ActorRef)
-	ActorBase BaseRef = ActorRef.GetLeveledActorBase()
-	if SexLabUtil.HasRace(BaseRef.GetRace())
-		return 2 ; Creature
-	elseIf ActorRef.IsInFaction(GenderFaction)
-		return ActorRef.GetFactionRank(GenderFaction) ; Override
-	endIf
-	return BaseRef.GetSex() ; Default
+	return SexLabUtil.GetAPI().GetGender(ActorRef)
 endFunction
-
 
 ; ------------------------------------------------------- ;
 ; --- Skill Type IDs
 ; ------------------------------------------------------- ;
 
 int function StatID(string Name)
-	return SkillNames.Find(Name)
+	return SkillNames().Find(Name)
 endFunction
 int property kForeplay hidden
 	int function get()
@@ -1123,107 +931,90 @@ string function PrintSkills(Actor ActorRef)
 	return Output
 endFunction
 
-;/ int property kArousalRate hidden
-	int function get()
-		return 18
-	endFunction
-endProperty
-int property kArousalModifier hidden
-	int function get()
-		return 19
-	endFunction
-endProperty /;
-
-
 ; ------------------------------------------------------- ;
 ; --- DEPRECATED - DO NOT USE                         --- ;
 ; ------------------------------------------------------- ;
 
-; v1.59b NOTICE:
-; SexLab native skills storage has changed to use lists for storage
-; instead of values. This allows for faster access internally and
-; significantly shrinks the amount of data StorageUtil has to store.
+function UpgradeLegacyStats(Form FormRef, bool IsImportant)
+endFunction
 
-; These functions will now reroute to their appropiate new/updated functions if
-; they are used to attempt to access the native skills. If accessing if they
-; are not used for native skills they will resort to old functionality
+function ClearLegacyStats(Form FormRef)
+endFunction
 
 bool function HasInt(Actor ActorRef, string Stat)
-	return HasIntValue(ActorRef, "sslActorStats."+Stat) || (IsSkilled(ActorRef) && _GetSkill(ActorRef, SkillNames.Find(Stat)) != 0.0)
+	return HasStat(ActorRef, Stat)
 endFunction
 bool function HasFloat(Actor ActorRef, string Stat)
-	return HasFloatValue(ActorRef, "sslActorStats."+Stat) || (IsSkilled(ActorRef) && _GetSkill(ActorRef, SkillNames.Find(Stat)) != 0.0)
+	return HasStat(ActorRef, Stat)
 endFunction
 bool function HasStr(Actor ActorRef, string Stat)
-	return HasStringValue(ActorRef, "sslActorStats."+Stat)
+	return HasStat(ActorRef, Stat)
 endFunction
 
 int function GetInt(Actor ActorRef, string Stat)
-	if SkillNames.Find(Stat) == -1
-		return GetIntValue(ActorRef, "sslActorStats."+Stat)
+	if SkillNames().Find(Stat) == -1
+		return GetStatInt(ActorRef, Stat)
 	endIf
 	return GetSkill(ActorRef, Stat)
 endFunction
 float function GetFloat(Actor ActorRef, string Stat)
-	if SkillNames.Find(Stat) == -1
-		return GetFloatValue(ActorRef, "sslActorStats."+Stat)
+	if SkillNames().Find(Stat) == -1
+		return GetStatFloat(ActorRef, Stat)
 	endIf
 	return GetSkillFloat(ActorRef, Stat)
 endFunction
 string function GetStr(Actor ActorRef, string Stat)
-	return GetStringValue(ActorRef, "sslActorStats."+Stat)
+	return GetStat(ActorRef, Stat)
 endFunction
 
 function SetInt(Actor ActorRef, string Stat, int Value)
-	if SkillNames.Find(Stat) != -1
-		_SetSkill(ActorRef, SkillNames.Find(Stat), value as int)
+	if SkillNames().Find(Stat) != -1
+		SetLegacyStatistic(ActorRef, SkillNames().Find(Stat), value as int)
 	else
-		SetIntValue(ActorRef, "sslActorStats."+Stat, Value)
+		SetStat(ActorRef, Stat, Value)
 	endIf
 endFunction
 function SetFloat(Actor ActorRef, string Stat, float Value)
-	if SkillNames.Find(Stat) != -1
-		_SetSkill(ActorRef, SkillNames.Find(Stat), 0.0)
+	if SkillNames().Find(Stat) != -1
+		SetLegacyStatistic(ActorRef, SkillNames().Find(Stat), 0.0)
 	else
-		SetFloatValue(ActorRef, "sslActorStats."+Stat, Value)
+		SetStat(ActorRef, Stat, Value)
 	endIf
 endFunction
 function SetStr(Actor ActorRef, string Stat, string Value)
-	SetStringValue(ActorRef, "sslActorStats."+Stat, Value)
+	SetStat(ActorRef, Stat, Value)
 endFunction
 
 function ClearInt(Actor ActorRef, string Stat)
-	_SetSkill(ActorRef, SkillNames.Find(Stat), 0.0)
-	UnsetIntValue(ActorRef, "sslActorStats."+Stat)
+	SetLegacyStatistic(ActorRef, SkillNames().Find(Stat), 0.0)
+	ClearStat(ActorRef, Stat)
 endFunction
 function ClearFloat(Actor ActorRef, string Stat)
-	_SetSkill(ActorRef, SkillNames.Find(Stat), 0.0)
-	UnsetFloatValue(ActorRef, "sslActorStats."+Stat)
+	SetLegacyStatistic(ActorRef, SkillNames().Find(Stat), 0.0)
+	ClearStat(ActorRef, Stat)
 endFunction
 function ClearStr(Actor ActorRef, string Stat)
-	UnsetStringValue(ActorRef, "sslActorStats."+Stat)
+	ClearStat(ActorRef, Stat)
 endFunction
 
 function AdjustInt(Actor ActorRef, string Stat, int Amount)
 	if Amount != 0 && ActorRef && Stat != ""
-		if SkillNames.Find(stat) != -1
+		if SkillNames().Find(stat) != -1
 			AdjustSkill(ActorRef, Stat, Amount)
 		else
-			AdjustIntValue(ActorRef, "sslActorStats."+Stat, Amount)
+			AdjustBy(ActorRef, Stat, Amount)
 		endIf
 	endIf
 endfunction
 function AdjustFloat(Actor ActorRef, string Stat, float Amount)
 	if Amount != 0.0 && ActorRef && Stat != ""
-		if SkillNames.Find(stat) != -1
+		if SkillNames().Find(stat) != -1
 			AdjustSkillFloat(ActorRef, Stat, Amount)
 		else
-			AdjustFloatValue(ActorRef, "sslActorStats."+Stat, Amount)
+			FloatAdjustBy(ActorRef, Stat, Amount)
 		endIf
 	endIf
 endfunction
-
-
 
 bool locked = false
 state Testing
@@ -1233,7 +1024,6 @@ state Testing
 	function Tester()
 		while locked
 			utility.wait(0.5)
-			Log("ActorStats Locked...")
 		endWhile
 		locked = true
 

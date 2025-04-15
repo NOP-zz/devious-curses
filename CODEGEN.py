@@ -1,4 +1,4 @@
-import sys, os
+import sys, os, time
 
 if len(sys.argv) == 2:
 	os.chdir(sys.argv[1])
@@ -383,3 +383,5 @@ devices_raw = pre + mid + post
 
 with open(r"src\Devices.hpp", "w") as f:
 	f.write(devices_raw)
+
+time.sleep(1.0)

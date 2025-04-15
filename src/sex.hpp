@@ -3,6 +3,7 @@
 #include "Devices.hpp"
 #include "tats.hpp"
 #include "Consequences.hpp"
+#include "../include/SexLabPPFunctions.h"
 
 using namespace SKSE;
 
@@ -22,21 +23,42 @@ namespace DCURSES {
 		}
 		auto player = RE::PlayerCharacter::GetSingleton();
 		//RE::TESFaction* arousalFaction = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("03FC36", 0, 16), "SexLabAroused.esm");
-		RE::TESFaction* SexlabGenderFaction = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("043A43", 0, 16), "SexLab.esm");
+		//RE::TESFaction* SexlabGenderFaction = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("043A43", 0, 16), "SexLab.esm");
 		//RE::TESFaction* PlayerMarriedFaction = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("0C6472", 0, 16), "Skyrim.esm");
 		RE::TESFaction* SexlabAnimatingFaction = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("00E50F", 0, 16), "SexLab.esm");
 		RE::TESFaction* ZadAnimatingFaction = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("029567", 0, 16), "Devious Devices - Integration.esm");
-		
+
 		if (actor->IsInCombat() || actor->IsInFaction(SexlabAnimatingFaction) || actor->IsInFaction(ZadAnimatingFaction) || actor->IsInWater() || actor->IsInRagdollState() || actor->IsChild() || actor->AsActorState()->GetSitSleepState() == RE::SIT_SLEEP_STATE::kIsSleeping || actor->IsHostileToActor(player)) {
 			return false;
 		}
 
-		bool actorIsCreature = !actor->GetRace()->HasKeywordString("ActorTypeNPC") && (actor->GetRace()->HasKeywordString("ActorTypeCreature") || actor->GetRace()->HasKeywordString("ActorTypeDwarven") || actor->GetRace()->HasKeywordString("ActorTypeAnimal"));
+		bool isCreature = !actor->GetRace()->HasKeywordString("ActorTypeNPC") && (actor->GetRace()->HasKeywordString("ActorTypeCreature") || actor->GetRace()->HasKeywordString("ActorTypeDwarven") || actor->GetRace()->HasKeywordString("ActorTypeAnimal"));
 
-		if ((actor->GetActorBase()->GetSex() == 0 && actor->GetFactionRank(SexlabGenderFaction, false) == 0 && settings.sexAllowMale) ||
-			(actor->GetActorBase()->GetSex() == 1 && actor->GetFactionRank(SexlabGenderFaction, false) == 1 && settings.sexAllowFemale) ||
-			(actor->GetActorBase()->GetSex() == 1 && actor->GetFactionRank(SexlabGenderFaction, false) == 0 && settings.sexAllowFuta) ||
-			(actorIsCreature && settings.sexAllowCreature)) {
+		int actorSex = actor->GetActorBase()->GetSex();
+
+		bool isFuta = false;
+
+		bool isMale = false;
+		bool isFemale = false;
+
+		if (!isCreature) {
+			auto sex = SexLab::GetSex(actor);
+			isMale = sex == 0;
+			isFemale = sex == 1;
+			isFuta = sex == 2;
+		}
+		else {
+			isMale = actorSex == 0;
+			isFemale = actorSex == 1;
+		}
+
+
+		log::trace("Gender testing actor {}: {} ({})", actor->GetName(), isFuta ? "futa" : isFemale ? "female" : isMale ? "male" : isCreature ? "creature" : "unknown", GetActorArousal(actor));
+
+		if ((isMale && settings.sexAllowMale) ||
+			(isFemale && settings.sexAllowFemale) ||
+			(isFuta && settings.sexAllowFuta) ||
+			(isCreature && settings.sexAllowCreature)) {
 			return true;
 		}
 		return false;
@@ -52,6 +74,7 @@ namespace DCURSES {
 
 		auto playerNumDevices = numDevicesVisible(player);
 		auto playerWornDeviceKeywords = GetWornDeviceKeywords(player);
+		auto playerIsNude = player->GetWornArmor((RE::BIPED_MODEL::BipedObjectSlot::kBody)) == nullptr;
 		auto playerIsWearingCollar = vectorContains(playerWornDeviceKeywords, "zad_DeviousCollar");
 		auto playerIsWearingHeavyBondage = vectorContains(playerWornDeviceKeywords, "zad_DeviousHeavyBondage");
 		auto playerIsWearingBlindfold = vectorContains(playerWornDeviceKeywords, "zad_DeviousBlindfold");
@@ -75,7 +98,7 @@ namespace DCURSES {
 					if (actor && actor->Is3DLoaded() && !actor->IsDead() && actor->GetPosition().GetDistance(playerPosition) <= settings.sexSearchRadius) {
 
 						bool actorIsCreature = !actor->GetRace()->HasKeywordString("ActorTypeNPC") && (actor->GetRace()->HasKeywordString("ActorTypeCreature") || actor->GetRace()->HasKeywordString("ActorTypeDwarven") || actor->GetRace()->HasKeywordString("ActorTypeAnimal"));
-
+						//log::info("testing actor {}", actor->GetName());
 						//Check aggressor against normal filters
 						if (SexActorFilter(actor)) {
 							//Check aggressor enabled
@@ -96,19 +119,21 @@ namespace DCURSES {
 								enabled = (!settings.sexRequireBindings || playerNumDevices > 0) &&
 									(!settings.sexRequireCollar || playerIsWearingCollar) &&
 									(!settings.sexRequireHeavy || playerIsWearingHeavyBondage) &&
-									(!settings.sexRequireNude || actor->GetWornArmor((RE::BIPED_MODEL::BipedObjectSlot::kBody)) == nullptr) &&
+									(!settings.sexRequireNude || playerIsNude) &&
 									(!(settings.sexRequiredPlayerTattoos > 0) || playerTattooCount >= settings.sexRequiredPlayerTattoos) &&
 									(!(settings.sexRequiredPlayerArousal > 0) || playerArousal >= settings.sexRequiredPlayerArousal);
 							}
 							else {
-								enabled = (!settings.sexRequireBindings && !settings.sexRequireCollar && !settings.sexRequireHeavy && !settings.sexRequireNude && !(settings.sexRequiredPlayerArousal > 0)) || (
+								enabled = (!settings.sexRequireBindings && !settings.sexRequireCollar && !settings.sexRequireHeavy && !settings.sexRequireNude && !(settings.sexRequiredPlayerArousal > 0) && !(settings.sexRequiredPlayerTattoos > 0)) || (
 									(settings.sexRequireBindings && playerNumDevices > 0) ||
 									(settings.sexRequireCollar && playerIsWearingCollar) ||
 									(settings.sexRequireHeavy && playerIsWearingHeavyBondage) ||
-									(settings.sexRequireNude && actor->GetWornArmor((RE::BIPED_MODEL::BipedObjectSlot::kBody)) == nullptr) ||
+									(settings.sexRequireNude && playerIsNude) ||
 									((settings.sexRequiredPlayerTattoos > 0) && playerTattooCount >= settings.sexRequiredPlayerTattoos) ||
 									((settings.sexRequiredPlayerArousal > 0) && playerArousal >= settings.sexRequiredPlayerArousal));
 							}
+
+							log::trace("Actor enabled: {}", enabled);
 
 							if (enabled) {
 								//Check aggressor arousal
@@ -118,16 +143,19 @@ namespace DCURSES {
 								//UpdateArousal(actor);
 								//}
 
+								UpdateArousal(actor);
+
 								float arousal = static_cast<float>(settings.sexBaseArousal);
 								int chance = settings.sexChance;
 								if (actorIsCreature) chance = settings.sexChanceCreature;
+
 								std::string logMessage = "";
 
 								if (GameHour->value < 5.0 || GameHour->value > 22.0) {
 									arousal -= settings.sexArousalNightModifier;
 									if (settings.sexArousalNightModifier > 0) logMessage += fmt::format("(night {}) ", settings.sexArousalNightModifier);
 								}
-								if (player->GetWornArmor((RE::BIPED_MODEL::BipedObjectSlot::kBody)) == nullptr) {
+								if (playerIsNude) {
 									arousal -= settings.sexArousalNudeModifier;
 									if (settings.sexArousalNudeModifier > 0) logMessage += fmt::format("(nude {}) ", settings.sexArousalNudeModifier);
 								}
@@ -156,7 +184,7 @@ namespace DCURSES {
 									if (settings.sexArousalVisibleModifier > 0) logMessage += fmt::format("(device {}) ", settings.sexArousalVisibleModifier);
 								}
 								if (playerTattooCount > 0) {
-									auto mod = settings.sexArousalTattooModifier * GetTattooCount(player);
+									auto mod = settings.sexArousalTattooModifier * playerTattooCount;
 									arousal -= mod;
 									if (mod > 0) logMessage += fmt::format("(tattoo {:.2f}) ", mod);
 								}
@@ -186,11 +214,12 @@ namespace DCURSES {
 									}
 								}
 
-								logMessage.pop_back();
+								if (!logMessage.empty()) logMessage.pop_back();
 
 								int r = Util::randomInt();
 
 
+								log::trace("Actor Info {}: {} > {}({}) [{}]", actor->GetName(), actorArousal, arousal, settings.sexBaseArousal, logMessage);
 
 								if (actorArousal >= arousal && r < chance) {
 									auto msg = fmt::format("[sex] {}: {} > {}({}) [{}] ({}%, {})", actor->GetName(), actorArousal, arousal, settings.sexBaseArousal, logMessage, chance, r);
@@ -291,6 +320,10 @@ namespace DCURSES {
 			return;
 		}
 
+		if (counters.clock_SexTimeout <= 0) {
+			return;
+		}
+
 		if (player->IsInCombat() || player->IsInFaction(ZadAnimatingFaction) || player->IsInWater() || player->IsInRagdollState() || RE::UI::GetSingleton()->IsMenuOpen("Dialogue Menu") || RE::UI::GetSingleton()->IsMenuOpen("Crafting Menu")) {
 			return;
 		}
@@ -299,11 +332,16 @@ namespace DCURSES {
 			return;
 		}
 
+		//log::info("Attempting random sex event.");
 
 		auto actors = getAllAvailableActors();
+
 		if (actors.size() == 0) {
 			return;
 		}
+
+		//log::info("Got actors for event.");
+
 		int r = Util::randomInt(static_cast<int>(actors.size()));
 		auto const& actorData = (actors)[r];
 
@@ -312,6 +350,7 @@ namespace DCURSES {
 		StartSex(actorData.first);
 
 		counters.clock_lastSex = -10;
+		counters.clock_SexTimeout = -10;
 	}
 
 	std::string P_GetAnimationFilterTags(RE::StaticFunctionTag*, RE::Actor* akActor) {
@@ -330,6 +369,26 @@ namespace DCURSES {
 		}
 		if (!(mask & 0b1000)) {
 			tagsToRemove = "Boobjob," + tagsToRemove;
+		}
+		return tagsToRemove;
+	}
+
+	std::string P_GetAnimationFilterTagsP(RE::StaticFunctionTag*, RE::Actor* akActor) {
+		int mask = GetDeviceMask(akActor);
+
+		std::string tagsToRemove;
+
+		if (!(mask & 0b0100)) {
+			tagsToRemove = "-Oral," + tagsToRemove;
+		}
+		if (!(mask & 0b0001)) {
+			tagsToRemove = "-Anal," + tagsToRemove;
+		}
+		if (!(mask & 0b0010)) {
+			tagsToRemove = "-Vaginal,-Fisting,-Fingering,-Masturbation," + tagsToRemove;
+		}
+		if (!(mask & 0b1000)) {
+			tagsToRemove = "-Boobjob," + tagsToRemove;
 		}
 		return tagsToRemove;
 	}
@@ -359,6 +418,7 @@ namespace DCURSES {
 
 	bool PapyrusFunctionsSex(RE::BSScript::IVirtualMachine* ivm) {
 		ivm->RegisterFunction("GetAnimationFilterTags", "DCursesLib", P_GetAnimationFilterTags);
+		ivm->RegisterFunction("GetAnimationFilterTagsP", "DCursesLib", P_GetAnimationFilterTagsP);
 		ivm->RegisterFunction("SexStarted", "DCursesLib", P_SexStarted);
 		ivm->RegisterFunction("SexEnded", "DCursesLib", P_SexEnded);
 		return true;

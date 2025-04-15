@@ -293,6 +293,8 @@ Bool Property noBeltPiercing = false Auto
 Int noBeltPiercingOID
 Bool Property plugsDontCount = true Auto
 Int plugsDontCountOID
+Bool Property onlyUseUnforgivingDevices = false Auto
+Int onlyUseUnforgivingDevicesOID
 Bool Property allowLegShackles = false Auto
 Int allowLegShacklesOID
 Bool Property keyForgiveness = true Auto
@@ -410,6 +412,10 @@ Event OnPageReset(string page)
 	If Game.GetModByName("SimpleSlavery.esp") != 255
 		flag_SimpleSlavery = 0
 	EndIf
+	int flag_UnforgivingDevices = 1
+	If Game.GetModByName("UnforgivingDevices.esp") != 255
+		flag_UnforgivingDevices = 0
+	EndIf
 	int flag_SSEnabled = 1
 	If eventSimpleSlaveryWeight > 0 && Game.GetModByName("SimpleSlavery.esp") != 255
 		flag_SSEnabled = 0
@@ -469,6 +475,8 @@ Event OnPageReset(string page)
 		straitjacketLegbinderWeightOID = AddSliderOption("Hobbling Straitjacket Weight  ", straitjacketLegbinderWeight, "{0}", 0)
 		petSuitWeightOID = AddSliderOption("Pet Suit Weight  ", petSuitWeight, "{0}", 0)
 		SetCursorPosition(1)
+		AddHeaderOption("Unforgiving Devices ")
+		onlyUseUnforgivingDevicesOID = AddToggleOption("Only Unforgiving Devices  ", onlyUseUnforgivingDevices, flag_UnforgivingDevices)
 		AddHeaderOption("Collars & Cuffs ")
 		collarWeightOID = AddSliderOption("Collar Weight  ", collarWeight, "{0}", 0)
 		armCuffsWeightOID = AddSliderOption("Arm Cuffs Weight  ", armCuffsWeight, "{0}", 0)
@@ -811,6 +819,10 @@ Event OnOptionHighlight(int option)
 	Endif
 	If option == petSuitWeightOID
 		SetInfoText("Chance to be equipped with a pet suit.")
+		Return
+	Endif
+	If option == onlyUseUnforgivingDevicesOID
+		SetInfoText("Only register devices to the mod that are converted to work with UD.")
 		Return
 	Endif
 	If option == collarWeightOID
@@ -1352,6 +1364,11 @@ Event OnOptionSelect(int option)
 	If option == plugsDontCountOID
 		plugsDontCount = !plugsDontCount
 		SetToggleOptionValue(plugsDontCountOID, plugsDontCount)
+		Return
+	Endif
+	If option == onlyUseUnforgivingDevicesOID
+		onlyUseUnforgivingDevices = !onlyUseUnforgivingDevices
+		SetToggleOptionValue(onlyUseUnforgivingDevicesOID, onlyUseUnforgivingDevices)
 		Return
 	Endif
 	If option == allowLegShacklesOID

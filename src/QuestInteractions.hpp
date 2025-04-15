@@ -146,9 +146,6 @@ namespace DCURSES {
 
 	void QITGInteraction1() {
 		CloseContinerMenus();
-		auto player = RE::PlayerCharacter::GetSingleton();
-
-		UndressActor(player);
 
 		DoStandardEvent(false, "", "white", 3, {"zad_DeviousHeavyBondage", "zad_DeviousBelt", "zad_DeviousHarness", "zad_DeviousGag", "zad_DeviousBlindfold"});
 
@@ -157,9 +154,6 @@ namespace DCURSES {
 
 	void QITGInteraction2() {
 		CloseContinerMenus();
-		auto player = RE::PlayerCharacter::GetSingleton();
-
-		UndressActor(player);
 
 		DoStandardEvent(true, "", "white | piercing", 6, { "zad_DeviousHeavyBondage", "zad_DeviousBelt", "zad_DeviousHarness"});
 
@@ -168,9 +162,6 @@ namespace DCURSES {
 
 	void QITGInteraction3() {
 		CloseContinerMenus();
-		auto player = RE::PlayerCharacter::GetSingleton();
-
-		UndressAndUnequipActor(player);
 
 		DoStandardEvent(false, "", "white | (piercing & !chastity)", 8);
 
@@ -181,7 +172,7 @@ namespace DCURSES {
 		CloseContinerMenus();
 		auto player = RE::PlayerCharacter::GetSingleton();
 
-		UndressActor(player);
+		UndressAndUnequipActor(player);
 
 		DoStandardEvent(false, "", "steel | (shock & piercing) | grand", 20, {"zad_DeviousHeavyBondage"});
 
@@ -233,9 +224,6 @@ namespace DCURSES {
 	}
 
 	void QICInteraction1() {
-		auto player = RE::PlayerCharacter::GetSingleton();
-		
-		UndressAndUnequipActor(player);
 
 		DoStandardEvent(false, "", "rope & !(white | red | black)", 8, {"zad_DeviousBelt"});
 
@@ -243,9 +231,6 @@ namespace DCURSES {
 	}
 
 	void QICInteraction2() {
-		auto player = RE::PlayerCharacter::GetSingleton();
-
-		UndressAndUnequipActor(player);
 
 		DoStandardEvent(false, "", "iron | chain | rusty | ironpear | peargag", 15, { "zad_DeviousBelt" });
 

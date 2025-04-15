@@ -1,6 +1,24 @@
 scriptname sslExpressionDefaults extends sslExpressionFactory
+{
+	Old default expressions of SL. ALl of this is legacy and no longer used
+	Expressions are now iniitlaized within its own dll (or through a .yml file system)
+}
+
+; *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* ;
+; ----------------------------------------------------------------------------- ;
+;								██╗     ███████╗ ██████╗  █████╗  ██████╗██╗   ██╗							;
+;								██║     ██╔════╝██╔════╝ ██╔══██╗██╔════╝╚██╗ ██╔╝							;
+;								██║     █████╗  ██║  ███╗███████║██║      ╚████╔╝ 							;
+;								██║     ██╔══╝  ██║   ██║██╔══██║██║       ╚██╔╝  							;
+;								███████╗███████╗╚██████╔╝██║  ██║╚██████╗   ██║   							;
+;								╚══════╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝ ╚═════╝   ╚═╝   							;
+; ----------------------------------------------------------------------------- ;
+; *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* ;
 
 function LoadExpressions()
+	Debug.Messagebox("Default Expressions are initialized in SexLabs .dll. Default Expressions should no longer be installed through Papyrus")
+	return
+
 	; Prepare factory resources
 	PrepareFactory()
 	; Regsiter expressions
@@ -18,10 +36,10 @@ function LoadExpressions()
 	RegisterExpression("Custom3")
 	RegisterExpression("Custom4")
 	RegisterExpression("Custom5")
-
 endFunction
 
 function Pleasure(int id)
+	return
 	sslBaseExpression Base = Create(id)
 
 	Base.Name = "Pleasure"
@@ -101,6 +119,7 @@ function Pleasure(int id)
 endFunction
 
 function Shy(int id)
+	return
 	sslBaseExpression Base = Create(id)
 
 	Base.Name = "Shy"
@@ -128,6 +147,7 @@ function Shy(int id)
 endFunction
 
 function Afraid(int id)
+	return
 	sslBaseExpression Base = Create(id)
 
 	Base.Name = "Afraid"
@@ -177,6 +197,7 @@ endFunction
 
 
 function Pained(int id)
+	return
 	sslBaseExpression Base = Create(id)
 
 	Base.Name = "Pained"
@@ -223,6 +244,7 @@ function Pained(int id)
 endFunction
 
 function Angry(int id)
+	return
 	sslBaseExpression Base = Create(id)
 
 	Base.Name = "Angry"
@@ -249,6 +271,7 @@ function Angry(int id)
 endFunction
 
 function Happy(int id)
+	return
 	sslBaseExpression Base = Create(id)
 
 	Base.Name = "Happy"
@@ -276,6 +299,7 @@ function Happy(int id)
 endFunction
 
 function Sad(int id)
+	return
 	sslBaseExpression Base = Create(id)
 
 	Base.Name = "Sad"
@@ -303,6 +327,7 @@ function Sad(int id)
 endFunction
 
 function Joy(int id)
+	return
 	sslBaseExpression Base = Create(id)
 
 	Base.Name = "Joy"
@@ -389,30 +414,35 @@ function Joy(int id)
 endFunction
 
 function Custom1(int id)
+	return
 	sslBaseExpression Base = Create(id)
 	Base.Name = "Custom 1"
 	Base.Enabled   = false
 	Base.Save(id)
 endFunction
 function Custom2(int id)
+	return
 	sslBaseExpression Base = Create(id)
 	Base.Name = "Custom 2"
 	Base.Enabled   = false
 	Base.Save(id)
 endFunction
 function Custom3(int id)
+	return
 	sslBaseExpression Base = Create(id)
 	Base.Name = "Custom 3"
 	Base.Enabled   = false
 	Base.Save(id)
 endFunction
 function Custom4(int id)
+	return
 	sslBaseExpression Base = Create(id)
 	Base.Name = "Custom 4"
 	Base.Enabled   = false
 	Base.Save(id)
 endFunction
 function Custom5(int id)
+	return
 	sslBaseExpression Base = Create(id)
 	Base.Name = "Custom 5"
 	Base.Enabled   = false

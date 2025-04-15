@@ -1,7 +1,18 @@
 scriptname sslTroubleshoot extends Quest
+{
+	Support script for attempting to troubleshoot certain issues. No longer used
+}
 
-import Debug
-import SexLabUtil
+; *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* ;
+; ----------------------------------------------------------------------------- ;
+;               ██╗     ███████╗ ██████╗  █████╗  ██████╗██╗   ██╗              ;
+;               ██║     ██╔════╝██╔════╝ ██╔══██╗██╔════╝╚██╗ ██╔╝              ;
+;               ██║     █████╗  ██║  ███╗███████║██║      ╚████╔╝               ;
+;               ██║     ██╔══╝  ██║   ██║██╔══██║██║       ╚██╔╝                ;
+;               ███████╗███████╗╚██████╔╝██║  ██║╚██████╗   ██║                 ;
+;               ╚══════╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝ ╚═════╝   ╚═╝                 ;
+; ----------------------------------------------------------------------------- ;
+; *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* ;
 
 Actor property PlayerRef auto
 SexLabFramework property SexLab auto
@@ -53,7 +64,7 @@ state AnimSlots
 			return false
 		endif
 
-		if AnimSlots.Slotted < 1 || AnimSlots.Animations.Length < 1
+		if AnimSlots.Slotted < 1
 			Error(101, "sslAnimSlots appears to have no animations registered.")
 			Repair(true)
 			return false
@@ -62,7 +73,7 @@ state AnimSlots
 		; Check health of all animations
 		Notify("Checking Animation Health...")
 		bool dirty = false
-		sslBaseAnimation[] Animations = AnimSlots.Animations
+		sslBaseAnimation[] Animations = AnimSlots.GetSlots(0, 128)
 		int i = AnimSlots.Slotted
 		while i > 0
 			i -= 1
@@ -164,7 +175,7 @@ state ThreadSlots
 				sslActorAlias ActorAlias = Thread.ActorAlias[n]
 				if ActorAlias.GetReference() != none
 					Error(153, "Actor Alias ("+n+") is not empty, attempting to correct this error now...")
-					ActorAlias.ClearAlias()
+					ActorAlias.Clear()
 				endIf
 				; if ActorAlias.TestAlias()
 				; 	Error(154, "Actor Alias ("+n+") failed to load a resource, something may be wrong with your SexLab.esm or you may have missing scripts. Attempting to correct this error now...")
@@ -192,10 +203,10 @@ state FNIS
 	bool function DoTest()
 
 		; Check FNIS generation
-		if !FNIS.IsGenerated()
-			Error(160, "You most likely have not run the GenerateFNISforUsers.exe tool for your current version of FNIS.")
-			return false
-		endIf
+		; if !FNIS.IsGenerated()
+		; 	Error(160, "You most likely have not run the GenerateFNISforUsers.exe tool for your current version of FNIS.")
+		; 	return false
+		; endIf
 
 		; Attempt to play event
 		Tell("Attempting to play test animation on player, pay attention to your characters animation...")
@@ -230,7 +241,7 @@ endState
 bool function Prepare()
 	GoToState("")
 	UnregisterForUpdate()
-	OpenUserLog("SexLab")
+	Debug.OpenUserLog("SexLab")
 
 	; ; Turn on Papyrus log and tracing
 	; Utility.SetINIBool("bEnableLogging:Papyrus", true)
@@ -251,8 +262,8 @@ bool function Prepare()
 	Checks[9] = SexLab.Stats != none
 	if Checks.Find(false) != -1
 		Error(20, "SexLab is missing a resource. This is generally a sign something is wrong with your SexLab.esm or you are missing scripts.")
-		Trace("SexLabFramework Checks -- "+Checks)
-		PrintConsole("SexLabFramework Checks -- "+Checks)
+		Debug.Trace("SexLabFramework Checks -- "+Checks)
+		SexLabUtil.PrintConsole("SexLabFramework Checks -- "+Checks)
 		return false
 	endIf
 
@@ -300,27 +311,15 @@ function Tell(string msg)
 endFunction
 
 function Log(string msg)
-	Debug.Trace(msg)
-	SexLabUtil.PrintConsole(msg)
-	Debug.TraceUser("SexLab", msg)
+	sslLog.Log(msg)
 endFunction
 
 function Notify(string msg)
-	Debug.Notification(msg)
-	SexLabUtil.PrintConsole(msg)
-	Debug.Trace(msg)
-	Debug.TraceUser("SexLab", msg)
-	Utility.Wait(0.1)
+	sslLog.Log(msg, true)
 endFunction
 
 function Error(int errorid, string msg)
-	Debug.TraceAndbox(msg)
-	Utility.Wait(0.1)
-	SexLabUtil.PrintConsole(msg)
-	Debug.TraceUser("SexLab", msg)
-	string id = "--- Error ID ( "+errorid+" ) ---"
-	SexLabUtil.PrintConsole(id)
-	Debug.TraceUser("SexLab", id)
+	sslLog.Error(msg, true)
 endFunction
 
 bool function Ask(string msg)

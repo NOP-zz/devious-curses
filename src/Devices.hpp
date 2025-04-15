@@ -395,6 +395,15 @@ namespace DCURSES {
 
 		int counter = 0;
 
+		if (RE::TESDataHandler::GetSingleton()->LookupModByName("UnforgivingDevices.esp") == nullptr) {
+			settings.onlyUseUnforgivingDevices = false;
+			SetMCMInt("onlyUseUnforgivingDevices", false);
+		}
+
+		if (settings.onlyUseUnforgivingDevices) {
+			log::info("Building device lists for Unforgiving Devices.");
+		}
+
 		log::info("Total devices from api: {}", API->GetDatabase().size());
 		for (auto const& [device, dev_data] : API->GetDatabase()) {
 			RE::TESObjectARMO* deviceInventory = device;
@@ -434,6 +443,10 @@ namespace DCURSES {
 				deviceInventory->HasKeywordString("zad_BlockGeneric") ||
 				deviceInventory->HasKeywordString("zad_QuestItem")
 				) {
+				continue;
+			}
+
+			if (settings.onlyUseUnforgivingDevices && !(deviceRendered->HasKeywordString("UD_UnforgivingDevice") && deviceInventory->HasKeywordString("UD_InventoryDevice"))) {
 				continue;
 			}
 

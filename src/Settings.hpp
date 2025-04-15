@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Scripting.hpp"
+#include "Serializer.hpp"
 #include "Json.hpp"
 
 #include <stdlib.h>
@@ -21,6 +22,7 @@ namespace DCURSES {
 		//Flag flag_SlaveTats					//CheckSTNG()
 		//Flag flag_LewdMarks					//ESP:LewdMarksSlaveTats.esp, CheckSTNG()
 		//Flag flag_SimpleSlavery				//ESP:SimpleSlavery.esp
+		//Flag flag_UnforgivingDevices			//ESP:UnforgivingDevices.esp
 		//Flag flag_SSEnabled					//VAR:eventSimpleSlaveryWeight > 0, ESP:SimpleSlavery.esp
 		//Flag flag_SGO							//ESP:Sgo4IF.esp
 		//Page Main								
@@ -74,6 +76,8 @@ namespace DCURSES {
 		int straitjacketLegbinderWeight = 15;	//Hobbling Straitjacket Weight//Chance to be equipped with a straitjacket that has a legbinder.//{0}//(0,100,1)
 		int petSuitWeight = 10;					//Pet Suit Weight//Chance to be equipped with a pet suit.//{0}//(0,100,1)
 		//Column
+		//Header Unforgiving Devices
+		bool onlyUseUnforgivingDevices = false;	//Only Unforgiving Devices//Only register devices to the mod that are converted to work with UD.		?:? flag_UnforgivingDevices
 		//Header Collars & Cuffs	
 		int collarWeight = 60;					//Collar Weight//Chance to be equipped with a collar.//{0}//(0,100,1)
 		int armCuffsWeight = 60;				//Arm Cuffs Weight//Chance to be equipped with arm cuffs.//{0}//(0,100,1)
@@ -526,6 +530,8 @@ namespace DCURSES {
 		SetMCMBool("noBeltPiercing",settings.noBeltPiercing);
 		settings.plugsDontCount = true;
 		SetMCMBool("plugsDontCount",settings.plugsDontCount);
+		settings.onlyUseUnforgivingDevices = false;
+		SetMCMBool("onlyUseUnforgivingDevices",settings.onlyUseUnforgivingDevices);
 		settings.allowLegShackles = false;
 		SetMCMBool("allowLegShackles",settings.allowLegShackles);
 		settings.keyForgiveness = true;
@@ -729,6 +735,7 @@ namespace DCURSES {
 			{"beltPlugs", settings.beltPlugs},
 			{"noBeltPiercing", settings.noBeltPiercing},
 			{"plugsDontCount", settings.plugsDontCount},
+			{"onlyUseUnforgivingDevices", settings.onlyUseUnforgivingDevices},
 			{"allowLegShackles", settings.allowLegShackles},
 			{"keyForgiveness", settings.keyForgiveness},
 			{"enableMagicKeys", settings.enableMagicKeys},
@@ -1057,6 +1064,8 @@ namespace DCURSES {
 		SetMCMBool("noBeltPiercing",settings.noBeltPiercing);
 		settings.plugsDontCount = static_cast<bool>(j.value("plugsDontCount", true));
 		SetMCMBool("plugsDontCount",settings.plugsDontCount);
+		settings.onlyUseUnforgivingDevices = static_cast<bool>(j.value("onlyUseUnforgivingDevices", false));
+		SetMCMBool("onlyUseUnforgivingDevices",settings.onlyUseUnforgivingDevices);
 		settings.allowLegShackles = static_cast<bool>(j.value("allowLegShackles", false));
 		SetMCMBool("allowLegShackles",settings.allowLegShackles);
 		settings.keyForgiveness = static_cast<bool>(j.value("keyForgiveness", true));
@@ -1263,6 +1272,7 @@ namespace DCURSES {
 		settings.beltPlugs = GetMCMSetting("beltPlugs")->GetBool();
 		settings.noBeltPiercing = GetMCMSetting("noBeltPiercing")->GetBool();
 		settings.plugsDontCount = GetMCMSetting("plugsDontCount")->GetBool();
+		settings.onlyUseUnforgivingDevices = GetMCMSetting("onlyUseUnforgivingDevices")->GetBool();
 		settings.allowLegShackles = GetMCMSetting("allowLegShackles")->GetBool();
 		settings.keyForgiveness = GetMCMSetting("keyForgiveness")->GetBool();
 		settings.enableMagicKeys = GetMCMSetting("enableMagicKeys")->GetBool();
@@ -1302,6 +1312,7 @@ namespace DCURSES {
 			ResetMCMSettings();
 		}
 
+		counters.clock_lastSex = -5;
 		SaveMCMSettings();
 		RecalculateDeviceLists();
 	}

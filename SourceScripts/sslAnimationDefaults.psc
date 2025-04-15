@@ -1,16 +1,25 @@
 scriptname sslAnimationDefaults extends sslAnimationFactory
+{
+	Old default animations of SL. ALl of this is legacy and no longer used.
+	These animations are now distributed as an optional package
+}
 
-
-;/ 
-
-For JSON loading animation instructions, see /data/SKSE/Plugins/SexLab/Animations/_README_.txt
-
-/;
+; *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* ;
+; ----------------------------------------------------------------------------- ;
+;								██╗     ███████╗ ██████╗  █████╗  ██████╗██╗   ██╗							;
+;								██║     ██╔════╝██╔════╝ ██╔══██╗██╔════╝╚██╗ ██╔╝							;
+;								██║     █████╗  ██║  ███╗███████║██║      ╚████╔╝ 							;
+;								██║     ██╔══╝  ██║   ██║██╔══██║██║       ╚██╔╝  							;
+;								███████╗███████╗╚██████╔╝██║  ██║╚██████╗   ██║   							;
+;								╚══════╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝ ╚═════╝   ╚═╝   							;
+; ----------------------------------------------------------------------------- ;
+; *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* ;
 
 function LoadAnimations()
-	; Prepare factory resources (as non creature)
-	PrepareFactory()
+	Debug.Messagebox("It is no longer possible to register animations through the Papyrus API. Use the SceneBuilder Tool to generate .slr files instead")
+	return
 
+	PrepareFactory()
 	if Game.GetCameraState() == 0
 		if Utility.IsInMenuMode()
 			MiscUtil.PrintConsole("WARNING! To continue with the SexLab animations setup close the console and all the menu")
@@ -20,7 +29,6 @@ function LoadAnimations()
 	endIf
 	bool SexLabDefault = Game.GetPlayer().GetAnimationVariableInt("SexLabDefault") >= 16300
 	bool APPack = Game.GetPlayer().GetAnimationVariableInt("SexLabAPAnimations") >= 16300
-
 	; Missionary
 	if SexLabDefault
 		RegisterAnimation("SexLabMissionary")
@@ -41,8 +49,6 @@ function LoadAnimations()
 		RegisterAnimation("APHoldLegUp")
 		RegisterAnimation("APLegUp")
 	endIf
-	RegisterCategory("Missionary")
-
 	; DoggyStyle
 	if SexLabDefault
 		RegisterAnimation("SexLabDoggyStyle")
@@ -60,8 +66,6 @@ function LoadAnimations()
 	if APPack
 		RegisterAnimation("APDoggyStyle")
 	endIf
-	RegisterCategory("DoggyStyle")
-
 	; Cowgirl
 	if SexLabDefault
 		RegisterAnimation("SexLabReverseCowgirl")
@@ -77,8 +81,6 @@ function LoadAnimations()
 	if APPack
 		RegisterAnimation("APCowgirl")
 	endIf
-	RegisterCategory("Cowgirl")
-
 	; Sideways
 	if SexLabDefault
 		RegisterAnimation("SexLabSideways")
@@ -87,8 +89,6 @@ function LoadAnimations()
 	if APPack
 		RegisterAnimation("APShoulder")
 	endIf
-	RegisterCategory("Sideways")
-	
 	; Standing
 	if SexLabDefault
 		RegisterAnimation("SexLabHuggingSex")
@@ -106,8 +106,6 @@ function LoadAnimations()
 	if APPack
 		RegisterAnimation("APStanding")
 	endIf
-	RegisterCategory("Standing")
-	
 	; Anal
 	if SexLabDefault
 		RegisterAnimation("ArrokAnal")
@@ -119,8 +117,6 @@ function LoadAnimations()
 		RegisterAnimation("APAnal")
 		RegisterAnimation("APFaceDown")
 	endIf
-	RegisterCategory("Anal")
-	
 	; Oral
 	if SexLabDefault
 		RegisterAnimation("ArrokBlowjob")
@@ -138,8 +134,6 @@ function LoadAnimations()
 		RegisterAnimation("APHandjob")
 		RegisterAnimation("APSkullFuck")
 	endIf
-	RegisterCategory("Oral")
-	
 	; Boobjob
 	if SexLabDefault
 		RegisterAnimation("SexLabBoobjob")
@@ -148,8 +142,6 @@ function LoadAnimations()
 	if APPack
 		RegisterAnimation("APBoobjob")
 	endIf
-	RegisterCategory("Boobjob")
-
 	; Foreplay
 	if SexLabDefault
 		RegisterAnimation("ArrokForeplay")
@@ -161,8 +153,6 @@ function LoadAnimations()
 		RegisterAnimation("LeitoKissing")
 		RegisterAnimation("LeitoSpoon")
 	endIf
-	RegisterCategory("Foreplay")
-
 	; Lesbian/Gay
 	if SexLabDefault
 		RegisterAnimation("SexLabTribadism")
@@ -170,9 +160,6 @@ function LoadAnimations()
 		RegisterAnimation("ZynLesbian")
 		RegisterAnimation("ZynLicking")
 	endIf
-	RegisterCategory("Lesbian")
-	RegisterCategory("Gay")
-
 	; Footjob
 	if SexLabDefault
 		RegisterAnimation("BleaghFootJob")
@@ -182,8 +169,6 @@ function LoadAnimations()
 		RegisterAnimation("MitosFootjob")
 		RegisterAnimation("MitosTease")
 	endIf
-	RegisterCategory("Footjob")
-
 	; Misc
 	if SexLabDefault
 		RegisterAnimation("MitosLapLove")
@@ -193,8 +178,6 @@ function LoadAnimations()
 	if APPack
 		RegisterAnimation("APFisting")
 	endIf
-	RegisterCategory("Misc")
-
 	; Solo
 	if SexLabDefault
 		RegisterAnimation("BleaghFemaleSolo")
@@ -207,8 +190,6 @@ function LoadAnimations()
 	if APPack
 		RegisterAnimation("APFemaleSolo")
 	endIf
-	RegisterCategory("Solo")
-
 	; 3P+
 	if SexLabDefault
 		RegisterAnimation("ArrokDevilsThreeway")
@@ -220,10 +201,6 @@ function LoadAnimations()
 		RegisterAnimation("ZynFemdom")
 		RegisterAnimation("ZynFourWay")
 	endIf
-	RegisterCategory("Orgy")
-
-	; Register any remaining custom categories from json loaders
-	RegisterOtherCategories()
 endFunction
 
 function ArrokBlowjob(int id)
@@ -232,12 +209,14 @@ function ArrokBlowjob(int id)
 	Base.Name    = "Arrok Blowjob"
 	Base.SoundFX = Sucking
 
+	; Submissive A1, Any
 	int a1 = Base.AddPosition(Female, Oral)
 	Base.AddPositionStage(a1, "Arrok_Blowjob_A1_S1", 0, silent = true, openMouth = true)
 	Base.AddPositionStage(a1, "Arrok_Blowjob_A1_S2", 0, silent = true, openMouth = true)
 	Base.AddPositionStage(a1, "Arrok_Blowjob_A1_S2", 0, silent = true, openMouth = true)
 	Base.AddPositionStage(a1, "Arrok_Blowjob_A1_S3", 0, silent = true, openMouth = true)
 
+	; Aggressor a2, Male/Futa
 	int a2 = Base.AddPosition(Male)
 	Base.AddPositionStage(a2, "Arrok_Blowjob_A2_S1", -120, side = -3.5, sos = -1)
 	Base.AddPositionStage(a2, "Arrok_Blowjob_A2_S2", -120, side = -3.5, sos = -1)
@@ -249,6 +228,7 @@ function ArrokBlowjob(int id)
 	Base.Save(id)
 endFunction
 
+; COPY DONE
 function ArrokBoobjob(int id)
 	sslBaseAnimation Base = Create(id)
 
@@ -424,6 +404,7 @@ function ArrokMaleMasturbation(int id)
 	Base.Save(id)
 endFunction
 
+; DONE
 function ArrokMissionary(int id)
 	sslBaseAnimation Base = Create(id)
 
@@ -790,6 +771,7 @@ function SexLabAggrDoggyStyle(int id)
 	Base.Save(id)
 endFunction
 
+; DONE
 function SexLabAggrMissionary(int id)
 	sslBaseAnimation Base = Create(id)
 
@@ -882,6 +864,7 @@ function SexLabHuggingSex(int id)
 	Base.Save(id)
 endFunction
 
+; DONE
 function SexLabMissionary(int id)
 	sslBaseAnimation Base = Create(id)
 

@@ -33,7 +33,7 @@ namespace DCURSES {
             auto activatedObject = activateEvent->objectActivated.get();
             auto activatingActor = activateEvent->actionRef.get();
             if (activatedObject && activatingActor && activatingActor == RE::PlayerCharacter::GetSingleton()) {
-                counters.clock_lastSex = -1;
+                counters.clock_SexTimeout = -2;
                 QICheckObjectActivation(activatedObject); // Must do first!
                 CalculateEventChance(activatedObject);
             }
@@ -62,7 +62,7 @@ namespace DCURSES {
             auto actor = object->As<RE::Actor>();
             if (actor && actor == RE::PlayerCharacter::GetSingleton()) {
                 log::trace("Updating actors arousal");
-                counters.clock_lastSex = -5;
+                counters.clock_SexTimeout = -5;
                 //Callbacks::GetSingleton().ResetArousalDatabase();
                 //Callbacks::GetSingleton().InitializeAllActorsArousal();
             }
@@ -126,6 +126,8 @@ namespace DCURSES {
             log::trace("Attached equip event sink.");
         }
     };
+
+
 
     void RegisterEventSinks() {
         ActivateEventSink::RegisterEvent();

@@ -23,7 +23,7 @@ namespace DCURSES {
 
         if (settings.enableSlowStrip) {
             SlowStrip(akActor);
-            return false;
+            return true;
         }
 
         for (uint32_t i = 1; i < (1 << 31); i = i << 1) {
@@ -55,8 +55,6 @@ namespace DCURSES {
                 removes.push_back(ammo);
             }
         }
-
-        RE::BGSBipedObjectForm;
 
         if (removes.size() > 0) {
             log::trace("Undress removed {} items", removes.size());
@@ -129,10 +127,11 @@ namespace DCURSES {
                 log::trace("Not boss chest, no heavy restraints.");
             }
 
-            UndressAndUnequipActor(player);
+            bool removeHandItems = false;
 
             int bailout = 10;
             int total = 0;
+
             std::optional<DeviceData> doLast = std::nullopt;
             for (int i = 0; i < count && bailout > 0; i++) {
                 log::trace("I: {}, C: {}, B: {}", i, count, bailout);
@@ -176,8 +175,12 @@ namespace DCURSES {
                 for (auto const& key : GetDeviceKeywords(rend, true)) {
                     usedKeys.push_back(key);
                 }
+                if (rend->HasKeywordString("zad_DeviousBondageMittens")) {
+                    removeHandItems = true;
+                }
                 if (rend->HasKeywordString("zad_DeviousHeavyBondage")) {
                     doLast = dev;
+                    removeHandItems = true;
                 }
                 else {
                     LockDevice(player, inv);
@@ -188,6 +191,13 @@ namespace DCURSES {
             if (doLast.has_value()) {
                 auto inv = doLast.value().inv;
                 LockDevice(player, inv);
+            }
+
+            if (removeHandItems) {
+                UndressAndUnequipActor(player);
+            }
+            else {
+                UndressActor(player);
             }
 
             std::string msg = "";

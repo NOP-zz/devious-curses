@@ -9,11 +9,13 @@ namespace DCURSES {
 
     class Counters {
     public:
+        int64_t clock_SexTimeout = 0;
         int64_t clock_lastSex = 0;
         int64_t clock_LMEventTimer = 0;
         int64_t clock_QIMeridia = 0;
         int64_t clock_QINocturnal = 0;
         void tick() {
+            clock_SexTimeout += 1;
             clock_lastSex += 1;
             clock_LMEventTimer += 1;
             clock_QIMeridia += 1;
@@ -112,7 +114,6 @@ namespace DCURSES {
     }
     
     void OnGameSaved(SerializationInterface* serde) {
-        SaveMCMSettings();
 
         if (!serde->OpenRecord(RefListsRecord, 0)) {
             log::error("Unable to open record to write cosave data.");

@@ -1,52 +1,96 @@
 scriptname sslBaseObject extends ReferenceAlias hidden
 
-; Config accessor
-sslSystemConfig property Config auto hidden
+String _name
+string Property Name
+	String Function Get()
+		return _GetName()
+	EndFunction
+	Function Set(String aSet)
+		_SetName(aSet)
+	EndFunction
+EndProperty
+String Function _GetName()
+	return _name
+EndFunction
+Function _SetName(String aSet)
+	_name = aSet
+EndFunction
 
-; Object base info
-int property SlotID auto hidden
-string property Name auto hidden
-; string property DisplayName auto hidden
-bool property Enabled auto hidden
+bool _enabled
+bool Property Enabled
+	bool Function Get()
+		return _GetEnabled()
+	EndFunction
+	Function Set(bool aSet)
+		_SetEnabled(aSet)
+	EndFunction
+EndProperty
+bool Function _GetEnabled()
+	return _enabled
+EndFunction
+Function _SetEnabled(bool aSet)
+	_enabled
+EndFunction
 
-string property Registry auto hidden
-bool property Registered hidden
-	bool function get()
-		return Registry != "" && Storage == none
-	endFunction
-endProperty
+String _registryID
+string Property Registry
+	String Function Get()
+		return _GetRegistryID()
+	EndFunction
+	Function Set(String asSet)
+		_SetRegistryID(asSet)
+	EndFunction
+EndProperty
+bool Property Registered hidden
+	bool Function get()
+		return Registry != ""
+	EndFunction
+EndProperty
+String Function _GetRegistryID()
+	return _registryID
+EndFunction
+Function _SetRegistryID(String asSet)
+	_registryID = asSet
+EndFunction
 
 ; ------------------------------------------------------- ;
 ; --- Tagging System                                  --- ;
 ; ------------------------------------------------------- ;
 
-string[] Tags
-string[] function GetRawTags()
-	return Tags
-endFunction
+String[] _Tags
+string[] Property Tags Hidden
+	String[] Function Get()
+		return _GetTags()
+	EndFunction
+	Function Set(String[] asSet)
+		_SetTags(asSet)
+	EndFunction
+EndProperty
+String[] Function _GetTags()
+	return _Tags
+EndFunction
+Function _SetTags(String[] asSet)
+	_Tags = asSet
+EndFunction
+
 string[] function GetTags()
 	return PapyrusUtil.ClearEmpty(Tags)
 endFunction
 
-bool function HasTag(string Tag)
-	return Tag != "" && Tags.Find(Tag) != -1
-endFunction
+bool Function HasTag(string Tag)
+	return Tag && !Tags.Length || Tags.Find(Tag) != -1
+EndFunction
 
 bool function AddTag(string Tag)
-	if Tag != "" && Tags.Find(Tag) == -1
-		int i = Tags.Find("")
-		if i != -1
-			Tags[i] = Tag
-		else
-			Tags = PapyrusUtil.PushString(Tags, Tag)
-		endIf
+	if Tag != "" && !Tags.Length || Tags.Find(Tag) == -1
+		Tags = PapyrusUtil.PushString(Tags, Tag)
 		return true
 	endIf
 	return false
 endFunction
 
 bool function RemoveTag(string Tag)
-	if Tag != "" && Tags.Find(Tag) != -1
+	if Tag != "" && !Tags.Length || Tags.Find(Tag) != -1
 		Tags = PapyrusUtil.RemoveString(Tags, Tag)
 		return true
 	endIf
@@ -61,27 +105,65 @@ function AddTags(string[] TagList)
 	endWhile
 endFunction
 
-function SetTags(string TagList)
-	AddTags(PapyrusUtil.StringSplit(TagList))
+; *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* ;
+; ----------------------------------------------------------------------------- ;
+;        ██╗███╗   ██╗████████╗███████╗██████╗ ███╗   ██╗ █████╗ ██╗            ;
+;        ██║████╗  ██║╚══██╔══╝██╔════╝██╔══██╗████╗  ██║██╔══██╗██║            ;
+;        ██║██╔██╗ ██║   ██║   █████╗  ██████╔╝██╔██╗ ██║███████║██║            ;
+;        ██║██║╚██╗██║   ██║   ██╔══╝  ██╔══██╗██║╚██╗██║██╔══██║██║            ;
+;        ██║██║ ╚████║   ██║   ███████╗██║  ██║██║ ╚████║██║  ██║███████╗       ;
+;        ╚═╝╚═╝  ╚═══╝   ╚═╝   ╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝╚══════╝       ;
+; ----------------------------------------------------------------------------- ;
+; *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* ;
+
+sslSystemConfig Property Config Hidden
+	sslSystemConfig Function Get()
+		return SexLabUtil.GetConfig()
+	EndFunction
+EndProperty
+
+function Log(string Log, string Type = "NOTICE")
+	sslLog.Log(Log)
 endFunction
 
-bool function ToggleTag(string Tag)
-	return (RemoveTag(Tag) || AddTag(Tag)) && HasTag(Tag)
+function Initialize()
+	Registry = ""
 endFunction
 
-bool function AddTagConditional(string Tag, bool AddTag)
-	if Tag != ""
-		if AddTag
-			AddTag(Tag)
-		elseIf !AddTag
-			RemoveTag(Tag)
-		endIf
-	endIf
-	return AddTag
+; *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*	;
+;																																											;
+;									██╗     ███████╗ ██████╗  █████╗  ██████╗██╗   ██╗									;
+;									██║     ██╔════╝██╔════╝ ██╔══██╗██╔════╝╚██╗ ██╔╝									;
+;									██║     █████╗  ██║  ███╗███████║██║      ╚████╔╝ 									;
+;									██║     ██╔══╝  ██║   ██║██╔══██║██║       ╚██╔╝  									;
+;									███████╗███████╗╚██████╔╝██║  ██║╚██████╗   ██║   									;
+;									╚══════╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝ ╚═════╝   ╚═╝   									;
+;																																											;
+; *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*--*-*-*-*-*-*-*-*-*-*-*-*-*-**-*-*-*-*-*-*	;
+
+int Property SlotID Hidden
+	int Function Get()
+		return -1
+	EndFunction
+EndProperty
+
+bool Property Saved hidden
+	bool function get()
+		return true
+	endFunction
+endProperty
+function Save(int id = -1)
+endFunction
+
+string function Key(string type = "")
+	return Registry+"."+type
+endFunction
+
+string[] function GetRawTags()
+	return GetTags()
 endFunction
 
 bool function CheckTags(string[] CheckTags, bool RequireAll = true, bool Suppress = false)
-	; return RequireAll && HasAllTag(CheckTags) || RequireAll && HasAllTag(CheckTags)
 	bool Valid = ParseTags(CheckTags, RequireAll)
 	return (Valid && !Suppress) || (!Valid && Suppress)
 endFunction
@@ -99,7 +181,7 @@ bool function HasOneTag(string[] TagList)
 	int i = TagList.Length
 	while i
 		i -= 1
-		if TagList[i] != "" && Tags.Find(TagList[i]) != -1
+		if HasTag(TagList[i])
 			return true
 		endIf
 	endWhile
@@ -110,74 +192,36 @@ bool function HasAllTag(string[] TagList)
 	int i = TagList.Length
 	while i
 		i -= 1
-		if TagList[i] != "" && Tags.Find(TagList[i]) == -1
+		if (!HasTag(TagList[i]))
 			return false
 		endIf
 	endWhile
 	return true
 endFunction
 
-; ------------------------------------------------------- ;
-; --- Phantom Slots                                   --- ;
-; ------------------------------------------------------- ;
+bool function AddTagConditional(string Tag, bool AddTag)
+	If(AddTag)
+		return AddTag(Tag)
+	Else
+		return RemoveTag(Tag)
+	EndIf
+endFunction
 
-; Phantom slots owner
-Form property Storage auto hidden
-bool property Ephemeral hidden
+function SetTags(string TagList)
+	AddTags(PapyrusUtil.StringSplit(TagList))
+endFunction
+
+bool function ToggleTag(string Tag)
+	return (RemoveTag(Tag) || AddTag(Tag)) && HasTag(Tag)
+endFunction
+
+Form Property Storage = none Auto Hidden
+bool Property Ephemeral hidden
 	bool function get()
 		return Storage != none
 	endFunction
 endProperty
 
 function MakeEphemeral(string Token, Form OwnerForm)
-	Initialize()
-	Enabled   = true
-	Registry  = Token
-	Storage   = OwnerForm
-	Log("Created Non-Global Object '"+Token+"'", Storage)
-endFunction
-
-; ------------------------------------------------------- ;
-; --- System Use                                      --- ;
-; ------------------------------------------------------- ;
-
-string function Key(string type = "")
-	return Registry+"."+type
-endFunction
-
-function Log(string Log, string Type = "NOTICE")
-	Log = Type+" "+Registry+" - "+Log
-	if Config.InDebugMode
-		SexLabUtil.PrintConsole(Log)
-	endIf
-	Debug.Trace("SEXLAB - "+Log)
-endFunction
-
-bool bSaved = false
-bool property Saved hidden
-	bool function get()
-		return bSaved
-	endFunction
-endProperty
-function Save(int id = -1)
-	bSaved = true
-	SlotID = id
-	; Trim tags
-	int i = Tags.Find("")
-	if i != -1
-		Tags = Utility.ResizeStringArray(Tags, (i + 1))
-	endIf
-endFunction
-
-function Initialize()
-	if !Config
-		Config = Game.GetFormFromFile(0xD62, "SexLab.esm") as sslSystemConfig
-	endIf
-	Name     = ""
-	Registry = ""
-	SlotID   = -1
-	Enabled  = false
-	bSaved   = false
-	Storage  = none
-	Tags     = new string[18]
+	Log("MakeEphemeral() is no longer supported; '" + Token + "'", Storage)
 endFunction
