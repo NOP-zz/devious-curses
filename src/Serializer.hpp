@@ -114,7 +114,6 @@ namespace DCURSES {
     }
     
     void OnGameSaved(SerializationInterface* serde) {
-
         if (!serde->OpenRecord(RefListsRecord, 0)) {
             log::error("Unable to open record to write cosave data.");
             return;

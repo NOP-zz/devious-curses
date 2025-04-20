@@ -29,7 +29,7 @@ using namespace SKSE;
 
 namespace DCURSES {
     //GLOBALS
-    //RE::TESObjectREFR* activatedObject;
+    
 
     void InitializeLogging() {
         auto path = log_directory();
@@ -127,6 +127,17 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
         switch (message->type)
         {
         case SKSE::MessagingInterface::kDataLoaded: {
+            auto ESP_file = RE::TESDataHandler::GetSingleton()->LookupLoadedModByName("Devious Curses.esp");
+
+            if (!ESP_file) {
+                log::critical("Devious curses ESP not loaded. Mod will be disabled.");
+                stl::report_and_fail("Devious Curses ESP is not loaded. If you are on skyrim version older than 1.6.1130 (Not AE) make sure to install Backported Extended ESL Support.");
+                return;
+            }
+            else {
+                log::trace("ESP Loaded.");
+            }
+
             log::trace("Calling JCWrapper init()");
             DCURSES::jcontainers::JCWrapper::GetSingleton()->Init();
             DCURSES::RegisterEventSinks();
@@ -140,7 +151,8 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
             bool DDNG_loaded = DeviousDevicesAPI::LoadAPI();
 
             if (!DDNG_loaded) {
-                log::critical("Devious Devices NG not loaded. Expect CTD!");
+                log::critical("Devious Devices NG not loaded. Mod will be disabled.");
+                stl::report_and_fail("Devious devices NG not loaded for Devious Curses. Please check to make sure that you have version 4.0+");
             }
             else {
                 log::trace("Devious Devices NG loaded: {}.", DeviousDevicesAPI::g_API->GetDatabase().size());

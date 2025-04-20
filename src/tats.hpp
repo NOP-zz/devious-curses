@@ -76,7 +76,7 @@ namespace DCURSES {
 		if (!actor) return false;
 		if (!slavetats_ng::iface) return false;
 		if (!jcontainers::JCWrapper::GetSingleton()->IsInitialized()) return false;
-		if (RE::TESDataHandler::GetSingleton()->LookupModByName("LewdMarksSlaveTats.esp") == nullptr) return false;
+		if (RE::TESDataHandler::GetSingleton()->LookupLoadedModByName("LewdMarksSlaveTats.esp") == nullptr) return false;
 
 		using namespace jcontainers;
 		std::string mark = fmt::format("{:03}", index);
@@ -136,7 +136,7 @@ namespace DCURSES {
 		if (!actor) return false;
 		if (!slavetats_ng::iface) return false;
 		if (!jcontainers::JCWrapper::GetSingleton()->IsInitialized()) return false;
-		if (RE::TESDataHandler::GetSingleton()->LookupModByName("LewdMarksSlaveTats.esp") == nullptr) return false;
+		if (RE::TESDataHandler::GetSingleton()->LookupLoadedModByName("LewdMarksSlaveTats.esp") == nullptr) return false;
 
 		using namespace jcontainers;
 		std::string mark = fmt::format("{:03}", index);
@@ -196,12 +196,7 @@ namespace DCURSES {
 		if (!actor) return false;
 		if (!slavetats_ng::iface) return false;
 		if (!jcontainers::JCWrapper::GetSingleton()->IsInitialized()) return false;
-		if (RE::TESDataHandler::GetSingleton()->LookupModByName("LewdMarksSlaveTats.esp") == nullptr) return false;
-
-		if (!RE::TESDataHandler::GetSingleton()->LookupModByName("LewdMarksSlaveTats.esp")) {
-			log::warn("Lewd Marks not installed.");
-			return false;
-		}
+		if (RE::TESDataHandler::GetSingleton()->LookupLoadedModByName("LewdMarksSlaveTats.esp") == nullptr) return false;
 		
 		auto glowColor = Util::ColorScale(base_color, 0.8);
 
@@ -213,12 +208,8 @@ namespace DCURSES {
 		if (!actor) return -1;
 		if (!slavetats_ng::iface) return -1;
 		if (!jcontainers::JCWrapper::GetSingleton()->IsInitialized()) return -1;
-		if (RE::TESDataHandler::GetSingleton()->LookupModByName("LewdMarksSlaveTats.esp") == nullptr) return -1;
+		if (RE::TESDataHandler::GetSingleton()->LookupLoadedModByName("LewdMarksSlaveTats.esp") == nullptr) return -1;
 
-		if (!RE::TESDataHandler::GetSingleton()->LookupModByName("LewdMarksSlaveTats.esp")) {
-			log::warn("Lewd Marks not installed.");
-			return -1;
-		}
 		using namespace jcontainers;
 
 		int a_template = JValue::addToPool(JMap::object(), "DCURSES");
@@ -246,12 +237,8 @@ namespace DCURSES {
 		if (!actor) return;
 		if (!slavetats_ng::iface) return;
 		if (!jcontainers::JCWrapper::GetSingleton()->IsInitialized()) return;
-		if (RE::TESDataHandler::GetSingleton()->LookupModByName("LewdMarksSlaveTats.esp") == nullptr) return;
+		if (RE::TESDataHandler::GetSingleton()->LookupLoadedModByName("LewdMarksSlaveTats.esp") == nullptr) return;
 
-		if (!RE::TESDataHandler::GetSingleton()->LookupModByName("LewdMarksSlaveTats.esp")) {
-			log::warn("Lewd Marks not installed.");
-			return;
-		}
 		using namespace jcontainers;
 
 		int index = GetLewdMark(actor);
@@ -264,12 +251,7 @@ namespace DCURSES {
 		if (!actor) return;
 		if (!slavetats_ng::iface) return;
 		if (!jcontainers::JCWrapper::GetSingleton()->IsInitialized()) return;
-		if (RE::TESDataHandler::GetSingleton()->LookupModByName("LewdMarksSlaveTats.esp") == nullptr) return;
-
-		if (!RE::TESDataHandler::GetSingleton()->LookupModByName("LewdMarksSlaveTats.esp")) {
-			log::warn("Lewd Marks not installed.");
-			return;
-		}
+		if (RE::TESDataHandler::GetSingleton()->LookupLoadedModByName("LewdMarksSlaveTats.esp") == nullptr) return;
 
 		if (index < 1) {
 			return;

@@ -23,7 +23,7 @@ namespace DCURSES {
 
         if (settings.enableSlowStrip) {
             SlowStrip(akActor);
-            return true;
+            return false;
         }
 
         for (uint32_t i = 1; i < (1 << 31); i = i << 1) {
@@ -217,7 +217,7 @@ namespace DCURSES {
     bool DoSimpleSlaveryEvent(std::string contName) {
         auto player = RE::PlayerCharacter::GetSingleton();
         UndressAndUnequipActor(player);
-        if (!RE::TESDataHandler::GetSingleton()->LookupModByName("SimpleSlavery.esp")) {
+        if (!RE::TESDataHandler::GetSingleton()->LookupLoadedModByName("SimpleSlavery.esp")) {
             return false;
         }
         if (GetWornDeviceCount(player) < settings.eventSSMinRestraints) {
@@ -240,7 +240,7 @@ namespace DCURSES {
 
     bool DoLewdMarkEvent(bool doMessage = true) {
         //45 no orgasm / edging
-        if (!RE::TESDataHandler::GetSingleton()->LookupModByName("LewdMarksSlaveTats.esp")) {
+        if (!RE::TESDataHandler::GetSingleton()->LookupLoadedModByName("LewdMarksSlaveTats.esp")) {
             return false;
         }
         auto player = RE::PlayerCharacter::GetSingleton();
@@ -862,7 +862,10 @@ namespace DCURSES {
                     }
                 }
                 else {
-                    didAnything = UndressActor(player, false);
+                    RE::TESObjectARMO* equipped = player->GetWornArmor(BOS::kBody);
+                    if (equipped != nullptr || !settings.enableSlowStrip) {
+                        didAnything = UndressActor(player, false);
+                    }
                 }
                 if (didAnything) {
                     auto health = player->AsActorValueOwner()->GetActorValue(RE::ActorValue::kHealth);
@@ -875,7 +878,7 @@ namespace DCURSES {
     }
 
     void EventsStartup() {
-        if (RE::TESDataHandler::GetSingleton()->LookupModByName("SimpleSlavery.esp") == nullptr) {
+        if (RE::TESDataHandler::GetSingleton()->LookupLoadedModByName("SimpleSlavery.esp") == nullptr) {
             settings.eventSimpleSlaveryWeight = 0;
             SetMCMInt("eventSimpleSlaveryWeight", 0);
         }
@@ -883,7 +886,7 @@ namespace DCURSES {
             settings.eventSGOWeight = 0;
             SetMCMInt("eventSGOWeight", 0);
         }*/
-        if (GetModuleHandle(L"SlaveTatsNG") == nullptr || RE::TESDataHandler::GetSingleton()->LookupModByName("LewdMarksSlaveTats.esp") == nullptr) {
+        if (GetModuleHandle(L"SlaveTatsNG") == nullptr || RE::TESDataHandler::GetSingleton()->LookupLoadedModByName("LewdMarksSlaveTats.esp") == nullptr) {
             settings.eventLewdMarkWeight = 0;
             SetMCMInt("eventLewdMarkWeight", 0);
         }

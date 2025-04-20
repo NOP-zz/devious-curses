@@ -395,7 +395,7 @@ namespace DCURSES {
 
 		int counter = 0;
 
-		if (RE::TESDataHandler::GetSingleton()->LookupModByName("UnforgivingDevices.esp") == nullptr) {
+		if (RE::TESDataHandler::GetSingleton()->LookupLoadedModByName("UnforgivingDevices.esp") == nullptr) {
 			settings.onlyUseUnforgivingDevices = false;
 			SetMCMInt("onlyUseUnforgivingDevices", false);
 		}

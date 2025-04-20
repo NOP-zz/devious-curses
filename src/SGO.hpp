@@ -55,7 +55,7 @@ namespace DCURSES {
     }
 
     bool DoSGOEvent(std::string contName) {
-        if (!RE::TESDataHandler::GetSingleton()->LookupModByName("Sgo4IF.esp")) {
+        if (!RE::TESDataHandler::GetSingleton()->LookupLoadedModByName("Sgo4IF.esp")) {
             return false;
         }
 
