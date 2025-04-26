@@ -137,6 +137,14 @@ Int Property eventSimpleSlaveryWeight = 0 Auto
 Int eventSimpleSlaveryWeightOID
 Int Property eventSSMinRestraints = 6 Auto
 Int eventSSMinRestraintsOID
+Int Property eventTattooWeight = 15 Auto
+Int eventTattooWeightOID
+Int Property eventTattooMin = 1 Auto
+Int eventTattooMinOID
+Int Property eventTattooMax = 3 Auto
+Int eventTattooMaxOID
+Int Property eventTattooCap = 8 Auto
+Int eventTattooCapOID
 Int Property eventLewdMarkWeight = 10 Auto
 Int eventLewdMarkWeightOID
 Int Property LMAllureWeight = 10 Auto
@@ -287,6 +295,8 @@ Bool Property eventScaling = true Auto
 Int eventScalingOID
 Bool Property bossOnlyHeavy = true Auto
 Int bossOnlyHeavyOID
+Bool Property stripPlayerOnEvent = true Auto
+Int stripPlayerOnEventOID
 Bool Property beltPlugs = true Auto
 Int beltPlugsOID
 Bool Property noBeltPiercing = false Auto
@@ -408,6 +418,10 @@ Event OnPageReset(string page)
 	If Game.GetModByName("LewdMarksSlaveTats.esp") != 255 && CheckSTNG()
 		flag_LewdMarks = 0
 	EndIf
+	int flag_RapeTats = 1
+	If Game.GetModByName("RapeTattoos.esp") != 255 && CheckSTNG()
+		flag_RapeTats = 0
+	EndIf
 	int flag_SimpleSlavery = 1
 	If Game.GetModByName("SimpleSlavery.esp") != 255
 		flag_SimpleSlavery = 0
@@ -445,6 +459,7 @@ Event OnPageReset(string page)
 		bossAditionalRestraintsOID = AddSliderOption("Boss Restraints  ", bossAditionalRestraints, "{0}", 0)
 		bossOnlyHeavyOID = AddToggleOption("Boss Heavy Restraints  ", bossOnlyHeavy, 0)
 		restraintCapOID = AddSliderOption("Restraints Cap  ", restraintCap, "{0}", 0)
+		stripPlayerOnEventOID = AddToggleOption("Strip Player  ", stripPlayerOnEvent, 0)
 		AddHeaderOption("Arousal ")
 		arousalModifierOID = AddSliderOption("Arousal Modifier  ", arousalModifier, "{1}", 0)
 		minArousalOID = AddSliderOption("Minimum Arousal  ", minArousal, "{0}", 0)
@@ -523,6 +538,11 @@ Event OnPageReset(string page)
 		eventSimpleSlaveryWeightOID = AddSliderOption("Simple Slavery Weight  ", eventSimpleSlaveryWeight, "{0}", flag_SimpleSlavery)
 		eventSSMinRestraintsOID = AddSliderOption("Minimum Restraints  ", eventSSMinRestraints, "{0}", flag_SSEnabled)
 		AddHeaderOption("Tattoo Curse ")
+		eventTattooWeightOID = AddSliderOption("Tattoo Curse Weight  ", eventTattooWeight, "{0}", flag_RapeTats)
+		eventTattooMinOID = AddSliderOption("Tattoo Curse Min  ", eventTattooMin, "{0}", flag_RapeTats)
+		eventTattooMaxOID = AddSliderOption("Tattoo Curse Max  ", eventTattooMax, "{0}", flag_RapeTats)
+		eventTattooCapOID = AddSliderOption("Tattoo Curse Cap  ", eventTattooCap, "{0}", flag_RapeTats)
+		AddHeaderOption("Mark Curse ")
 		eventLewdMarkWeightOID = AddSliderOption("Lewd Mark Weight  ", eventLewdMarkWeight, "{0}", flag_LewdMarks)
 	Elseif page == "Lewd Marks "
 		lockSlaveTatsOID = AddToggleOption("Lock Tattoos  ", lockSlaveTats, 0)
@@ -584,7 +604,7 @@ Event OnPageReset(string page)
 		DisableGasMasksOID = AddToggleOption("Disable Gas Masks  ", DisableGasMasks, 0)
 		DisableCatsuitsOID = AddToggleOption("Disable Catsuits  ", DisableCatsuits, 0)
 		enableQuestInteractionsOID = AddToggleOption("Quest Interactions  ", enableQuestInteractions, 0)
-		enableSlowStripOID = AddToggleOption("Slow Strip  ", enableSlowStrip, 0)
+		enableSlowStripOID = AddToggleOption("Use Sexlab Strip  ", enableSlowStrip, 0)
 		setAllDefaultSettingsOID = AddToggleOption("Return to Default [WARNING]  ", setAllDefaultSettings, 0)
 	Elseif page == "Consequences "
 		AddHeaderOption("Triggers ")
@@ -727,6 +747,10 @@ Event OnOptionHighlight(int option)
 	Endif
 	If option == restraintCapOID
 		SetInfoText("Events won't happen if you have more than this many restraints.")
+		Return
+	Endif
+	If option == stripPlayerOnEventOID
+		SetInfoText("Toggle to choose if the player should be stripped on any event.\nIf a heavy bondage device is equipped the player will be stripped anyway.")
 		Return
 	Endif
 	If option == arousalModifierOID
@@ -965,6 +989,22 @@ Event OnOptionHighlight(int option)
 		SetInfoText("Minimum restraints that need to be equipped for a Simple Slavery auction to start.")
 		Return
 	Endif
+	If option == eventTattooWeightOID
+		SetInfoText("Chance to receive random tattoos.\nRequires Rape Tattoos.")
+		Return
+	Endif
+	If option == eventTattooMinOID
+		SetInfoText("Minimum number of tattoos that can be put on.")
+		Return
+	Endif
+	If option == eventTattooMaxOID
+		SetInfoText("Maximum number of tattoos that can be put on.")
+		Return
+	Endif
+	If option == eventTattooCapOID
+		SetInfoText("If you have this many tattoos already you won't get any more.")
+		Return
+	Endif
 	If option == eventLewdMarkWeightOID
 		SetInfoText("Chance to receive a lewd mark.")
 		Return
@@ -1138,7 +1178,7 @@ Event OnOptionHighlight(int option)
 		Return
 	Endif
 	If option == enableSlowStripOID
-		SetInfoText("Used to fix a rare bug where clothes stripping happens too fast.")
+		SetInfoText("Replace the built in stripping algorithm with the one from sexlab.\nCan fix rare cases of crashing on stripping and also give more control over what gets stripped.")
 		Return
 	Endif
 	If option == setAllDefaultSettingsOID
@@ -1349,6 +1389,11 @@ Event OnOptionSelect(int option)
 	If option == bossOnlyHeavyOID
 		bossOnlyHeavy = !bossOnlyHeavy
 		SetToggleOptionValue(bossOnlyHeavyOID, bossOnlyHeavy)
+		Return
+	Endif
+	If option == stripPlayerOnEventOID
+		stripPlayerOnEvent = !stripPlayerOnEvent
+		SetToggleOptionValue(stripPlayerOnEventOID, stripPlayerOnEvent)
 		Return
 	Endif
 	If option == beltPlugsOID
@@ -1888,6 +1933,34 @@ Event OnOptionSliderOpen(int option)
 	If option == eventSSMinRestraintsOID
 		SetSliderDialogStartValue(eventSSMinRestraints)
 		SetSliderDialogDefaultValue(6)
+		SetSliderDialogRange(0, 10)
+		SetSliderDialogInterval(1)
+		Return
+	Endif
+	If option == eventTattooWeightOID
+		SetSliderDialogStartValue(eventTattooWeight)
+		SetSliderDialogDefaultValue(15)
+		SetSliderDialogRange(0, 500)
+		SetSliderDialogInterval(1)
+		Return
+	Endif
+	If option == eventTattooMinOID
+		SetSliderDialogStartValue(eventTattooMin)
+		SetSliderDialogDefaultValue(1)
+		SetSliderDialogRange(1, 10)
+		SetSliderDialogInterval(1)
+		Return
+	Endif
+	If option == eventTattooMaxOID
+		SetSliderDialogStartValue(eventTattooMax)
+		SetSliderDialogDefaultValue(3)
+		SetSliderDialogRange(1, 10)
+		SetSliderDialogInterval(1)
+		Return
+	Endif
+	If option == eventTattooCapOID
+		SetSliderDialogStartValue(eventTattooCap)
+		SetSliderDialogDefaultValue(8)
 		SetSliderDialogRange(0, 10)
 		SetSliderDialogInterval(1)
 		Return
@@ -2697,6 +2770,30 @@ Event OnOptionSliderAccept(int option, float value)
 	Endif
 	If option == eventSSMinRestraintsOID
 		eventSSMinRestraints = value as int
+		SetSliderOptionValue(option, value, "{0}")
+		
+		Return
+	Endif
+	If option == eventTattooWeightOID
+		eventTattooWeight = value as int
+		SetSliderOptionValue(option, value, "{0}")
+		
+		Return
+	Endif
+	If option == eventTattooMinOID
+		eventTattooMin = value as int
+		SetSliderOptionValue(option, value, "{0}")
+		
+		Return
+	Endif
+	If option == eventTattooMaxOID
+		eventTattooMax = value as int
+		SetSliderOptionValue(option, value, "{0}")
+		
+		Return
+	Endif
+	If option == eventTattooCapOID
+		eventTattooCap = value as int
 		SetSliderOptionValue(option, value, "{0}")
 		
 		Return

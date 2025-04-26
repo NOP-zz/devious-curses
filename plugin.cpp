@@ -127,9 +127,7 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
         switch (message->type)
         {
         case SKSE::MessagingInterface::kDataLoaded: {
-            auto ESP_file = RE::TESDataHandler::GetSingleton()->LookupLoadedModByName("Devious Curses.esp");
-
-            if (!ESP_file) {
+            if (!DCURSES::CheckESPLoaded()) {
                 log::critical("Devious curses ESP not loaded. Mod will be disabled.");
                 stl::report_and_fail("Devious Curses ESP is not loaded. If you are on skyrim version older than 1.6.1130 (Not AE) make sure to install Backported Extended ESL Support.");
                 return;
@@ -148,6 +146,8 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
         }
         case SKSE::MessagingInterface::kNewGame:
         case SKSE::MessagingInterface::kPostLoadGame: {
+            
+
             bool DDNG_loaded = DeviousDevicesAPI::LoadAPI();
 
             if (!DDNG_loaded) {

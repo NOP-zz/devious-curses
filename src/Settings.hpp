@@ -21,6 +21,7 @@ namespace DCURSES {
 		//MCM_START
 		//Flag flag_SlaveTats					//CheckSTNG()
 		//Flag flag_LewdMarks					//ESP:LewdMarksSlaveTats.esp, CheckSTNG()
+		//Flag flag_RapeTats					//ESP:RapeTattoos.esp, CheckSTNG()
 		//Flag flag_SimpleSlavery				//ESP:SimpleSlavery.esp
 		//Flag flag_UnforgivingDevices			//ESP:UnforgivingDevices.esp
 		//Flag flag_SSEnabled					//VAR:eventSimpleSlaveryWeight > 0, ESP:SimpleSlavery.esp
@@ -45,6 +46,7 @@ namespace DCURSES {
 		int bossAditionalRestraints = 2;		//Boss Restraints//Added restraints when opening a boss chest.//{0}//(0,10,1)
 		bool bossOnlyHeavy = true;				//Boss Heavy Restraints//Heavy restraints can only be applied from boss chests.
 		int restraintCap = 7;					//Restraints Cap//Events won't happen if you have more than this many restraints.//{0}//(1,15,1)
+		bool stripPlayerOnEvent = true;			//Strip Player//Toggle to choose if the player should be stripped on any event.\nIf a heavy bondage device is equipped the player will be stripped anyway.
 		//Header Arousal
 		float arousalModifier = 1.4f;			//Arousal Modifier//If this is greater than 1, curses will me more likely the more aroused the player is.\nIf set to 10 with full arousal will multiply the chance by 10 while half arousal would multiply the chance by 5.//{1}//(1,10,0.1)
 		int minArousal = 10;					//Minimum Arousal//Curses won't trigger if the player is below this arousal level.//{0}//(0,100,1)
@@ -124,6 +126,11 @@ namespace DCURSES {
 		int eventSimpleSlaveryWeight = 0;		//Simple Slavery Weight//Chance to trigger a Simple Slavery auction.//{0}//(0,500,1) ?:? flag_SimpleSlavery														**RELOAD
 		int eventSSMinRestraints = 6;			//Minimum Restraints//Minimum restraints that need to be equipped for a Simple Slavery auction to start.//{0}//(0,10,1)											?:? flag_SSEnabled
 		//Header Tattoo Curse
+		int eventTattooWeight = 15;				//Tattoo Curse Weight//Chance to receive random tattoos.\nRequires Rape Tattoos.//{0}//(0,500,1)							?:? flag_RapeTats
+		int eventTattooMin = 1;					//Tattoo Curse Min//Minimum number of tattoos that can be put on.//{0}//(1,10,1)											?:? flag_RapeTats
+		int eventTattooMax = 3;					//Tattoo Curse Max//Maximum number of tattoos that can be put on.//{0}//(1,10,1)											?:? flag_RapeTats
+		int eventTattooCap = 8;					//Tattoo Curse Cap//If you have this many tattoos already you won't get any more.//{0}//(0,10,1)							?:? flag_RapeTats
+		//Header Mark Curse
 		int eventLewdMarkWeight = 10;			//Lewd Mark Weight//Chance to receive a lewd mark.//{0}//(0,500,1) ?:? flag_LewdMarks
 		//Page Lewd Marks
 		bool lockSlaveTats = true;				//Lock Tattoos//Tattoos will be locked in the slave tats menu.
@@ -182,7 +189,7 @@ namespace DCURSES {
 		bool DisableGasMasks = false;			//Disable Gas Masks//Gas masks will be removed from this mod completely.
 		bool DisableCatsuits = false;			//Disable Catsuits//Catsuits will be removed from this mod completely.
 		bool enableQuestInteractions = true;	//Quest Interactions//Enable interactions with vanilla quests. This might include sex with NPCs, equipped devices, added tattoos, and more.
-		bool enableSlowStrip = false;			//Slow Strip//Used to fix a rare bug where clothes stripping happens too fast.
+		bool enableSlowStrip = false;			//Use Sexlab Strip//Replace the built in stripping algorithm with the one from sexlab.\nCan fix rare cases of crashing on stripping and also give more control over what gets stripped.
 		bool setAllDefaultSettings = false;		//Return to Default [WARNING]//If you exit the menu with this enabled all settings in the MCM will be reset to default.
 		//Page Consequences
 		//Header Triggers
@@ -366,6 +373,14 @@ namespace DCURSES {
 		SetMCMInt("eventSimpleSlaveryWeight",settings.eventSimpleSlaveryWeight);
 		settings.eventSSMinRestraints = 6;
 		SetMCMInt("eventSSMinRestraints",settings.eventSSMinRestraints);
+		settings.eventTattooWeight = 15;
+		SetMCMInt("eventTattooWeight",settings.eventTattooWeight);
+		settings.eventTattooMin = 1;
+		SetMCMInt("eventTattooMin",settings.eventTattooMin);
+		settings.eventTattooMax = 3;
+		SetMCMInt("eventTattooMax",settings.eventTattooMax);
+		settings.eventTattooCap = 8;
+		SetMCMInt("eventTattooCap",settings.eventTattooCap);
 		settings.eventLewdMarkWeight = 10;
 		SetMCMInt("eventLewdMarkWeight",settings.eventLewdMarkWeight);
 		settings.LMAllureWeight = 10;
@@ -524,6 +539,8 @@ namespace DCURSES {
 		SetMCMBool("eventScaling",settings.eventScaling);
 		settings.bossOnlyHeavy = true;
 		SetMCMBool("bossOnlyHeavy",settings.bossOnlyHeavy);
+		settings.stripPlayerOnEvent = true;
+		SetMCMBool("stripPlayerOnEvent",settings.stripPlayerOnEvent);
 		settings.beltPlugs = true;
 		SetMCMBool("beltPlugs",settings.beltPlugs);
 		settings.noBeltPiercing = false;
@@ -657,6 +674,10 @@ namespace DCURSES {
 			{"eventStandardBossReduction", settings.eventStandardBossReduction},
 			{"eventSimpleSlaveryWeight", settings.eventSimpleSlaveryWeight},
 			{"eventSSMinRestraints", settings.eventSSMinRestraints},
+			{"eventTattooWeight", settings.eventTattooWeight},
+			{"eventTattooMin", settings.eventTattooMin},
+			{"eventTattooMax", settings.eventTattooMax},
+			{"eventTattooCap", settings.eventTattooCap},
 			{"eventLewdMarkWeight", settings.eventLewdMarkWeight},
 			{"LMAllureWeight", settings.LMAllureWeight},
 			{"LMAllureMod", settings.LMAllureMod},
@@ -732,6 +753,7 @@ namespace DCURSES {
 			{"onlyLockedDoors", settings.onlyLockedDoors},
 			{"eventScaling", settings.eventScaling},
 			{"bossOnlyHeavy", settings.bossOnlyHeavy},
+			{"stripPlayerOnEvent", settings.stripPlayerOnEvent},
 			{"beltPlugs", settings.beltPlugs},
 			{"noBeltPiercing", settings.noBeltPiercing},
 			{"plugsDontCount", settings.plugsDontCount},
@@ -900,6 +922,14 @@ namespace DCURSES {
 		SetMCMInt("eventSimpleSlaveryWeight",settings.eventSimpleSlaveryWeight);
 		settings.eventSSMinRestraints = static_cast<int>(j.value("eventSSMinRestraints", 6));
 		SetMCMInt("eventSSMinRestraints",settings.eventSSMinRestraints);
+		settings.eventTattooWeight = static_cast<int>(j.value("eventTattooWeight", 15));
+		SetMCMInt("eventTattooWeight",settings.eventTattooWeight);
+		settings.eventTattooMin = static_cast<int>(j.value("eventTattooMin", 1));
+		SetMCMInt("eventTattooMin",settings.eventTattooMin);
+		settings.eventTattooMax = static_cast<int>(j.value("eventTattooMax", 3));
+		SetMCMInt("eventTattooMax",settings.eventTattooMax);
+		settings.eventTattooCap = static_cast<int>(j.value("eventTattooCap", 8));
+		SetMCMInt("eventTattooCap",settings.eventTattooCap);
 		settings.eventLewdMarkWeight = static_cast<int>(j.value("eventLewdMarkWeight", 10));
 		SetMCMInt("eventLewdMarkWeight",settings.eventLewdMarkWeight);
 		settings.LMAllureWeight = static_cast<int>(j.value("LMAllureWeight", 10));
@@ -1058,6 +1088,8 @@ namespace DCURSES {
 		SetMCMBool("eventScaling",settings.eventScaling);
 		settings.bossOnlyHeavy = static_cast<bool>(j.value("bossOnlyHeavy", true));
 		SetMCMBool("bossOnlyHeavy",settings.bossOnlyHeavy);
+		settings.stripPlayerOnEvent = static_cast<bool>(j.value("stripPlayerOnEvent", true));
+		SetMCMBool("stripPlayerOnEvent",settings.stripPlayerOnEvent);
 		settings.beltPlugs = static_cast<bool>(j.value("beltPlugs", true));
 		SetMCMBool("beltPlugs",settings.beltPlugs);
 		settings.noBeltPiercing = static_cast<bool>(j.value("noBeltPiercing", false));
@@ -1190,6 +1222,10 @@ namespace DCURSES {
 		settings.eventStandardBossReduction = GetMCMSetting("eventStandardBossReduction")->GetSInt();
 		settings.eventSimpleSlaveryWeight = GetMCMSetting("eventSimpleSlaveryWeight")->GetSInt();
 		settings.eventSSMinRestraints = GetMCMSetting("eventSSMinRestraints")->GetSInt();
+		settings.eventTattooWeight = GetMCMSetting("eventTattooWeight")->GetSInt();
+		settings.eventTattooMin = GetMCMSetting("eventTattooMin")->GetSInt();
+		settings.eventTattooMax = GetMCMSetting("eventTattooMax")->GetSInt();
+		settings.eventTattooCap = GetMCMSetting("eventTattooCap")->GetSInt();
 		settings.eventLewdMarkWeight = GetMCMSetting("eventLewdMarkWeight")->GetSInt();
 		settings.LMAllureWeight = GetMCMSetting("LMAllureWeight")->GetSInt();
 		settings.LMAllureMod = GetMCMSetting("LMAllureMod")->GetSInt();
@@ -1269,6 +1305,7 @@ namespace DCURSES {
 		settings.onlyLockedDoors = GetMCMSetting("onlyLockedDoors")->GetBool();
 		settings.eventScaling = GetMCMSetting("eventScaling")->GetBool();
 		settings.bossOnlyHeavy = GetMCMSetting("bossOnlyHeavy")->GetBool();
+		settings.stripPlayerOnEvent = GetMCMSetting("stripPlayerOnEvent")->GetBool();
 		settings.beltPlugs = GetMCMSetting("beltPlugs")->GetBool();
 		settings.noBeltPiercing = GetMCMSetting("noBeltPiercing")->GetBool();
 		settings.plugsDontCount = GetMCMSetting("plugsDontCount")->GetBool();

@@ -32,6 +32,7 @@ namespace DCURSES {
 		AddLewdMark(player, TAT_MERIDIA, 0x220022);
 		counters.clock_QIMeridia = static_cast<uint64_t>(Util::randomDouble(10, 15) * -60.0);
 		PlayerMessage("As you kill Malkoran he curses you with an unknown mark!");
+		SendModEventMark(player, "Malkoran", TAT_MERIDIA);
 	}
 
 	void QISanguineInteraction1() {
@@ -49,6 +50,7 @@ namespace DCURSES {
 
 		DoStandardEvent(false, "", "(rust | (iron & belt))", 20, {"zad_DeviousGag", "zad_DeviousHeavyBondage", "zad_DeviousBondageMittens", "zad_DeviousPlugVaginal", "zad_DeviousPlugAnal"});
 		AddLewdMark(player, TAT_NUDITY, 0x990000);
+		SendModEventMark(player, "Nudity", TAT_NUDITY);
 		counters.LMPeopleTalked = -100;
 	}
 

@@ -83,11 +83,5 @@ if(DEFINED OUTPUT_FOLDER)
     )
     add_dependencies(Papyrus Codegen)
 
-    # If you perform a "Debug" build, also copy .pdb file (for debug symbols)
-    add_custom_command(
-        TARGET "${PROJECT_NAME}"
-        POST_BUILD
-        COMMAND "${CMAKE_COMMAND}" -E copy_if_different "$<TARGET_PDB_FILE:${PROJECT_NAME}>" "${DLL_FOLDER}/$<TARGET_PDB_FILE_NAME:${PROJECT_NAME}>"
-        VERBATIM
-    )
+
 endif()

@@ -958,24 +958,24 @@ namespace DCURSES {
 
 			double roll = Util::randomDouble(weightSum);
 			if (roll < piercingWeight) {
-				SKSE::GetTaskInterface()->AddTask([activatedObject, piercingKey] {
+				//SKSE::GetTaskInterface()->AddTask([activatedObject, piercingKey] {
 					activatedObject->AddObjectToContainer((RE::TESBoundObject*)piercingKey, nullptr, 1, nullptr);
 					counters.SinceLastKey = 0;
-				});
+				//});
 				return piercingKey;
 			}
 			else if (roll - piercingWeight < chastityWeight) {
-				SKSE::GetTaskInterface()->AddTask([activatedObject, chastityKey] {
+				//SKSE::GetTaskInterface()->AddTask([activatedObject, chastityKey] {
 					activatedObject->AddObjectToContainer((RE::TESBoundObject*)chastityKey, nullptr, 1, nullptr);
 					counters.SinceLastKey = 0;
-				});
+				//});
 				return chastityKey;
 			}
 			else {
-				SKSE::GetTaskInterface()->AddTask([activatedObject, restraintsKey] {
+				//SKSE::GetTaskInterface()->AddTask([activatedObject, restraintsKey] {
 					activatedObject->AddObjectToContainer((RE::TESBoundObject*)restraintsKey, nullptr, 1, nullptr);
 					counters.SinceLastKey = 0;
-				});
+				//});
 				return restraintsKey;
 			}
 		}
@@ -995,7 +995,7 @@ namespace DCURSES {
 			return;
 		}
 
-		SKSE::GetTaskInterface()->AddTask([activatedObject, restraintsKey, chastityKey, piercingKey] {
+		//SKSE::GetTaskInterface()->AddTask([activatedObject, restraintsKey, chastityKey, piercingKey] {
 			auto inventory = activatedObject->GetInventory();
 			for (auto const& [k, v] : inventory) {
 
@@ -1009,7 +1009,7 @@ namespace DCURSES {
 					activatedObject->RemoveItem((RE::TESBoundObject*)piercingKey, v.first, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
 				}
 			}
-		});
+		//});
 
 
 	}
