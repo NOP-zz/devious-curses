@@ -25,11 +25,11 @@ namespace DCURSES {
 
 	typedef std::pair<std::vector<DeviceData>, std::string> DeviceList;
 
-	DeviceList GetAdjustedDeviceList(DeviceList* list, std::vector<std::string> skipList, std::string editorIdRequires = "") {
+	DeviceList GetAdjustedDeviceList(DeviceList* list, std::vector<std::string> skipList, std::string theme = "") {
 		DeviceList result;
 		result.second = list->second;
 		for (auto x : list->first) {
-			if (Util::testFormComp(editorIdRequires, x.inv)) {
+			if (Util::testFormComp(theme, x.inv)) {
 				bool canUse = true;
 				for (auto key : skipList) {
 					if (x.rend->HasKeywordString(key)) {
@@ -45,18 +45,18 @@ namespace DCURSES {
 		return result;
 	}
 
-	std::optional<DeviceData> GetRandomDevice(DeviceList* list, std::vector<std::string> skipList = std::vector<std::string>(), std::string editorIdRequires = "") {
+	std::optional<DeviceData> GetRandomDevice(DeviceList* list, std::vector<std::string> skipList = std::vector<std::string>(), std::string theme = "") {
 		if (list == nullptr) { return std::nullopt; }
-		if (editorIdRequires == "") {
-			if (list->first.size() == 0) { return std::nullopt; }
-			int r = Util::randomInt(static_cast<int>(list->first.size()));
-			return (list->first)[r];
-		}
+		//if (theme == "") {
+		if (list->first.size() == 0) { return std::nullopt; }
+		int r = Util::randomInt(static_cast<int>(list->first.size()));
+		return (list->first)[r];
+		//}
 
-		auto adj = GetAdjustedDeviceList(list, skipList, editorIdRequires);
-		if (adj.first.size() == 0) { return std::nullopt; }
-		int r = Util::randomInt(static_cast<int>(adj.first.size()));
-		return (adj.first)[r];
+		//auto adj = GetAdjustedDeviceList(list, skipList, theme);
+		//if (adj.first.size() == 0) { return std::nullopt; }
+		//int r = Util::randomInt(static_cast<int>(adj.first.size()));
+		//return (adj.first)[r];
 	}
 
 	struct Devices {
@@ -397,7 +397,7 @@ namespace DCURSES {
 
 		if (RE::TESDataHandler::GetSingleton()->LookupLoadedModByName("UnforgivingDevices.esp") == nullptr) {
 			settings.onlyUseUnforgivingDevices = false;
-			SetMCMInt("onlyUseUnforgivingDevices", false);
+			SetMCMBool("onlyUseUnforgivingDevices", false);
 		}
 
 		if (settings.onlyUseUnforgivingDevices) {
@@ -661,7 +661,7 @@ namespace DCURSES {
 		return count;
 	}
 
-	DeviceList GetRandomWeightedList(RE::Actor* actor, std::vector<std::string> skipList, std::string editorIdContains = "") {
+	DeviceList GetRandomWeightedList(RE::Actor* actor, std::vector<std::string> skipList, std::string theme = "") {
 		if (!actor) return DeviceList();
 
 		static const std::vector<std::string> allDeviceKeywords = { "zad_DeviousBelt", "zad_DeviousBra", "zad_DeviousPlugVaginal", "zad_DeviousPlugAnal", "zad_DeviousCollar", "zad_DeviousLegCuffs",
@@ -775,7 +775,7 @@ namespace DCURSES {
 		std::vector<std::pair<DeviceList, double>> adjustedLists;
 
 		for (auto list : lists) {
-			auto adj = GetAdjustedDeviceList(list.first, skipList, editorIdContains);
+			auto adj = GetAdjustedDeviceList(list.first, skipList, theme);
 			adjustedLists.push_back(std::make_pair(adj, list.second));
 		}
 
@@ -800,39 +800,23 @@ namespace DCURSES {
 		return DeviceList();
 	}
 
-	std::optional<DeviceData> GetRandomEquipableDevice(RE::Actor* actor, std::vector<std::string> skipList, std::string editorIdRequires = "") {
+	std::optional<DeviceData> GetRandomEquipableDevice(RE::Actor* actor, std::vector<std::string> skipList, std::string theme = "") {
 		if (!actor) return std::nullopt;
 
-		DeviceList equipable;
-		DeviceList randomList = GetRandomWeightedList(actor, skipList, editorIdRequires);
-		equipable.second = randomList.second;
+
+		DeviceList randomList = GetRandomWeightedList(actor, skipList, theme);
 		if (randomList.first.size() == 0) {
 			if (!randomList.second.empty()) log::trace("Random list {} has no items.", randomList.second);
 			return std::nullopt;
 		}
-		for (auto const& dev : randomList.first) {
-			auto rend = dev.rend;
-			//auto inv = dev.inv;
-			bool canWear = true;
-			for (uint32_t i = 0; i < rend->numKeywords; i++) {
-				auto keywd = rend->keywords[i];
-				std::string kwname = Util::GetFormEditorId(keywd);
-				if (kwname.rfind("zad_Devious", 0) != std::string::npos) {
-					if (std::find(skipList.begin(), skipList.end(), kwname) != skipList.end()) {
-						canWear = false;
-						break;
-					}
-				}
-			}
-			if (canWear) {
-				equipable.first.push_back(dev);
-			}
-		}
-		auto dev = GetRandomDevice(&equipable);
+		auto dev = GetRandomDevice(&randomList);
 		if (!dev) {
-			log::trace("Failed to get device from list {} - Length {}", equipable.second, equipable.first.size());
+			log::trace("Failed to get device from list {} - Length {}", randomList.second, randomList.first.size());
+			return std::nullopt;
 		}
-		log::info("Got device {} from list {} - Length {}", dev.value().inv->GetName(), equipable.second, equipable.first.size());
+		else {
+			//log::info("Got device {} from list {} - Length {}", dev.value().inv->GetName(), randomList.second, randomList.first.size());
+		}
 		return dev;
 	}
 
@@ -1046,6 +1030,30 @@ namespace DCURSES {
 				return true;
 			}
 		}
+		return false;
+	}
+
+	bool TestTheme(std::string theme, std::vector<std::string> skipKeywords = {}) {
+		RE::Actor* player = RE::PlayerCharacter::GetSingleton();
+
+		std::list<RE::TESObjectARMO*> to_equip;
+
+		std::string device_names = "";
+		std::string device_ids = "";
+
+		std::vector<std::string> usedKeys = GetKeywordsCantEquip(player);
+
+		for (auto kw : skipKeywords) {
+			usedKeys.push_back(kw);
+		}
+
+		for (int i = 0; i < 10; i++) {
+			auto dev = GetRandomEquipableDevice(player, usedKeys, theme);
+			if (dev) {
+				return true;
+			}
+		}
+
 		return false;
 	}
 }

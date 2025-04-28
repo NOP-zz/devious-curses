@@ -4,6 +4,7 @@
 #include "devices.hpp"
 #include "Consequences.hpp"
 #include "SGO.hpp"
+#include "themes.hpp"
 
 #include "../include/DDNG_API.h"
 #include "../include/form_ids.h"
@@ -107,139 +108,146 @@ namespace DCURSES {
         }
     }
 
-    void DoStandardEvent(bool isBoss, std::string contName, std::string editorIdRequires = "", int countOverride = -1, std::vector<std::string> skipKeywords = {}) {
+    bool DoStandardEvent(bool isBoss, std::string contName, std::string theme = "", int countOverride = -1, std::vector<std::string> skipKeywords = {}) {
         RE::Actor* player = RE::PlayerCharacter::GetSingleton();
         if (Util::randomDouble() < settings.keyLossChance) {
             RemoveKeys(player);
         }
-        ForceThirdPerson();
 
-        SKSE::GetTaskInterface()->AddTask([isBoss, contName, editorIdRequires, countOverride, skipKeywords, player] {
-            std::string device_names = "";
-            std::string device_ids = "";
+        std::list<RE::TESObjectARMO*> to_equip;
 
-            std::vector<std::string> usedKeys = GetKeywordsCantEquip(player);
-            for (auto kw : skipKeywords) {
-                usedKeys.push_back(kw);
+        std::string device_names = "";
+        std::string device_ids = "";
+
+        std::vector<std::string> usedKeys = GetKeywordsCantEquip(player);
+        for (auto kw : skipKeywords) {
+            usedKeys.push_back(kw);
+        }
+        int count = Util::randomInt(settings.minRestraints, settings.maxRestraints);
+        if (countOverride > 0) {
+            count = countOverride;
+        }
+        if (isBoss) {
+            count += settings.bossAditionalRestraints;
+        }
+        else if (settings.bossOnlyHeavy && countOverride <= 0) {
+            usedKeys.push_back("zad_DeviousHeavyBondage");
+            log::trace("Not boss chest, no heavy restraints.");
+        }
+
+        if (theme.empty() && settings.useThemes) {
+            theme = GetRandomTheme();
+        }
+
+        bool removeHandItems = false;
+
+        int bailout = 10;
+
+        for (int i = 0; i < count && bailout > 0; i++) {
+            log::trace("I: {}, C: {}, B: {}", i, count, bailout);
+            log::trace("player exists: {}", player != nullptr);
+            auto dev = GetRandomEquipableDevice(player, usedKeys, theme);
+            if (!dev) {
+                bailout--;
+                i--;
+                continue;
             }
-            int count = Util::randomInt(settings.minRestraints, settings.maxRestraints);
-            if (countOverride > 0) {
-                count = countOverride;
-            }
-            if (isBoss) {
-                count += settings.bossAditionalRestraints;
-            }
-            else if (settings.bossOnlyHeavy && countOverride <= 0) {
-                usedKeys.push_back("zad_DeviousHeavyBondage");
-                log::trace("Not boss chest, no heavy restraints.");
-            }
+            auto rend = dev.value().rend;
+            auto inv = dev.value().inv;
 
-            bool removeHandItems = false;
-
-            int bailout = 10;
-            int total = 0;
-
-            std::optional<DeviceData> doLast = std::nullopt;
-            for (int i = 0; i < count && bailout > 0; i++) {
-                log::trace("I: {}, C: {}, B: {}", i, count, bailout);
-                log::trace("player exists: {}", player != nullptr);
-                auto dev = GetRandomEquipableDevice(player, usedKeys, editorIdRequires);
-                if (!dev) {
-                    bailout--;
-                    i--;
-                    continue;
-                }
-                auto rend = dev.value().rend;
-                auto inv = dev.value().inv;
-
-                if (settings.beltPlugs && rend->HasKeywordString("zad_DeviousBelt")) {
-                    if (std::find(usedKeys.begin(), usedKeys.end(), "zad_DeviousPlugAnal") == usedKeys.end()) {
-                        std::optional<DeviceData> plug;
-                        plug = GetRandomDevice(&devices.plugsABasic, usedKeys, editorIdRequires);
-                        if (!plug) {
-                            plug = GetRandomDevice(&devices.plugsABasic);
-                        }
-                        if (plug) {
-                            LockDevice(player, plug.value().inv);
-                            total += 1;
-                            device_names += plug.value().inv->GetName();
-                            device_names += ",";
-                            device_ids += Util::GetFormEditorId(plug.value().inv);
-                            device_ids += ",";
-                        }
+            if (settings.beltPlugs && rend->HasKeywordString("zad_DeviousBelt")) {
+                if (std::find(usedKeys.begin(), usedKeys.end(), "zad_DeviousPlugAnal") == usedKeys.end()) {
+                    std::optional<DeviceData> plug;
+                    plug = GetRandomDevice(&devices.plugsABasic, {}, theme);
+                    if (!plug) {
+                        plug = GetRandomDevice(&devices.plugsABasic);
                     }
-                    if (std::find(usedKeys.begin(), usedKeys.end(), "zad_DeviousPlugVaginal") == usedKeys.end()) {
-                        std::optional<DeviceData> plug;
-                        plug = GetRandomDevice(&devices.plugsVBasic, usedKeys, editorIdRequires);
-                        if (!plug) {
-                            plug = GetRandomDevice(&devices.plugsVBasic);
-                        }
-                        if (plug) {
-                            LockDevice(player, plug.value().inv);
-                            total += 1;
-                            device_names += plug.value().inv->GetName();
-                            device_names += ",";
-                            device_ids += Util::GetFormEditorId(plug.value().inv);
-                            device_ids += ",";
-                        }
+                    if (plug) {
+                        //LockDevice(player, plug.value().inv);
+                        to_equip.push_back(plug.value().inv);
+                        device_names += plug.value().inv->GetName();
+                        device_names += ",";
+                        device_ids += Util::GetFormEditorId(plug.value().inv);
+                        device_ids += ",";
                     }
                 }
-                if (settings.plugsDontCount && (rend->HasKeywordString("zad_DeviousPlugVaginal") || rend->HasKeywordString("zad_DeviousPlugAnal"))) {
-                    i--;
+                if (std::find(usedKeys.begin(), usedKeys.end(), "zad_DeviousPlugVaginal") == usedKeys.end()) {
+                    std::optional<DeviceData> plug;
+                    plug = GetRandomDevice(&devices.plugsVBasic, {}, theme);
+                    if (!plug) {
+                        plug = GetRandomDevice(&devices.plugsVBasic);
+                    }
+                    if (plug) {
+                        //LockDevice(player, plug.value().inv);
+                        to_equip.push_back(plug.value().inv);
+                        device_names += plug.value().inv->GetName();
+                        device_names += ",";
+                        device_ids += Util::GetFormEditorId(plug.value().inv);
+                        device_ids += ",";
+                    }
                 }
-                for (auto const& key : GetDeviceKeywords(rend, true)) {
-                    usedKeys.push_back(key);
-                }
-                if (rend->HasKeywordString("zad_DeviousBondageMittens")) {
-                    //removeHandItems = true;
-                }
-
-                if (rend->HasKeywordString("zad_DeviousHeavyBondage")) {
-                    doLast = dev;
-                    removeHandItems = true;
-                }
-                else {
-                    LockDevice(player, inv);
-                }
-
-                device_names += inv->GetName();
-                device_names += ",";
-                device_ids += Util::GetFormEditorId(inv);
-                device_ids += ",";
-
-                total += 1;
+            }
+            if (settings.plugsDontCount && (rend->HasKeywordString("zad_DeviousPlugVaginal") || rend->HasKeywordString("zad_DeviousPlugAnal"))) {
+                i--;
+            }
+            for (auto const& key : GetDeviceKeywords(rend, true)) {
+                usedKeys.push_back(key);
+            }
+            if (rend->HasKeywordString("zad_DeviousBondageMittens")) {
+                //removeHandItems = true;
             }
 
-            if (doLast.has_value()) {
-                auto inv = doLast.value().inv;
-                LockDevice(player, inv);
+            if (rend->HasKeywordString("zad_DeviousHeavyBondage")) {
+                to_equip.push_front(inv);
+                removeHandItems = true;
+            }
+            else {
+                //LockDevice(player, inv);
+                to_equip.push_back(inv);
             }
 
-            if (removeHandItems) {
-                UndressAndUnequipActor(player);
-            }
-            else if (settings.stripPlayerOnEvent) {
-                UndressActor(player, false);
-            }
+            device_names += inv->GetName();
+            device_names += ",";
+            device_ids += Util::GetFormEditorId(inv);
+            device_ids += ",";
+        }
 
-            std::string msg = "";
-            for (auto const& i : usedKeys) { msg += (i + ", "); }
-            msg.pop_back(); msg.pop_back();
-            log::trace("usedKeys: {}", msg);
+        if (bailout == 0) {
+            log::trace("Ran out of devices to equip.");
+        }
+        if (to_equip.size() == 0) {
+            return false;
+        }
 
-            if (bailout == 0) {
-                log::trace("Ran out of devices to equip.");
-            }
-            if (total > 0 && !contName.empty()) {
-                PlayerMessage(fmt::format("As you touch the {} you see restraints magically appear and wrap themselves around you!", contName));
-            }
-            if (total > 0) {
-                device_names.pop_back();
-                device_ids.pop_back();
+        if (removeHandItems) {
+            UndressAndUnequipActor(player);
+            ForceThirdPerson();
+        }
+        else if (settings.stripPlayerOnEvent) {
+            UndressActor(player, false);
+            ForceThirdPerson();
+        }
 
-                SendModEventDevices(player, total, device_names, device_ids);
+        SKSE::GetTaskInterface()->AddTask([player, to_equip] {
+            for (auto device : to_equip) {
+                log::trace("Locking device {}", device->GetName());
+                LockDevice(player, device);
             }
         });
+
+        std::string msg = "";
+        for (auto const& i : usedKeys) { msg += (i + ", "); }
+        msg.pop_back(); msg.pop_back();
+        log::trace("usedKeys: {}", msg);
+
+        if (!contName.empty()) {
+            PlayerMessage(fmt::format("As you touch the {} you see restraints magically appear and wrap themselves around you!", contName));
+        }
+        device_names.pop_back();
+        device_ids.pop_back();
+
+        SendModEventDevices(player, static_cast<int>(to_equip.size()), device_names, device_ids);
+        return true;
     }
 
     bool DoSimpleSlaveryEvent(std::string contName) {
@@ -269,12 +277,16 @@ namespace DCURSES {
     bool DoTattooEvent(std::string containerName) {
         auto player = RE::PlayerCharacter::GetSingleton();
 
+        if (settings.stripPlayerOnEvent) {
+            UndressActor(player, false);
+        }
+
         if (GetTattooCount(player) > settings.eventTattooCap) {
             return false;
         }
 
         int num_tattoos = Util::randomInt(settings.eventTattooMin, settings.eventTattooMax);
-        DoTattooEvent(player, num_tattoos);
+        RTDoTattooEvent(player, num_tattoos);
 
         std::string str = num_tattoos == 1 ? "a tattoo appears on your body!" : num_tattoos < 4 ? "a few tattoos appear on your body!" : "your body is covered in tattoos!";
         PlayerMessage(fmt::format("As you touch the {} you feel a sharp pain as {}", containerName, str));
@@ -284,7 +296,7 @@ namespace DCURSES {
 
     bool DoLewdMarkEvent(bool doMessage = true) {
         //45 no orgasm / edging
-        if (!RE::TESDataHandler::GetSingleton()->LookupLoadedLightModByName("LewdMarksSlaveTats.esp")) {
+        if (!CheckLewdMarksInstalled()) {
             return false;
         }
         auto player = RE::PlayerCharacter::GetSingleton();
@@ -932,9 +944,13 @@ namespace DCURSES {
             settings.eventSGOWeight = 0;
             SetMCMInt("eventSGOWeight", 0);
         }*/
-        if (GetModuleHandle(L"SlaveTatsNG") == nullptr || RE::TESDataHandler::GetSingleton()->LookupLoadedLightModByName("LewdMarksSlaveTats.esp") == nullptr) {
+        if (!CheckLewdMarksInstalled()) {
             settings.eventLewdMarkWeight = 0;
             SetMCMInt("eventLewdMarkWeight", 0);
+        }
+        if (!P_CheckSTNG(nullptr) || RE::TESDataHandler::GetSingleton()->LookupLoadedModByName("RapeTattoos.esp") == nullptr) {
+            settings.eventTattooWeight = 0;
+            SetMCMInt("eventTattooWeight", 0);
         }
     }
 }

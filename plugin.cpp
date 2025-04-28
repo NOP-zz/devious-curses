@@ -10,6 +10,7 @@
 #include "src/QuestInteractions.hpp"
 #include "src/QLIEIntegration.hpp"
 #include "src/SGO.hpp"
+#include "src/themes.hpp"
 
 #include "include/DDNG_API.h"
 
@@ -49,18 +50,18 @@ namespace DCURSES {
     }
 
     void P_OnUpdate(RE::StaticFunctionTag*) {
-        auto c1 = std::chrono::high_resolution_clock::now();
+        //auto c1 = std::chrono::high_resolution_clock::now();
         EventsUpdate();
-        auto c2 = std::chrono::high_resolution_clock::now();
+        //auto c2 = std::chrono::high_resolution_clock::now();
         SexUpdate();
-        auto c3 = std::chrono::high_resolution_clock::now();
+        //auto c3 = std::chrono::high_resolution_clock::now();
         QIUpdate();
-        auto c4 = std::chrono::high_resolution_clock::now();
+        //auto c4 = std::chrono::high_resolution_clock::now();
 
-        auto d1 = (c2 - c1).count() / 1000.0;
-        auto d2 = (c3 - c2).count() / 1000.0;
-        auto d3 = (c4 - c3).count() / 1000.0;
-        auto dt = (c4 - c1).count() / 1000.0;
+        //auto d1 = (c2 - c1).count() / 1000.0;
+        //auto d2 = (c3 - c2).count() / 1000.0;
+        //auto d3 = (c4 - c3).count() / 1000.0;
+        //auto dt = (c4 - c1).count() / 1000.0;
 
         //log::trace("UPDATE: E: {:.2f}, S: {:.2f}, Q: {:.2f}, total: {:.2f}", d1, d2, d3, dt);
 
@@ -85,7 +86,13 @@ namespace DCURSES {
     void P_Test(RE::StaticFunctionTag*) {
         log::trace("DCURSES test");
 
-        DoSGOGemEvent("TEST");
+        auto c1 = std::chrono::high_resolution_clock::now();
+        GetRandomTheme();
+        auto c2 = std::chrono::high_resolution_clock::now();
+
+        auto dt = (c2 - c1).count() / 1000.0;
+
+        log::trace("GetRandomTheme time: {:.2f}", dt);
     }
 
     bool PapyrusFunctions(RE::BSScript::IVirtualMachine* ivm) {
@@ -95,6 +102,7 @@ namespace DCURSES {
         ivm->RegisterFunction("OnUpdate", "DCursesLib", P_OnUpdate);
         PapyrusFunctionsSettigns(ivm);
         PapyrusFunctionsSex(ivm);
+        PapyrusFunctionsTats(ivm);
         return true;
     }
 

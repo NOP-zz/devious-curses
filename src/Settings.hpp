@@ -20,7 +20,7 @@ namespace DCURSES {
 
 		//MCM_START
 		//Flag flag_SlaveTats					//CheckSTNG()
-		//Flag flag_LewdMarks					//ESP:LewdMarksSlaveTats.esp, CheckSTNG()
+		//Flag flag_LewdMarks					//CheckLM(), CheckSTNG()
 		//Flag flag_RapeTats					//ESP:RapeTattoos.esp, CheckSTNG()
 		//Flag flag_SimpleSlavery				//ESP:SimpleSlavery.esp
 		//Flag flag_UnforgivingDevices			//ESP:UnforgivingDevices.esp
@@ -41,8 +41,8 @@ namespace DCURSES {
 		int eventScalingMod = 15;				//Event Scaling Target//The number of events before traps start becoming more likely.//{0}//(1,50,1)
 		//Column
 		//Header Parameters
-		int minRestraints = 1;					//Min Restraints//Minimum number of restraints.//{0}//(1,10,1)
-		int maxRestraints = 3;					//Max Restraints//Maximum number of restraints.//{0}//(1,10,1)
+		int minRestraints = 1;					//Min Restraints//Minimum number of restraints.//{0}//(1,15,1)
+		int maxRestraints = 3;					//Max Restraints//Maximum number of restraints.//{0}//(1,15,1)
 		int bossAditionalRestraints = 2;		//Boss Restraints//Added restraints when opening a boss chest.//{0}//(0,10,1)
 		bool bossOnlyHeavy = true;				//Boss Heavy Restraints//Heavy restraints can only be applied from boss chests.
 		int restraintCap = 7;					//Restraints Cap//Events won't happen if you have more than this many restraints.//{0}//(1,15,1)
@@ -121,10 +121,10 @@ namespace DCURSES {
 		//Header Bondage Curse
 		int eventStandardWeight = 100;			//Bondage Curse Weight//Chance to receive a bondage device event.//{0}//(0,500,1)
 		int eventStandardBossReduction = 20;	//Standard Boss Reduction//If the container is a boss chest, the standard event weight will be reduced by this amount.//{0}//(0,500,1)
-		//Column
 		//Header Slavery Curse
 		int eventSimpleSlaveryWeight = 0;		//Simple Slavery Weight//Chance to trigger a Simple Slavery auction.//{0}//(0,500,1) ?:? flag_SimpleSlavery														**RELOAD
 		int eventSSMinRestraints = 6;			//Minimum Restraints//Minimum restraints that need to be equipped for a Simple Slavery auction to start.//{0}//(0,10,1)											?:? flag_SSEnabled
+		//Column
 		//Header Tattoo Curse
 		int eventTattooWeight = 15;				//Tattoo Curse Weight//Chance to receive random tattoos.\nRequires Rape Tattoos.//{0}//(0,500,1)							?:? flag_RapeTats
 		int eventTattooMin = 1;					//Tattoo Curse Min//Minimum number of tattoos that can be put on.//{0}//(1,10,1)											?:? flag_RapeTats
@@ -185,6 +185,7 @@ namespace DCURSES {
 		float rDeviceBaseChance = 1.5;			//Device Base Chance//Chance to loot a random bondage item from a container or a dead body.//{1}%//(0,100,0.1)
 		bool dragonHoard = true;				//Dragon Hoards//Dragons will drop more gold, but the gold they carry is likely to be cursed.\nWith this enabled some settings might be ignored when looting dragons.
 		bool bossExtraGold = true;				//Boss Chest Extra Gold//Boss chests will have extra gold.
+		bool useThemes = false;					//Use Device Themes//Events that equip the player with devices will try to keep all devices equipped to a consistent theme.\nWARNING: this will increase the time taken to run each event and may cause lag spikes.
 		//Column
 		bool DisableGasMasks = false;			//Disable Gas Masks//Gas masks will be removed from this mod completely.
 		bool DisableCatsuits = false;			//Disable Catsuits//Catsuits will be removed from this mod completely.
@@ -573,6 +574,8 @@ namespace DCURSES {
 		SetMCMBool("dragonHoard",settings.dragonHoard);
 		settings.bossExtraGold = true;
 		SetMCMBool("bossExtraGold",settings.bossExtraGold);
+		settings.useThemes = false;
+		SetMCMBool("useThemes",settings.useThemes);
 		settings.DisableGasMasks = false;
 		SetMCMBool("DisableGasMasks",settings.DisableGasMasks);
 		settings.DisableCatsuits = false;
@@ -770,6 +773,7 @@ namespace DCURSES {
 			{"bossChestUseModelPath", settings.bossChestUseModelPath},
 			{"dragonHoard", settings.dragonHoard},
 			{"bossExtraGold", settings.bossExtraGold},
+			{"useThemes", settings.useThemes},
 			{"DisableGasMasks", settings.DisableGasMasks},
 			{"DisableCatsuits", settings.DisableCatsuits},
 			{"enableQuestInteractions", settings.enableQuestInteractions},
@@ -1122,6 +1126,8 @@ namespace DCURSES {
 		SetMCMBool("dragonHoard",settings.dragonHoard);
 		settings.bossExtraGold = static_cast<bool>(j.value("bossExtraGold", true));
 		SetMCMBool("bossExtraGold",settings.bossExtraGold);
+		settings.useThemes = static_cast<bool>(j.value("useThemes", false));
+		SetMCMBool("useThemes",settings.useThemes);
 		settings.DisableGasMasks = static_cast<bool>(j.value("DisableGasMasks", false));
 		SetMCMBool("DisableGasMasks",settings.DisableGasMasks);
 		settings.DisableCatsuits = static_cast<bool>(j.value("DisableCatsuits", false));
@@ -1322,6 +1328,7 @@ namespace DCURSES {
 		settings.bossChestUseModelPath = GetMCMSetting("bossChestUseModelPath")->GetBool();
 		settings.dragonHoard = GetMCMSetting("dragonHoard")->GetBool();
 		settings.bossExtraGold = GetMCMSetting("bossExtraGold")->GetBool();
+		settings.useThemes = GetMCMSetting("useThemes")->GetBool();
 		settings.DisableGasMasks = GetMCMSetting("DisableGasMasks")->GetBool();
 		settings.DisableCatsuits = GetMCMSetting("DisableCatsuits")->GetBool();
 		settings.enableQuestInteractions = GetMCMSetting("enableQuestInteractions")->GetBool();
@@ -1354,17 +1361,8 @@ namespace DCURSES {
 		RecalculateDeviceLists();
 	}
 
-	bool P_CheckSTNG(RE::StaticFunctionTag*) {
-		return GetModuleHandle(L"SlaveTatsNG") != nullptr;
-	}
-
 	bool PapyrusFunctionsSettigns(RE::BSScript::IVirtualMachine* ivm) {
-		//ivm->RegisterFunction("UpdateDCursesSKSE_Int", "DCurses_MCM", P_UpdateSKSEInt);
-		//ivm->RegisterFunction("UpdateDCursesSKSE_Float", "DCurses_MCM", P_UpdateSKSEFloat);
-		//ivm->RegisterFunction("UpdateDCursesSKSE_Bool", "DCurses_MCM", P_UpdateSKSEBool);
-
 		ivm->RegisterFunction("UpdateSKSE", "DCurses_MCM", P_UpdateSKSE);
-		ivm->RegisterFunction("CheckSTNG", "DCurses_MCM", P_CheckSTNG);
 		return true;
 	}
 

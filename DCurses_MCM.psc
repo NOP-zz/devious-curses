@@ -3,6 +3,7 @@ Scriptname DCurses_MCM extends SKI_ConfigBase
 
 function UpdateSKSE() global Native
 bool function CheckSTNG() global Native
+bool function CheckLM() global Native
 
 Perk Property PerkLooted Auto
 
@@ -329,6 +330,8 @@ Bool Property dragonHoard = true Auto
 Int dragonHoardOID
 Bool Property bossExtraGold = true Auto
 Int bossExtraGoldOID
+Bool Property useThemes = false Auto
+Int useThemesOID
 Bool Property DisableGasMasks = false Auto
 Int DisableGasMasksOID
 Bool Property DisableCatsuits = false Auto
@@ -415,7 +418,7 @@ Event OnPageReset(string page)
 		flag_SlaveTats = 0
 	EndIf
 	int flag_LewdMarks = 1
-	If Game.GetModByName("LewdMarksSlaveTats.esp") != 255 && CheckSTNG()
+	If CheckLM() && CheckSTNG()
 		flag_LewdMarks = 0
 	EndIf
 	int flag_RapeTats = 1
@@ -533,10 +536,10 @@ Event OnPageReset(string page)
 		AddHeaderOption("Bondage Curse ")
 		eventStandardWeightOID = AddSliderOption("Bondage Curse Weight  ", eventStandardWeight, "{0}", 0)
 		eventStandardBossReductionOID = AddSliderOption("Standard Boss Reduction  ", eventStandardBossReduction, "{0}", 0)
-		SetCursorPosition(1)
 		AddHeaderOption("Slavery Curse ")
 		eventSimpleSlaveryWeightOID = AddSliderOption("Simple Slavery Weight  ", eventSimpleSlaveryWeight, "{0}", flag_SimpleSlavery)
 		eventSSMinRestraintsOID = AddSliderOption("Minimum Restraints  ", eventSSMinRestraints, "{0}", flag_SSEnabled)
+		SetCursorPosition(1)
 		AddHeaderOption("Tattoo Curse ")
 		eventTattooWeightOID = AddSliderOption("Tattoo Curse Weight  ", eventTattooWeight, "{0}", flag_RapeTats)
 		eventTattooMinOID = AddSliderOption("Tattoo Curse Min  ", eventTattooMin, "{0}", flag_RapeTats)
@@ -600,6 +603,7 @@ Event OnPageReset(string page)
 		rDeviceBaseChanceOID = AddSliderOption("Device Base Chance  ", rDeviceBaseChance, "{1}%", 0)
 		dragonHoardOID = AddToggleOption("Dragon Hoards  ", dragonHoard, 0)
 		bossExtraGoldOID = AddToggleOption("Boss Chest Extra Gold  ", bossExtraGold, 0)
+		useThemesOID = AddToggleOption("Use Device Themes  ", useThemes, 0)
 		SetCursorPosition(1)
 		DisableGasMasksOID = AddToggleOption("Disable Gas Masks  ", DisableGasMasks, 0)
 		DisableCatsuitsOID = AddToggleOption("Disable Catsuits  ", DisableCatsuits, 0)
@@ -1165,6 +1169,10 @@ Event OnOptionHighlight(int option)
 		SetInfoText("Boss chests will have extra gold.")
 		Return
 	Endif
+	If option == useThemesOID
+		SetInfoText("Events that equip the player with devices will try to keep all devices equipped to a consistent theme.\nWARNING: this will increase the time taken to run each event and may cause lag spikes.")
+		Return
+	Endif
 	If option == DisableGasMasksOID
 		SetInfoText("Gas masks will be removed from this mod completely.")
 		Return
@@ -1477,6 +1485,11 @@ Event OnOptionSelect(int option)
 		SetToggleOptionValue(bossExtraGoldOID, bossExtraGold)
 		Return
 	Endif
+	If option == useThemesOID
+		useThemes = !useThemes
+		SetToggleOptionValue(useThemesOID, useThemes)
+		Return
+	Endif
 	If option == DisableGasMasksOID
 		DisableGasMasks = !DisableGasMasks
 		SetToggleOptionValue(DisableGasMasksOID, DisableGasMasks)
@@ -1597,14 +1610,14 @@ Event OnOptionSliderOpen(int option)
 	If option == minRestraintsOID
 		SetSliderDialogStartValue(minRestraints)
 		SetSliderDialogDefaultValue(1)
-		SetSliderDialogRange(1, 10)
+		SetSliderDialogRange(1, 15)
 		SetSliderDialogInterval(1)
 		Return
 	Endif
 	If option == maxRestraintsOID
 		SetSliderDialogStartValue(maxRestraints)
 		SetSliderDialogDefaultValue(3)
-		SetSliderDialogRange(1, 10)
+		SetSliderDialogRange(1, 15)
 		SetSliderDialogInterval(1)
 		Return
 	Endif

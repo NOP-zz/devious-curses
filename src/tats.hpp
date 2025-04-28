@@ -72,11 +72,37 @@ namespace DCURSES {
 		return JArray::count(matches);
 	}
 
+	bool CheckLewdMarksInstalled() {
+		if (!slavetats_ng::iface) return false;
+		if (!jcontainers::JCWrapper::GetSingleton()->IsInitialized()) return false;
+
+		using namespace jcontainers;
+
+		int a_template = JValue::addToPool(JMap::object(), "DCURSES");
+		int matches = JValue::addToPool(JArray::object(), "DCURSES");
+
+		JMap::setStr(a_template, "section", "LewdMarks");
+		JMap::setStr(a_template, "name", "001");
+
+		if (slavetats_ng::query_available_tattoos(a_template, matches)) {
+			JValue::cleanPool("DCURSES");
+			return false;
+		}
+
+		if (JArray::count(matches) == 0) {
+			JValue::cleanPool("DCURSES");
+			return false;
+		}
+
+		JValue::cleanPool("DCURSES");
+		return true;
+	}
+
 	bool _AddLewdMarkGlow(RE::Actor* actor, int index, int32_t color, int32_t glow) {
 		if (!actor) return false;
 		if (!slavetats_ng::iface) return false;
 		if (!jcontainers::JCWrapper::GetSingleton()->IsInitialized()) return false;
-		if (RE::TESDataHandler::GetSingleton()->LookupLoadedLightModByName("LewdMarksSlaveTats.esp") == nullptr) return false;
+		if (!CheckLewdMarksInstalled()) return false;
 
 		using namespace jcontainers;
 		std::string mark = fmt::format("{:03}", index);
@@ -136,7 +162,7 @@ namespace DCURSES {
 		if (!actor) return false;
 		if (!slavetats_ng::iface) return false;
 		if (!jcontainers::JCWrapper::GetSingleton()->IsInitialized()) return false;
-		if (RE::TESDataHandler::GetSingleton()->LookupLoadedLightModByName("LewdMarksSlaveTats.esp") == nullptr) return false;
+		if (!CheckLewdMarksInstalled()) return false;
 
 		using namespace jcontainers;
 		std::string mark = fmt::format("{:03}", index);
@@ -196,7 +222,7 @@ namespace DCURSES {
 		if (!actor) return false;
 		if (!slavetats_ng::iface) return false;
 		if (!jcontainers::JCWrapper::GetSingleton()->IsInitialized()) return false;
-		if (RE::TESDataHandler::GetSingleton()->LookupLoadedLightModByName("LewdMarksSlaveTats.esp") == nullptr) return false;
+		if (!CheckLewdMarksInstalled()) return false;
 		
 		auto glowColor = Util::ColorScale(base_color, 0.8);
 
@@ -208,7 +234,7 @@ namespace DCURSES {
 		if (!actor) return -1;
 		if (!slavetats_ng::iface) return -1;
 		if (!jcontainers::JCWrapper::GetSingleton()->IsInitialized()) return -1;
-		if (RE::TESDataHandler::GetSingleton()->LookupLoadedLightModByName("LewdMarksSlaveTats.esp") == nullptr) return -1;
+		if (!CheckLewdMarksInstalled()) return -1;
 
 		using namespace jcontainers;
 
@@ -237,7 +263,7 @@ namespace DCURSES {
 		if (!actor) return;
 		if (!slavetats_ng::iface) return;
 		if (!jcontainers::JCWrapper::GetSingleton()->IsInitialized()) return;
-		if (RE::TESDataHandler::GetSingleton()->LookupLoadedLightModByName("LewdMarksSlaveTats.esp") == nullptr) return;
+		if (!CheckLewdMarksInstalled()) return;
 
 		using namespace jcontainers;
 
@@ -251,7 +277,7 @@ namespace DCURSES {
 		if (!actor) return;
 		if (!slavetats_ng::iface) return;
 		if (!jcontainers::JCWrapper::GetSingleton()->IsInitialized()) return;
-		if (RE::TESDataHandler::GetSingleton()->LookupLoadedLightModByName("LewdMarksSlaveTats.esp") == nullptr) return;
+		if (!CheckLewdMarksInstalled()) return;
 
 		if (index < 1) {
 			return;
@@ -272,5 +298,19 @@ namespace DCURSES {
 		slavetats_ng::synchronize_tattoos(actor, true);
 		JValue::cleanPool("DCURSES");
 		RemoveLewdMark(actor, GetLewdMark(actor));
+	}
+
+	bool P_CheckSTNG(RE::StaticFunctionTag*) {
+		return slavetats_ng::iface;
+	}
+
+	bool P_CheckLM(RE::StaticFunctionTag*) {
+		return CheckLewdMarksInstalled();
+	}
+
+	bool PapyrusFunctionsTats(RE::BSScript::IVirtualMachine* ivm) {
+		ivm->RegisterFunction("CheckSTNG", "DCurses_MCM", P_CheckSTNG);
+		ivm->RegisterFunction("CheckLM", "DCurses_MCM", P_CheckLM);
+		return true;
 	}
 }

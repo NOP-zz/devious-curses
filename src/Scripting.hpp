@@ -229,7 +229,7 @@ namespace DCURSES {
         GetVM()->DispatchMethodCall(slaObject, "GetActorArousal", RE::MakeFunctionArguments<RE::Actor*>(std::move(akActor)), callback);
     }
 
-    void DoTattooEvent(RE::Actor* akActor, int count) {
+    void RTDoTattooEvent(RE::Actor* akActor, int count) {
         RE::BSTSmartPointer<RE::BSScript::Object> rapeTatsObject;
         RE::TESForm* sla = RE::TESDataHandler::GetSingleton()->LookupForm(std::stoi("d62", 0, 16), "RapeTattoos.esp");
         RE::VMHandle hand = GetHP()->GetHandleForObject(RE::FormType::Quest, sla);
@@ -237,7 +237,7 @@ namespace DCURSES {
 
         if (akActor == nullptr) { return; }
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> callback;
-        GetVM()->DispatchMethodCall(rapeTatsObject, "addTattooEventV2", RE::MakeFunctionArguments<RE::Actor*, int>(std::move(akActor), std::move(count)), callback);
+        GetVM()->DispatchMethodCall(rapeTatsObject, "doTattooActionFor", RE::MakeFunctionArguments<RE::Actor*, int>(std::move(akActor), std::move(count)), callback);
     }
 
     void ForceThirdPerson() {

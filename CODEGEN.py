@@ -124,6 +124,7 @@ Scriptname DCurses_MCM extends SKI_ConfigBase
 
 function UpdateSKSE() global Native
 bool function CheckSTNG() global Native
+bool function CheckLM() global Native
 
 Perk Property PerkLooted Auto
 
