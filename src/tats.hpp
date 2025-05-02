@@ -82,7 +82,6 @@ namespace DCURSES {
 		int matches = JValue::addToPool(JArray::object(), "DCURSES");
 
 		JMap::setStr(a_template, "section", "LewdMarks");
-		JMap::setStr(a_template, "name", "001");
 
 		if (slavetats_ng::query_available_tattoos(a_template, matches)) {
 			JValue::cleanPool("DCURSES");

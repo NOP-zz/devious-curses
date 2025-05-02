@@ -332,10 +332,6 @@ Bool Property bossExtraGold = true Auto
 Int bossExtraGoldOID
 Bool Property useThemes = false Auto
 Int useThemesOID
-Bool Property DisableGasMasks = false Auto
-Int DisableGasMasksOID
-Bool Property DisableCatsuits = false Auto
-Int DisableCatsuitsOID
 Bool Property enableQuestInteractions = true Auto
 Int enableQuestInteractionsOID
 Bool Property enableSlowStrip = false Auto
@@ -605,8 +601,6 @@ Event OnPageReset(string page)
 		bossExtraGoldOID = AddToggleOption("Boss Chest Extra Gold  ", bossExtraGold, 0)
 		useThemesOID = AddToggleOption("Use Device Themes  ", useThemes, 0)
 		SetCursorPosition(1)
-		DisableGasMasksOID = AddToggleOption("Disable Gas Masks  ", DisableGasMasks, 0)
-		DisableCatsuitsOID = AddToggleOption("Disable Catsuits  ", DisableCatsuits, 0)
 		enableQuestInteractionsOID = AddToggleOption("Quest Interactions  ", enableQuestInteractions, 0)
 		enableSlowStripOID = AddToggleOption("Use Sexlab Strip  ", enableSlowStrip, 0)
 		setAllDefaultSettingsOID = AddToggleOption("Return to Default [WARNING]  ", setAllDefaultSettings, 0)
@@ -1173,14 +1167,6 @@ Event OnOptionHighlight(int option)
 		SetInfoText("Events that equip the player with devices will try to keep all devices equipped to a consistent theme.\nWARNING: this will increase the time taken to run each event and may cause lag spikes.")
 		Return
 	Endif
-	If option == DisableGasMasksOID
-		SetInfoText("Gas masks will be removed from this mod completely.")
-		Return
-	Endif
-	If option == DisableCatsuitsOID
-		SetInfoText("Catsuits will be removed from this mod completely.")
-		Return
-	Endif
 	If option == enableQuestInteractionsOID
 		SetInfoText("Enable interactions with vanilla quests. This might include sex with NPCs, equipped devices, added tattoos, and more.")
 		Return
@@ -1488,16 +1474,6 @@ Event OnOptionSelect(int option)
 	If option == useThemesOID
 		useThemes = !useThemes
 		SetToggleOptionValue(useThemesOID, useThemes)
-		Return
-	Endif
-	If option == DisableGasMasksOID
-		DisableGasMasks = !DisableGasMasks
-		SetToggleOptionValue(DisableGasMasksOID, DisableGasMasks)
-		Return
-	Endif
-	If option == DisableCatsuitsOID
-		DisableCatsuits = !DisableCatsuits
-		SetToggleOptionValue(DisableCatsuitsOID, DisableCatsuits)
 		Return
 	Endif
 	If option == enableQuestInteractionsOID

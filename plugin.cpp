@@ -87,7 +87,7 @@ namespace DCURSES {
         log::trace("DCURSES test");
 
         auto c1 = std::chrono::high_resolution_clock::now();
-        GetRandomTheme();
+        DoStandardEvent(false, "", "pony", 20);
         auto c2 = std::chrono::high_resolution_clock::now();
 
         auto dt = (c2 - c1).count() / 1000.0;

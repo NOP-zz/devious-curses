@@ -187,8 +187,6 @@ namespace DCURSES {
 		bool bossExtraGold = true;				//Boss Chest Extra Gold//Boss chests will have extra gold.
 		bool useThemes = false;					//Use Device Themes//Events that equip the player with devices will try to keep all devices equipped to a consistent theme.\nWARNING: this will increase the time taken to run each event and may cause lag spikes.
 		//Column
-		bool DisableGasMasks = false;			//Disable Gas Masks//Gas masks will be removed from this mod completely.
-		bool DisableCatsuits = false;			//Disable Catsuits//Catsuits will be removed from this mod completely.
 		bool enableQuestInteractions = true;	//Quest Interactions//Enable interactions with vanilla quests. This might include sex with NPCs, equipped devices, added tattoos, and more.
 		bool enableSlowStrip = false;			//Use Sexlab Strip//Replace the built in stripping algorithm with the one from sexlab.\nCan fix rare cases of crashing on stripping and also give more control over what gets stripped.
 		bool setAllDefaultSettings = false;		//Return to Default [WARNING]//If you exit the menu with this enabled all settings in the MCM will be reset to default.
@@ -576,10 +574,6 @@ namespace DCURSES {
 		SetMCMBool("bossExtraGold",settings.bossExtraGold);
 		settings.useThemes = false;
 		SetMCMBool("useThemes",settings.useThemes);
-		settings.DisableGasMasks = false;
-		SetMCMBool("DisableGasMasks",settings.DisableGasMasks);
-		settings.DisableCatsuits = false;
-		SetMCMBool("DisableCatsuits",settings.DisableCatsuits);
 		settings.enableQuestInteractions = true;
 		SetMCMBool("enableQuestInteractions",settings.enableQuestInteractions);
 		settings.enableSlowStrip = false;
@@ -774,8 +768,6 @@ namespace DCURSES {
 			{"dragonHoard", settings.dragonHoard},
 			{"bossExtraGold", settings.bossExtraGold},
 			{"useThemes", settings.useThemes},
-			{"DisableGasMasks", settings.DisableGasMasks},
-			{"DisableCatsuits", settings.DisableCatsuits},
 			{"enableQuestInteractions", settings.enableQuestInteractions},
 			{"enableSlowStrip", settings.enableSlowStrip},
 			{"setAllDefaultSettings", settings.setAllDefaultSettings},
@@ -1128,10 +1120,6 @@ namespace DCURSES {
 		SetMCMBool("bossExtraGold",settings.bossExtraGold);
 		settings.useThemes = static_cast<bool>(j.value("useThemes", false));
 		SetMCMBool("useThemes",settings.useThemes);
-		settings.DisableGasMasks = static_cast<bool>(j.value("DisableGasMasks", false));
-		SetMCMBool("DisableGasMasks",settings.DisableGasMasks);
-		settings.DisableCatsuits = static_cast<bool>(j.value("DisableCatsuits", false));
-		SetMCMBool("DisableCatsuits",settings.DisableCatsuits);
 		settings.enableQuestInteractions = static_cast<bool>(j.value("enableQuestInteractions", true));
 		SetMCMBool("enableQuestInteractions",settings.enableQuestInteractions);
 		settings.enableSlowStrip = static_cast<bool>(j.value("enableSlowStrip", false));
@@ -1329,8 +1317,6 @@ namespace DCURSES {
 		settings.dragonHoard = GetMCMSetting("dragonHoard")->GetBool();
 		settings.bossExtraGold = GetMCMSetting("bossExtraGold")->GetBool();
 		settings.useThemes = GetMCMSetting("useThemes")->GetBool();
-		settings.DisableGasMasks = GetMCMSetting("DisableGasMasks")->GetBool();
-		settings.DisableCatsuits = GetMCMSetting("DisableCatsuits")->GetBool();
 		settings.enableQuestInteractions = GetMCMSetting("enableQuestInteractions")->GetBool();
 		settings.enableSlowStrip = GetMCMSetting("enableSlowStrip")->GetBool();
 		settings.setAllDefaultSettings = GetMCMSetting("setAllDefaultSettings")->GetBool();

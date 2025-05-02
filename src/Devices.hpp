@@ -11,6 +11,7 @@
 #include "spdlog/spdlog.h"
 #include <fstream>
 
+constexpr auto EXCLUSIONS_FILE = "Data/SKSE/Plugins/DeviousCursesExclusions.json";
 
 using namespace SKSE;
 
@@ -119,7 +120,30 @@ namespace DCURSES {
 	// GLOBAL
 	struct Devices devices = Devices();
 
-	bool ProcessDevice(DeviceData dev) {
+	std::vector<std::string> GetDeviceExclusions() {
+		nlohmann::json j = nlohmann::json::array();
+
+		if (!std::filesystem::exists(EXCLUSIONS_FILE)) {
+			log::warn("Unable to load exclusions file. Creating blank file.");
+			std::ofstream o(EXCLUSIONS_FILE);
+			o << j << std::endl;
+		}
+		else {
+			std::ifstream i(EXCLUSIONS_FILE);
+
+			try {
+				i >> j;
+			}
+			catch (...) {
+				log::error("Exclusions file has garbled data.");
+				return std::vector<std::string>();
+			}
+		}
+
+		return j.get<std::vector<std::string>>();
+	}
+
+	bool ProcessDevice(DeviceData dev, std::vector<std::string> exclusions) {
 		RE::TESObjectARMO* rend = dev.rend;
 		if (!rend) {
 			log::warn("ProcessDevice called with bad device data");
@@ -158,13 +182,12 @@ namespace DCURSES {
 			return false;
 		}
 
-		if (settings.DisableGasMasks && Util::FormEditorIdContains(rend, "gasmask")) {
-			return false;
+		for (auto excl : exclusions) {
+			if (Util::testFormComp(excl, dev.inv)) {
+				return false;
+			}
 		}
-		if (settings.DisableCatsuits && Util::FormEditorIdContains(rend, "catsuit")) {
-			return false;
-		}
-
+		
 		if (deviceTypeCount > 4) { // We don't want restraints that block too much.
 			return false;
 		}
@@ -404,6 +427,8 @@ namespace DCURSES {
 			log::info("Building device lists for Unforgiving Devices.");
 		}
 
+		auto exclusions = GetDeviceExclusions();
+
 		log::info("Total devices from api: {}", API->GetDatabase().size());
 		for (auto const& [device, dev_data] : API->GetDatabase()) {
 			RE::TESObjectARMO* deviceInventory = device;
@@ -468,7 +493,7 @@ namespace DCURSES {
 				keyCount
 			};
 
-			if (ProcessDevice(dat)) {
+			if (ProcessDevice(dat, exclusions)) {
 				counter++;
 			}
 		}
