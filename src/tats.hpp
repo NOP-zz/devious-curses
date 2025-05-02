@@ -99,9 +99,6 @@ namespace DCURSES {
 
 	bool _AddLewdMarkGlow(RE::Actor* actor, int index, int32_t color, int32_t glow) {
 		if (!actor) return false;
-		if (!slavetats_ng::iface) return false;
-		if (!jcontainers::JCWrapper::GetSingleton()->IsInitialized()) return false;
-		if (!CheckLewdMarksInstalled()) return false;
 
 		using namespace jcontainers;
 		std::string mark = fmt::format("{:03}", index);
@@ -159,9 +156,6 @@ namespace DCURSES {
 
 	bool _AddLewdMarkMain(RE::Actor* actor, int index, int32_t color, int32_t glow) {
 		if (!actor) return false;
-		if (!slavetats_ng::iface) return false;
-		if (!jcontainers::JCWrapper::GetSingleton()->IsInitialized()) return false;
-		if (!CheckLewdMarksInstalled()) return false;
 
 		using namespace jcontainers;
 		std::string mark = fmt::format("{:03}", index);
@@ -233,7 +227,6 @@ namespace DCURSES {
 		if (!actor) return -1;
 		if (!slavetats_ng::iface) return -1;
 		if (!jcontainers::JCWrapper::GetSingleton()->IsInitialized()) return -1;
-		if (!CheckLewdMarksInstalled()) return -1;
 
 		using namespace jcontainers;
 

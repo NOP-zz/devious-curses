@@ -85,14 +85,31 @@ namespace DCURSES {
 
     void P_Test(RE::StaticFunctionTag*) {
         log::trace("DCURSES test");
+        const auto processLists = RE::ProcessLists::GetSingleton();
 
+        auto a = processLists->aliveActorList;
+        auto high = processLists->highActorHandles;
+        auto midh = processLists->middleHighActorHandles;
+        auto midl = processLists->middleLowActorHandles;
+        auto low = processLists->lowActorHandles;
+
+        log::trace("alive: {}, high: {}, midh: {}, midl: {}, low: {}",
+            std::distance(a.begin(), a.end()),
+            std::distance(high.begin(), high.end()),
+            std::distance(midh.begin(), midh.end()),
+            std::distance(midl.begin(), midl.end()),
+            std::distance(low.begin(), low.end())
+        );
+
+        /*
         auto c1 = std::chrono::high_resolution_clock::now();
-        DoStandardEvent(false, "", "pony", 20);
+        SexUpdate();
         auto c2 = std::chrono::high_resolution_clock::now();
 
         auto dt = (c2 - c1).count() / 1000.0;
 
         log::trace("GetRandomTheme time: {:.2f}", dt);
+        */
     }
 
     bool PapyrusFunctions(RE::BSScript::IVirtualMachine* ivm) {
