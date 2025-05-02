@@ -7,11 +7,11 @@ using namespace SKSE;
 constexpr auto THEMES_FILE = "Data/SKSE/Plugins/DeviousCursesThemes.json";
 
 namespace DCURSES {
-	std::string GetRandomTheme() {
+	void CreateThemesFileIfNeeded() {
 		nlohmann::json j = nlohmann::json::array();
 
 		if (!std::filesystem::exists(THEMES_FILE)) {
-			log::warn("Unable to load themes file. Recreating file.");
+			log::warn("Unable to load themes file. Creating default file.");
 			std::ofstream o(THEMES_FILE);
 			j = nlohmann::json::array({
 				"red & (ebonite | rubber)",
@@ -26,19 +26,24 @@ namespace DCURSES {
 				"rope & red",
 				"rope & black"
 			});
-			o << j << std::endl;
+			o << std::setw(4) << j << std::endl;
 		}
-		else {
-			std::ifstream i(THEMES_FILE);
+	}
 
-			try {
-				i >> j;
-			}
-			catch (...) {
-				log::error("Themes file has garbled data.");
-				return "";
-			}
+	std::string GetRandomTheme() {
+		CreateThemesFileIfNeeded();
+
+		nlohmann::json j = nlohmann::json::array();
+		std::ifstream i(THEMES_FILE);
+
+		try {
+			i >> j;
 		}
+		catch (...) {
+			log::error("Themes file has garbled data.");
+			return "";
+		}
+
 
 		auto themes = j.get<std::vector<std::string>>();
 		std::vector<std::string> out;

@@ -120,7 +120,7 @@ namespace DCURSES {
 	// GLOBAL
 	struct Devices devices = Devices();
 
-	std::vector<std::string> GetDeviceExclusions() {
+	void CreateExclusionsFileIfNeeded() {
 		nlohmann::json j = nlohmann::json::array();
 
 		if (!std::filesystem::exists(EXCLUSIONS_FILE)) {
@@ -128,17 +128,23 @@ namespace DCURSES {
 			std::ofstream o(EXCLUSIONS_FILE);
 			o << j << std::endl;
 		}
-		else {
-			std::ifstream i(EXCLUSIONS_FILE);
+	}
 
-			try {
-				i >> j;
-			}
-			catch (...) {
-				log::error("Exclusions file has garbled data.");
-				return std::vector<std::string>();
-			}
+	std::vector<std::string> GetDeviceExclusions() {
+		CreateExclusionsFileIfNeeded();
+
+		nlohmann::json j = nlohmann::json::array();
+
+		std::ifstream i(EXCLUSIONS_FILE);
+
+		try {
+			i >> j;
 		}
+		catch (...) {
+			log::error("Exclusions file has garbled data.");
+			return std::vector<std::string>();
+		}
+
 
 		return j.get<std::vector<std::string>>();
 	}

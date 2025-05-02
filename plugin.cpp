@@ -180,6 +180,9 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
             break;
         }
         case SKSE::MessagingInterface::kPostLoad: {
+            DCURSES::CreateExclusionsFileIfNeeded();
+            DCURSES::CreateThemesFileIfNeeded();
+
             std::string pluginName = getJContainersPluginName();
 
             SKSE::GetMessagingInterface()->RegisterListener("SlaveTatsNG", slavetats_ng::messaging_hook);
