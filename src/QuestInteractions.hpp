@@ -26,13 +26,13 @@ namespace DCURSES {
 		auto player = RE::PlayerCharacter::GetSingleton();
 		auto mark = GetLewdMark(player);
 		if (mark > 0) {
-			RemoveLewdMark(player, mark);
+			RemoveLewdMark(player);
 		}
 
-		AddLewdMark(player, TAT_MERIDIA, 0x220022);
+		AddLewdMark(player, TAT_MERIDIA);
 		counters.clock_QIMeridia = static_cast<uint64_t>(Util::randomDouble(10, 15) * -60.0);
 		PlayerMessage("As you kill Malkoran he curses you with an unknown mark!");
-		SendModEventMark(player, "Malkoran", TAT_MERIDIA);
+		SendModEventMark(player, "Malkoran", "Malkoran", TAT_MERIDIA);
 	}
 
 	void QISanguineInteraction1() {
@@ -49,8 +49,8 @@ namespace DCURSES {
 		LockDevice(player, plug, true);
 
 		DoStandardEvent(false, "", "(rust | (iron & belt))", 20, {"zad_DeviousGag", "zad_DeviousHeavyBondage", "zad_DeviousBondageMittens", "zad_DeviousPlugVaginal", "zad_DeviousPlugAnal"});
-		AddLewdMark(player, TAT_NUDITY, 0x990000);
-		SendModEventMark(player, "Nudity", TAT_NUDITY);
+		AddLewdMark(player, TAT_NUDITY);
+		SendModEventMark(player, "Sanguine", "Nudity", TAT_NUDITY);
 		counters.LMPeopleTalked = -100;
 	}
 
@@ -62,10 +62,12 @@ namespace DCURSES {
 
 		auto mark = GetLewdMark(player);
 		if (mark == TAT_NUDITY) {
-			RemoveLewdMark(player, mark);
+			RemoveLewdMark(player);
 		}
 		PlayerMessage("Now that your wild adventure with Sanguine is over, he gives you a magic key!");
 	}
+
+	void QIPotemaInteraction(); // Add a curse during the potema questline. Sugestion was to have a curse that periodically summons devices. Gets stronger when fighting potema??
 
 	RE::Actor* QIMGGetSummonedAtronach();
 
@@ -281,7 +283,7 @@ namespace DCURSES {
 			switch (mark) {
 			case (TAT_MERIDIA):
 				if (!player->IsInCombat() && counters.clock_QIMeridia > 0) {
-					RemoveLewdMark(player, TAT_MERIDIA);
+					RemoveLewdMark(player);
 					DoStandardEvent(false, "", "(black & (ebonite | _LS_ | plug)) | piercing", 20);
 					PlayerMessage("You feel a surge of energy as Malkoran's mark activates!");
 				}

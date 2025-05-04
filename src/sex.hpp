@@ -408,8 +408,7 @@ namespace DCURSES {
 		for (auto actor : actors) {
 			if (actor && actor != RE::PlayerCharacter::GetSingleton()) {
 				log::trace("Sex ended with {}", actor->GetName());
-				counters.LMSexCounter += 1;
-				log::info("Allure mark: {}", counters.LMSexCounter);
+				IncrementCounterForMark(RE::PlayerCharacter::GetSingleton(), TAT_ALLURE);
 				ConsSexEnded(actor);
 				break;
 			}

@@ -172,15 +172,40 @@ namespace DCURSES {
 		if (actor->IsPlayerTeammate() && !settings.consAllowFollowers) {
 			return false;
 		}
-		int weightTotal = settings.consFineWeight + settings.consRandomBondageWeight + settings.consSexWeight + settings.consMercyWeight;
-		if (weightTotal == 0) return false;
-		int r = Util::randomInt(weightTotal);
 
-		std::vector<std::pair<bool (*)(RE::Actor* actor, consequenceSource source), int>> consequences;
-		consequences.push_back(std::make_pair(ConsFine, settings.consFineWeight));
-		consequences.push_back(std::make_pair(ConsSex, settings.consSexWeight));
-		consequences.push_back(std::make_pair(ConsRandomDevice, settings.consRandomBondageWeight));
-		consequences.push_back(std::make_pair(ConsMercy, settings.consMercyWeight));
+		double consFineWeight = settings.consFineWeight;
+		double consRandomBondageWeight = settings.consRandomBondageWeight;
+		double consSexWeight = settings.consSexWeight;
+		double consMercyWeight = settings.consMercyWeight;
+
+		if (settings.consUseRelationships) {
+			int relationship_rank = 0;
+			auto actor_base = actor->GetActorBase();
+			if (actor_base) {
+				auto relationship = RE::BGSRelationship::GetRelationship(actor_base, RE::PlayerCharacter::GetSingleton()->GetActorBase());
+				if (relationship) {
+					relationship_rank = 4 - static_cast<int>(relationship->level.get());
+					log::trace("Got relationship rank with {}: {}", actor->GetName(), relationship_rank);
+				}
+			}
+
+			consFineWeight = settings.consFineWeight * (8.0 - relationship_rank) / 8.0;
+			consSexWeight = settings.consSexWeight * (8.0 - relationship_rank) / 8.0;
+			consRandomBondageWeight = settings.consRandomBondageWeight * (8.0 - relationship_rank) / 8.0;
+			
+			consMercyWeight = settings.consMercyWeight * (8.0 + relationship_rank) / 8.0;
+		}
+
+		double weightTotal = consFineWeight + consRandomBondageWeight + consSexWeight + consMercyWeight;
+		if (weightTotal <= 0.0) return false;
+		
+		double r = Util::randomDouble(weightTotal);
+
+		std::vector<std::pair<bool (*)(RE::Actor* actor, consequenceSource source), double>> consequences;
+		consequences.push_back(std::make_pair(ConsFine, consFineWeight));
+		consequences.push_back(std::make_pair(ConsSex, consSexWeight));
+		consequences.push_back(std::make_pair(ConsRandomDevice, consRandomBondageWeight));
+		consequences.push_back(std::make_pair(ConsMercy, consMercyWeight));
 
 		for (size_t i = 0; !consequences.empty(); i = (i + 1) % consequences.size()) {
 			auto pair = consequences[i];
@@ -210,8 +235,7 @@ namespace DCURSES {
 		auto player = RE::PlayerCharacter::GetSingleton();
 		log::trace("Checking consequence dialogue");
 		if (player->GetWornArmor((RE::BIPED_MODEL::BipedObjectSlot::kBody)) == nullptr) {
-			counters.LMPeopleTalked += 1;
-			log::info("Nudity mark: {}", counters.LMPeopleTalked);
+			IncrementCounterForMark(player, TAT_NUDITY);
 			if (Util::randomDouble() < settings.consTriggerNude) {
 				log::trace("Nude Trigger");
 				if (DoConsequence(actor, consequenceSource::kNude)) {

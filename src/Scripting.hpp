@@ -98,19 +98,24 @@ namespace DCURSES {
         GetVM()->DispatchStaticCall("DCursesLib", "SlowStrip", RE::MakeFunctionArguments<RE::Actor*>(std::move(actor)), result);
     }
 
-    void SendModEventDevices(RE::Actor* who, int device_count, std::string devices, std::string device_ids) {
+    void SendModEventDevices(RE::Actor* who, std::string what, int device_count, std::string devices, std::string device_ids) {
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> result;
-        GetVM()->DispatchStaticCall("DCursesLib", "SendModEventDevices", RE::MakeFunctionArguments<RE::Actor*, int, std::string, std::string>(std::move(who), std::move(device_count), std::move(devices), std::move(device_ids)), result);
+        GetVM()->DispatchStaticCall("DCursesLib", "SendModEventDevices", RE::MakeFunctionArguments<RE::Actor*, std::string, int, std::string, std::string>(std::move(who), std::move(what), std::move(device_count), std::move(devices), std::move(device_ids)), result);
     }
 
-    void SendModEventMark(RE::Actor* who, std::string mark_name, int mark_id) {
+    void SendModEventMark(RE::Actor* who, std::string what, std::string mark_name, int mark_id) {
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> result;
-        GetVM()->DispatchStaticCall("DCursesLib", "SendModEventMark", RE::MakeFunctionArguments<RE::Actor*, std::string, int>(std::move(who), std::move(mark_name), std::move(mark_id)), result);
+        GetVM()->DispatchStaticCall("DCursesLib", "SendModEventMark", RE::MakeFunctionArguments<RE::Actor*, std::string, std::string, int>(std::move(who), std::move(what), std::move(mark_name), std::move(mark_id)), result);
     }
 
-    void SendModEventTattoo(RE::Actor* who, int tattoo_count) {
+    void SendModEventTattoo(RE::Actor* who, std::string what, int tattoo_count) {
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> result;
-        GetVM()->DispatchStaticCall("DCursesLib", "SendModEventTattoo", RE::MakeFunctionArguments<RE::Actor*, int>(std::move(who), std::move(tattoo_count)), result);
+        GetVM()->DispatchStaticCall("DCursesLib", "SendModEventTattoo", RE::MakeFunctionArguments<RE::Actor*, std::string, int>(std::move(who), std::move(what), std::move(tattoo_count)), result);
+    }
+
+    void SendModEventContraption(RE::Actor* who, std::string what) {
+        RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> result;
+        GetVM()->DispatchStaticCall("DCursesLib", "SendModEventContraption", RE::MakeFunctionArguments<RE::Actor*, std::string>(std::move(who), std::move(what)), result);
     }
 
     void SetArousal(RE::Actor* actor, int arousal) {
@@ -238,6 +243,40 @@ namespace DCURSES {
         if (akActor == nullptr) { return; }
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> callback;
         GetVM()->DispatchMethodCall(rapeTatsObject, "doTattooActionFor", RE::MakeFunctionArguments<RE::Actor*, int>(std::move(akActor), std::move(count)), callback);
+    }
+
+    RE::BSTSmartPointer<RE::BSScript::Object> ContraptionsGetRefScript(RE::TESObjectREFR* furniture) {
+        auto handle = GetHP()->GetHandleForObject(RE::FormType::Reference, furniture);
+        RE::BSTSmartPointer<RE::BSScript::Object> scriptObject;
+        GetVM()->FindBoundObject(handle, "zadcFurnitureScript", scriptObject);
+
+        if (!scriptObject) {
+            return nullptr;
+        }
+
+        return scriptObject;
+    }
+
+    void ContraptionsLockActor(RE::Actor* akActor, RE::TESObjectREFR* furniture) {
+        RE::TESForm* clibs = RE::TESDataHandler::GetSingleton()->LookupForm(0x22fd, "Devious Devices - Contraptions.esm");
+        RE::VMHandle hand = GetHP()->GetHandleForObject(RE::FormType::Quest, clibs);
+        RE::BSTSmartPointer<RE::BSScript::Object> zadclibsObject;
+        GetVM()->FindBoundObject(hand, "zadcLibs", zadclibsObject);
+
+        if (akActor == nullptr || furniture == nullptr) { return; }
+        RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> callback;
+        GetVM()->DispatchMethodCall(zadclibsObject, "LockActorV2", RE::MakeFunctionArguments<RE::Actor*, RE::TESObjectREFR*, RE::TESPackage*, bool>(std::move(akActor), std::move(furniture), nullptr, false), callback);
+    }
+
+    void ContraptionsUnlockActor(RE::Actor* akActor) {
+        RE::TESForm* clibs = RE::TESDataHandler::GetSingleton()->LookupForm(0x22fd, "Devious Devices - Contraptions.esm");
+        RE::VMHandle hand = GetHP()->GetHandleForObject(RE::FormType::Quest, clibs);
+        RE::BSTSmartPointer<RE::BSScript::Object> zadclibsObject;
+        GetVM()->FindBoundObject(hand, "zadcLibs", zadclibsObject);
+
+        if (akActor == nullptr) { return; }
+        RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> callback;
+        GetVM()->DispatchMethodCall(zadclibsObject, "UnlockActor", RE::MakeFunctionArguments<RE::Actor*>(std::move(akActor)), callback);
     }
 
     void ForceThirdPerson() {

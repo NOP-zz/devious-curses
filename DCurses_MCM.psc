@@ -134,6 +134,8 @@ Int Property eventStandardWeight = 100 Auto
 Int eventStandardWeightOID
 Int Property eventStandardBossReduction = 20 Auto
 Int eventStandardBossReductionOID
+Int Property eventContraptionWeight = 25 Auto
+Int eventContraptionWeightOID
 Int Property eventSimpleSlaveryWeight = 0 Auto
 Int eventSimpleSlaveryWeightOID
 Int Property eventSSMinRestraints = 6 Auto
@@ -246,6 +248,10 @@ Float Property keyBonus = 1.0 Auto
 Int keyBonusOID
 Float Property keyPickpocketBonus = 2.0 Auto
 Int keyPickpocketBonusOID
+Float Property magicKeyChance = 10.0 Auto
+Int magicKeyChanceOID
+Float Property eventContraptionTime = 0.0 Auto
+Int eventContraptionTimeOID
 Float Property LMBondageChance = 5.0 Auto
 Int LMBondageChanceOID
 Float Property playerHomeModifier = 0.0 Auto
@@ -280,6 +286,8 @@ Float Property wildernessModifier = 0.9 Auto
 Int wildernessModifierOID
 Float Property rDeviceBaseChance = 1.5 Auto
 Int rDeviceBaseChanceOID
+Float Property tatSolventChance = 0.5 Auto
+Int tatSolventChanceOID
 Float Property consTriggerNude = 15.0 Auto
 Int consTriggerNudeOID
 Float Property consTriggerRestrained = 50.0 Auto
@@ -310,14 +318,10 @@ Bool Property allowLegShackles = false Auto
 Int allowLegShacklesOID
 Bool Property keyForgiveness = true Auto
 Int keyForgivenessOID
-Bool Property enableMagicKeys = true Auto
-Int enableMagicKeysOID
 Bool Property preferRelevantKeys = true Auto
 Int preferRelevantKeysOID
 Bool Property vanishingKeys = true Auto
 Int vanishingKeysOID
-Bool Property lockSlaveTats = true Auto
-Int lockSlaveTatsOID
 Bool Property LMNudityChestOnly = false Auto
 Int LMNudityChestOnlyOID
 Bool Property useLocationModifiers = true Auto
@@ -332,14 +336,16 @@ Bool Property bossExtraGold = true Auto
 Int bossExtraGoldOID
 Bool Property useThemes = false Auto
 Int useThemesOID
-Bool Property enableQuestInteractions = true Auto
-Int enableQuestInteractionsOID
 Bool Property enableSlowStrip = false Auto
 Int enableSlowStripOID
 Bool Property setAllDefaultSettings = false Auto
 Int setAllDefaultSettingsOID
 Bool Property consAllowFollowers = false Auto
 Int consAllowFollowersOID
+Bool Property consUseRelationships = true Auto
+Int consUseRelationshipsOID
+Bool Property consRelationBondage = false Auto
+Int consRelationBondageOID
 Bool Property consRandomHeavyBondage = false Auto
 Int consRandomHeavyBondageOID
 Bool Property sexEnabled = false Auto
@@ -525,13 +531,16 @@ Event OnPageReset(string page)
 		chastityKeyWeightOID = AddSliderOption("Chastity Key Weight  ", chastityKeyWeight, "{0}", 0)
 		piercingToolWeightOID = AddSliderOption("Piercing Tool Weight  ", piercingToolWeight, "{0}", 0)
 		AddEmptyOption()
-		enableMagicKeysOID = AddToggleOption("Magic Keys  ", enableMagicKeys, 0)
+		magicKeyChanceOID = AddSliderOption("Magic Key Chance  ", magicKeyChance, "{1}", 0)
 		preferRelevantKeysOID = AddToggleOption("Prefer Relevant Keys  ", preferRelevantKeys, 0)
 		vanishingKeysOID = AddToggleOption("Vanishing Keys  ", vanishingKeys, 0)
 	Elseif page == "Events "
 		AddHeaderOption("Bondage Curse ")
 		eventStandardWeightOID = AddSliderOption("Bondage Curse Weight  ", eventStandardWeight, "{0}", 0)
 		eventStandardBossReductionOID = AddSliderOption("Standard Boss Reduction  ", eventStandardBossReduction, "{0}", 0)
+		AddHeaderOption("Contraption Curse ")
+		eventContraptionWeightOID = AddSliderOption("Contraption Curse Weight  ", eventContraptionWeight, "{0}", 0)
+		eventContraptionTimeOID = AddSliderOption("Contraption Release Time  ", eventContraptionTime, "{1}", 0)
 		AddHeaderOption("Slavery Curse ")
 		eventSimpleSlaveryWeightOID = AddSliderOption("Simple Slavery Weight  ", eventSimpleSlaveryWeight, "{0}", flag_SimpleSlavery)
 		eventSSMinRestraintsOID = AddSliderOption("Minimum Restraints  ", eventSSMinRestraints, "{0}", flag_SSEnabled)
@@ -544,7 +553,6 @@ Event OnPageReset(string page)
 		AddHeaderOption("Mark Curse ")
 		eventLewdMarkWeightOID = AddSliderOption("Lewd Mark Weight  ", eventLewdMarkWeight, "{0}", flag_LewdMarks)
 	Elseif page == "Lewd Marks "
-		lockSlaveTatsOID = AddToggleOption("Lock Tattoos  ", lockSlaveTats, 0)
 		AddHeaderOption("Allure ")
 		LMAllureWeightOID = AddSliderOption("Allure Mark Weight  ", LMAllureWeight, "{0}", flag_LewdMarks)
 		LMAllureModOID = AddSliderOption("Allure Arousal  ", LMAllureMod, "{0}", flag_LewdMarks)
@@ -556,7 +564,6 @@ Event OnPageReset(string page)
 		LMHeatContainerCountOID = AddSliderOption("Container Count  ", LMHeatContainerCount, "{0}", flag_LewdMarks)
 		LMHeatColorOID = AddColorOption("Color  ", LMHeatColor, flag_LewdMarks)
 		SetCursorPosition(1)
-		AddEmptyOption()
 		AddHeaderOption("Bondage ")
 		LMBondageWeightOID = AddSliderOption("Bondage Mark  ", LMBondageWeight, "{0}", flag_LewdMarks)
 		LMBondageChanceOID = AddSliderOption("Chance  ", LMBondageChance, "{1}%", flag_LewdMarks)
@@ -601,8 +608,8 @@ Event OnPageReset(string page)
 		bossExtraGoldOID = AddToggleOption("Boss Chest Extra Gold  ", bossExtraGold, 0)
 		useThemesOID = AddToggleOption("Use Device Themes  ", useThemes, 0)
 		SetCursorPosition(1)
-		enableQuestInteractionsOID = AddToggleOption("Quest Interactions  ", enableQuestInteractions, 0)
 		enableSlowStripOID = AddToggleOption("Use Sexlab Strip  ", enableSlowStrip, 0)
+		tatSolventChanceOID = AddSliderOption("Universal Solvent Chance  ", tatSolventChance, "{1}", 0)
 		setAllDefaultSettingsOID = AddToggleOption("Return to Default [WARNING]  ", setAllDefaultSettings, 0)
 	Elseif page == "Consequences "
 		AddHeaderOption("Triggers ")
@@ -611,6 +618,9 @@ Event OnPageReset(string page)
 		consTriggerSexOID = AddSliderOption("Sex  ", consTriggerSex, "{1}%", 0)
 		AddEmptyOption()
 		consAllowFollowersOID = AddToggleOption("Allow Followers  ", consAllowFollowers, 0)
+		AddEmptyOption()
+		consUseRelationshipsOID = AddToggleOption("Use Relationships  ", consUseRelationships, 0)
+		consRelationBondageOID = AddToggleOption("Relationship Bondage  ", consRelationBondage, 0)
 		SetCursorPosition(1)
 		AddHeaderOption("Results ")
 		consSexWeightOID = AddSliderOption("Sex Weight  ", consSexWeight, "{0}", 0)
@@ -632,7 +642,7 @@ Event OnPageReset(string page)
 			flag_enable_random_sex = 0
 		EndIf
 		int flag_sex_slave_tats = 1
-		If sexRandomEnabled && Game.GetModByName("SlaveTats.esp") != 255
+		If sexRandomEnabled && CheckSTNG()
 			flag_sex_slave_tats = 0
 		EndIf
 		AddHeaderOption("General ")
@@ -959,8 +969,8 @@ Event OnOptionHighlight(int option)
 		SetInfoText("Chance to find a piercing removal tool.")
 		Return
 	Endif
-	If option == enableMagicKeysOID
-		SetInfoText("Magic Keys will rarely be found within boss chests. They will destroy all restraints you are wearing.\nYou can only have a max of one at a time and they can never be lost.")
+	If option == magicKeyChanceOID
+		SetInfoText("Chance that magic keys will be found in boss chests. They will destroy all restraints you are wearing.\nYou can only have a max of one at a time and they can never be lost.\nSet to 0 to disable")
 		Return
 	Endif
 	If option == preferRelevantKeysOID
@@ -977,6 +987,14 @@ Event OnOptionHighlight(int option)
 	Endif
 	If option == eventStandardBossReductionOID
 		SetInfoText("If the container is a boss chest, the standard event weight will be reduced by this amount.")
+		Return
+	Endif
+	If option == eventContraptionWeightOID
+		SetInfoText("Chance to be bound in a contraption from DDC.")
+		Return
+	Endif
+	If option == eventContraptionTimeOID
+		SetInfoText("Will be automatically released after this many in game hours. Set to 0 to disable automatic release.")
 		Return
 	Endif
 	If option == eventSimpleSlaveryWeightOID
@@ -1005,10 +1023,6 @@ Event OnOptionHighlight(int option)
 	Endif
 	If option == eventLewdMarkWeightOID
 		SetInfoText("Chance to receive a lewd mark.")
-		Return
-	Endif
-	If option == lockSlaveTatsOID
-		SetInfoText("Tattoos will be locked in the slave tats menu.")
 		Return
 	Endif
 	If option == LMAllureWeightOID
@@ -1167,12 +1181,12 @@ Event OnOptionHighlight(int option)
 		SetInfoText("Events that equip the player with devices will try to keep all devices equipped to a consistent theme.\nWARNING: this will increase the time taken to run each event and may cause lag spikes.")
 		Return
 	Endif
-	If option == enableQuestInteractionsOID
-		SetInfoText("Enable interactions with vanilla quests. This might include sex with NPCs, equipped devices, added tattoos, and more.")
-		Return
-	Endif
 	If option == enableSlowStripOID
 		SetInfoText("Replace the built in stripping algorithm with the one from sexlab.\nCan fix rare cases of crashing on stripping and also give more control over what gets stripped.")
+		Return
+	Endif
+	If option == tatSolventChanceOID
+		SetInfoText("Chance to find universal solvent when looting dead bodies. Universal solvent will remove all lewd marks and tattoos.\nHaving more tattoos will slightly increase the chance of finding one.\nSet to 0 to disable.")
 		Return
 	Endif
 	If option == setAllDefaultSettingsOID
@@ -1192,7 +1206,15 @@ Event OnOptionHighlight(int option)
 		Return
 	Endif
 	If option == consAllowFollowersOID
-		SetInfoText("talking to or having sex with followers can trigger consequences.")
+		SetInfoText("Talking to or having sex with followers can trigger consequences.")
+		Return
+	Endif
+	If option == consUseRelationshipsOID
+		SetInfoText("The relationship rank of the target actor will affect how they treat you. You are less likely to see all consequences except mercy when the relationship is better.")
+		Return
+	Endif
+	If option == consRelationBondageOID
+		SetInfoText("Your friends want to tie you up so this is affected like mercy when Use Relationships is on.")
 		Return
 	Endif
 	If option == consSexWeightOID
@@ -1420,11 +1442,6 @@ Event OnOptionSelect(int option)
 		SetToggleOptionValue(keyForgivenessOID, keyForgiveness)
 		Return
 	Endif
-	If option == enableMagicKeysOID
-		enableMagicKeys = !enableMagicKeys
-		SetToggleOptionValue(enableMagicKeysOID, enableMagicKeys)
-		Return
-	Endif
 	If option == preferRelevantKeysOID
 		preferRelevantKeys = !preferRelevantKeys
 		SetToggleOptionValue(preferRelevantKeysOID, preferRelevantKeys)
@@ -1433,11 +1450,6 @@ Event OnOptionSelect(int option)
 	If option == vanishingKeysOID
 		vanishingKeys = !vanishingKeys
 		SetToggleOptionValue(vanishingKeysOID, vanishingKeys)
-		Return
-	Endif
-	If option == lockSlaveTatsOID
-		lockSlaveTats = !lockSlaveTats
-		SetToggleOptionValue(lockSlaveTatsOID, lockSlaveTats)
 		Return
 	Endif
 	If option == LMNudityChestOnlyOID
@@ -1476,11 +1488,6 @@ Event OnOptionSelect(int option)
 		SetToggleOptionValue(useThemesOID, useThemes)
 		Return
 	Endif
-	If option == enableQuestInteractionsOID
-		enableQuestInteractions = !enableQuestInteractions
-		SetToggleOptionValue(enableQuestInteractionsOID, enableQuestInteractions)
-		Return
-	Endif
 	If option == enableSlowStripOID
 		enableSlowStrip = !enableSlowStrip
 		SetToggleOptionValue(enableSlowStripOID, enableSlowStrip)
@@ -1494,6 +1501,16 @@ Event OnOptionSelect(int option)
 	If option == consAllowFollowersOID
 		consAllowFollowers = !consAllowFollowers
 		SetToggleOptionValue(consAllowFollowersOID, consAllowFollowers)
+		Return
+	Endif
+	If option == consUseRelationshipsOID
+		consUseRelationships = !consUseRelationships
+		SetToggleOptionValue(consUseRelationshipsOID, consUseRelationships)
+		Return
+	Endif
+	If option == consRelationBondageOID
+		consRelationBondage = !consRelationBondage
+		SetToggleOptionValue(consRelationBondageOID, consRelationBondage)
 		Return
 	Endif
 	If option == consRandomHeavyBondageOID
@@ -1912,6 +1929,13 @@ Event OnOptionSliderOpen(int option)
 		SetSliderDialogInterval(1)
 		Return
 	Endif
+	If option == eventContraptionWeightOID
+		SetSliderDialogStartValue(eventContraptionWeight)
+		SetSliderDialogDefaultValue(25)
+		SetSliderDialogRange(0, 500)
+		SetSliderDialogInterval(1)
+		Return
+	Endif
 	If option == eventSimpleSlaveryWeightOID
 		SetSliderDialogStartValue(eventSimpleSlaveryWeight)
 		SetSliderDialogDefaultValue(0)
@@ -2304,6 +2328,20 @@ Event OnOptionSliderOpen(int option)
 		SetSliderDialogInterval(0.1)
 		Return
 	Endif
+	If option == magicKeyChanceOID
+		SetSliderDialogStartValue(magicKeyChance)
+		SetSliderDialogDefaultValue(10.0)
+		SetSliderDialogRange(0, 50)
+		SetSliderDialogInterval(0.1)
+		Return
+	Endif
+	If option == eventContraptionTimeOID
+		SetSliderDialogStartValue(eventContraptionTime)
+		SetSliderDialogDefaultValue(0.0)
+		SetSliderDialogRange(0, 24)
+		SetSliderDialogInterval(0.1)
+		Return
+	Endif
 	If option == LMBondageChanceOID
 		SetSliderDialogStartValue(LMBondageChance)
 		SetSliderDialogDefaultValue(5.0)
@@ -2420,6 +2458,13 @@ Event OnOptionSliderOpen(int option)
 		SetSliderDialogStartValue(rDeviceBaseChance)
 		SetSliderDialogDefaultValue(1.5)
 		SetSliderDialogRange(0, 100)
+		SetSliderDialogInterval(0.1)
+		Return
+	Endif
+	If option == tatSolventChanceOID
+		SetSliderDialogStartValue(tatSolventChance)
+		SetSliderDialogDefaultValue(0.5)
+		SetSliderDialogRange(0, 50)
 		SetSliderDialogInterval(0.1)
 		Return
 	Endif
@@ -2750,6 +2795,12 @@ Event OnOptionSliderAccept(int option, float value)
 		
 		Return
 	Endif
+	If option == eventContraptionWeightOID
+		eventContraptionWeight = value as int
+		SetSliderOptionValue(option, value, "{0}")
+		
+		Return
+	Endif
 	If option == eventSimpleSlaveryWeightOID
 		eventSimpleSlaveryWeight = value as int
 		SetSliderOptionValue(option, value, "{0}")
@@ -3074,6 +3125,16 @@ Event OnOptionSliderAccept(int option, float value)
 		SetSliderOptionValue(option, value, "{1}x")
 		Return
 	Endif
+	If option == magicKeyChanceOID
+		magicKeyChance = value
+		SetSliderOptionValue(option, value, "{1}")
+		Return
+	Endif
+	If option == eventContraptionTimeOID
+		eventContraptionTime = value
+		SetSliderOptionValue(option, value, "{1}")
+		Return
+	Endif
 	If option == LMBondageChanceOID
 		LMBondageChance = value
 		SetSliderOptionValue(option, value, "{1}%")
@@ -3157,6 +3218,11 @@ Event OnOptionSliderAccept(int option, float value)
 	If option == rDeviceBaseChanceOID
 		rDeviceBaseChance = value
 		SetSliderOptionValue(option, value, "{1}%")
+		Return
+	Endif
+	If option == tatSolventChanceOID
+		tatSolventChance = value
+		SetSliderOptionValue(option, value, "{1}")
 		Return
 	Endif
 	If option == consTriggerNudeOID

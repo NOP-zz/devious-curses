@@ -13,6 +13,10 @@ constexpr auto SAARTHAL_SUMMON_SPELL = 0x801;
 
 constexpr auto NOCTURNAL_PLUG1 = 0x812;
 constexpr auto NOCTURNAL_PLUG2 = 0x813;
+
+constexpr auto MARK_CONTROLLER = 0x818;
+constexpr auto MARK_SPELL = 0x817;
+constexpr auto MARK_EFFECT = 0x816;
 // DDX
 constexpr auto DDX_RUSTY_PEAR_ANAL_SIGN = 0x1FC45;
 constexpr auto DDX_RUSTY_PEAR_VAGINAL = 0x1FC4F;

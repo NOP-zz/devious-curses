@@ -7,10 +7,9 @@
 #include "src/events.hpp"
 #include "src/Consequences.hpp"
 #include "src/TESEvents.hpp"
-#include "src/QuestInteractions.hpp"
 #include "src/QLIEIntegration.hpp"
-#include "src/SGO.hpp"
 #include "src/themes.hpp"
+#include "src/Contraptions.hpp"
 
 #include "include/DDNG_API.h"
 
@@ -50,20 +49,21 @@ namespace DCURSES {
     }
 
     void P_OnUpdate(RE::StaticFunctionTag*) {
-        //auto c1 = std::chrono::high_resolution_clock::now();
+        auto c1 = std::chrono::high_resolution_clock::now();
         EventsUpdate();
-        //auto c2 = std::chrono::high_resolution_clock::now();
+        auto c2 = std::chrono::high_resolution_clock::now();
         SexUpdate();
-        //auto c3 = std::chrono::high_resolution_clock::now();
-        QIUpdate();
-        //auto c4 = std::chrono::high_resolution_clock::now();
+        //QIUpdate();
+        auto c3 = std::chrono::high_resolution_clock::now();
+        MarkControllerUpdate();
+        auto c4 = std::chrono::high_resolution_clock::now();
+        
+        auto d1 = (c2 - c1).count() / 1000.0;
+        auto d2 = (c3 - c2).count() / 1000.0;
+        auto d3 = (c4 - c3).count() / 1000.0;
+        auto dt = (c4 - c1).count() / 1000.0;
 
-        //auto d1 = (c2 - c1).count() / 1000.0;
-        //auto d2 = (c3 - c2).count() / 1000.0;
-        //auto d3 = (c4 - c3).count() / 1000.0;
-        //auto dt = (c4 - c1).count() / 1000.0;
-
-        //log::trace("UPDATE: E: {:.2f}, S: {:.2f}, Q: {:.2f}, total: {:.2f}", d1, d2, d3, dt);
+        log::trace("UPDATE: E: {:.2f}, S: {:.2f}, M: {:.2f}, total: {:.2f}", d1, d2, d3, dt);
 
         //Always do last!
         counters.tick();
@@ -81,35 +81,17 @@ namespace DCURSES {
         return numDevicesVisible(akActor);
     }
 
-    int counter = 0;
-
     void P_Test(RE::StaticFunctionTag*) {
         log::trace("DCURSES test");
-        const auto processLists = RE::ProcessLists::GetSingleton();
+        auto player = RE::PlayerCharacter::GetSingleton();
+        
+        auto ref = GetContraptionForActor(RE::PlayerCharacter::GetSingleton());
+        if (ref)
+            ContraptionsUnlockActor(player);
+        else
+            CreateAndLockContraption(player);
+        
 
-        auto a = processLists->aliveActorList;
-        auto high = processLists->highActorHandles;
-        auto midh = processLists->middleHighActorHandles;
-        auto midl = processLists->middleLowActorHandles;
-        auto low = processLists->lowActorHandles;
-
-        log::trace("alive: {}, high: {}, midh: {}, midl: {}, low: {}",
-            std::distance(a.begin(), a.end()),
-            std::distance(high.begin(), high.end()),
-            std::distance(midh.begin(), midh.end()),
-            std::distance(midl.begin(), midl.end()),
-            std::distance(low.begin(), low.end())
-        );
-
-        /*
-        auto c1 = std::chrono::high_resolution_clock::now();
-        SexUpdate();
-        auto c2 = std::chrono::high_resolution_clock::now();
-
-        auto dt = (c2 - c1).count() / 1000.0;
-
-        log::trace("GetRandomTheme time: {:.2f}", dt);
-        */
     }
 
     bool PapyrusFunctions(RE::BSScript::IVirtualMachine* ivm) {
@@ -171,7 +153,11 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
         }
         case SKSE::MessagingInterface::kNewGame:
         case SKSE::MessagingInterface::kPostLoadGame: {
-            
+            auto perk = RE::TESDataHandler::GetSingleton()->LookupForm<RE::BGSPerk>(DCURSES::MARK_CONTROLLER, "Devious Curses.esp");
+            auto player = RE::PlayerCharacter::GetSingleton();
+            if (!player->HasPerk(perk)) {
+                player->AddPerk(perk);
+            }
 
             bool DDNG_loaded = DeviousDevicesAPI::LoadAPI();
 

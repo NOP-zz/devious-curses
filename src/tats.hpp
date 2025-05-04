@@ -97,6 +97,122 @@ namespace DCURSES {
 		return true;
 	}
 
+	class MarkEffectVisitor : public RE::MagicTarget::ForEachActiveEffectVisitor {
+	public:
+		RE::ActiveEffect* markEffect = nullptr;
+		// Inherited via ForEachActiveEffectVisitor
+		virtual RE::BSContainer::ForEachResult Accept(RE::ActiveEffect* a_effect) override
+		{
+			auto effect = RE::TESDataHandler::GetSingleton()->LookupForm<RE::EffectSetting>(MARK_EFFECT, "Devious Curses.esp");
+			if (a_effect->GetBaseObject() == effect) {
+				markEffect = a_effect;
+				return RE::BSContainer::ForEachResult::kStop;
+			}
+			return RE::BSContainer::ForEachResult::kContinue;
+		}
+	};
+
+	RE::ActiveEffect* GetMarkEffect(RE::Actor* actor) {
+		auto target = actor->GetMagicTarget();
+		auto visitor = MarkEffectVisitor();
+		target->VisitEffects(visitor);
+		return visitor.markEffect;
+	}
+
+	int GetLewdMark(RE::Actor* actor) {
+		auto active = GetMarkEffect(actor);
+		if (active) {
+			return static_cast<int>(active->magnitude);
+		}
+		return 0;
+	}
+
+	int GetColorForMark(int mark) {
+		switch (mark) {
+		case TAT_ALLURE:
+			return settings.LMAllureColor;
+		case TAT_HEAT:
+			return settings.LMHeatColor;
+		case TAT_BONDAGE:
+			return settings.LMBondageColor;
+		case TAT_NUDITY:
+			return settings.LMNudityColor;
+		case TAT_MERIDIA:
+			return 0x220022;
+		}
+		return 0;
+	}
+
+	void SetLewdMarkForEffect(RE::Actor* actor, int mark) {
+		auto active = GetMarkEffect(actor);
+		if (active) {
+			active->magnitude = static_cast<float>(mark);
+		}
+	}
+
+	void SetMarkControlerVisible(RE::Actor* actor, bool visible = true) {
+		if (actor != RE::PlayerCharacter::GetSingleton()) { return; }
+
+		auto effect = RE::TESDataHandler::GetSingleton()->LookupForm<RE::EffectSetting>(MARK_EFFECT, "Devious Curses.esp");
+		if (visible) {
+			effect->data.flags.reset(RE::EffectSetting::EffectSettingData::Flag::kHideInUI);
+		}
+		else {
+			effect->data.flags.set(RE::EffectSetting::EffectSettingData::Flag::kHideInUI);
+		}
+	}
+
+	void UpdateMarkControlerInfo() {
+		auto active = GetMarkEffect(RE::PlayerCharacter::GetSingleton());
+		auto effect = active->GetBaseObject();
+		switch (static_cast<int>(active->magnitude)) {
+		case TAT_ALLURE:
+			effect->fullName = "Alure Mark";
+			effect->magicItemDescription = fmt::format("You still need to have sex {} times!", counters.LMSexCounter * -1);
+			break;
+		case TAT_HEAT:
+			effect->fullName = "Heat Mark";
+			effect->magicItemDescription = fmt::format("You still need to open {} containers!", counters.LMContainersOpened * -1);
+			break;
+		case TAT_BONDAGE:
+			effect->fullName = "Bondage Mark";
+			effect->magicItemDescription = fmt::format("The mark still needs to equip {} devices!", counters.LMDevicesEquipped * -1);
+			break;
+		case TAT_NUDITY:
+			effect->fullName = "Nudity Mark";
+			effect->magicItemDescription = fmt::format("You still need to talk to {} different people!", counters.LMPeopleTalked * -1);
+			break;
+		case TAT_MERIDIA:
+			effect->fullName = "Malkoran's Mark";
+			effect->magicItemDescription = "You aren't sure what the mark does, but you know something will happen soon!";
+			break;
+		}
+	}
+
+	void IncrementCounterForMark(RE::Actor* actor, int mark) {
+		if (mark == GetLewdMark(actor)) {
+			switch (mark) {
+			case TAT_ALLURE:
+				counters.LMSexCounter += 1;
+				log::info("Incrementing counter for Allure mark.");
+				break;
+			case TAT_HEAT:
+				counters.LMContainersOpened += 1;
+				log::info("Incrementing counter for Heat mark.");
+				break;
+			case TAT_BONDAGE:
+				counters.LMDevicesEquipped += 1;
+				log::info("Incrementing counter for Bondage mark.");
+				break;
+			case TAT_NUDITY:
+				counters.LMPeopleTalked += 1;
+				log::info("Incrementing counter for Nudity mark.");
+				break;
+			}
+			UpdateMarkControlerInfo();
+		}
+	}
+
 	bool _AddLewdMarkGlow(RE::Actor* actor, int index, int32_t color, int32_t glow) {
 		if (!actor) return false;
 
@@ -125,9 +241,7 @@ namespace DCURSES {
 		tattoo = JValue::addToPool(JArray::getObj(matches, 0), "DCURSES");
 		JMap::setInt(tattoo, "color", color);
 		JMap::setInt(tattoo, "glow", glow);
-		if (settings.lockSlaveTats) {
-			JMap::setInt(tattoo, "locked", 1);
-		}
+		JMap::setInt(tattoo, "locked", 1);
 		JMap::setFlt(tattoo, "invertedAlpha", 0.0f);
 
 		JArray::clear(matches);
@@ -176,9 +290,7 @@ namespace DCURSES {
 		tattoo = JValue::addToPool(JArray::getObj(matches, 0), "DCURSES");
 		JMap::setInt(tattoo, "color", color);
 		JMap::setInt(tattoo, "glow", glow);
-		if (settings.lockSlaveTats) {
-			JMap::setInt(tattoo, "locked", 1);
-		}
+		JMap::setInt(tattoo, "locked", 1);
 		JMap::setFlt(tattoo, "invertedAlpha", 0.0f);
 
 		JArray::clear(matches);
@@ -211,22 +323,10 @@ namespace DCURSES {
 		return true;
 	}
 
-	bool AddLewdMark(RE::Actor* actor, int index, int base_color) {
-		if (!actor) return false;
-		if (!slavetats_ng::iface) return false;
-		if (!jcontainers::JCWrapper::GetSingleton()->IsInitialized()) return false;
-		if (!CheckLewdMarksInstalled()) return false;
-		
-		auto glowColor = Util::ColorScale(base_color, 0.8);
-
-		return _AddLewdMarkGlow(actor, index, glowColor, glowColor) && _AddLewdMarkMain(actor, index, base_color, glowColor);
-		
-	}
-
-	int GetLewdMark(RE::Actor* actor) {
-		if (!actor) return -1;
-		if (!slavetats_ng::iface) return -1;
-		if (!jcontainers::JCWrapper::GetSingleton()->IsInitialized()) return -1;
+	int GetLewdMarkApplied(RE::Actor* actor) {
+		if (!actor) return 0;
+		if (!slavetats_ng::iface) return 0;
+		if (!jcontainers::JCWrapper::GetSingleton()->IsInitialized()) return 0;
 
 		using namespace jcontainers;
 
@@ -239,7 +339,7 @@ namespace DCURSES {
 
 		if (slavetats_ng::query_applied_tattoos(actor, a_template, matches)) {
 			JValue::cleanPool("DCURSES");
-			return -1;
+			return 0;
 		}
 
 		if (JArray::count(matches) > 0) {
@@ -248,7 +348,7 @@ namespace DCURSES {
 		}
 
 		JValue::cleanPool("DCURSES");
-		return -1;
+		return 0;
 	}
 
 	void SetMarkColor(RE::Actor* actor, int32_t color, int32_t glow) {
@@ -265,15 +365,37 @@ namespace DCURSES {
 		return;
 	}
 
-	void RemoveLewdMark(RE::Actor* actor, int index) {
+	bool AddLewdMark(RE::Actor* actor, int index) {
+		if (!actor) return false;
+		if (!slavetats_ng::iface) return false;
+		if (!jcontainers::JCWrapper::GetSingleton()->IsInitialized()) return false;
+		if (!CheckLewdMarksInstalled()) return false;
+		
+		auto base_color = GetColorForMark(index);
+		auto glowColor = Util::ColorScale(base_color, 0.8);
+
+		if (_AddLewdMarkGlow(actor, index, glowColor, glowColor) && _AddLewdMarkMain(actor, index, base_color, glowColor)) {
+			SetLewdMarkForEffect(actor, index);
+			UpdateMarkControlerInfo();
+			SetMarkControlerVisible(actor);
+			return true;
+		}
+		return false;
+		
+	}
+
+	void RemoveLewdMark(RE::Actor* actor, int index = -1) {
 		if (!actor) return;
 		if (!slavetats_ng::iface) return;
 		if (!jcontainers::JCWrapper::GetSingleton()->IsInitialized()) return;
 		if (!CheckLewdMarksInstalled()) return;
 
-		if (index < 1) {
-			return;
+		if (index == -1) {
+			index = GetLewdMark(actor);
 		}
+
+		SetLewdMarkForEffect(actor, 0);
+		SetMarkControlerVisible(actor, false);
 
 		slavetats_ng::simple_remove_tattoo(actor, "LewdMarks", fmt::format("{:03}", index), false);
 		slavetats_ng::simple_remove_tattoo(actor, "LewdMarks-glow", fmt::format("{:03}", index), true);
@@ -289,7 +411,34 @@ namespace DCURSES {
 		slavetats_ng::remove_tattoos(actor, a_template);
 		slavetats_ng::synchronize_tattoos(actor, true);
 		JValue::cleanPool("DCURSES");
-		RemoveLewdMark(actor, GetLewdMark(actor));
+		RemoveLewdMark(actor);
+	}
+
+	void MarkControllerUpdate() {
+		auto player = RE::PlayerCharacter::GetSingleton();
+		auto mark = GetLewdMark(player);
+		auto applied = GetLewdMarkApplied(player);
+
+		if (applied != mark) {
+			log::trace("Resolving mark discrepancy, expected {}, had {}", mark, applied);
+			if (mark == -1) {
+				RemoveLewdMark(player, applied);
+			}
+			else if (applied > 0) {
+				RemoveLewdMark(player, applied);
+				AddLewdMark(player, mark);
+			}
+			else {
+				AddLewdMark(player, mark);
+			}
+		}
+
+		if (mark > 0) {
+			SetMarkControlerVisible(player);
+		}
+		else {
+			SetMarkControlerVisible(player, false);
+		}
 	}
 
 	bool P_CheckSTNG(RE::StaticFunctionTag*) {
