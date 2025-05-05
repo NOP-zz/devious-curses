@@ -924,7 +924,6 @@ namespace DCURSES {
                         PlayerMessage(fmt::format("You loose {} gold as punishment for loosing tattoos!", toRemove));
                     }
 
-                    SetEffectMagnitude(BRANDING_EFFECT, static_cast<float>(tattoo_count));
                     if (Util::randomDouble() < settings.LMBrandingChance && RE::TESDataHandler::GetSingleton()->LookupLoadedModByName("RapeTattoos.esp")) {
                         RTDoTattooEvent(player, 1);
                         PlayerMessage("You feel a sharp pain as the mark brands you!");
@@ -932,6 +931,9 @@ namespace DCURSES {
                     if (tattoo_count >= settings.LMBrndingTotal) {
                         RemoveLewdMark();
                         PlayerMessage("You feel the branding mark fade from your body.");
+                    }
+                    else {
+                        Util::ExecuteWithDelay(750ms, [player] {SetEffectMagnitude(BRANDING_EFFECT, static_cast<float>(GetTattooCount(player))); });
                     }
                     break;
                 }

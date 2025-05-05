@@ -39,6 +39,7 @@ constexpr auto DDX_RED_CATSUIT = 0x3D8fC;
 
 	class StaticDataHolder {
 	private: 
+		std::mutex mutex = std::mutex();
 		std::map<std::pair<uint32_t, std::string>, RE::TESForm*> _internalData;
 		StaticDataHolder() {}
 	public:
@@ -55,14 +56,18 @@ constexpr auto DDX_RED_CATSUIT = 0x3D8fC;
 			auto pair = std::make_pair(formid, modname);
 			if (_internalData.count(pair)) {
 				//log::trace("StaticDataHolder Returning stored data {:X} from {}", formid, modname);
-				auto form = _internalData.at(pair)->As<T>();
-				return form->Is(T::FORMTYPE) ? static_cast<T*>(form) : 0;
+				auto form = _internalData.at(pair);
+				return (form && form->Is(T::FORMTYPE)) ? static_cast<T*>(form) : nullptr;
 			}
 			else {
 				//log::trace("StaticDataHolder grabbing {:X} from {}", formid, modname);
 				RE::TESForm* form = RE::TESDataHandler::GetSingleton()->LookupForm(formid, modname);
-				_internalData.insert({ pair, form });
-				return form->Is(T::FORMTYPE) ? static_cast<T*>(form) : 0;
+				if (form) {
+					mutex.lock();
+					_internalData.insert({ pair, form });
+					mutex.unlock();
+				}
+				return (form && form->Is(T::FORMTYPE)) ? static_cast<T*>(form) : nullptr;
 			}
 		}
 	};

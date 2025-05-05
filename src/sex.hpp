@@ -320,7 +320,7 @@ namespace DCURSES {
 			return;
 		}
 
-		if (counters.clock_SexTimeout <= 0) {
+		if (counters.clock_SexTimeout <= settings.sexSearchInterval) {
 			return;
 		}
 

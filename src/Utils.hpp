@@ -219,5 +219,22 @@ namespace DCURSES {
 
 			return ref;
 		}
+
+		void ProfileExecutionTime(std::string name, std::function<void()> func) {
+			auto c1 = std::chrono::high_resolution_clock::now();
+			func();
+			auto c2 = std::chrono::high_resolution_clock::now();
+
+			auto dt = (c2 - c1).count() / 1000000.0;
+
+			log::trace("{}: {:.4f} ms", name, dt);
+		}
+
+		void ExecuteWithDelay(std::chrono::milliseconds time, std::function<void()> func) {
+			std::thread{ [func, time] {
+				std::this_thread::sleep_for(time);
+				SKSE::GetTaskInterface()->AddTask(func);
+			} }.detach();
+		}
 	}
 }

@@ -69,13 +69,7 @@ namespace DCURSES {
 			}
 
 			object->data.angle = RE::NiPoint3(0, actor->GetAngleY(), actor->GetAngleZ());
-
-			std::thread{ [actor, object] {
-				std::this_thread::sleep_for(250ms);
-				SKSE::GetTaskInterface()->AddTask([actor, object]() {
-					ContraptionsLockActor(actor, object);
-				});
-			} }.detach();
+			Util::ExecuteWithDelay(250ms, [actor, object] {ContraptionsLockActor(actor, object); });
 		});
 	}
 }
