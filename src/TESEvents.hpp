@@ -2,6 +2,7 @@
 
 #include "../include/form_ids.h"
 #include "events.hpp"
+#include "QuestInteractions.hpp"
 
 using namespace SKSE;
 
@@ -10,7 +11,7 @@ namespace DCURSES {
     class QuestStageEventSink : public RE::BSTEventSink<RE::TESQuestStageEvent> {
         virtual RE::BSEventNotifyControl ProcessEvent(const RE::TESQuestStageEvent* questEvent, RE::BSTEventSource<RE::TESQuestStageEvent>*) override {
             if (!questEvent) return RE::BSEventNotifyControl::kContinue;
-            //QICheckQuestStage(questEvent->formID, questEvent->stage);
+            QICheckQuestStage(questEvent->formID, questEvent->stage);
             return RE::BSEventNotifyControl::kContinue;
         }
     public:
@@ -32,8 +33,10 @@ namespace DCURSES {
             auto activatedObject = activateEvent->objectActivated.get();
             auto activatingActor = activateEvent->actionRef.get();
             if (activatedObject && activatingActor && activatingActor == RE::PlayerCharacter::GetSingleton()) {
-                counters.clock_SexTimeout = -2;
-                //QICheckObjectActivation(activatedObject); // Must do first!
+                if (counters.clock_SexTimeout >= settings.sexSearchInterval - 1) {
+                    counters.clock_SexTimeout = settings.sexSearchInterval - 3;
+                }
+                QICheckObjectActivation(activatedObject); // Must do first!
                 CalculateEventChance(activatedObject);
             }
             return RE::BSEventNotifyControl::kContinue;
@@ -61,7 +64,7 @@ namespace DCURSES {
             auto actor = object->As<RE::Actor>();
             if (actor && actor == RE::PlayerCharacter::GetSingleton()) {
                 log::trace("Updating actors arousal");
-                counters.clock_SexTimeout = -2;
+                counters.clock_SexTimeout -= 2;
                 //Callbacks::GetSingleton().ResetArousalDatabase();
                 //Callbacks::GetSingleton().InitializeAllActorsArousal();
             }
@@ -132,6 +135,6 @@ namespace DCURSES {
         ActivateEventSink::RegisterEvent();
         EquipEventSink::RegisterEvent();
         //LocationEventSink::RegisterEvent();
-        //QuestStageEventSink::RegisterEvent();
+        QuestStageEventSink::RegisterEvent();
     }
 }
