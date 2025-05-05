@@ -138,10 +138,6 @@ Int Property eventOppressiveWeight = 15 Auto
 Int eventOppressiveWeightOID
 Int Property eventContraptionWeight = 25 Auto
 Int eventContraptionWeightOID
-Int Property eventSimpleSlaveryWeight = 0 Auto
-Int eventSimpleSlaveryWeightOID
-Int Property eventSSMinRestraints = 6 Auto
-Int eventSSMinRestraintsOID
 Int Property eventTattooWeight = 15 Auto
 Int eventTattooWeightOID
 Int Property eventTattooMin = 1 Auto
@@ -152,6 +148,10 @@ Int Property eventTattooCap = 8 Auto
 Int eventTattooCapOID
 Int Property eventLewdMarkWeight = 10 Auto
 Int eventLewdMarkWeightOID
+Int Property eventSimpleSlaveryWeight = 0 Auto
+Int eventSimpleSlaveryWeightOID
+Int Property eventSSMinRestraints = 6 Auto
+Int eventSSMinRestraintsOID
 Int Property LMAllureWeight = 10 Auto
 Int LMAllureWeightOID
 Int Property LMAllureMod = 5 Auto
@@ -164,6 +164,10 @@ Int Property LMHeatMod = 30 Auto
 Int LMHeatModOID
 Int Property LMHeatContainerCount = 50 Auto
 Int LMHeatContainerCountOID
+Int Property LMBrandingWeight = 10 Auto
+Int LMBrandingWeightOID
+Int Property LMBrndingTotal = 12 Auto
+Int LMBrndingTotalOID
 Int Property LMBondageWeight = 5 Auto
 Int LMBondageWeightOID
 Int Property LMBondageDeviceCount = 8 Auto
@@ -220,6 +224,8 @@ Int Property sexArousalSpouseModifier = 20 Auto
 Int sexArousalSpouseModifierOID
 Int Property sexArousalSummonModifier = 0 Auto
 Int sexArousalSummonModifierOID
+Int Property sexSearchInterval = 5 Auto
+Int sexSearchIntervalOID
 Int Property sexRequiredPlayerArousal = 0 Auto
 Int sexRequiredPlayerArousalOID
 Int Property sexRequiredPlayerTattoos = 0 Auto
@@ -260,8 +266,12 @@ Float Property magicKeyChance = 10.0 Auto
 Int magicKeyChanceOID
 Float Property eventContraptionTime = 0.0 Auto
 Int eventContraptionTimeOID
+Float Property LMBrandingChance = 1.5 Auto
+Int LMBrandingChanceOID
 Float Property LMBondageChance = 5.0 Auto
 Int LMBondageChanceOID
+Float Property oppSummonChance = 1.5 Auto
+Int oppSummonChanceOID
 Float Property playerHomeModifier = 0.0 Auto
 Int playerHomeModifierOID
 Float Property cityModifier = 0.0 Auto
@@ -330,6 +340,10 @@ Bool Property preferRelevantKeys = true Auto
 Int preferRelevantKeysOID
 Bool Property vanishingKeys = true Auto
 Int vanishingKeysOID
+Bool Property enableQuestInteractions = true Auto
+Int enableQuestInteractionsOID
+Bool Property LMBrandingPunish = true Auto
+Int LMBrandingPunishOID
 Bool Property LMNudityChestOnly = false Auto
 Int LMNudityChestOnlyOID
 Bool Property oppSCollarDrainsMagicka = true Auto
@@ -390,6 +404,8 @@ Int Property LMAllureColor = 0xcf11c5 Auto
 Int LMAllureColorOID
 Int Property LMHeatColor = 0xe3143a Auto
 Int LMHeatColorOID
+Int Property LMBrandingColor = 0x220022 Auto
+Int LMBrandingColorOID
 Int Property LMBondageColor = 0x7908cf Auto
 Int LMBondageColorOID
 Int Property LMNudityColor = 0xd676cb Auto
@@ -437,6 +453,10 @@ Event OnPageReset(string page)
 	int flag_RapeTats = 1
 	If Game.GetModByName("RapeTattoos.esp") != 255 && CheckSTNG()
 		flag_RapeTats = 0
+	EndIf
+	int flag_RT_LM = 1
+	If Game.GetModByName("RapeTattoos.esp") != 255 && CheckSTNG() && CheckLM()
+		flag_RT_LM = 0
 	EndIf
 	int flag_SimpleSlavery = 1
 	If Game.GetModByName("SimpleSlavery.esp") != 255
@@ -554,10 +574,8 @@ Event OnPageReset(string page)
 		AddHeaderOption("Contraption Curse ")
 		eventContraptionWeightOID = AddSliderOption("Contraption Curse Weight  ", eventContraptionWeight, "{0}", 0)
 		eventContraptionTimeOID = AddSliderOption("Contraption Release Time  ", eventContraptionTime, "{1}", 0)
-		AddHeaderOption("Slavery Curse ")
-		eventSimpleSlaveryWeightOID = AddSliderOption("Simple Slavery Weight  ", eventSimpleSlaveryWeight, "{0}", flag_SimpleSlavery)
-		eventSSMinRestraintsOID = AddSliderOption("Minimum Restraints  ", eventSSMinRestraints, "{0}", flag_SSEnabled)
 		SetCursorPosition(1)
+		enableQuestInteractionsOID = AddToggleOption("Quest Interactions  ", enableQuestInteractions, 0)
 		AddHeaderOption("Tattoo Curse ")
 		eventTattooWeightOID = AddSliderOption("Tattoo Curse Weight  ", eventTattooWeight, "{0}", flag_RapeTats)
 		eventTattooMinOID = AddSliderOption("Tattoo Curse Min  ", eventTattooMin, "{0}", flag_RapeTats)
@@ -565,6 +583,9 @@ Event OnPageReset(string page)
 		eventTattooCapOID = AddSliderOption("Tattoo Curse Cap  ", eventTattooCap, "{0}", flag_RapeTats)
 		AddHeaderOption("Mark Curse ")
 		eventLewdMarkWeightOID = AddSliderOption("Lewd Mark Weight  ", eventLewdMarkWeight, "{0}", flag_LewdMarks)
+		AddHeaderOption("Slavery Curse ")
+		eventSimpleSlaveryWeightOID = AddSliderOption("Simple Slavery Weight  ", eventSimpleSlaveryWeight, "{0}", flag_SimpleSlavery)
+		eventSSMinRestraintsOID = AddSliderOption("Minimum Restraints  ", eventSSMinRestraints, "{0}", flag_SSEnabled)
 	Elseif page == "Lewd Marks "
 		AddHeaderOption("Allure ")
 		LMAllureWeightOID = AddSliderOption("Allure Mark Weight  ", LMAllureWeight, "{0}", flag_LewdMarks)
@@ -576,6 +597,12 @@ Event OnPageReset(string page)
 		LMHeatModOID = AddSliderOption("Heat Arousal  ", LMHeatMod, "{0}", flag_LewdMarks)
 		LMHeatContainerCountOID = AddSliderOption("Container Count  ", LMHeatContainerCount, "{0}", flag_LewdMarks)
 		LMHeatColorOID = AddColorOption("Color  ", LMHeatColor, flag_LewdMarks)
+		AddHeaderOption("Branding ")
+		LMBrandingWeightOID = AddSliderOption("Branding Mark  ", LMBrandingWeight, "{0}", flag_LewdMarks)
+		LMBrandingChanceOID = AddSliderOption("Chance  ", LMBrandingChance, "{1}%", flag_RT_LM)
+		LMBrndingTotalOID = AddSliderOption("Total Tattoos  ", LMBrndingTotal, "{0}", flag_LewdMarks)
+		LMBrandingPunishOID = AddToggleOption("Punishment  ", LMBrandingPunish, flag_LewdMarks)
+		LMBrandingColorOID = AddColorOption("Color  ", LMBrandingColor, flag_LewdMarks)
 		SetCursorPosition(1)
 		AddHeaderOption("Bondage ")
 		LMBondageWeightOID = AddSliderOption("Bondage Mark  ", LMBondageWeight, "{0}", flag_LewdMarks)
@@ -598,6 +625,7 @@ Event OnPageReset(string page)
 		oppSummonerSexCountOID = AddSliderOption("Sex Count  ", oppSummonerSexCount, "{0}", 0)
 		oppSCollarDrainsMagickaOID = AddToggleOption("Magicka Drain  ", oppSCollarDrainsMagicka, 0)
 		oppSMinSummonArousalOID = AddSliderOption("Summon Arousal  ", oppSMinSummonArousal, "{0}", 0)
+		oppSummonChanceOID = AddSliderOption("Summon Chance  ", oppSummonChance, "{1}%", 0)
 	Elseif page == "Locations "
 		useLocationModifiersOID = AddToggleOption("Use Location Modifiers  ", useLocationModifiers, 0)
 		AddEmptyOption()
@@ -687,6 +715,7 @@ Event OnPageReset(string page)
 		sexArousalSummonModifierOID = AddSliderOption("Summon Modifier  ", sexArousalSummonModifier, "-{0}", flag_enable_random_sex)
 		AddHeaderOption("Search ")
 		sexSearchRadiusOID = AddSliderOption("Search Radius  ", sexSearchRadius, "{0}", flag_enable_random_sex)
+		sexSearchIntervalOID = AddSliderOption("Search Interval  ", sexSearchInterval, "{0}", flag_enable_random_sex)
 		SetCursorPosition(1)
 		AddHeaderOption("Allowed Actors ")
 		sexAllowMaleOID = AddToggleOption("Allow Male Actors  ", sexAllowMale, flag_enable_sex)
@@ -1020,12 +1049,8 @@ Event OnOptionHighlight(int option)
 		SetInfoText("Will be automatically released after this many in game hours. Set to 0 to disable automatic release.")
 		Return
 	Endif
-	If option == eventSimpleSlaveryWeightOID
-		SetInfoText("Chance to trigger a Simple Slavery auction.")
-		Return
-	Endif
-	If option == eventSSMinRestraintsOID
-		SetInfoText("Minimum restraints that need to be equipped for a Simple Slavery auction to start.")
+	If option == enableQuestInteractionsOID
+		SetInfoText("Certain quests may have some additional events tied to them.\nCheck the mod page for more info.")
 		Return
 	Endif
 	If option == eventTattooWeightOID
@@ -1046,6 +1071,14 @@ Event OnOptionHighlight(int option)
 	Endif
 	If option == eventLewdMarkWeightOID
 		SetInfoText("Chance to receive a lewd mark.")
+		Return
+	Endif
+	If option == eventSimpleSlaveryWeightOID
+		SetInfoText("Chance to trigger a Simple Slavery auction.")
+		Return
+	Endif
+	If option == eventSSMinRestraintsOID
+		SetInfoText("Minimum restraints that need to be equipped for a Simple Slavery auction to start.")
 		Return
 	Endif
 	If option == LMAllureWeightOID
@@ -1077,6 +1110,26 @@ Event OnOptionHighlight(int option)
 		Return
 	Endif
 	If option == LMHeatColorOID
+		SetInfoText("Color for mark.")
+		Return
+	Endif
+	If option == LMBrandingWeightOID
+		SetInfoText("This mark will force you to have a certain number of tattoos!")
+		Return
+	Endif
+	If option == LMBrandingChanceOID
+		SetInfoText("How likely you are to receive a random tattoo per 15 seconds.\nRequires Rape Tattoos")
+		Return
+	Endif
+	If option == LMBrndingTotalOID
+		SetInfoText("How many tattoos you need before the mark releases. The mark itself counts as 2.")
+		Return
+	Endif
+	If option == LMBrandingPunishOID
+		SetInfoText("You will be punished by loosing gold if your total tattoo count decreases.")
+		Return
+	Endif
+	If option == LMBrandingColorOID
 		SetInfoText("Color for mark.")
 		Return
 	Endif
@@ -1130,6 +1183,10 @@ Event OnOptionHighlight(int option)
 	Endif
 	If option == oppSMinSummonArousalOID
 		SetInfoText("Will change the arousal of all of your summons to be at least this value.")
+		Return
+	Endif
+	If option == oppSummonChanceOID
+		SetInfoText("The chance per second that the collar summons an atronach to have sex with you.\nThis won't happen if you already have a different summon.")
 		Return
 	Endif
 	If option == useLocationModifiersOID
@@ -1360,6 +1417,10 @@ Event OnOptionHighlight(int option)
 		SetInfoText("How far away can actors be from the player.")
 		Return
 	Endif
+	If option == sexSearchIntervalOID
+		SetInfoText("How often the actor search happens.")
+		Return
+	Endif
 	If option == sexAllowMaleOID
 		SetInfoText("Male actors will be allowed.")
 		Return
@@ -1489,6 +1550,16 @@ Event OnOptionSelect(int option)
 	If option == vanishingKeysOID
 		vanishingKeys = !vanishingKeys
 		SetToggleOptionValue(vanishingKeysOID, vanishingKeys)
+		Return
+	Endif
+	If option == enableQuestInteractionsOID
+		enableQuestInteractions = !enableQuestInteractions
+		SetToggleOptionValue(enableQuestInteractionsOID, enableQuestInteractions)
+		Return
+	Endif
+	If option == LMBrandingPunishOID
+		LMBrandingPunish = !LMBrandingPunish
+		SetToggleOptionValue(LMBrandingPunishOID, LMBrandingPunish)
 		Return
 	Endif
 	If option == LMNudityChestOnlyOID
@@ -1987,20 +2058,6 @@ Event OnOptionSliderOpen(int option)
 		SetSliderDialogInterval(1)
 		Return
 	Endif
-	If option == eventSimpleSlaveryWeightOID
-		SetSliderDialogStartValue(eventSimpleSlaveryWeight)
-		SetSliderDialogDefaultValue(0)
-		SetSliderDialogRange(0, 500)
-		SetSliderDialogInterval(1)
-		Return
-	Endif
-	If option == eventSSMinRestraintsOID
-		SetSliderDialogStartValue(eventSSMinRestraints)
-		SetSliderDialogDefaultValue(6)
-		SetSliderDialogRange(0, 10)
-		SetSliderDialogInterval(1)
-		Return
-	Endif
 	If option == eventTattooWeightOID
 		SetSliderDialogStartValue(eventTattooWeight)
 		SetSliderDialogDefaultValue(15)
@@ -2033,6 +2090,20 @@ Event OnOptionSliderOpen(int option)
 		SetSliderDialogStartValue(eventLewdMarkWeight)
 		SetSliderDialogDefaultValue(10)
 		SetSliderDialogRange(0, 500)
+		SetSliderDialogInterval(1)
+		Return
+	Endif
+	If option == eventSimpleSlaveryWeightOID
+		SetSliderDialogStartValue(eventSimpleSlaveryWeight)
+		SetSliderDialogDefaultValue(0)
+		SetSliderDialogRange(0, 500)
+		SetSliderDialogInterval(1)
+		Return
+	Endif
+	If option == eventSSMinRestraintsOID
+		SetSliderDialogStartValue(eventSSMinRestraints)
+		SetSliderDialogDefaultValue(6)
+		SetSliderDialogRange(0, 10)
 		SetSliderDialogInterval(1)
 		Return
 	Endif
@@ -2075,6 +2146,20 @@ Event OnOptionSliderOpen(int option)
 		SetSliderDialogStartValue(LMHeatContainerCount)
 		SetSliderDialogDefaultValue(50)
 		SetSliderDialogRange(10, 200)
+		SetSliderDialogInterval(1)
+		Return
+	Endif
+	If option == LMBrandingWeightOID
+		SetSliderDialogStartValue(LMBrandingWeight)
+		SetSliderDialogDefaultValue(10)
+		SetSliderDialogRange(0, 500)
+		SetSliderDialogInterval(1)
+		Return
+	Endif
+	If option == LMBrndingTotalOID
+		SetSliderDialogStartValue(LMBrndingTotal)
+		SetSliderDialogDefaultValue(12)
+		SetSliderDialogRange(1, 20)
 		SetSliderDialogInterval(1)
 		Return
 	Endif
@@ -2274,6 +2359,13 @@ Event OnOptionSliderOpen(int option)
 		SetSliderDialogInterval(1)
 		Return
 	Endif
+	If option == sexSearchIntervalOID
+		SetSliderDialogStartValue(sexSearchInterval)
+		SetSliderDialogDefaultValue(5)
+		SetSliderDialogRange(5, 120)
+		SetSliderDialogInterval(1)
+		Return
+	Endif
 	If option == sexRequiredPlayerArousalOID
 		SetSliderDialogStartValue(sexRequiredPlayerArousal)
 		SetSliderDialogDefaultValue(0)
@@ -2414,9 +2506,23 @@ Event OnOptionSliderOpen(int option)
 		SetSliderDialogInterval(0.1)
 		Return
 	Endif
+	If option == LMBrandingChanceOID
+		SetSliderDialogStartValue(LMBrandingChance)
+		SetSliderDialogDefaultValue(1.5)
+		SetSliderDialogRange(0, 100)
+		SetSliderDialogInterval(0.1)
+		Return
+	Endif
 	If option == LMBondageChanceOID
 		SetSliderDialogStartValue(LMBondageChance)
 		SetSliderDialogDefaultValue(5.0)
+		SetSliderDialogRange(0, 100)
+		SetSliderDialogInterval(0.1)
+		Return
+	Endif
+	If option == oppSummonChanceOID
+		SetSliderDialogStartValue(oppSummonChance)
+		SetSliderDialogDefaultValue(1.5)
 		SetSliderDialogRange(0, 100)
 		SetSliderDialogInterval(0.1)
 		Return
@@ -2879,19 +2985,6 @@ Event OnOptionSliderAccept(int option, float value)
 		
 		Return
 	Endif
-	If option == eventSimpleSlaveryWeightOID
-		eventSimpleSlaveryWeight = value as int
-		SetSliderOptionValue(option, value, "{0}")
-		
-		ForcePageReset()
-		Return
-	Endif
-	If option == eventSSMinRestraintsOID
-		eventSSMinRestraints = value as int
-		SetSliderOptionValue(option, value, "{0}")
-		
-		Return
-	Endif
 	If option == eventTattooWeightOID
 		eventTattooWeight = value as int
 		SetSliderOptionValue(option, value, "{0}")
@@ -2918,6 +3011,19 @@ Event OnOptionSliderAccept(int option, float value)
 	Endif
 	If option == eventLewdMarkWeightOID
 		eventLewdMarkWeight = value as int
+		SetSliderOptionValue(option, value, "{0}")
+		
+		Return
+	Endif
+	If option == eventSimpleSlaveryWeightOID
+		eventSimpleSlaveryWeight = value as int
+		SetSliderOptionValue(option, value, "{0}")
+		
+		ForcePageReset()
+		Return
+	Endif
+	If option == eventSSMinRestraintsOID
+		eventSSMinRestraints = value as int
 		SetSliderOptionValue(option, value, "{0}")
 		
 		Return
@@ -2954,6 +3060,18 @@ Event OnOptionSliderAccept(int option, float value)
 	Endif
 	If option == LMHeatContainerCountOID
 		LMHeatContainerCount = value as int
+		SetSliderOptionValue(option, value, "{0}")
+		
+		Return
+	Endif
+	If option == LMBrandingWeightOID
+		LMBrandingWeight = value as int
+		SetSliderOptionValue(option, value, "{0}")
+		
+		Return
+	Endif
+	If option == LMBrndingTotalOID
+		LMBrndingTotal = value as int
 		SetSliderOptionValue(option, value, "{0}")
 		
 		Return
@@ -3126,6 +3244,12 @@ Event OnOptionSliderAccept(int option, float value)
 		
 		Return
 	Endif
+	If option == sexSearchIntervalOID
+		sexSearchInterval = value as int
+		SetSliderOptionValue(option, value, "{0}")
+		
+		Return
+	Endif
 	If option == sexRequiredPlayerArousalOID
 		sexRequiredPlayerArousal = value as int
 		SetSliderOptionValue(option, value, "{0}")
@@ -3231,8 +3355,18 @@ Event OnOptionSliderAccept(int option, float value)
 		SetSliderOptionValue(option, value, "{1}")
 		Return
 	Endif
+	If option == LMBrandingChanceOID
+		LMBrandingChance = value
+		SetSliderOptionValue(option, value, "{1}%")
+		Return
+	Endif
 	If option == LMBondageChanceOID
 		LMBondageChance = value
+		SetSliderOptionValue(option, value, "{1}%")
+		Return
+	Endif
+	If option == oppSummonChanceOID
+		oppSummonChance = value
 		SetSliderOptionValue(option, value, "{1}%")
 		Return
 	Endif
@@ -3375,6 +3509,11 @@ Event OnOptionColorOpen(int option)
 		SetColorDialogDefaultColor(0xe3143a)
 		Return
 	Endif
+	If option == LMBrandingColorOID
+		SetColorDialogStartColor(LMBrandingColor)
+		SetColorDialogDefaultColor(0x220022)
+		Return
+	Endif
 	If option == LMBondageColorOID
 		SetColorDialogStartColor(LMBondageColor)
 		SetColorDialogDefaultColor(0x7908cf)
@@ -3395,6 +3534,11 @@ Event OnOptionColorAccept(int option, int color)
 	Endif
 	If option == LMHeatColorOID
 		LMHeatColor = color as int
+		SetColorOptionValue(option, color)
+		Return
+	Endif
+	If option == LMBrandingColorOID
+		LMBrandingColor = color as int
 		SetColorOptionValue(option, color)
 		Return
 	Endif

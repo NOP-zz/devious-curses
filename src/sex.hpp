@@ -336,6 +336,8 @@ namespace DCURSES {
 
 		auto actors = getAllAvailableActors();
 
+		counters.clock_SexTimeout = 0;
+
 		if (actors.size() == 0) {
 			return;
 		}
@@ -350,7 +352,6 @@ namespace DCURSES {
 		StartSex(actorData.first);
 
 		counters.clock_lastSex = -10;
-		counters.clock_SexTimeout = -2;
 	}
 
 	std::string P_GetAnimationFilterTags(RE::StaticFunctionTag*, RE::Actor* akActor) {

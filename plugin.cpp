@@ -11,6 +11,7 @@
 #include "src/themes.hpp"
 #include "src/Contraptions.hpp"
 #include "src/O_Devices.hpp"
+#include "src/QuestInteractions.hpp"
 
 #include "include/DDNG_API.h"
 
@@ -212,7 +213,7 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
 
         }
         case SKSE::MessagingInterface::kSaveGame: {
-            DCURSES::counters.clock_SexTimeout = -2;
+            DCURSES::counters.clock_SexTimeout -= 2;
             DCURSES::SaveMCMSettings();
         }
         }
