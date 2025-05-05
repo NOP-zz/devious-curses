@@ -559,7 +559,7 @@ namespace DCURSES {
             }
 
             if (data.isBoss && settings.magicKeyChance > 0) {
-                RE::TESKey* magicKey = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESKey>(MAGIC_KEY, "Devious Curses.esp");
+                RE::TESKey* magicKey = StaticDataHolder::GetSingleton()->LookupForm<RE::TESKey>(MAGIC_KEY, "Devious Curses.esp");
                 double c2 = settings.magicKeyChance * pow(1.5, (GetWornDeviceCount(player) - 1.0) / 9.0);
                 double r2 = Util::randomDouble();
                 log::trace("Magic Key: {} ({})", c2, r2);
@@ -568,7 +568,7 @@ namespace DCURSES {
                 }
             }
             else if (data.isDeadActor && settings.tatSolventChance > 0) {
-                RE::TESObjectMISC* solvent = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectMISC>(TATTOO_CHARM, "Devious Curses.esp");
+                RE::TESObjectMISC* solvent = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectMISC>(TATTOO_CHARM, "Devious Curses.esp");
                 double c2 = settings.tatSolventChance * pow(1.5, (GetTattooCount(player) - 1.0) / 9.0);
                 double r2 = Util::randomDouble();
                 log::trace("Solvent: {} ({})", c2, r2);

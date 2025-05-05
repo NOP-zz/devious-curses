@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../src/Utils.hpp"
+#include "form_ids.h"
 #include <algorithm>
 
 namespace SexLab {
@@ -50,7 +51,7 @@ namespace SexLab {
 			}
 		}
 
-		static const auto sosfaction = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESFaction>(0x00AFF8, "Schlongs of Skyrim.esp");
+		static const auto sosfaction = DCURSES::StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x00AFF8, "Schlongs of Skyrim.esp");
 		if (sosfaction) {
 			bool ret = false;
 			a_actor->VisitFactions([&ret](RE::TESFaction* a_faction, int8_t a_rank) -> bool {
@@ -86,7 +87,7 @@ namespace SexLab {
 		int ret = -1;
 		if (!a_skipfactions) {
 			a_actor->VisitFactions([&](auto a_faction, auto a_rank) {
-				RE::TESFaction* SexlabGenderFaction = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("043A43", 0, 16), "SexLab.esm");
+				RE::TESFaction* SexlabGenderFaction = DCURSES::StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("043A43", 0, 16), "SexLab.esm");
 				if (a_faction == SexlabGenderFaction) {
 					switch (a_rank) {
 					case 0:

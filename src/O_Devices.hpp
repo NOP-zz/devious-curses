@@ -68,7 +68,7 @@ namespace DCURSES {
 		}
 
 		SetODeviceEffectVisible(SUMMONER_COLLAR_EFFECT);
-		GetEffectForODevice(SUMMONER_COLLAR_EFFECT)->magnitude = settings.oppSummonerSexCount;
+		GetEffectForODevice(SUMMONER_COLLAR_EFFECT)->magnitude = static_cast<float>(settings.oppSummonerSexCount);
 
 		auto magic = player->AsActorValueOwner()->GetActorValue(RE::ActorValue::kMagicka);
 		player->AsActorValueOwner()->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kDamage, RE::ActorValue::kMagicka, -magic);
@@ -83,7 +83,7 @@ namespace DCURSES {
 		int weightTotal = settings.oppSummonerCollarWeight;
 		if (weightTotal <= 0.0) return false;
 
-		int r = Util::randomDouble(weightTotal);
+		int r = Util::randomInt(weightTotal);
 
 		std::vector<std::pair<bool (*)(std::string, bool), int>> events;
 		events.push_back(std::make_pair(OppSummonerCollarEvent, settings.oppSummonerCollarWeight));

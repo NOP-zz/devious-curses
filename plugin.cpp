@@ -89,7 +89,13 @@ namespace DCURSES {
         log::trace("DCURSES test");
         auto player = RE::PlayerCharacter::GetSingleton();
         
-        OppSummonerCollarEvent("");
+        auto mark = GetLewdMark(player);
+        if (mark) {
+            RemoveLewdMark(player);
+        }
+        else {
+            DoLewdMarkEvent("", false);
+        }
         
 
     }
@@ -153,7 +159,7 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
         }
         case SKSE::MessagingInterface::kNewGame:
         case SKSE::MessagingInterface::kPostLoadGame: {
-            auto perk = RE::TESDataHandler::GetSingleton()->LookupForm<RE::BGSPerk>(DCURSES::MGEF_CONTROLLER, "Devious Curses.esp");
+            auto perk = DCURSES::StaticDataHolder::GetSingleton()->LookupForm<RE::BGSPerk>(DCURSES::MGEF_CONTROLLER, "Devious Curses.esp");
             auto player = RE::PlayerCharacter::GetSingleton();
             if (!player->HasPerk(perk)) {
                 player->AddPerk(perk);

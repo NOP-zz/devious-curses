@@ -74,12 +74,12 @@ namespace DCURSES {
     }
 
     int GetActorArousal(RE::Actor* actor) {
-        auto faction = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("03fc36", 0, 16), "SexLabAroused.esm");
+        auto faction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("03fc36", 0, 16), "SexLabAroused.esm");
         return actor->GetFactionRank(faction, actor == RE::PlayerCharacter::GetSingleton());
     }
 
     void StartPapyrusTimer() {
-        RE::TESForm* mcm = RE::TESDataHandler::GetSingleton()->LookupForm(DCURSES_MCM, "Devious Curses.esp");
+        RE::TESForm* mcm = StaticDataHolder::GetSingleton()->LookupForm<RE::TESForm>(DCURSES_MCM, "Devious Curses.esp");
         auto handle = GetHP()->GetHandleForObject(RE::FormType::Quest, mcm);
         RE::BSTSmartPointer<RE::BSScript::Object> mcmObject;
         GetVM()->FindBoundObject(handle, "DCurses_MCM", mcmObject);

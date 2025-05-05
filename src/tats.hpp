@@ -99,16 +99,20 @@ namespace DCURSES {
 
 	class MarkEffectVisitor : public RE::MagicTarget::ForEachActiveEffectVisitor {
 	public:
+		RE::EffectSetting* match = nullptr;
 		RE::ActiveEffect* markEffect = nullptr;
 		// Inherited via ForEachActiveEffectVisitor
 		virtual RE::BSContainer::ForEachResult Accept(RE::ActiveEffect* a_effect) override
 		{
-			auto effect = RE::TESDataHandler::GetSingleton()->LookupForm<RE::EffectSetting>(MARK_EFFECT, "Devious Curses.esp");
-			if (a_effect->GetBaseObject() == effect) {
+			if (a_effect->GetBaseObject() == match) {
 				markEffect = a_effect;
 				return RE::BSContainer::ForEachResult::kStop;
 			}
 			return RE::BSContainer::ForEachResult::kContinue;
+		}
+
+		MarkEffectVisitor() {
+			match = StaticDataHolder::GetSingleton()->LookupForm<RE::EffectSetting>(MARK_EFFECT, "Devious Curses.esp");
 		}
 	};
 
@@ -153,7 +157,7 @@ namespace DCURSES {
 	void SetMarkControlerVisible(RE::Actor* actor, bool visible = true) {
 		if (actor != RE::PlayerCharacter::GetSingleton()) { return; }
 
-		auto effect = RE::TESDataHandler::GetSingleton()->LookupForm<RE::EffectSetting>(MARK_EFFECT, "Devious Curses.esp");
+		auto effect = StaticDataHolder::GetSingleton()->LookupForm<RE::EffectSetting>(MARK_EFFECT, "Devious Curses.esp");
 		if (visible) {
 			effect->data.flags.reset(RE::EffectSetting::EffectSettingData::Flag::kHideInUI);
 		}
@@ -164,28 +168,30 @@ namespace DCURSES {
 
 	void UpdateMarkControlerInfo() {
 		auto active = GetMarkEffect(RE::PlayerCharacter::GetSingleton());
-		auto effect = active->GetBaseObject();
-		switch (static_cast<int>(active->magnitude)) {
-		case TAT_ALLURE:
-			effect->fullName = "Alure Mark";
-			effect->magicItemDescription = fmt::format("You still need to have sex {} times!", counters.LMSexCounter * -1);
-			break;
-		case TAT_HEAT:
-			effect->fullName = "Heat Mark";
-			effect->magicItemDescription = fmt::format("You still need to open {} containers!", counters.LMContainersOpened * -1);
-			break;
-		case TAT_BONDAGE:
-			effect->fullName = "Bondage Mark";
-			effect->magicItemDescription = fmt::format("The mark still needs to equip {} devices!", counters.LMDevicesEquipped * -1);
-			break;
-		case TAT_NUDITY:
-			effect->fullName = "Nudity Mark";
-			effect->magicItemDescription = fmt::format("You still need to talk to {} different people!", counters.LMPeopleTalked * -1);
-			break;
-		case TAT_MERIDIA:
-			effect->fullName = "Malkoran's Mark";
-			effect->magicItemDescription = "You aren't sure what the mark does, but you know something will happen soon!";
-			break;
+		if (active) {
+			auto effect = active->GetBaseObject();
+			switch (static_cast<int>(active->magnitude)) {
+			case TAT_ALLURE:
+				effect->fullName = "Alure Mark";
+				effect->magicItemDescription = fmt::format("You still need to have sex {} times!", counters.LMSexCounter * -1);
+				break;
+			case TAT_HEAT:
+				effect->fullName = "Heat Mark";
+				effect->magicItemDescription = fmt::format("You still need to open {} containers!", counters.LMContainersOpened * -1);
+				break;
+			case TAT_BONDAGE:
+				effect->fullName = "Bondage Mark";
+				effect->magicItemDescription = fmt::format("The mark still needs to equip {} devices!", counters.LMDevicesEquipped * -1);
+				break;
+			case TAT_NUDITY:
+				effect->fullName = "Nudity Mark";
+				effect->magicItemDescription = fmt::format("You still need to talk to {} different people!", counters.LMPeopleTalked * -1);
+				break;
+			case TAT_MERIDIA:
+				effect->fullName = "Malkoran's Mark";
+				effect->magicItemDescription = "You aren't sure what the mark does, but you know something will happen soon!";
+				break;
+			}
 		}
 	}
 

@@ -9,7 +9,7 @@ namespace DCURSES {
 	RE::TESObjectACTI* GetRandomContraption() {
 		std::vector<RE::TESObjectACTI*> contraptions;
 		for (auto acti_id : ZADC_CONTRAPTIONS) {
-			auto activator = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectACTI>(acti_id, "Devious Devices - Contraptions.esm");
+			auto activator = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectACTI>(acti_id, "Devious Devices - Contraptions.esm");
 			if (!activator) {
 				log::warn("Unable to get activator for form {:x}", acti_id);
 			}
@@ -52,7 +52,7 @@ namespace DCURSES {
 		return ref;
 	}
 
-	void CreateAndLockContraption(RE::Actor* actor, bool sendEvent = false) {
+	void CreateAndLockContraption(RE::Actor* actor) {
 		ForceThirdPerson();
 		SKSE::GetTaskInterface()->AddTask([actor]() {
 			auto ptr = actor->PlaceObjectAtMe(GetRandomContraption(), false);

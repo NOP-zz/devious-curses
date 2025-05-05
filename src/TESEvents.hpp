@@ -93,8 +93,8 @@ namespace DCURSES {
             auto equipmentForm = RE::TESForm::LookupByID(equipEvent->baseObject);
             auto player = RE::PlayerCharacter::GetSingleton();
             if (equipActor == player && equipmentForm) {
-                RE::TESKey* magicKey = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESKey>(MAGIC_KEY, "Devious Curses.esp");
-                RE::TESObjectMISC* tattooCharm = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectMISC>(TATTOO_CHARM, "Devious Curses.esp");
+                RE::TESKey* magicKey = StaticDataHolder::GetSingleton()->LookupForm<RE::TESKey>(MAGIC_KEY, "Devious Curses.esp");
+                RE::TESObjectMISC* tattooCharm = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectMISC>(TATTOO_CHARM, "Devious Curses.esp");
                 //RE::TESObjectARMO* collar = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectARMO>(SAARTHAL_COLLAR, "Devious Curses.esp");
 
                 if (equipmentForm == magicKey) {
