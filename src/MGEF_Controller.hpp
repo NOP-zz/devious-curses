@@ -93,7 +93,7 @@ namespace DCURSES {
 
 		for (auto effect : all_effects) {
 			if (effect->HasKeywordString("DCurses_MenuEffect")) {
-				list.push_back({ effect->formID & 0x00000fff, -1.0f });
+				list.push_back({ effect->formID & 0x00000fff, 0.0f });
 			}
 		}
 

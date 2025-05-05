@@ -428,7 +428,7 @@ Function Initialize()
 	Pages[4] = "Lewd Marks "
 	Pages[5] = "Oppressive Devices "
 	Pages[6] = "Locations "
-	Pages[7] = "QuestInteraction "
+	Pages[7] = "Quest Interactions "
 	Pages[8] = "Misc "
 	Pages[9] = "Consequences "
 	Pages[10] = "Sex "
@@ -652,7 +652,7 @@ Event OnPageReset(string page)
 		dragonLairModifierOID = AddSliderOption("Dragon Lair Modifier  ", dragonLairModifier, "{1}x", 0)
 		apocryphaModifierOID = AddSliderOption("Apocrypha Modifier  ", apocryphaModifier, "{1}x", 0)
 		wildernessModifierOID = AddSliderOption("Wilderness Modifier  ", wildernessModifier, "{1}x", 0)
-	Elseif page == "QuestInteraction "
+	Elseif page == "Quest Interactions "
 		int flag_enable_qi = 1
 		If enableQuestInteractions
 			flag_enable_qi = 0
