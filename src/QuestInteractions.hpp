@@ -22,7 +22,7 @@ namespace DCURSES {
 		}
 
 		AddLewdMark(TAT_BRANDING);
-		SetEffectMagnitude(BRANDING_EFFECT, GetTattooCount(player));
+		SetEffectMagnitude(BRANDING_EFFECT, static_cast<float>(GetTattooCount(player)));
 		PlayerMessage("As you kill Malkoran he curses you with a mark of branding!");
 		SendModEventMark(player, "Malkoran", "Branding", TAT_BRANDING);
 	}
@@ -50,12 +50,7 @@ namespace DCURSES {
 		SetEffectMagnitude(NUDITY_EFFECT, 100);
 
 		SendModEventMark(player, "Sanguine", "Nudity", TAT_NUDITY);
-		std::thread{ [] {
-			std::this_thread::sleep_for(3000ms);
-			SKSE::GetTaskInterface()->AddTask([]() {
-				PlayerMessage("As you awaken you notice that you're covered in chains and have a strange mark on you. Hopfully Sam can fix this...");
-			});
-		} }.detach();
+		Util::ExecuteWithDelay(4s, [] {PlayerMessage("As you awaken you notice that you're covered in chains and have a strange mark on you. Hopefully Sam can fix this..."); });
 	}
 
 	void QISanguineInteractionEnd() {

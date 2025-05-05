@@ -79,10 +79,30 @@ namespace DCURSES {
 	}
 
 	void MGEFOnGameLoad() {
+		auto perk = DCURSES::StaticDataHolder::GetSingleton()->LookupForm<RE::BGSPerk>(DCURSES::MGEF_CONTROLLER, "Devious Curses.esp");
 		auto spell = DCURSES::StaticDataHolder::GetSingleton()->LookupForm<RE::SpellItem>(DCURSES::MGEF_SPELL, "Devious Curses.esp");
 		auto player = RE::PlayerCharacter::GetSingleton();
 
-		player->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)->CastSpellImmediate(spell, true, player, 1.0, false, 0.0, nullptr);
-		
+		if (!player->HasPerk(perk)) {
+			player->AddPerk(perk);
+		}
+
+		std::list<std::pair<uint32_t, float>> list;
+
+		auto all_effects = RE::TESDataHandler::GetSingleton()->GetFormArray<RE::EffectSetting>();
+
+		for (auto effect : all_effects) {
+			if (effect->HasKeywordString("DCurses_MenuEffect")) {
+				list.push_back({ effect->formID & 0x00000fff, -1.0f });
+			}
+		}
+
+		for (std::pair<uint32_t, float> &id : list) {
+			id.second = GetEffectMagnitude(id.first);
+		}
+		player->GetMagicCaster(RE::MagicSystem::CastingSource::kOther)->CastSpellImmediate(spell, true, player, 1.0, false, 0.0, nullptr);
+		for (std::pair<uint32_t, float>& id : list) {
+			SetEffectMagnitude(id.first, id.second);
+		}
 	}
 }

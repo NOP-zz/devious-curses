@@ -74,7 +74,7 @@ namespace DCURSES {
     }
 
     int GetActorArousal(RE::Actor* actor) {
-        auto faction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("03fc36", 0, 16), "SexLabAroused.esm");
+        auto faction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x03fc36, "SexLabAroused.esm");
         return actor->GetFactionRank(faction, actor == RE::PlayerCharacter::GetSingleton());
     }
 
