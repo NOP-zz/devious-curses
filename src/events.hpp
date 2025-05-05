@@ -96,7 +96,7 @@ namespace DCURSES {
         if (!(activatedObject && activatedObject->HasContainer())) {
             return;
         }
-        bool hasBondageMark = GetLewdMark(RE::PlayerCharacter::GetSingleton()) == TAT_BONDAGE;
+        bool hasBondageMark = GetLewdMark() == TAT_BONDAGE;
         float chance = settings.rDeviceBaseChance + (hasBondageMark * 2.5f);
         for (int i = 0; i < 2 + (hasBondageMark * 2); i++) {
             if (Util::randomDouble() < chance) {
@@ -253,7 +253,6 @@ namespace DCURSES {
 
     bool DoSimpleSlaveryEvent(std::string contName) {
         auto player = RE::PlayerCharacter::GetSingleton();
-        UndressAndUnequipActor(player);
         if (!RE::TESDataHandler::GetSingleton()->LookupLoadedModByName("SimpleSlavery.esp")) {
             return false;
         }
@@ -278,10 +277,6 @@ namespace DCURSES {
     bool DoTattooEvent(std::string containerName) {
         auto player = RE::PlayerCharacter::GetSingleton();
 
-        if (settings.stripPlayerOnEvent) {
-            UndressActor(player, false);
-        }
-
         if (GetTattooCount(player) > settings.eventTattooCap) {
             return false;
         }
@@ -298,10 +293,6 @@ namespace DCURSES {
     bool DoContraptionEvent(std::string containerName) {
         auto player = RE::PlayerCharacter::GetSingleton();
 
-        if (settings.stripPlayerOnEvent) {
-            UndressActor(player, false);
-        }
-
         CreateAndLockContraption(player);
         SendModEventContraption(player, containerName);
 
@@ -314,12 +305,8 @@ namespace DCURSES {
             return false;
         }
         auto player = RE::PlayerCharacter::GetSingleton();
-        if (GetLewdMark(player) > 0) {
+        if (GetLewdMark() > 0) {
             return false;
-        }
-
-        if (settings.stripPlayerOnEvent) {
-            UndressActor(player, false);
         }
 
         int weightTotal = settings.LMAllureWeight + settings.LMHeatWeight + settings.LMBondageWeight + settings.LMNudityWeight;
@@ -327,8 +314,8 @@ namespace DCURSES {
         int r = Util::randomInt(weightTotal);
 
         if (r < settings.LMAllureWeight) {
-            counters.LMSexCounter = static_cast<int64_t>(-1 * settings.LMAllureSex * Util::randomDouble(0.8, 1.2));
-            AddLewdMark(player, TAT_ALLURE);
+            AddLewdMark(TAT_ALLURE);
+            SetEffectMagnitude(ALLURE_EFFECT, static_cast<float>(settings.LMAllureSex * Util::randomDouble(0.8, 1.2)));
             if (doMessage) PlayerMessage("After a sharp pain, you see that you have a mark of allure.");
             SendModEventMark(player, containerName, "Allure", TAT_ALLURE);
             return true;
@@ -338,8 +325,8 @@ namespace DCURSES {
         }
 
         if (r < settings.LMHeatWeight) {
-            counters.LMContainersOpened = static_cast<int64_t>(-1 * settings.LMHeatContainerCount * Util::randomDouble(0.8, 1.2));
-            AddLewdMark(player, TAT_HEAT);
+            AddLewdMark(TAT_HEAT);
+            SetEffectMagnitude(HEAT_EFFECT, static_cast<float>(settings.LMHeatContainerCount * Util::randomDouble(0.8, 1.2)));
             if (doMessage) PlayerMessage("After a sharp pain, you see that you have a mark of heat.");
             SendModEventMark(player, containerName, "Heat", TAT_HEAT);
             return true;
@@ -349,8 +336,8 @@ namespace DCURSES {
         }
 
         if (r < settings.LMBondageWeight) {
-            counters.LMDevicesEquipped = static_cast<int64_t>(-1 * settings.LMBondageDeviceCount * Util::randomDouble(0.8, 1.2));
-            AddLewdMark(player, TAT_BONDAGE);
+            AddLewdMark(TAT_BONDAGE);
+            SetEffectMagnitude(BONDAGE_EFFECT, static_cast<float>(settings.LMBondageDeviceCount * Util::randomDouble(0.8, 1.2)));
             if (doMessage) PlayerMessage("After a sharp pain, you see that you have a mark of bondage.");
             SendModEventMark(player, containerName, "Bondage", TAT_BONDAGE);
             return true;
@@ -360,8 +347,8 @@ namespace DCURSES {
         }
 
         if (r < settings.LMNudityWeight) {
-            counters.LMPeopleTalked = static_cast<int64_t>(-1 * settings.LMNudityTalkTimes * Util::randomDouble(0.8, 1.2));
-            AddLewdMark(player, TAT_NUDITY);
+            AddLewdMark(TAT_NUDITY);
+            SetEffectMagnitude(NUDITY_EFFECT, static_cast<float>(settings.LMNudityTalkTimes * Util::randomDouble(0.8, 1.2)));
             if (doMessage) PlayerMessage("After a sharp pain, you see that you have a mark of nudity.");
             SendModEventMark(player, containerName, "Nudity", TAT_NUDITY);
             return true;
@@ -374,6 +361,7 @@ namespace DCURSES {
     }
 
     void DoEvent(bool isBoss, std::string contName) {
+        auto player = RE::PlayerCharacter::GetSingleton();
         CloseContinerMenus();
         //DisableMenus();
         int weightTotal = settings.eventStandardWeight + settings.eventSimpleSlaveryWeight + settings.eventLewdMarkWeight + settings.eventTattooWeight + settings.eventContraptionWeight + settings.eventOppressiveWeight;
@@ -383,7 +371,7 @@ namespace DCURSES {
         int r = Util::randomInt(weightTotal);
 
         if (r < settings.eventSimpleSlaveryWeight && DoSimpleSlaveryEvent(contName)) {
-            //EnableMenus();
+            UndressAndUnequipActor(player);
             return;
         }
         else if (r > settings.eventSimpleSlaveryWeight) {
@@ -392,7 +380,9 @@ namespace DCURSES {
 
         
         if (r < settings.eventContraptionWeight && DoContraptionEvent(contName)) {
-            //EnableMenus();
+            if (settings.stripPlayerOnEvent) {
+                UndressAndUnequipActor(player);
+            }
             return;
         }
         else if (r > settings.eventContraptionWeight) {
@@ -400,7 +390,9 @@ namespace DCURSES {
         }
 
         if (r < settings.eventOppressiveWeight && DoOppDeviceEvent(contName)) {
-            //EnableMenus();
+            if (settings.stripPlayerOnEvent) {
+                UndressActor(player, false);
+            }
             return;
         }
         else if (r > settings.eventOppressiveWeight) {
@@ -409,7 +401,9 @@ namespace DCURSES {
         
 
         if (r < settings.eventTattooWeight && DoTattooEvent(contName)) {
-            //EnableMenus();
+            if (settings.stripPlayerOnEvent) {
+                UndressActor(player, false);
+            }
             return;
         }
         else if (r > settings.eventTattooWeight) {
@@ -417,7 +411,9 @@ namespace DCURSES {
         }
 
         if (r < settings.eventLewdMarkWeight && DoLewdMarkEvent(contName)) {
-            //EnableMenus();
+            if (settings.stripPlayerOnEvent) {
+                UndressActor(player, false);
+            }
             return;
         }
         else if (r > settings.eventLewdMarkWeight) {
@@ -653,7 +649,7 @@ namespace DCURSES {
             logMessage += "(dead) ";
         }
         else if (data.isLeveled) {
-            IncrementCounterForMark(player, TAT_HEAT);
+            DecrementCounterForMark(TAT_HEAT);
             chance *= settings.containerModifier;
             logMessage += "(container) ";
         }
@@ -818,7 +814,7 @@ namespace DCURSES {
     void EventsUpdate() {
         //log::trace("LM clock: {}", counters.clock_LMEventTimer);
         auto player = RE::PlayerCharacter::GetSingleton();
-        int mark = GetLewdMark(player);
+        int mark = GetLewdMark();
         if (mark > 0) {
             //int base_color = mark == 11 ? settings.LMHeatColor : (mark == 13 ? settings.LMAllureColor : (mark == 71 ? settings.LMBondageColor : (mark == 79 ? settings.LMNudityColor : 0)));
             if (counters.clock_LMEventTimer >= 15) {
@@ -827,8 +823,8 @@ namespace DCURSES {
                 switch (mark) {
                 case TAT_HEAT: {
                     ModifyArousal(player, settings.LMHeatMod / 4);
-                    if (counters.LMContainersOpened >= 0) {
-                        RemoveLewdMark(player);
+                    if (GetEffectMagnitude(HEAT_EFFECT) <= 0) {
+                        RemoveLewdMark();
                         PlayerMessage("You feel a sense of calm as the heat mark fades from your body.");
                     }
                     break;
@@ -847,8 +843,8 @@ namespace DCURSES {
                             }
                         }
                     }
-                    if (counters.LMSexCounter >= 0) {
-                        RemoveLewdMark(player);
+                    if (GetEffectMagnitude(ALLURE_EFFECT) <= 0) {
+                        RemoveLewdMark();
                         PlayerMessage("You sense that people are no longer staring at you as the allure mark fades from your body.");
                     }
                     break;
@@ -884,19 +880,19 @@ namespace DCURSES {
                         }
                         auto device = equipable[Util::randomInt(static_cast<int>(equipable.size()))];
                         log::trace("Equipping device: {}", device->GetName());
-                        IncrementCounterForMark(player, TAT_BONDAGE);
+                        DecrementCounterForMark(TAT_BONDAGE);
                         LockDevice(player, device);
                         PlayerMessage(fmt::format("Your mark pulses with light as your {} appears on your body!", device->GetName()));
                     }
-                    if (counters.LMDevicesEquipped >= 0) {
-                        RemoveLewdMark(player);
+                    if (GetEffectMagnitude(BONDAGE_EFFECT) <= 0) {
+                        RemoveLewdMark();
                         PlayerMessage("You feel much less oppressed as the bondage mark fades from your body.");
                     }
                     break;
                 }
                 case TAT_NUDITY: {
-                    if (counters.LMPeopleTalked >= 0) {
-                        RemoveLewdMark(player);
+                    if (GetEffectMagnitude(NUDITY_EFFECT) <= 0) {
+                        RemoveLewdMark();
                         PlayerMessage("You feel less helpless as the nudity mark fades from your body.");
                     }
                     break;

@@ -236,7 +236,7 @@ namespace DCURSES {
 		auto player = RE::PlayerCharacter::GetSingleton();
 		log::trace("Checking consequence dialogue");
 		if (player->GetWornArmor((RE::BIPED_MODEL::BipedObjectSlot::kBody)) == nullptr) {
-			IncrementCounterForMark(player, TAT_NUDITY);
+			DecrementCounterForMark(TAT_NUDITY);
 			if (Util::randomDouble() < settings.consTriggerNude) {
 				log::trace("Nude Trigger");
 				if (DoConsequence(actor, consequenceSource::kNude)) {

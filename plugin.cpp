@@ -89,14 +89,23 @@ namespace DCURSES {
         log::trace("DCURSES test");
         auto player = RE::PlayerCharacter::GetSingleton();
         
-        auto mark = GetLewdMark(player);
+        /*
+        auto mark = GetLewdMark();
         if (mark) {
-            RemoveLewdMark(player);
+            RemoveLewdMark();
         }
         else {
             DoLewdMarkEvent("", false);
         }
-        
+        */
+
+        auto ref = GetContraptionForActor(player);
+        if (ref) {
+            ContraptionsUnlockActor(player);
+        }
+        else {
+            CreateAndLockContraption(player);
+        }
 
     }
 
@@ -159,11 +168,7 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
         }
         case SKSE::MessagingInterface::kNewGame:
         case SKSE::MessagingInterface::kPostLoadGame: {
-            auto perk = DCURSES::StaticDataHolder::GetSingleton()->LookupForm<RE::BGSPerk>(DCURSES::MGEF_CONTROLLER, "Devious Curses.esp");
-            auto player = RE::PlayerCharacter::GetSingleton();
-            if (!player->HasPerk(perk)) {
-                player->AddPerk(perk);
-            }
+            DCURSES::MGEFOnGameLoad();
 
             bool DDNG_loaded = DeviousDevicesAPI::LoadAPI();
 

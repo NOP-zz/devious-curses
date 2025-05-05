@@ -12,22 +12,14 @@ namespace DCURSES {
         int64_t clock_SexTimeout = 0;
         int64_t clock_lastSex = 0;
         int64_t clock_LMEventTimer = 0;
-        int64_t clock_QIMeridia = 0;
-        int64_t clock_QINocturnal = 0;
         void tick() {
             clock_SexTimeout += 1;
             clock_lastSex += 1;
             clock_LMEventTimer += 1;
-            clock_QIMeridia += 1;
-            clock_QINocturnal += 1;
         }
         int64_t SinceLastKey = 0;
         int64_t SinceLastEvent = 0;
-
-        int64_t LMDevicesEquipped = 0;
-        int64_t LMContainersOpened = 0;
-        int64_t LMPeopleTalked = 0;
-        int64_t LMSexCounter = 0;
+        int ActiveLewdMark = 0;
     } counters;
 
     class RefLists {

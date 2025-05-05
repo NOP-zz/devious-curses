@@ -4,18 +4,31 @@ using namespace SKSE;
 
 namespace DCURSES {
 // DCURSES
-constexpr auto MAGIC_KEY = 0x806;
 constexpr auto TATTOO_CHARM = 0x809;
 constexpr auto DCURSES_MCM = 0x800;
 
+// DEVICES
 constexpr auto SUMMONER_COLLAR = 0x810;
+
+// KEYS
+constexpr auto MAGIC_KEY = 0x806;
 constexpr auto SUMMONER_COLLAR_KEY = 0x807;
+
+// SPELLS
+constexpr auto MGEF_SPELL = 0x817;
 constexpr auto SUMMONER_SUMMON_SPELL = 0x801;
+
+// EFFECTS
+constexpr auto ALLURE_EFFECT = 0x80B;
+constexpr auto HEAT_EFFECT = 0x805;
+constexpr auto NUDITY_EFFECT = 0x80F;
+constexpr auto BONDAGE_EFFECT = 0x811;
 constexpr auto SUMMONER_COLLAR_EFFECT = 0x803;
 
+// PERKS
 constexpr auto MGEF_CONTROLLER = 0x818;
-constexpr auto MGEF_SPELL = 0x817;
-constexpr auto MARK_EFFECT = 0x816;
+
+
 // DDX
 constexpr auto DDX_RUSTY_PEAR_ANAL_SIGN = 0x1FC45;
 constexpr auto DDX_RUSTY_PEAR_VAGINAL = 0x1FC4F;

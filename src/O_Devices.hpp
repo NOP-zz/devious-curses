@@ -1,59 +1,9 @@
 #pragma once
 
 #include "Scripting.hpp"
+#include "MGEF_Controller.hpp"
 
 namespace DCURSES {
-	class EffectVisitor : public RE::MagicTarget::ForEachActiveEffectVisitor {
-	public:
-		RE::EffectSetting* match = nullptr;
-		RE::ActiveEffect* activeEffect = nullptr;
-		// Inherited via ForEachActiveEffectVisitor
-		virtual RE::BSContainer::ForEachResult Accept(RE::ActiveEffect* a_effect) override
-		{
-			if (a_effect->GetBaseObject() == match) {
-				activeEffect = a_effect;
-				return RE::BSContainer::ForEachResult::kStop;
-			}
-			return RE::BSContainer::ForEachResult::kContinue;
-		}
-
-		EffectVisitor(RE::EffectSetting* effect) {
-			match = effect;
-		}
-	};
-
-	RE::ActiveEffect* GetEffectForODevice(uint32_t effect_formid) {
-		auto effect = RE::TESDataHandler::GetSingleton()->LookupForm<RE::EffectSetting>(effect_formid, "Devious Curses.esp");
-		if (!effect) {
-			log::warn("No EffectSetting for id {:x}", effect_formid);
-			return nullptr;
-		}
-		auto target = RE::PlayerCharacter::GetSingleton()->GetMagicTarget();
-		auto visitor = EffectVisitor(effect);
-		target->VisitEffects(visitor);
-		return visitor.activeEffect;
-	}
-
-	void DecrementODeviceMagnitude(uint32_t effect_formid) {
-		auto effect = GetEffectForODevice(effect_formid);
-		effect->magnitude -= 1;
-	}
-
-	void SetODeviceEffectVisible(uint32_t effect_formid, bool visible = true) {
-		auto effect = RE::TESDataHandler::GetSingleton()->LookupForm<RE::EffectSetting>(effect_formid, "Devious Curses.esp");
-		if (!effect) {
-			log::warn("No EffectSetting for id {:x}", effect_formid);
-			return;
-		}
-
-		if (visible) {
-			effect->data.flags.reset(RE::EffectSetting::EffectSettingData::Flag::kHideInUI);
-		}
-		else {
-			effect->data.flags.set(RE::EffectSetting::EffectSettingData::Flag::kHideInUI);
-		}
-	}
-	
 	bool OppSummonerCollarEvent(std::string containerName, bool doMessage = false) {
 		if (!settings.sexAllowCreature || settings.sexChanceCreature == 0) {
 			return false;
@@ -67,8 +17,8 @@ namespace DCURSES {
 			return false;
 		}
 
-		SetODeviceEffectVisible(SUMMONER_COLLAR_EFFECT);
-		GetEffectForODevice(SUMMONER_COLLAR_EFFECT)->magnitude = static_cast<float>(settings.oppSummonerSexCount);
+		SetEffectVisible(SUMMONER_COLLAR_EFFECT);
+		SetEffectMagnitude(SUMMONER_COLLAR_EFFECT, static_cast<float>(settings.oppSummonerSexCount));
 
 		auto magic = player->AsActorValueOwner()->GetActorValue(RE::ActorValue::kMagicka);
 		player->AsActorValueOwner()->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kDamage, RE::ActorValue::kMagicka, -magic);
@@ -116,15 +66,18 @@ namespace DCURSES {
 		//Summoner Collar
 		bool isWearingSummonerCollar = ActorIsWearingDevice(player, summoner_collar);
 		if (isWearingSummonerCollar) {
+			SetEffectVisible(SUMMONER_COLLAR_EFFECT);
 			auto summons_list = getPlayerCommandedActors();
 			if (summons_list.empty()) {
-				RE::SpellItem* conjure_atronach = RE::TESDataHandler::GetSingleton()->LookupForm<RE::SpellItem>(SUMMONER_SUMMON_SPELL, "Devious Curses.esp");
-				//conjure_atronach->data.delivery = RE::MagicSystem::Delivery::kSelf;
-				RE::MagicCaster* caster = player->GetMagicCaster(RE::MagicSystem::CastingSource::kOther);
-				caster->CastSpellImmediate(conjure_atronach, false, player, 5.0f, false, 0.0f, nullptr);
-				//conjure_atronach->data.delivery = RE::MagicSystem::Delivery::kTargetLocation;
-				auto magic = player->AsActorValueOwner()->GetActorValue(RE::ActorValue::kMagicka);
-				if (settings.oppSCollarDrainsMagicka) player->AsActorValueOwner()->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kDamage, RE::ActorValue::kMagicka, -magic);
+				if (Util::randomDouble() < 7.5) {
+					RE::SpellItem* conjure_atronach = RE::TESDataHandler::GetSingleton()->LookupForm<RE::SpellItem>(SUMMONER_SUMMON_SPELL, "Devious Curses.esp");
+					//conjure_atronach->data.delivery = RE::MagicSystem::Delivery::kSelf;
+					RE::MagicCaster* caster = player->GetMagicCaster(RE::MagicSystem::CastingSource::kOther);
+					caster->CastSpellImmediate(conjure_atronach, false, player, 3.0f, false, 0.0f, nullptr);
+					//conjure_atronach->data.delivery = RE::MagicSystem::Delivery::kTargetLocation;
+					auto magic = player->AsActorValueOwner()->GetActorValue(RE::ActorValue::kMagicka);
+					if (settings.oppSCollarDrainsMagicka) player->AsActorValueOwner()->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kDamage, RE::ActorValue::kMagicka, -magic);
+				}
 			}
 			else {
 				if (settings.oppSMinSummonArousal > 0) {
@@ -137,11 +90,11 @@ namespace DCURSES {
 			}
 		}
 		else {
-			SetODeviceEffectVisible(SUMMONER_COLLAR_EFFECT, false);
+			SetEffectVisible(SUMMONER_COLLAR_EFFECT, false);
 		}
 
-		if (GetEffectForODevice(SUMMONER_COLLAR_EFFECT)->magnitude == 0) {
-			SetODeviceEffectVisible(SUMMONER_COLLAR_EFFECT, false);
+		if (GetEffectMagnitude(SUMMONER_COLLAR_EFFECT) <= 0) {
+			SetEffectVisible(SUMMONER_COLLAR_EFFECT, false);
 			if (isWearingSummonerCollar && GetItemCount(player, summoner_collar_key) == 0) {
 				player->AddObjectToContainer((RE::TESBoundObject*)summoner_collar_key, nullptr, 1, nullptr);
 				PlayerMessage("The Summoner Collar is now satisfied and you can unlock it!");
@@ -150,5 +103,14 @@ namespace DCURSES {
 
 		//Next Device
 		
+	}
+
+	void OppOnSexEnd(RE::Actor* actor) {
+		if (getIsPlayerCommandedActor(actor)) {
+			if (Util::GetFormEditorId(actor->GetActorBase()) == "DCurses_SummonAtronachFrost") {
+				actor->KillImmediate();
+			}
+			ModifyEffectMagnitude(SUMMONER_COLLAR_EFFECT, -1.0);
+		}
 	}
 }

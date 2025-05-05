@@ -70,7 +70,7 @@ namespace DCURSES {
 		auto playerPosition = player->GetPosition();
 
 		auto playerTattooCount = GetTattooCount(player);
-		auto playerLewdMark = GetLewdMark(player);
+		auto playerLewdMark = GetLewdMark();
 
 		auto playerNumDevices = numDevicesVisible(player);
 		auto playerWornDeviceKeywords = GetWornDeviceKeywords(player);
@@ -394,21 +394,49 @@ namespace DCURSES {
 	}
 
 	
+	class EffectVisitor2 : public RE::MagicTarget::ForEachActiveEffectVisitor {
+	public:
+		RE::Actor* match = nullptr;
+		// Inherited via ForEachActiveEffectVisitor
+		virtual RE::BSContainer::ForEachResult Accept(RE::ActiveEffect* a_effect) override
+		{
+			if (a_effect->GetBaseObject()->data.associatedForm) {
+				RE::TESNPC* actor_base = a_effect->GetBaseObject()->data.associatedForm->As<RE::TESNPC>();
+				if (actor_base && actor_base == match->GetActorBase()) {
+					log::info("Increasing summon time for {}", match->GetName());
+					a_effect->duration += 120;
+				}
+			}
+			return RE::BSContainer::ForEachResult::kContinue;
+		}
+
+		EffectVisitor2(RE::Actor* actor) {
+			match = actor;
+		}
+	};
+
 
 	void P_SexStarted(RE::StaticFunctionTag*, RE::BSTArray<RE::Actor*> actors) {
 		for (auto actor : actors) {
 			if (actor && actor != RE::PlayerCharacter::GetSingleton()) {
 				log::trace("Sex started with {}", actor->GetName());
+				if (getIsPlayerCommandedActor(actor)) {
+					EffectVisitor2 temp(actor);
+					RE::PlayerCharacter::GetSingleton()->AsMagicTarget()->VisitEffects(temp);
+				}
 				break;
 			}
 		}
 	}
 
+	void OppOnSexEnd(RE::Actor* actor);
+
 	void P_SexEnded(RE::StaticFunctionTag*, RE::BSTArray<RE::Actor*> actors) {
 		for (auto actor : actors) {
 			if (actor && actor != RE::PlayerCharacter::GetSingleton()) {
 				log::trace("Sex ended with {}", actor->GetName());
-				IncrementCounterForMark(RE::PlayerCharacter::GetSingleton(), TAT_ALLURE);
+				OppOnSexEnd(actor);
+				DecrementCounterForMark(TAT_ALLURE);
 				ConsSexEnded(actor);
 				break;
 			}
