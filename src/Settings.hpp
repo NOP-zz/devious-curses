@@ -127,8 +127,6 @@ namespace DCURSES {
 		//Header Contraption Curse
 		int eventContraptionWeight = 25;		//Contraption Curse Weight//Chance to be bound in a contraption from DDC.//{0}//(0,500,1)
 		float eventContraptionTime = 0.0;		//Contraption Release Time//Will be automatically released after this many in game hours. Set to 0 to disable automatic release.//{1}//(0,24,0.1)
-		//Column
-		bool enableQuestInteractions = true;	//Quest Interactions//Certain quests may have some additional events tied to them.\nCheck the mod page for more info.
 		//Header Tattoo Curse
 		int eventTattooWeight = 15;				//Tattoo Curse Weight//Chance to receive random tattoos.\nRequires Rape Tattoos.//{0}//(0,500,1)							?:? flag_RapeTats
 		int eventTattooMin = 1;					//Tattoo Curse Min//Minimum number of tattoos that can be put on.//{0}//(1,10,1)											?:? flag_RapeTats
@@ -197,6 +195,14 @@ namespace DCURSES {
 		float dragonLairModifier = 2.0f;		//Dragon Lair Modifier//Modifier for events to happen in dragon lairs.//{1}x//(0,10,0.1)
 		float apocryphaModifier = 2.0f;			//Apocrypha Modifier//Modifier for events to happen in apocrypha.//{1}x//(0,10,0.1)
 		float wildernessModifier = 0.9f;		//Wilderness Modifier//Modifier for events to happen in the wilderness.//{1}x//(0,10,0.1)
+		//Page QuestInteraction
+		//Flag flag_enable_qi					//VAR:enableQuestInteractions
+		bool enableQuestInteractions = true;	//Quest Interactions//Certain quests may have some additional events tied to them.\n The mod page has more information about each quest.
+		//Column
+		//Header Quest Toggles
+		bool enableQISaarthal = true;			//Saarthal//The Saarthal event.
+		bool enableQIMalkoran = true;			//Malkoran//The Malkoran event.
+		bool enableQISanguine = true;			//Sanguine//The Sanguine events.
 		//Page Misc
 		bool noMessageBoxes = false;			//Remove Message Boxes//No message boxes will be shown.
 		bool bossChestUseModelPath = true;		//Boss Chest Models//Use the model of chests to determine if they are a boss chest.\nThere will be a higher chance for non-vanilla chests being marked correctly, but also for some non-boss chests to be treated like one.\nThis includes the models for standard, dwarven, falmer, apocrypha, soul cairn, and snow elf boss chests.
@@ -607,8 +613,6 @@ namespace DCURSES {
 		SetMCMBool("preferRelevantKeys",settings.preferRelevantKeys);
 		settings.vanishingKeys = true;
 		SetMCMBool("vanishingKeys",settings.vanishingKeys);
-		settings.enableQuestInteractions = true;
-		SetMCMBool("enableQuestInteractions",settings.enableQuestInteractions);
 		settings.LMBrandingPunish = true;
 		SetMCMBool("LMBrandingPunish",settings.LMBrandingPunish);
 		settings.LMNudityChestOnly = false;
@@ -617,6 +621,14 @@ namespace DCURSES {
 		SetMCMBool("oppSCollarDrainsMagicka",settings.oppSCollarDrainsMagicka);
 		settings.useLocationModifiers = true;
 		SetMCMBool("useLocationModifiers",settings.useLocationModifiers);
+		settings.enableQuestInteractions = true;
+		SetMCMBool("enableQuestInteractions",settings.enableQuestInteractions);
+		settings.enableQISaarthal = true;
+		SetMCMBool("enableQISaarthal",settings.enableQISaarthal);
+		settings.enableQIMalkoran = true;
+		SetMCMBool("enableQIMalkoran",settings.enableQIMalkoran);
+		settings.enableQISanguine = true;
+		SetMCMBool("enableQISanguine",settings.enableQISanguine);
 		settings.noMessageBoxes = false;
 		SetMCMBool("noMessageBoxes",settings.noMessageBoxes);
 		settings.bossChestUseModelPath = true;
@@ -827,11 +839,14 @@ namespace DCURSES {
 			{"keyForgiveness", settings.keyForgiveness},
 			{"preferRelevantKeys", settings.preferRelevantKeys},
 			{"vanishingKeys", settings.vanishingKeys},
-			{"enableQuestInteractions", settings.enableQuestInteractions},
 			{"LMBrandingPunish", settings.LMBrandingPunish},
 			{"LMNudityChestOnly", settings.LMNudityChestOnly},
 			{"oppSCollarDrainsMagicka", settings.oppSCollarDrainsMagicka},
 			{"useLocationModifiers", settings.useLocationModifiers},
+			{"enableQuestInteractions", settings.enableQuestInteractions},
+			{"enableQISaarthal", settings.enableQISaarthal},
+			{"enableQIMalkoran", settings.enableQIMalkoran},
+			{"enableQISanguine", settings.enableQISanguine},
 			{"noMessageBoxes", settings.noMessageBoxes},
 			{"bossChestUseModelPath", settings.bossChestUseModelPath},
 			{"dragonHoard", settings.dragonHoard},
@@ -1201,8 +1216,6 @@ namespace DCURSES {
 		SetMCMBool("preferRelevantKeys",settings.preferRelevantKeys);
 		settings.vanishingKeys = static_cast<bool>(j.value("vanishingKeys", true));
 		SetMCMBool("vanishingKeys",settings.vanishingKeys);
-		settings.enableQuestInteractions = static_cast<bool>(j.value("enableQuestInteractions", true));
-		SetMCMBool("enableQuestInteractions",settings.enableQuestInteractions);
 		settings.LMBrandingPunish = static_cast<bool>(j.value("LMBrandingPunish", true));
 		SetMCMBool("LMBrandingPunish",settings.LMBrandingPunish);
 		settings.LMNudityChestOnly = static_cast<bool>(j.value("LMNudityChestOnly", false));
@@ -1211,6 +1224,14 @@ namespace DCURSES {
 		SetMCMBool("oppSCollarDrainsMagicka",settings.oppSCollarDrainsMagicka);
 		settings.useLocationModifiers = static_cast<bool>(j.value("useLocationModifiers", true));
 		SetMCMBool("useLocationModifiers",settings.useLocationModifiers);
+		settings.enableQuestInteractions = static_cast<bool>(j.value("enableQuestInteractions", true));
+		SetMCMBool("enableQuestInteractions",settings.enableQuestInteractions);
+		settings.enableQISaarthal = static_cast<bool>(j.value("enableQISaarthal", true));
+		SetMCMBool("enableQISaarthal",settings.enableQISaarthal);
+		settings.enableQIMalkoran = static_cast<bool>(j.value("enableQIMalkoran", true));
+		SetMCMBool("enableQIMalkoran",settings.enableQIMalkoran);
+		settings.enableQISanguine = static_cast<bool>(j.value("enableQISanguine", true));
+		SetMCMBool("enableQISanguine",settings.enableQISanguine);
 		settings.noMessageBoxes = static_cast<bool>(j.value("noMessageBoxes", false));
 		SetMCMBool("noMessageBoxes",settings.noMessageBoxes);
 		settings.bossChestUseModelPath = static_cast<bool>(j.value("bossChestUseModelPath", true));
@@ -1425,11 +1446,14 @@ namespace DCURSES {
 		settings.keyForgiveness = GetMCMSetting("keyForgiveness")->GetBool();
 		settings.preferRelevantKeys = GetMCMSetting("preferRelevantKeys")->GetBool();
 		settings.vanishingKeys = GetMCMSetting("vanishingKeys")->GetBool();
-		settings.enableQuestInteractions = GetMCMSetting("enableQuestInteractions")->GetBool();
 		settings.LMBrandingPunish = GetMCMSetting("LMBrandingPunish")->GetBool();
 		settings.LMNudityChestOnly = GetMCMSetting("LMNudityChestOnly")->GetBool();
 		settings.oppSCollarDrainsMagicka = GetMCMSetting("oppSCollarDrainsMagicka")->GetBool();
 		settings.useLocationModifiers = GetMCMSetting("useLocationModifiers")->GetBool();
+		settings.enableQuestInteractions = GetMCMSetting("enableQuestInteractions")->GetBool();
+		settings.enableQISaarthal = GetMCMSetting("enableQISaarthal")->GetBool();
+		settings.enableQIMalkoran = GetMCMSetting("enableQIMalkoran")->GetBool();
+		settings.enableQISanguine = GetMCMSetting("enableQISanguine")->GetBool();
 		settings.noMessageBoxes = GetMCMSetting("noMessageBoxes")->GetBool();
 		settings.bossChestUseModelPath = GetMCMSetting("bossChestUseModelPath")->GetBool();
 		settings.dragonHoard = GetMCMSetting("dragonHoard")->GetBool();

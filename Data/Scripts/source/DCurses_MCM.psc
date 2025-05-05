@@ -340,8 +340,6 @@ Bool Property preferRelevantKeys = true Auto
 Int preferRelevantKeysOID
 Bool Property vanishingKeys = true Auto
 Int vanishingKeysOID
-Bool Property enableQuestInteractions = true Auto
-Int enableQuestInteractionsOID
 Bool Property LMBrandingPunish = true Auto
 Int LMBrandingPunishOID
 Bool Property LMNudityChestOnly = false Auto
@@ -350,6 +348,14 @@ Bool Property oppSCollarDrainsMagicka = true Auto
 Int oppSCollarDrainsMagickaOID
 Bool Property useLocationModifiers = true Auto
 Int useLocationModifiersOID
+Bool Property enableQuestInteractions = true Auto
+Int enableQuestInteractionsOID
+Bool Property enableQISaarthal = true Auto
+Int enableQISaarthalOID
+Bool Property enableQIMalkoran = true Auto
+Int enableQIMalkoranOID
+Bool Property enableQISanguine = true Auto
+Int enableQISanguineOID
 Bool Property noMessageBoxes = false Auto
 Int noMessageBoxesOID
 Bool Property bossChestUseModelPath = true Auto
@@ -414,7 +420,7 @@ String Property LMNudityAditionalForms = "" Auto
 Int LMNudityAditionalFormsOID
 
 Function Initialize()
-	Pages = new String[10]
+	Pages = new String[11]
 	Pages[0] = "Main "
 	Pages[1] = "Devices "
 	Pages[2] = "Keys "
@@ -422,9 +428,10 @@ Function Initialize()
 	Pages[4] = "Lewd Marks "
 	Pages[5] = "Oppressive Devices "
 	Pages[6] = "Locations "
-	Pages[7] = "Misc "
-	Pages[8] = "Consequences "
-	Pages[9] = "Sex "
+	Pages[7] = "QuestInteraction "
+	Pages[8] = "Misc "
+	Pages[9] = "Consequences "
+	Pages[10] = "Sex "
 EndFunction
 
 Event OnConfigInit()
@@ -574,8 +581,6 @@ Event OnPageReset(string page)
 		AddHeaderOption("Contraption Curse ")
 		eventContraptionWeightOID = AddSliderOption("Contraption Curse Weight  ", eventContraptionWeight, "{0}", 0)
 		eventContraptionTimeOID = AddSliderOption("Contraption Release Time  ", eventContraptionTime, "{1}", 0)
-		SetCursorPosition(1)
-		enableQuestInteractionsOID = AddToggleOption("Quest Interactions  ", enableQuestInteractions, 0)
 		AddHeaderOption("Tattoo Curse ")
 		eventTattooWeightOID = AddSliderOption("Tattoo Curse Weight  ", eventTattooWeight, "{0}", flag_RapeTats)
 		eventTattooMinOID = AddSliderOption("Tattoo Curse Min  ", eventTattooMin, "{0}", flag_RapeTats)
@@ -647,6 +652,17 @@ Event OnPageReset(string page)
 		dragonLairModifierOID = AddSliderOption("Dragon Lair Modifier  ", dragonLairModifier, "{1}x", 0)
 		apocryphaModifierOID = AddSliderOption("Apocrypha Modifier  ", apocryphaModifier, "{1}x", 0)
 		wildernessModifierOID = AddSliderOption("Wilderness Modifier  ", wildernessModifier, "{1}x", 0)
+	Elseif page == "QuestInteraction "
+		int flag_enable_qi = 1
+		If enableQuestInteractions
+			flag_enable_qi = 0
+		EndIf
+		enableQuestInteractionsOID = AddToggleOption("Quest Interactions  ", enableQuestInteractions, 0)
+		SetCursorPosition(1)
+		AddHeaderOption("Quest Toggles ")
+		enableQISaarthalOID = AddToggleOption("Saarthal  ", enableQISaarthal, 0)
+		enableQIMalkoranOID = AddToggleOption("Malkoran  ", enableQIMalkoran, 0)
+		enableQISanguineOID = AddToggleOption("Sanguine  ", enableQISanguine, 0)
 	Elseif page == "Misc "
 		noMessageBoxesOID = AddToggleOption("Remove Message Boxes  ", noMessageBoxes, 0)
 		bossChestUseModelPathOID = AddToggleOption("Boss Chest Models  ", bossChestUseModelPath, 0)
@@ -1049,10 +1065,6 @@ Event OnOptionHighlight(int option)
 		SetInfoText("Will be automatically released after this many in game hours. Set to 0 to disable automatic release.")
 		Return
 	Endif
-	If option == enableQuestInteractionsOID
-		SetInfoText("Certain quests may have some additional events tied to them.\nCheck the mod page for more info.")
-		Return
-	Endif
 	If option == eventTattooWeightOID
 		SetInfoText("Chance to receive random tattoos.\nRequires Rape Tattoos.")
 		Return
@@ -1251,6 +1263,22 @@ Event OnOptionHighlight(int option)
 	Endif
 	If option == wildernessModifierOID
 		SetInfoText("Modifier for events to happen in the wilderness.")
+		Return
+	Endif
+	If option == enableQuestInteractionsOID
+		SetInfoText("Certain quests may have some additional events tied to them.\n The mod page has more information about each quest.")
+		Return
+	Endif
+	If option == enableQISaarthalOID
+		SetInfoText("The Saarthal event.")
+		Return
+	Endif
+	If option == enableQIMalkoranOID
+		SetInfoText("The Malkoran event.")
+		Return
+	Endif
+	If option == enableQISanguineOID
+		SetInfoText("The Sanguine events.")
 		Return
 	Endif
 	If option == noMessageBoxesOID
@@ -1552,11 +1580,6 @@ Event OnOptionSelect(int option)
 		SetToggleOptionValue(vanishingKeysOID, vanishingKeys)
 		Return
 	Endif
-	If option == enableQuestInteractionsOID
-		enableQuestInteractions = !enableQuestInteractions
-		SetToggleOptionValue(enableQuestInteractionsOID, enableQuestInteractions)
-		Return
-	Endif
 	If option == LMBrandingPunishOID
 		LMBrandingPunish = !LMBrandingPunish
 		SetToggleOptionValue(LMBrandingPunishOID, LMBrandingPunish)
@@ -1576,6 +1599,26 @@ Event OnOptionSelect(int option)
 	If option == useLocationModifiersOID
 		useLocationModifiers = !useLocationModifiers
 		SetToggleOptionValue(useLocationModifiersOID, useLocationModifiers)
+		Return
+	Endif
+	If option == enableQuestInteractionsOID
+		enableQuestInteractions = !enableQuestInteractions
+		SetToggleOptionValue(enableQuestInteractionsOID, enableQuestInteractions)
+		Return
+	Endif
+	If option == enableQISaarthalOID
+		enableQISaarthal = !enableQISaarthal
+		SetToggleOptionValue(enableQISaarthalOID, enableQISaarthal)
+		Return
+	Endif
+	If option == enableQIMalkoranOID
+		enableQIMalkoran = !enableQIMalkoran
+		SetToggleOptionValue(enableQIMalkoranOID, enableQIMalkoran)
+		Return
+	Endif
+	If option == enableQISanguineOID
+		enableQISanguine = !enableQISanguine
+		SetToggleOptionValue(enableQISanguineOID, enableQISanguine)
 		Return
 	Endif
 	If option == noMessageBoxesOID

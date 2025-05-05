@@ -4,3 +4,7 @@
 build
 cmake-build*
 SourceScripts
+Data/_Version Archive
+Data/SKSE
+Data/meta.ini
+Data/*.zip

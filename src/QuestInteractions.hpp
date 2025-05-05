@@ -11,6 +11,8 @@ namespace DCURSES {
 	constexpr auto QUEST_MG04 = 0x1F254;
 
 	void QIMeridiaInteraction() {
+		if (!settings.enableQIMalkoran) { return; }
+
 		CloseContinerMenus();
 		auto player = RE::PlayerCharacter::GetSingleton();
 		auto mark = GetLewdMark();
@@ -28,6 +30,7 @@ namespace DCURSES {
 	}
 
 	void QISanguineInteraction1() {
+		if (!settings.enableQISanguine) { return; }
 		auto player = RE::PlayerCharacter::GetSingleton();
 
 		auto belt = GetWornDeviceByKeyword(player, "zad_DeviousBelt");
@@ -54,6 +57,7 @@ namespace DCURSES {
 	}
 
 	void QISanguineInteractionEnd() {
+		if (!settings.enableQISanguine) { return; }
 		RE::TESKey* magic_key = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESKey>(MAGIC_KEY, "Devious Curses.esp");
 		auto player = RE::PlayerCharacter::GetSingleton();
 
@@ -70,6 +74,7 @@ namespace DCURSES {
 	void QIPotemaInteraction(); // Add a curse during the potema questline. Sugestion was to have a curse that periodically summons devices. Gets stronger when fighting potema??
 
 	void QIMGInteraction1() {
+		if (!settings.enableQISaarthal) { return; }
 		RE::TESObjectARMO* amulet = RE::TESForm::LookupByID(0x233D0)->As<RE::TESObjectARMO>();
 		auto player = RE::PlayerCharacter::GetSingleton();
 		if (OppSummonerCollarEvent("", false)) {
