@@ -58,13 +58,16 @@ namespace DCURSES {
         auto c3 = std::chrono::high_resolution_clock::now();
         MarkControllerUpdate();
         auto c4 = std::chrono::high_resolution_clock::now();
+        OppDeviceUpdate();
+        auto c5 = std::chrono::high_resolution_clock::now();
         
         auto d1 = (c2 - c1).count() / 1000.0;
         auto d2 = (c3 - c2).count() / 1000.0;
         auto d3 = (c4 - c3).count() / 1000.0;
-        auto dt = (c4 - c1).count() / 1000.0;
+        auto d4 = (c5 - c4).count() / 1000.0;
+        auto dt = (c5 - c1).count() / 1000.0;
 
-        log::trace("UPDATE: E: {:.2f}, S: {:.2f}, M: {:.2f}, total: {:.2f}", d1, d2, d3, dt);
+        log::trace("UPDATE: E: {:.2f}, S: {:.2f}, M: {:.2f}, O: {:.2f} total: {:.2f}", d1, d2, d3, d4, dt);
 
         //Always do last!
         counters.tick();
@@ -86,11 +89,7 @@ namespace DCURSES {
         log::trace("DCURSES test");
         auto player = RE::PlayerCharacter::GetSingleton();
         
-        auto ref = GetContraptionForActor(RE::PlayerCharacter::GetSingleton());
-        if (ref)
-            ContraptionsUnlockActor(player);
-        else
-            CreateAndLockContraption(player);
+        OppSummonerCollarEvent("");
         
 
     }
