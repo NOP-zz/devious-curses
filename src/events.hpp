@@ -311,7 +311,23 @@ namespace DCURSES {
 
         int weightTotal = settings.LMAllureWeight + settings.LMHeatWeight + settings.LMBondageWeight + settings.LMNudityWeight;
 
+        if (GetTattooCount(player) < settings.LMBrndingTotal / 2) {
+            weightTotal += settings.LMBrandingWeight;
+        }
+
         int r = Util::randomInt(weightTotal);
+
+        if (r < settings.LMBrandingWeight && GetTattooCount(player) < settings.LMBrndingTotal / 2) {
+            AddLewdMark(TAT_BRANDING);
+            int tattoo_count = GetTattooCount(player);
+            SetEffectMagnitude(BRANDING_EFFECT, static_cast<float>(tattoo_count));
+            if (doMessage) PlayerMessage("After a sharp pain, you see that you have a mark of branding.");
+            SendModEventMark(player, containerName, "Branding", TAT_BRANDING);
+            return true;
+        }
+        else if (r > settings.LMBrandingWeight) {
+            r -= settings.LMBrandingWeight;
+        }
 
         if (r < settings.LMAllureWeight) {
             AddLewdMark(TAT_ALLURE);
@@ -896,7 +912,30 @@ namespace DCURSES {
                         PlayerMessage("You feel less helpless as the nudity mark fades from your body.");
                     }
                     break;
-                }}
+                }
+                case TAT_BRANDING: {
+                    int tattoo_count = GetTattooCount(player);
+                    float mag = GetEffectMagnitude(BRANDING_EFFECT);
+                    if (settings.LMBrandingPunish && mag > tattoo_count) {
+                        RE::TESForm* gold = RE::TESForm::LookupByID(std::stoi("0f", 0, 16));
+                        int goldCount = GetItemCount(player, gold);
+                        int toRemove = static_cast<int>(goldCount * Util::randomDouble(0.2, 0.4));
+                        player->RemoveItem((RE::TESBoundObject*)gold, toRemove, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+                        PlayerMessage(fmt::format("You loose {} gold as punishment for loosing tattoos!", toRemove));
+                    }
+
+                    SetEffectMagnitude(BRANDING_EFFECT, static_cast<float>(tattoo_count));
+                    if (Util::randomDouble() < settings.LMBrandingChance && RE::TESDataHandler::GetSingleton()->LookupLoadedModByName("RapeTattoos.esp")) {
+                        RTDoTattooEvent(player, 1);
+                        PlayerMessage("You feel a sharp pain as the mark brands you!");
+                    }
+                    if (tattoo_count >= settings.LMBrndingTotal) {
+                        RemoveLewdMark();
+                        PlayerMessage("You feel the branding mark fade from your body.");
+                    }
+                    break;
+                }
+                }
             }
             if (mark == TAT_NUDITY) {
                 typedef RE::BIPED_MODEL::BipedObjectSlot BOS;
@@ -966,6 +1005,8 @@ namespace DCURSES {
         if (!P_CheckSTNG(nullptr) || RE::TESDataHandler::GetSingleton()->LookupLoadedModByName("RapeTattoos.esp") == nullptr) {
             settings.eventTattooWeight = 0;
             SetMCMInt("eventTattooWeight", 0);
+            settings.LMBrandingChance = 0;
+            SetMCMFloat("LMBrandingChance", 0);
         }
     }
 }

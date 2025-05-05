@@ -76,8 +76,6 @@ namespace DCURSES {
 					ContraptionsLockActor(actor, object);
 				});
 			} }.detach();
-			
-			//ContraptionsLockActor(actor, object);
 		});
 	}
 }

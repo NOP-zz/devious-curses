@@ -22,6 +22,7 @@ namespace DCURSES {
 		//Flag flag_SlaveTats					//CheckSTNG()
 		//Flag flag_LewdMarks					//CheckLM(), CheckSTNG()
 		//Flag flag_RapeTats					//ESP:RapeTattoos.esp, CheckSTNG()
+		//Flag flag_RT_LM						//ESP:RapeTattoos.esp, CheckSTNG(), CheckLM()
 		//Flag flag_SimpleSlavery				//ESP:SimpleSlavery.esp
 		//Flag flag_UnforgivingDevices			//ESP:UnforgivingDevices.esp
 		//Flag flag_SSEnabled					//VAR:eventSimpleSlaveryWeight > 0, ESP:SimpleSlavery.esp
@@ -126,10 +127,8 @@ namespace DCURSES {
 		//Header Contraption Curse
 		int eventContraptionWeight = 25;		//Contraption Curse Weight//Chance to be bound in a contraption from DDC.//{0}//(0,500,1)
 		float eventContraptionTime = 0.0;		//Contraption Release Time//Will be automatically released after this many in game hours. Set to 0 to disable automatic release.//{1}//(0,24,0.1)
-		//Header Slavery Curse
-		int eventSimpleSlaveryWeight = 0;		//Simple Slavery Weight//Chance to trigger a Simple Slavery auction.//{0}//(0,500,1) ?:? flag_SimpleSlavery														**RELOAD
-		int eventSSMinRestraints = 6;			//Minimum Restraints//Minimum restraints that need to be equipped for a Simple Slavery auction to start.//{0}//(0,10,1)											?:? flag_SSEnabled
 		//Column
+		bool enableQuestInteractions = true;	//Quest Interactions//Certain quests may have some additional events tied to them.\nCheck the mod page for more info.
 		//Header Tattoo Curse
 		int eventTattooWeight = 15;				//Tattoo Curse Weight//Chance to receive random tattoos.\nRequires Rape Tattoos.//{0}//(0,500,1)							?:? flag_RapeTats
 		int eventTattooMin = 1;					//Tattoo Curse Min//Minimum number of tattoos that can be put on.//{0}//(1,10,1)											?:? flag_RapeTats
@@ -137,6 +136,9 @@ namespace DCURSES {
 		int eventTattooCap = 8;					//Tattoo Curse Cap//If you have this many tattoos already you won't get any more.//{0}//(0,10,1)							?:? flag_RapeTats
 		//Header Mark Curse
 		int eventLewdMarkWeight = 10;			//Lewd Mark Weight//Chance to receive a lewd mark.//{0}//(0,500,1) ?:? flag_LewdMarks
+		//Header Slavery Curse
+		int eventSimpleSlaveryWeight = 0;		//Simple Slavery Weight//Chance to trigger a Simple Slavery auction.//{0}//(0,500,1) ?:? flag_SimpleSlavery					**RELOAD
+		int eventSSMinRestraints = 6;			//Minimum Restraints//Minimum restraints that need to be equipped for a Simple Slavery auction to start.//{0}//(0,10,1)		?:? flag_SSEnabled
 		//Page Lewd Marks
 		//Header Allure
 		int LMAllureWeight = 10;				//Allure Mark Weight//This mark will make everyone around you horny all the time.//{0}//(0,500,1)							?:? flag_LewdMarks
@@ -148,6 +150,12 @@ namespace DCURSES {
 		int LMHeatMod = 30;						//Heat Arousal//How much your arousal will change per minute.//{0}//(0,200,1)												?:? flag_LewdMarks
 		int LMHeatContainerCount = 50;			//Container Count//How many containers you must open before the mark will fade.//{0}//(10,200,1)							?:? flag_LewdMarks
 		color LMHeatColor = 0xe3143a;			//Color//Color for mark.																									?:? flag_LewdMarks
+		//Header Branding
+		int LMBrandingWeight = 10;				//Branding Mark//This mark will force you to have a certain number of tattoos!//{0}//(0,500,1)								?:? flag_LewdMarks
+		float LMBrandingChance = 1.5;			//Chance//How likely you are to receive a random tattoo per 15 seconds.\nRequires Rape Tattoos//{1}%//(0,100,0.1)			?:? flag_RT_LM
+		int LMBrndingTotal = 12;				//Total Tattoos//How many tattoos you need before the mark releases. The mark itself counts as 2.//{0}//(1,20,1)			?:? flag_LewdMarks
+		bool LMBrandingPunish = true;			//Punishment//You will be punished by loosing gold if your total tattoo count decreases.									?:? flag_LewdMarks
+		color LMBrandingColor = 0x220022;		//Color//Color for mark.																									?:? flag_LewdMarks
 		//Column
 		//Header Bondage
 		int LMBondageWeight = 5;				//Bondage Mark//With this mark devices that are in your inventory might equip themselves.//{0}//(0,500,1)					?:? flag_LewdMarks
@@ -167,6 +175,7 @@ namespace DCURSES {
 		int oppSummonerSexCount = 15;			//Sex Count//How may time you need to have sex with your summons before the collar will unlock.//{0}//(1,100,1)
 		bool oppSCollarDrainsMagicka = true;	//Magicka Drain//The collar will drain all of your magicka when summoning.
 		int oppSMinSummonArousal = 90;			//Summon Arousal//Will change the arousal of all of your summons to be at least this value.//{0}//(0,100,1)
+		float oppSummonChance = 1.5;			//Summon Chance//The chance per second that the collar summons an atronach to have sex with you.\nThis won't happen if you already have a different summon.//{1}%//(0,100,0.1)
 		//Page Locations
 		bool useLocationModifiers = true;		//Use Location Modifiers//Weather or not to apply the location modifiers listed below to event chances.
 		//Empty
@@ -248,6 +257,7 @@ namespace DCURSES {
 		int sexArousalSummonModifier = 0;		//Summon Modifier//Modifier for arousal if the aggressor is your summon.//-{0}//(0,50,1)																				?:? flag_enable_random_sex
 		//Header Search
 		float sexSearchRadius = 2000;			//Search Radius//How far away can actors be from the player.//{0}//(100,10000,100)																						?:? flag_enable_random_sex
+		int sexSearchInterval = 5;				//Search Interval//How often the actor search happens.//{0}//(5,120,1)																									?:? flag_enable_random_sex
 		//Column
 		//Header Allowed Actors
 		bool sexAllowMale = true;				//Allow Male Actors//Male actors will be allowed.																														?:? flag_enable_sex
@@ -385,10 +395,6 @@ namespace DCURSES {
 		SetMCMInt("eventOppressiveWeight",settings.eventOppressiveWeight);
 		settings.eventContraptionWeight = 25;
 		SetMCMInt("eventContraptionWeight",settings.eventContraptionWeight);
-		settings.eventSimpleSlaveryWeight = 0;
-		SetMCMInt("eventSimpleSlaveryWeight",settings.eventSimpleSlaveryWeight);
-		settings.eventSSMinRestraints = 6;
-		SetMCMInt("eventSSMinRestraints",settings.eventSSMinRestraints);
 		settings.eventTattooWeight = 15;
 		SetMCMInt("eventTattooWeight",settings.eventTattooWeight);
 		settings.eventTattooMin = 1;
@@ -399,6 +405,10 @@ namespace DCURSES {
 		SetMCMInt("eventTattooCap",settings.eventTattooCap);
 		settings.eventLewdMarkWeight = 10;
 		SetMCMInt("eventLewdMarkWeight",settings.eventLewdMarkWeight);
+		settings.eventSimpleSlaveryWeight = 0;
+		SetMCMInt("eventSimpleSlaveryWeight",settings.eventSimpleSlaveryWeight);
+		settings.eventSSMinRestraints = 6;
+		SetMCMInt("eventSSMinRestraints",settings.eventSSMinRestraints);
 		settings.LMAllureWeight = 10;
 		SetMCMInt("LMAllureWeight",settings.LMAllureWeight);
 		settings.LMAllureMod = 5;
@@ -411,6 +421,10 @@ namespace DCURSES {
 		SetMCMInt("LMHeatMod",settings.LMHeatMod);
 		settings.LMHeatContainerCount = 50;
 		SetMCMInt("LMHeatContainerCount",settings.LMHeatContainerCount);
+		settings.LMBrandingWeight = 10;
+		SetMCMInt("LMBrandingWeight",settings.LMBrandingWeight);
+		settings.LMBrndingTotal = 12;
+		SetMCMInt("LMBrndingTotal",settings.LMBrndingTotal);
 		settings.LMBondageWeight = 5;
 		SetMCMInt("LMBondageWeight",settings.LMBondageWeight);
 		settings.LMBondageDeviceCount = 8;
@@ -467,6 +481,8 @@ namespace DCURSES {
 		SetMCMInt("sexArousalSpouseModifier",settings.sexArousalSpouseModifier);
 		settings.sexArousalSummonModifier = 0;
 		SetMCMInt("sexArousalSummonModifier",settings.sexArousalSummonModifier);
+		settings.sexSearchInterval = 5;
+		SetMCMInt("sexSearchInterval",settings.sexSearchInterval);
 		settings.sexRequiredPlayerArousal = 0;
 		SetMCMInt("sexRequiredPlayerArousal",settings.sexRequiredPlayerArousal);
 		settings.sexRequiredPlayerTattoos = 0;
@@ -481,6 +497,8 @@ namespace DCURSES {
 		SetMCMInt("LMAllureColor",settings.LMAllureColor);
 		settings.LMHeatColor = 0xe3143a;
 		SetMCMInt("LMHeatColor",settings.LMHeatColor);
+		settings.LMBrandingColor = 0x220022;
+		SetMCMInt("LMBrandingColor",settings.LMBrandingColor);
 		settings.LMBondageColor = 0x7908cf;
 		SetMCMInt("LMBondageColor",settings.LMBondageColor);
 		settings.LMNudityColor = 0xd676cb;
@@ -515,8 +533,12 @@ namespace DCURSES {
 		SetMCMFloat("magicKeyChance",settings.magicKeyChance);
 		settings.eventContraptionTime = 0.0f;
 		SetMCMFloat("eventContraptionTime",settings.eventContraptionTime);
+		settings.LMBrandingChance = 1.5f;
+		SetMCMFloat("LMBrandingChance",settings.LMBrandingChance);
 		settings.LMBondageChance = 5.0f;
 		SetMCMFloat("LMBondageChance",settings.LMBondageChance);
+		settings.oppSummonChance = 1.5f;
+		SetMCMFloat("oppSummonChance",settings.oppSummonChance);
 		settings.playerHomeModifier = 0.0f;
 		SetMCMFloat("playerHomeModifier",settings.playerHomeModifier);
 		settings.cityModifier = 0.0f;
@@ -585,6 +607,10 @@ namespace DCURSES {
 		SetMCMBool("preferRelevantKeys",settings.preferRelevantKeys);
 		settings.vanishingKeys = true;
 		SetMCMBool("vanishingKeys",settings.vanishingKeys);
+		settings.enableQuestInteractions = true;
+		SetMCMBool("enableQuestInteractions",settings.enableQuestInteractions);
+		settings.LMBrandingPunish = true;
+		SetMCMBool("LMBrandingPunish",settings.LMBrandingPunish);
 		settings.LMNudityChestOnly = false;
 		SetMCMBool("LMNudityChestOnly",settings.LMNudityChestOnly);
 		settings.oppSCollarDrainsMagicka = true;
@@ -700,19 +726,21 @@ namespace DCURSES {
 			{"eventStandardBossReduction", settings.eventStandardBossReduction},
 			{"eventOppressiveWeight", settings.eventOppressiveWeight},
 			{"eventContraptionWeight", settings.eventContraptionWeight},
-			{"eventSimpleSlaveryWeight", settings.eventSimpleSlaveryWeight},
-			{"eventSSMinRestraints", settings.eventSSMinRestraints},
 			{"eventTattooWeight", settings.eventTattooWeight},
 			{"eventTattooMin", settings.eventTattooMin},
 			{"eventTattooMax", settings.eventTattooMax},
 			{"eventTattooCap", settings.eventTattooCap},
 			{"eventLewdMarkWeight", settings.eventLewdMarkWeight},
+			{"eventSimpleSlaveryWeight", settings.eventSimpleSlaveryWeight},
+			{"eventSSMinRestraints", settings.eventSSMinRestraints},
 			{"LMAllureWeight", settings.LMAllureWeight},
 			{"LMAllureMod", settings.LMAllureMod},
 			{"LMAllureSex", settings.LMAllureSex},
 			{"LMHeatWeight", settings.LMHeatWeight},
 			{"LMHeatMod", settings.LMHeatMod},
 			{"LMHeatContainerCount", settings.LMHeatContainerCount},
+			{"LMBrandingWeight", settings.LMBrandingWeight},
+			{"LMBrndingTotal", settings.LMBrndingTotal},
 			{"LMBondageWeight", settings.LMBondageWeight},
 			{"LMBondageDeviceCount", settings.LMBondageDeviceCount},
 			{"LMNudityWeight", settings.LMNudityWeight},
@@ -741,6 +769,7 @@ namespace DCURSES {
 			{"sexArousalFollowerModifier", settings.sexArousalFollowerModifier},
 			{"sexArousalSpouseModifier", settings.sexArousalSpouseModifier},
 			{"sexArousalSummonModifier", settings.sexArousalSummonModifier},
+			{"sexSearchInterval", settings.sexSearchInterval},
 			{"sexRequiredPlayerArousal", settings.sexRequiredPlayerArousal},
 			{"sexRequiredPlayerTattoos", settings.sexRequiredPlayerTattoos},
 			{"sexChanceFollower", settings.sexChanceFollower},
@@ -761,7 +790,9 @@ namespace DCURSES {
 			{"keyPickpocketBonus", settings.keyPickpocketBonus},
 			{"magicKeyChance", settings.magicKeyChance},
 			{"eventContraptionTime", settings.eventContraptionTime},
+			{"LMBrandingChance", settings.LMBrandingChance},
 			{"LMBondageChance", settings.LMBondageChance},
+			{"oppSummonChance", settings.oppSummonChance},
 			{"playerHomeModifier", settings.playerHomeModifier},
 			{"cityModifier", settings.cityModifier},
 			{"townModifier", settings.townModifier},
@@ -796,6 +827,8 @@ namespace DCURSES {
 			{"keyForgiveness", settings.keyForgiveness},
 			{"preferRelevantKeys", settings.preferRelevantKeys},
 			{"vanishingKeys", settings.vanishingKeys},
+			{"enableQuestInteractions", settings.enableQuestInteractions},
+			{"LMBrandingPunish", settings.LMBrandingPunish},
 			{"LMNudityChestOnly", settings.LMNudityChestOnly},
 			{"oppSCollarDrainsMagicka", settings.oppSCollarDrainsMagicka},
 			{"useLocationModifiers", settings.useLocationModifiers},
@@ -826,6 +859,7 @@ namespace DCURSES {
 			{"sexAlwaysAllowSummons", settings.sexAlwaysAllowSummons},
 			{"LMAllureColor", settings.LMAllureColor},
 			{"LMHeatColor", settings.LMHeatColor},
+			{"LMBrandingColor", settings.LMBrandingColor},
 			{"LMBondageColor", settings.LMBondageColor},
 			{"LMNudityColor", settings.LMNudityColor},
 			{"LMNudityAditionalForms", settings.LMNudityAditionalForms},
@@ -955,10 +989,6 @@ namespace DCURSES {
 		SetMCMInt("eventOppressiveWeight",settings.eventOppressiveWeight);
 		settings.eventContraptionWeight = static_cast<int>(j.value("eventContraptionWeight", 25));
 		SetMCMInt("eventContraptionWeight",settings.eventContraptionWeight);
-		settings.eventSimpleSlaveryWeight = static_cast<int>(j.value("eventSimpleSlaveryWeight", 0));
-		SetMCMInt("eventSimpleSlaveryWeight",settings.eventSimpleSlaveryWeight);
-		settings.eventSSMinRestraints = static_cast<int>(j.value("eventSSMinRestraints", 6));
-		SetMCMInt("eventSSMinRestraints",settings.eventSSMinRestraints);
 		settings.eventTattooWeight = static_cast<int>(j.value("eventTattooWeight", 15));
 		SetMCMInt("eventTattooWeight",settings.eventTattooWeight);
 		settings.eventTattooMin = static_cast<int>(j.value("eventTattooMin", 1));
@@ -969,6 +999,10 @@ namespace DCURSES {
 		SetMCMInt("eventTattooCap",settings.eventTattooCap);
 		settings.eventLewdMarkWeight = static_cast<int>(j.value("eventLewdMarkWeight", 10));
 		SetMCMInt("eventLewdMarkWeight",settings.eventLewdMarkWeight);
+		settings.eventSimpleSlaveryWeight = static_cast<int>(j.value("eventSimpleSlaveryWeight", 0));
+		SetMCMInt("eventSimpleSlaveryWeight",settings.eventSimpleSlaveryWeight);
+		settings.eventSSMinRestraints = static_cast<int>(j.value("eventSSMinRestraints", 6));
+		SetMCMInt("eventSSMinRestraints",settings.eventSSMinRestraints);
 		settings.LMAllureWeight = static_cast<int>(j.value("LMAllureWeight", 10));
 		SetMCMInt("LMAllureWeight",settings.LMAllureWeight);
 		settings.LMAllureMod = static_cast<int>(j.value("LMAllureMod", 5));
@@ -981,6 +1015,10 @@ namespace DCURSES {
 		SetMCMInt("LMHeatMod",settings.LMHeatMod);
 		settings.LMHeatContainerCount = static_cast<int>(j.value("LMHeatContainerCount", 50));
 		SetMCMInt("LMHeatContainerCount",settings.LMHeatContainerCount);
+		settings.LMBrandingWeight = static_cast<int>(j.value("LMBrandingWeight", 10));
+		SetMCMInt("LMBrandingWeight",settings.LMBrandingWeight);
+		settings.LMBrndingTotal = static_cast<int>(j.value("LMBrndingTotal", 12));
+		SetMCMInt("LMBrndingTotal",settings.LMBrndingTotal);
 		settings.LMBondageWeight = static_cast<int>(j.value("LMBondageWeight", 5));
 		SetMCMInt("LMBondageWeight",settings.LMBondageWeight);
 		settings.LMBondageDeviceCount = static_cast<int>(j.value("LMBondageDeviceCount", 8));
@@ -1037,6 +1075,8 @@ namespace DCURSES {
 		SetMCMInt("sexArousalSpouseModifier",settings.sexArousalSpouseModifier);
 		settings.sexArousalSummonModifier = static_cast<int>(j.value("sexArousalSummonModifier", 0));
 		SetMCMInt("sexArousalSummonModifier",settings.sexArousalSummonModifier);
+		settings.sexSearchInterval = static_cast<int>(j.value("sexSearchInterval", 5));
+		SetMCMInt("sexSearchInterval",settings.sexSearchInterval);
 		settings.sexRequiredPlayerArousal = static_cast<int>(j.value("sexRequiredPlayerArousal", 0));
 		SetMCMInt("sexRequiredPlayerArousal",settings.sexRequiredPlayerArousal);
 		settings.sexRequiredPlayerTattoos = static_cast<int>(j.value("sexRequiredPlayerTattoos", 0));
@@ -1051,6 +1091,8 @@ namespace DCURSES {
 		SetMCMInt("LMAllureColor",settings.LMAllureColor);
 		settings.LMHeatColor = static_cast<int>(j.value("LMHeatColor", 0xe3143a));
 		SetMCMInt("LMHeatColor",settings.LMHeatColor);
+		settings.LMBrandingColor = static_cast<int>(j.value("LMBrandingColor", 0x220022));
+		SetMCMInt("LMBrandingColor",settings.LMBrandingColor);
 		settings.LMBondageColor = static_cast<int>(j.value("LMBondageColor", 0x7908cf));
 		SetMCMInt("LMBondageColor",settings.LMBondageColor);
 		settings.LMNudityColor = static_cast<int>(j.value("LMNudityColor", 0xd676cb));
@@ -1085,8 +1127,12 @@ namespace DCURSES {
 		SetMCMFloat("magicKeyChance",settings.magicKeyChance);
 		settings.eventContraptionTime = static_cast<float>(j.value("eventContraptionTime", 0.0));
 		SetMCMFloat("eventContraptionTime",settings.eventContraptionTime);
+		settings.LMBrandingChance = static_cast<float>(j.value("LMBrandingChance", 1.5));
+		SetMCMFloat("LMBrandingChance",settings.LMBrandingChance);
 		settings.LMBondageChance = static_cast<float>(j.value("LMBondageChance", 5.0));
 		SetMCMFloat("LMBondageChance",settings.LMBondageChance);
+		settings.oppSummonChance = static_cast<float>(j.value("oppSummonChance", 1.5));
+		SetMCMFloat("oppSummonChance",settings.oppSummonChance);
 		settings.playerHomeModifier = static_cast<float>(j.value("playerHomeModifier", 0.0));
 		SetMCMFloat("playerHomeModifier",settings.playerHomeModifier);
 		settings.cityModifier = static_cast<float>(j.value("cityModifier", 0.0));
@@ -1155,6 +1201,10 @@ namespace DCURSES {
 		SetMCMBool("preferRelevantKeys",settings.preferRelevantKeys);
 		settings.vanishingKeys = static_cast<bool>(j.value("vanishingKeys", true));
 		SetMCMBool("vanishingKeys",settings.vanishingKeys);
+		settings.enableQuestInteractions = static_cast<bool>(j.value("enableQuestInteractions", true));
+		SetMCMBool("enableQuestInteractions",settings.enableQuestInteractions);
+		settings.LMBrandingPunish = static_cast<bool>(j.value("LMBrandingPunish", true));
+		SetMCMBool("LMBrandingPunish",settings.LMBrandingPunish);
 		settings.LMNudityChestOnly = static_cast<bool>(j.value("LMNudityChestOnly", false));
 		SetMCMBool("LMNudityChestOnly",settings.LMNudityChestOnly);
 		settings.oppSCollarDrainsMagicka = static_cast<bool>(j.value("oppSCollarDrainsMagicka", true));
@@ -1269,19 +1319,21 @@ namespace DCURSES {
 		settings.eventStandardBossReduction = GetMCMSetting("eventStandardBossReduction")->GetSInt();
 		settings.eventOppressiveWeight = GetMCMSetting("eventOppressiveWeight")->GetSInt();
 		settings.eventContraptionWeight = GetMCMSetting("eventContraptionWeight")->GetSInt();
-		settings.eventSimpleSlaveryWeight = GetMCMSetting("eventSimpleSlaveryWeight")->GetSInt();
-		settings.eventSSMinRestraints = GetMCMSetting("eventSSMinRestraints")->GetSInt();
 		settings.eventTattooWeight = GetMCMSetting("eventTattooWeight")->GetSInt();
 		settings.eventTattooMin = GetMCMSetting("eventTattooMin")->GetSInt();
 		settings.eventTattooMax = GetMCMSetting("eventTattooMax")->GetSInt();
 		settings.eventTattooCap = GetMCMSetting("eventTattooCap")->GetSInt();
 		settings.eventLewdMarkWeight = GetMCMSetting("eventLewdMarkWeight")->GetSInt();
+		settings.eventSimpleSlaveryWeight = GetMCMSetting("eventSimpleSlaveryWeight")->GetSInt();
+		settings.eventSSMinRestraints = GetMCMSetting("eventSSMinRestraints")->GetSInt();
 		settings.LMAllureWeight = GetMCMSetting("LMAllureWeight")->GetSInt();
 		settings.LMAllureMod = GetMCMSetting("LMAllureMod")->GetSInt();
 		settings.LMAllureSex = GetMCMSetting("LMAllureSex")->GetSInt();
 		settings.LMHeatWeight = GetMCMSetting("LMHeatWeight")->GetSInt();
 		settings.LMHeatMod = GetMCMSetting("LMHeatMod")->GetSInt();
 		settings.LMHeatContainerCount = GetMCMSetting("LMHeatContainerCount")->GetSInt();
+		settings.LMBrandingWeight = GetMCMSetting("LMBrandingWeight")->GetSInt();
+		settings.LMBrndingTotal = GetMCMSetting("LMBrndingTotal")->GetSInt();
 		settings.LMBondageWeight = GetMCMSetting("LMBondageWeight")->GetSInt();
 		settings.LMBondageDeviceCount = GetMCMSetting("LMBondageDeviceCount")->GetSInt();
 		settings.LMNudityWeight = GetMCMSetting("LMNudityWeight")->GetSInt();
@@ -1310,6 +1362,7 @@ namespace DCURSES {
 		settings.sexArousalFollowerModifier = GetMCMSetting("sexArousalFollowerModifier")->GetSInt();
 		settings.sexArousalSpouseModifier = GetMCMSetting("sexArousalSpouseModifier")->GetSInt();
 		settings.sexArousalSummonModifier = GetMCMSetting("sexArousalSummonModifier")->GetSInt();
+		settings.sexSearchInterval = GetMCMSetting("sexSearchInterval")->GetSInt();
 		settings.sexRequiredPlayerArousal = GetMCMSetting("sexRequiredPlayerArousal")->GetSInt();
 		settings.sexRequiredPlayerTattoos = GetMCMSetting("sexRequiredPlayerTattoos")->GetSInt();
 		settings.sexChanceFollower = GetMCMSetting("sexChanceFollower")->GetSInt();
@@ -1317,6 +1370,7 @@ namespace DCURSES {
 		settings.sexChanceSummon = GetMCMSetting("sexChanceSummon")->GetSInt();
 		settings.LMAllureColor = GetMCMSetting("LMAllureColor")->GetSInt();
 		settings.LMHeatColor = GetMCMSetting("LMHeatColor")->GetSInt();
+		settings.LMBrandingColor = GetMCMSetting("LMBrandingColor")->GetSInt();
 		settings.LMBondageColor = GetMCMSetting("LMBondageColor")->GetSInt();
 		settings.LMNudityColor = GetMCMSetting("LMNudityColor")->GetSInt();
 		settings.baseChance = GetMCMSetting("baseChance")->GetFloat();
@@ -1334,7 +1388,9 @@ namespace DCURSES {
 		settings.keyPickpocketBonus = GetMCMSetting("keyPickpocketBonus")->GetFloat();
 		settings.magicKeyChance = GetMCMSetting("magicKeyChance")->GetFloat();
 		settings.eventContraptionTime = GetMCMSetting("eventContraptionTime")->GetFloat();
+		settings.LMBrandingChance = GetMCMSetting("LMBrandingChance")->GetFloat();
 		settings.LMBondageChance = GetMCMSetting("LMBondageChance")->GetFloat();
+		settings.oppSummonChance = GetMCMSetting("oppSummonChance")->GetFloat();
 		settings.playerHomeModifier = GetMCMSetting("playerHomeModifier")->GetFloat();
 		settings.cityModifier = GetMCMSetting("cityModifier")->GetFloat();
 		settings.townModifier = GetMCMSetting("townModifier")->GetFloat();
@@ -1369,6 +1425,8 @@ namespace DCURSES {
 		settings.keyForgiveness = GetMCMSetting("keyForgiveness")->GetBool();
 		settings.preferRelevantKeys = GetMCMSetting("preferRelevantKeys")->GetBool();
 		settings.vanishingKeys = GetMCMSetting("vanishingKeys")->GetBool();
+		settings.enableQuestInteractions = GetMCMSetting("enableQuestInteractions")->GetBool();
+		settings.LMBrandingPunish = GetMCMSetting("LMBrandingPunish")->GetBool();
 		settings.LMNudityChestOnly = GetMCMSetting("LMNudityChestOnly")->GetBool();
 		settings.oppSCollarDrainsMagicka = GetMCMSetting("oppSCollarDrainsMagicka")->GetBool();
 		settings.useLocationModifiers = GetMCMSetting("useLocationModifiers")->GetBool();
@@ -1403,7 +1461,7 @@ namespace DCURSES {
 			ResetMCMSettings();
 		}
 
-		counters.clock_SexTimeout = -5;
+		counters.clock_SexTimeout -= 2;
 		SaveMCMSettings();
 		RecalculateDeviceLists();
 	}

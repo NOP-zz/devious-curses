@@ -69,7 +69,7 @@ namespace DCURSES {
 			SetEffectVisible(SUMMONER_COLLAR_EFFECT);
 			auto summons_list = getPlayerCommandedActors();
 			if (summons_list.empty()) {
-				if (Util::randomDouble() < 7.5) {
+				if (Util::randomDouble() < settings.oppSummonChance) {
 					RE::SpellItem* conjure_atronach = RE::TESDataHandler::GetSingleton()->LookupForm<RE::SpellItem>(SUMMONER_SUMMON_SPELL, "Devious Curses.esp");
 					//conjure_atronach->data.delivery = RE::MagicSystem::Delivery::kSelf;
 					RE::MagicCaster* caster = player->GetMagicCaster(RE::MagicSystem::CastingSource::kOther);

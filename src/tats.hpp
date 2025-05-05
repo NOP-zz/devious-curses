@@ -50,8 +50,7 @@ namespace DCURSES {
 	static const int TAT_HEAT = 11;
 	static const int TAT_BONDAGE = 71;
 	static const int TAT_NUDITY = 79;
-
-	static const int TAT_MERIDIA = 74;
+	static const int TAT_BRANDING = 74;
 
 	int GetTattooCount(RE::Actor* actor) {
 		if (!actor) return 0;
@@ -112,8 +111,8 @@ namespace DCURSES {
 			return settings.LMBondageColor;
 		case TAT_NUDITY:
 			return settings.LMNudityColor;
-		case TAT_MERIDIA:
-			return 0x220022;
+		case TAT_BRANDING:
+			return settings.LMBrandingColor;
 		}
 		return 0;
 	}
@@ -350,6 +349,7 @@ namespace DCURSES {
 		SetEffectVisible(HEAT_EFFECT, false);
 		SetEffectVisible(NUDITY_EFFECT, false);
 		SetEffectVisible(BONDAGE_EFFECT, false);
+		SetEffectVisible(BRANDING_EFFECT, false);
 
 		switch (mark) {
 		case TAT_ALLURE:
@@ -363,6 +363,9 @@ namespace DCURSES {
 			break;
 		case TAT_BONDAGE:
 			SetEffectVisible(BONDAGE_EFFECT);
+			break;
+		case TAT_BRANDING:
+			SetEffectVisible(BRANDING_EFFECT);
 			break;
 		}
 	}

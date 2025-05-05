@@ -23,6 +23,7 @@ constexpr auto ALLURE_EFFECT = 0x80B;
 constexpr auto HEAT_EFFECT = 0x805;
 constexpr auto NUDITY_EFFECT = 0x80F;
 constexpr auto BONDAGE_EFFECT = 0x811;
+constexpr auto BRANDING_EFFECT = 0x808;
 constexpr auto SUMMONER_COLLAR_EFFECT = 0x803;
 
 // PERKS
