@@ -85,11 +85,13 @@ namespace DCURSES {
         log::trace("DCURSES test");
         auto player = RE::PlayerCharacter::GetSingleton();
         
-        auto ref = GetContraptionForActor(RE::PlayerCharacter::GetSingleton());
-        if (ref)
-            ContraptionsUnlockActor(player);
-        else
-            CreateAndLockContraption(player);
+        auto mark = GetLewdMark(player);
+        if (mark) {
+            RemoveLewdMark(player);
+        }
+        else {
+            DoLewdMarkEvent("", false);
+        }
         
 
     }
