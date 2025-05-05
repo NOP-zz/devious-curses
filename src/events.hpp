@@ -375,7 +375,7 @@ namespace DCURSES {
     void DoEvent(bool isBoss, std::string contName) {
         CloseContinerMenus();
         //DisableMenus();
-        int weightTotal = settings.eventStandardWeight + settings.eventSimpleSlaveryWeight + settings.eventLewdMarkWeight;// +settings.eventSGOWeight;
+        int weightTotal = settings.eventStandardWeight + settings.eventSimpleSlaveryWeight + settings.eventLewdMarkWeight + settings.eventTattooWeight + settings.eventContraptionWeight;
         if (isBoss) {
             weightTotal -= settings.eventStandardBossReduction;
         }
