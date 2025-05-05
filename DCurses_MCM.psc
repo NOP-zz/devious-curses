@@ -134,6 +134,8 @@ Int Property eventStandardWeight = 100 Auto
 Int eventStandardWeightOID
 Int Property eventStandardBossReduction = 20 Auto
 Int eventStandardBossReductionOID
+Int Property eventOppressiveWeight = 15 Auto
+Int eventOppressiveWeightOID
 Int Property eventContraptionWeight = 25 Auto
 Int eventContraptionWeightOID
 Int Property eventSimpleSlaveryWeight = 0 Auto
@@ -170,6 +172,12 @@ Int Property LMNudityWeight = 15 Auto
 Int LMNudityWeightOID
 Int Property LMNudityTalkTimes = 35 Auto
 Int LMNudityTalkTimesOID
+Int Property oppSummonerCollarWeight = 20 Auto
+Int oppSummonerCollarWeightOID
+Int Property oppSummonerSexCount = 15 Auto
+Int oppSummonerSexCountOID
+Int Property oppSMinSummonArousal = 90 Auto
+Int oppSMinSummonArousalOID
 Int Property consSexWeight = 15 Auto
 Int consSexWeightOID
 Int Property consFineWeight = 10 Auto
@@ -324,6 +332,8 @@ Bool Property vanishingKeys = true Auto
 Int vanishingKeysOID
 Bool Property LMNudityChestOnly = false Auto
 Int LMNudityChestOnlyOID
+Bool Property oppSCollarDrainsMagicka = true Auto
+Int oppSCollarDrainsMagickaOID
 Bool Property useLocationModifiers = true Auto
 Int useLocationModifiersOID
 Bool Property noMessageBoxes = false Auto
@@ -388,16 +398,17 @@ String Property LMNudityAditionalForms = "" Auto
 Int LMNudityAditionalFormsOID
 
 Function Initialize()
-	Pages = new String[9]
+	Pages = new String[10]
 	Pages[0] = "Main "
 	Pages[1] = "Devices "
 	Pages[2] = "Keys "
 	Pages[3] = "Events "
 	Pages[4] = "Lewd Marks "
-	Pages[5] = "Locations "
-	Pages[6] = "Misc "
-	Pages[7] = "Consequences "
-	Pages[8] = "Sex "
+	Pages[5] = "Oppressive Devices "
+	Pages[6] = "Locations "
+	Pages[7] = "Misc "
+	Pages[8] = "Consequences "
+	Pages[9] = "Sex "
 EndFunction
 
 Event OnConfigInit()
@@ -538,6 +549,8 @@ Event OnPageReset(string page)
 		AddHeaderOption("Bondage Curse ")
 		eventStandardWeightOID = AddSliderOption("Bondage Curse Weight  ", eventStandardWeight, "{0}", 0)
 		eventStandardBossReductionOID = AddSliderOption("Standard Boss Reduction  ", eventStandardBossReduction, "{0}", 0)
+		AddHeaderOption("Oppresive Curse ")
+		eventOppressiveWeightOID = AddSliderOption("Oppressive Curse Weight  ", eventOppressiveWeight, "{0}", 0)
 		AddHeaderOption("Contraption Curse ")
 		eventContraptionWeightOID = AddSliderOption("Contraption Curse Weight  ", eventContraptionWeight, "{0}", 0)
 		eventContraptionTimeOID = AddSliderOption("Contraption Release Time  ", eventContraptionTime, "{1}", 0)
@@ -579,6 +592,12 @@ Event OnPageReset(string page)
 		LMNudityAditionalFormsOID = AddInputOption("Strip Slots  ", LMNudityAditionalForms, flag_LMStripBody)
 		LMNudityTalkTimesOID = AddSliderOption("Dialogue Times  ", LMNudityTalkTimes, "{0}", flag_LewdMarks)
 		LMNudityColorOID = AddColorOption("Color  ", LMNudityColor, flag_LewdMarks)
+	Elseif page == "Oppressive Devices "
+		AddHeaderOption("Summoner Collar ")
+		oppSummonerCollarWeightOID = AddSliderOption("Weight  ", oppSummonerCollarWeight, "{0}", 0)
+		oppSummonerSexCountOID = AddSliderOption("Sex Count  ", oppSummonerSexCount, "{0}", 0)
+		oppSCollarDrainsMagickaOID = AddToggleOption("Magicka Drain  ", oppSCollarDrainsMagicka, 0)
+		oppSMinSummonArousalOID = AddSliderOption("Summon Arousal  ", oppSMinSummonArousal, "{0}", 0)
 	Elseif page == "Locations "
 		useLocationModifiersOID = AddToggleOption("Use Location Modifiers  ", useLocationModifiers, 0)
 		AddEmptyOption()
@@ -989,6 +1008,10 @@ Event OnOptionHighlight(int option)
 		SetInfoText("If the container is a boss chest, the standard event weight will be reduced by this amount.")
 		Return
 	Endif
+	If option == eventOppressiveWeightOID
+		SetInfoText("Chance to receive an oppressive device event.")
+		Return
+	Endif
 	If option == eventContraptionWeightOID
 		SetInfoText("Chance to be bound in a contraption from DDC.")
 		Return
@@ -1091,6 +1114,22 @@ Event OnOptionHighlight(int option)
 	Endif
 	If option == LMNudityColorOID
 		SetInfoText("Color for mark.")
+		Return
+	Endif
+	If option == oppSummonerCollarWeightOID
+		SetInfoText("How likely that you will be equipped with a collar that makes you have sex with your summons.\nRequires creatures to be enabled for sex.")
+		Return
+	Endif
+	If option == oppSummonerSexCountOID
+		SetInfoText("How may time you need to have sex with your summons before the collar will unlock.")
+		Return
+	Endif
+	If option == oppSCollarDrainsMagickaOID
+		SetInfoText("The collar will drain all of your magicka when summoning.")
+		Return
+	Endif
+	If option == oppSMinSummonArousalOID
+		SetInfoText("Will change the arousal of all of your summons to be at least this value.")
 		Return
 	Endif
 	If option == useLocationModifiersOID
@@ -1456,6 +1495,11 @@ Event OnOptionSelect(int option)
 		LMNudityChestOnly = !LMNudityChestOnly
 		SetToggleOptionValue(LMNudityChestOnlyOID, LMNudityChestOnly)
 		ForcePageReset()
+		Return
+	Endif
+	If option == oppSCollarDrainsMagickaOID
+		oppSCollarDrainsMagicka = !oppSCollarDrainsMagicka
+		SetToggleOptionValue(oppSCollarDrainsMagickaOID, oppSCollarDrainsMagicka)
 		Return
 	Endif
 	If option == useLocationModifiersOID
@@ -1929,6 +1973,13 @@ Event OnOptionSliderOpen(int option)
 		SetSliderDialogInterval(1)
 		Return
 	Endif
+	If option == eventOppressiveWeightOID
+		SetSliderDialogStartValue(eventOppressiveWeight)
+		SetSliderDialogDefaultValue(15)
+		SetSliderDialogRange(0, 500)
+		SetSliderDialogInterval(1)
+		Return
+	Endif
 	If option == eventContraptionWeightOID
 		SetSliderDialogStartValue(eventContraptionWeight)
 		SetSliderDialogDefaultValue(25)
@@ -2052,6 +2103,27 @@ Event OnOptionSliderOpen(int option)
 		SetSliderDialogStartValue(LMNudityTalkTimes)
 		SetSliderDialogDefaultValue(35)
 		SetSliderDialogRange(3, 100)
+		SetSliderDialogInterval(1)
+		Return
+	Endif
+	If option == oppSummonerCollarWeightOID
+		SetSliderDialogStartValue(oppSummonerCollarWeight)
+		SetSliderDialogDefaultValue(20)
+		SetSliderDialogRange(1, 500)
+		SetSliderDialogInterval(1)
+		Return
+	Endif
+	If option == oppSummonerSexCountOID
+		SetSliderDialogStartValue(oppSummonerSexCount)
+		SetSliderDialogDefaultValue(15)
+		SetSliderDialogRange(1, 100)
+		SetSliderDialogInterval(1)
+		Return
+	Endif
+	If option == oppSMinSummonArousalOID
+		SetSliderDialogStartValue(oppSMinSummonArousal)
+		SetSliderDialogDefaultValue(90)
+		SetSliderDialogRange(0, 100)
 		SetSliderDialogInterval(1)
 		Return
 	Endif
@@ -2795,6 +2867,12 @@ Event OnOptionSliderAccept(int option, float value)
 		
 		Return
 	Endif
+	If option == eventOppressiveWeightOID
+		eventOppressiveWeight = value as int
+		SetSliderOptionValue(option, value, "{0}")
+		
+		Return
+	Endif
 	If option == eventContraptionWeightOID
 		eventContraptionWeight = value as int
 		SetSliderOptionValue(option, value, "{0}")
@@ -2900,6 +2978,24 @@ Event OnOptionSliderAccept(int option, float value)
 	Endif
 	If option == LMNudityTalkTimesOID
 		LMNudityTalkTimes = value as int
+		SetSliderOptionValue(option, value, "{0}")
+		
+		Return
+	Endif
+	If option == oppSummonerCollarWeightOID
+		oppSummonerCollarWeight = value as int
+		SetSliderOptionValue(option, value, "{0}")
+		
+		Return
+	Endif
+	If option == oppSummonerSexCountOID
+		oppSummonerSexCount = value as int
+		SetSliderOptionValue(option, value, "{0}")
+		
+		Return
+	Endif
+	If option == oppSMinSummonArousalOID
+		oppSMinSummonArousal = value as int
 		SetSliderOptionValue(option, value, "{0}")
 		
 		Return

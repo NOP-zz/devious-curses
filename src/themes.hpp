@@ -44,23 +44,23 @@ namespace DCURSES {
 			return "";
 		}
 
-
 		auto themes = j.get<std::vector<std::string>>();
-		std::vector<std::string> out;
 
-		for (auto theme : themes) {
-			if (TestTheme(theme)) {
-				out.push_back(theme);
-			}
-		}
-
-		if (out.size() == 0) {
+		if (themes.size() == 0) {
 			log::warn("Unable to find theme.");
 			return "";
 		}
 
-		auto theme = out[Util::randomInt(static_cast<int>(out.size()))];
-		log::info("Got random theme {}", theme);
-		return theme;
+		Util::ShuffleVector(themes);
+
+		for (auto theme : themes) {
+			if (TestTheme(theme)) {
+				log::info("Got random theme {}", theme);
+				return theme;
+			}
+		}
+
+		log::trace("Unable to find theme based on equipped devices.");
+		return "";
 	}
 }

@@ -5,6 +5,7 @@
 #include "Consequences.hpp"
 #include "themes.hpp"
 #include "Contraptions.hpp"
+#include "O_Devices.hpp"
 
 #include "../include/DDNG_API.h"
 #include "../include/form_ids.h"
@@ -375,7 +376,7 @@ namespace DCURSES {
     void DoEvent(bool isBoss, std::string contName) {
         CloseContinerMenus();
         //DisableMenus();
-        int weightTotal = settings.eventStandardWeight + settings.eventSimpleSlaveryWeight + settings.eventLewdMarkWeight + settings.eventTattooWeight + settings.eventContraptionWeight;
+        int weightTotal = settings.eventStandardWeight + settings.eventSimpleSlaveryWeight + settings.eventLewdMarkWeight + settings.eventTattooWeight + settings.eventContraptionWeight + settings.eventOppressiveWeight;
         if (isBoss) {
             weightTotal -= settings.eventStandardBossReduction;
         }
@@ -396,6 +397,14 @@ namespace DCURSES {
         }
         else if (r > settings.eventContraptionWeight) {
             r -= settings.eventContraptionWeight;
+        }
+
+        if (r < settings.eventOppressiveWeight && DoOppDeviceEvent(contName)) {
+            //EnableMenus();
+            return;
+        }
+        else if (r > settings.eventOppressiveWeight) {
+            r -= settings.eventOppressiveWeight;
         }
         
 

@@ -207,14 +207,15 @@ namespace DCURSES {
 		consequences.push_back(std::make_pair(ConsRandomDevice, consRandomBondageWeight));
 		consequences.push_back(std::make_pair(ConsMercy, consMercyWeight));
 
-		for (size_t i = 0; !consequences.empty(); i = (i + 1) % consequences.size()) {
+		Util::ShuffleVector(consequences);
+
+		for (size_t i = 0; i < consequences.size(); i++) {
 			auto pair = consequences[i];
 			if (r < pair.second) {
 				if (pair.first(actor, source)) {
 					return true;
 				}
 				else {
-					//consequences.erase(consequences.begin() + i);
 					return false;
 				}
 			}

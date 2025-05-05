@@ -80,8 +80,8 @@ namespace DCURSES {
 		auto playerIsWearingBlindfold = vectorContains(playerWornDeviceKeywords, "zad_DeviousBlindfold");
 		auto playerIsWearingBoots = vectorContains(playerWornDeviceKeywords, "zad_DeviousBoots");
 
-		RE::TESObjectARMO* collar = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectARMO>(SAARTHAL_COLLAR, "Devious Curses.esp");
-		auto playerHasMGCollar = ActorIsWearingDevice(player, collar);
+		RE::TESObjectARMO* summoner_collar = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectARMO>(SUMMONER_COLLAR, "Devious Curses.esp");
+		auto playerHasSummonerCollar = ActorIsWearingDevice(player, summoner_collar);
 
 		RE::TESFaction* PlayerMarriedFaction = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("0C6472", 0, 16), "Skyrim.esm");
 		RE::TESGlobal* GameHour = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESGlobal>(std::stoi("38", 0, 16), "Skyrim.esm");
@@ -112,7 +112,7 @@ namespace DCURSES {
 							else if (actor->IsInFaction(PlayerMarriedFaction) && settings.sexAlwaysAllowSpouse) {
 								enabled = true;
 							}
-							else if (getIsPlayerCommandedActor(actor) && (settings.sexAlwaysAllowSummons || playerHasMGCollar)) {
+							else if (getIsPlayerCommandedActor(actor) && (settings.sexAlwaysAllowSummons || playerHasSummonerCollar)) {
 								enabled = true;
 							}
 							else if (settings.sexRequireAll) {

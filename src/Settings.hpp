@@ -121,6 +121,8 @@ namespace DCURSES {
 		//Header Bondage Curse
 		int eventStandardWeight = 100;			//Bondage Curse Weight//Chance to receive a bondage device event.//{0}//(0,500,1)
 		int eventStandardBossReduction = 20;	//Standard Boss Reduction//If the container is a boss chest, the standard event weight will be reduced by this amount.//{0}//(0,500,1)
+		//Header Oppresive Curse
+		int eventOppressiveWeight = 15;			//Oppressive Curse Weight//Chance to receive an oppressive device event.//{0}//(0,500,1)
 		//Header Contraption Curse
 		int eventContraptionWeight = 25;		//Contraption Curse Weight//Chance to be bound in a contraption from DDC.//{0}//(0,500,1)
 		float eventContraptionTime = 0.0;		//Contraption Release Time//Will be automatically released after this many in game hours. Set to 0 to disable automatic release.//{1}//(0,24,0.1)
@@ -159,6 +161,12 @@ namespace DCURSES {
 		text LMNudityAditionalForms = "";		//Strip Slots//A comma separated list of additional slots to strip. Will not strip devices.\nFor example: 46,47,49,52.		?:? flag_LMStripBody
 		int LMNudityTalkTimes = 35;				//Dialogue Times//How many times you have to talk to different characters before the mark will fade.//{0}//(3,100,1)		?:? flag_LewdMarks
 		color LMNudityColor = 0xd676cb;			//Color//Color for mark.																									?:? flag_LewdMarks
+		//Page Oppressive Devices
+		//Header Summoner Collar
+		int oppSummonerCollarWeight = 20;		//Weight//How likely that you will be equipped with a collar that makes you have sex with your summons.\nRequires creatures to be enabled for sex.//{0}//(1,500,1)
+		int oppSummonerSexCount = 15;			//Sex Count//How may time you need to have sex with your summons before the collar will unlock.//{0}//(1,100,1)
+		bool oppSCollarDrainsMagicka = true;	//Magicka Drain//The collar will drain all of your magicka when summoning.
+		int oppSMinSummonArousal = 90;			//Summon Arousal//Will change the arousal of all of your summons to be at least this value.//{0}//(0,100,1)
 		//Page Locations
 		bool useLocationModifiers = true;		//Use Location Modifiers//Weather or not to apply the location modifiers listed below to event chances.
 		//Empty
@@ -373,6 +381,8 @@ namespace DCURSES {
 		SetMCMInt("eventStandardWeight",settings.eventStandardWeight);
 		settings.eventStandardBossReduction = 20;
 		SetMCMInt("eventStandardBossReduction",settings.eventStandardBossReduction);
+		settings.eventOppressiveWeight = 15;
+		SetMCMInt("eventOppressiveWeight",settings.eventOppressiveWeight);
 		settings.eventContraptionWeight = 25;
 		SetMCMInt("eventContraptionWeight",settings.eventContraptionWeight);
 		settings.eventSimpleSlaveryWeight = 0;
@@ -409,6 +419,12 @@ namespace DCURSES {
 		SetMCMInt("LMNudityWeight",settings.LMNudityWeight);
 		settings.LMNudityTalkTimes = 35;
 		SetMCMInt("LMNudityTalkTimes",settings.LMNudityTalkTimes);
+		settings.oppSummonerCollarWeight = 20;
+		SetMCMInt("oppSummonerCollarWeight",settings.oppSummonerCollarWeight);
+		settings.oppSummonerSexCount = 15;
+		SetMCMInt("oppSummonerSexCount",settings.oppSummonerSexCount);
+		settings.oppSMinSummonArousal = 90;
+		SetMCMInt("oppSMinSummonArousal",settings.oppSMinSummonArousal);
 		settings.consSexWeight = 15;
 		SetMCMInt("consSexWeight",settings.consSexWeight);
 		settings.consFineWeight = 10;
@@ -571,6 +587,8 @@ namespace DCURSES {
 		SetMCMBool("vanishingKeys",settings.vanishingKeys);
 		settings.LMNudityChestOnly = false;
 		SetMCMBool("LMNudityChestOnly",settings.LMNudityChestOnly);
+		settings.oppSCollarDrainsMagicka = true;
+		SetMCMBool("oppSCollarDrainsMagicka",settings.oppSCollarDrainsMagicka);
 		settings.useLocationModifiers = true;
 		SetMCMBool("useLocationModifiers",settings.useLocationModifiers);
 		settings.noMessageBoxes = false;
@@ -680,6 +698,7 @@ namespace DCURSES {
 			{"piercingToolWeight", settings.piercingToolWeight},
 			{"eventStandardWeight", settings.eventStandardWeight},
 			{"eventStandardBossReduction", settings.eventStandardBossReduction},
+			{"eventOppressiveWeight", settings.eventOppressiveWeight},
 			{"eventContraptionWeight", settings.eventContraptionWeight},
 			{"eventSimpleSlaveryWeight", settings.eventSimpleSlaveryWeight},
 			{"eventSSMinRestraints", settings.eventSSMinRestraints},
@@ -698,6 +717,9 @@ namespace DCURSES {
 			{"LMBondageDeviceCount", settings.LMBondageDeviceCount},
 			{"LMNudityWeight", settings.LMNudityWeight},
 			{"LMNudityTalkTimes", settings.LMNudityTalkTimes},
+			{"oppSummonerCollarWeight", settings.oppSummonerCollarWeight},
+			{"oppSummonerSexCount", settings.oppSummonerSexCount},
+			{"oppSMinSummonArousal", settings.oppSMinSummonArousal},
 			{"consSexWeight", settings.consSexWeight},
 			{"consFineWeight", settings.consFineWeight},
 			{"consFineAmount", settings.consFineAmount},
@@ -775,6 +797,7 @@ namespace DCURSES {
 			{"preferRelevantKeys", settings.preferRelevantKeys},
 			{"vanishingKeys", settings.vanishingKeys},
 			{"LMNudityChestOnly", settings.LMNudityChestOnly},
+			{"oppSCollarDrainsMagicka", settings.oppSCollarDrainsMagicka},
 			{"useLocationModifiers", settings.useLocationModifiers},
 			{"noMessageBoxes", settings.noMessageBoxes},
 			{"bossChestUseModelPath", settings.bossChestUseModelPath},
@@ -928,6 +951,8 @@ namespace DCURSES {
 		SetMCMInt("eventStandardWeight",settings.eventStandardWeight);
 		settings.eventStandardBossReduction = static_cast<int>(j.value("eventStandardBossReduction", 20));
 		SetMCMInt("eventStandardBossReduction",settings.eventStandardBossReduction);
+		settings.eventOppressiveWeight = static_cast<int>(j.value("eventOppressiveWeight", 15));
+		SetMCMInt("eventOppressiveWeight",settings.eventOppressiveWeight);
 		settings.eventContraptionWeight = static_cast<int>(j.value("eventContraptionWeight", 25));
 		SetMCMInt("eventContraptionWeight",settings.eventContraptionWeight);
 		settings.eventSimpleSlaveryWeight = static_cast<int>(j.value("eventSimpleSlaveryWeight", 0));
@@ -964,6 +989,12 @@ namespace DCURSES {
 		SetMCMInt("LMNudityWeight",settings.LMNudityWeight);
 		settings.LMNudityTalkTimes = static_cast<int>(j.value("LMNudityTalkTimes", 35));
 		SetMCMInt("LMNudityTalkTimes",settings.LMNudityTalkTimes);
+		settings.oppSummonerCollarWeight = static_cast<int>(j.value("oppSummonerCollarWeight", 20));
+		SetMCMInt("oppSummonerCollarWeight",settings.oppSummonerCollarWeight);
+		settings.oppSummonerSexCount = static_cast<int>(j.value("oppSummonerSexCount", 15));
+		SetMCMInt("oppSummonerSexCount",settings.oppSummonerSexCount);
+		settings.oppSMinSummonArousal = static_cast<int>(j.value("oppSMinSummonArousal", 90));
+		SetMCMInt("oppSMinSummonArousal",settings.oppSMinSummonArousal);
 		settings.consSexWeight = static_cast<int>(j.value("consSexWeight", 15));
 		SetMCMInt("consSexWeight",settings.consSexWeight);
 		settings.consFineWeight = static_cast<int>(j.value("consFineWeight", 10));
@@ -1126,6 +1157,8 @@ namespace DCURSES {
 		SetMCMBool("vanishingKeys",settings.vanishingKeys);
 		settings.LMNudityChestOnly = static_cast<bool>(j.value("LMNudityChestOnly", false));
 		SetMCMBool("LMNudityChestOnly",settings.LMNudityChestOnly);
+		settings.oppSCollarDrainsMagicka = static_cast<bool>(j.value("oppSCollarDrainsMagicka", true));
+		SetMCMBool("oppSCollarDrainsMagicka",settings.oppSCollarDrainsMagicka);
 		settings.useLocationModifiers = static_cast<bool>(j.value("useLocationModifiers", true));
 		SetMCMBool("useLocationModifiers",settings.useLocationModifiers);
 		settings.noMessageBoxes = static_cast<bool>(j.value("noMessageBoxes", false));
@@ -1234,6 +1267,7 @@ namespace DCURSES {
 		settings.piercingToolWeight = GetMCMSetting("piercingToolWeight")->GetSInt();
 		settings.eventStandardWeight = GetMCMSetting("eventStandardWeight")->GetSInt();
 		settings.eventStandardBossReduction = GetMCMSetting("eventStandardBossReduction")->GetSInt();
+		settings.eventOppressiveWeight = GetMCMSetting("eventOppressiveWeight")->GetSInt();
 		settings.eventContraptionWeight = GetMCMSetting("eventContraptionWeight")->GetSInt();
 		settings.eventSimpleSlaveryWeight = GetMCMSetting("eventSimpleSlaveryWeight")->GetSInt();
 		settings.eventSSMinRestraints = GetMCMSetting("eventSSMinRestraints")->GetSInt();
@@ -1252,6 +1286,9 @@ namespace DCURSES {
 		settings.LMBondageDeviceCount = GetMCMSetting("LMBondageDeviceCount")->GetSInt();
 		settings.LMNudityWeight = GetMCMSetting("LMNudityWeight")->GetSInt();
 		settings.LMNudityTalkTimes = GetMCMSetting("LMNudityTalkTimes")->GetSInt();
+		settings.oppSummonerCollarWeight = GetMCMSetting("oppSummonerCollarWeight")->GetSInt();
+		settings.oppSummonerSexCount = GetMCMSetting("oppSummonerSexCount")->GetSInt();
+		settings.oppSMinSummonArousal = GetMCMSetting("oppSMinSummonArousal")->GetSInt();
 		settings.consSexWeight = GetMCMSetting("consSexWeight")->GetSInt();
 		settings.consFineWeight = GetMCMSetting("consFineWeight")->GetSInt();
 		settings.consFineAmount = GetMCMSetting("consFineAmount")->GetSInt();
@@ -1333,6 +1370,7 @@ namespace DCURSES {
 		settings.preferRelevantKeys = GetMCMSetting("preferRelevantKeys")->GetBool();
 		settings.vanishingKeys = GetMCMSetting("vanishingKeys")->GetBool();
 		settings.LMNudityChestOnly = GetMCMSetting("LMNudityChestOnly")->GetBool();
+		settings.oppSCollarDrainsMagicka = GetMCMSetting("oppSCollarDrainsMagicka")->GetBool();
 		settings.useLocationModifiers = GetMCMSetting("useLocationModifiers")->GetBool();
 		settings.noMessageBoxes = GetMCMSetting("noMessageBoxes")->GetBool();
 		settings.bossChestUseModelPath = GetMCMSetting("bossChestUseModelPath")->GetBool();

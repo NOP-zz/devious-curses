@@ -10,6 +10,7 @@
 #include "src/QLIEIntegration.hpp"
 #include "src/themes.hpp"
 #include "src/Contraptions.hpp"
+#include "src/O_Devices.hpp"
 
 #include "include/DDNG_API.h"
 
@@ -153,7 +154,7 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
         }
         case SKSE::MessagingInterface::kNewGame:
         case SKSE::MessagingInterface::kPostLoadGame: {
-            auto perk = RE::TESDataHandler::GetSingleton()->LookupForm<RE::BGSPerk>(DCURSES::MARK_CONTROLLER, "Devious Curses.esp");
+            auto perk = RE::TESDataHandler::GetSingleton()->LookupForm<RE::BGSPerk>(DCURSES::MGEF_CONTROLLER, "Devious Curses.esp");
             auto player = RE::PlayerCharacter::GetSingleton();
             if (!player->HasPerk(perk)) {
                 player->AddPerk(perk);

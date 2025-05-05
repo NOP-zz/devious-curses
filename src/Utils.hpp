@@ -45,6 +45,13 @@ namespace DCURSES {
 			return randomInt(0, 99);
 		}
 
+		template<class T>
+		void ShuffleVector(std::vector<T> &vector) {
+			auto seed1 = (unsigned int)std::chrono::system_clock::now().time_since_epoch().count();
+			std::mt19937 e2(seed1);
+			std::shuffle(vector.begin(), vector.end(), e2);
+		}
+
 		int ColorScale(int color, double mult) {
 			int r = (color & 0xff0000) >> 4*4;
 			int g = (color & 0x00ff00) >> 2*4;
