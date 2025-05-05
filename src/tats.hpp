@@ -112,7 +112,7 @@ namespace DCURSES {
 		}
 
 		MarkEffectVisitor() {
-			match = RE::TESDataHandler::GetSingleton()->LookupForm<RE::EffectSetting>(MARK_EFFECT, "Devious Curses.esp");
+			match = StaticDataHolder::GetSingleton()->LookupForm<RE::EffectSetting>(MARK_EFFECT, "Devious Curses.esp");
 		}
 	};
 
@@ -157,7 +157,7 @@ namespace DCURSES {
 	void SetMarkControlerVisible(RE::Actor* actor, bool visible = true) {
 		if (actor != RE::PlayerCharacter::GetSingleton()) { return; }
 
-		auto effect = RE::TESDataHandler::GetSingleton()->LookupForm<RE::EffectSetting>(MARK_EFFECT, "Devious Curses.esp");
+		auto effect = StaticDataHolder::GetSingleton()->LookupForm<RE::EffectSetting>(MARK_EFFECT, "Devious Curses.esp");
 		if (visible) {
 			effect->data.flags.reset(RE::EffectSetting::EffectSettingData::Flag::kHideInUI);
 		}

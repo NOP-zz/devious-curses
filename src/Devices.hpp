@@ -888,9 +888,9 @@ namespace DCURSES {
 	RE::TESKey* GenerateKeys(RE::TESObjectREFR* activatedObject, bool skipRand = false) {
 		auto player = RE::PlayerCharacter::GetSingleton();
 
-		RE::TESKey* restraintsKey = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESKey>(std::stoi("1775f", 0, 16), "Devious Devices - Integration.esm");
-		RE::TESKey* chastityKey = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESKey>(std::stoi("8a4f", 0, 16), "Devious Devices - Integration.esm");
-		RE::TESKey* piercingKey = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESKey>(std::stoi("409a4", 0, 16), "Devious Devices - Integration.esm");
+		RE::TESKey* restraintsKey = StaticDataHolder::GetSingleton()->LookupForm<RE::TESKey>(std::stoi("1775f", 0, 16), "Devious Devices - Integration.esm");
+		RE::TESKey* chastityKey = StaticDataHolder::GetSingleton()->LookupForm<RE::TESKey>(std::stoi("8a4f", 0, 16), "Devious Devices - Integration.esm");
+		RE::TESKey* piercingKey = StaticDataHolder::GetSingleton()->LookupForm<RE::TESKey>(std::stoi("409a4", 0, 16), "Devious Devices - Integration.esm");
 
 		int total_keys = GetItemCount(player, restraintsKey) + GetItemCount(player, chastityKey) + GetItemCount(player, piercingKey);
 
@@ -1000,9 +1000,9 @@ namespace DCURSES {
 	}
 
 	void RemoveKeys(RE::TESObjectREFR* activatedObject) {
-		RE::TESKey* restraintsKey = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESKey>(std::stoi("1775f", 0, 16), "Devious Devices - Integration.esm");
-		RE::TESKey* chastityKey = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESKey>(std::stoi("8a4f", 0, 16), "Devious Devices - Integration.esm");
-		RE::TESKey* piercingKey = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESKey>(std::stoi("409a4", 0, 16), "Devious Devices - Integration.esm");
+		RE::TESKey* restraintsKey = StaticDataHolder::GetSingleton()->LookupForm<RE::TESKey>(std::stoi("1775f", 0, 16), "Devious Devices - Integration.esm");
+		RE::TESKey* chastityKey = StaticDataHolder::GetSingleton()->LookupForm<RE::TESKey>(std::stoi("8a4f", 0, 16), "Devious Devices - Integration.esm");
+		RE::TESKey* piercingKey = StaticDataHolder::GetSingleton()->LookupForm<RE::TESKey>(std::stoi("409a4", 0, 16), "Devious Devices - Integration.esm");
 
 		//RE::TESKey* chaosFragment = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESKey>(std::stoi("01F367", 0, 16), "Devious Curses.esp");
 

@@ -155,7 +155,7 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
         }
         case SKSE::MessagingInterface::kNewGame:
         case SKSE::MessagingInterface::kPostLoadGame: {
-            auto perk = RE::TESDataHandler::GetSingleton()->LookupForm<RE::BGSPerk>(DCURSES::MARK_CONTROLLER, "Devious Curses.esp");
+            auto perk = DCURSES::StaticDataHolder::GetSingleton()->LookupForm<RE::BGSPerk>(DCURSES::MARK_CONTROLLER, "Devious Curses.esp");
             auto player = RE::PlayerCharacter::GetSingleton();
             if (!player->HasPerk(perk)) {
                 player->AddPerk(perk);
