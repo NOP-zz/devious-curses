@@ -64,7 +64,7 @@ namespace DCURSES {
 	}
 
 	void SetEffectVisible(uint32_t effect_formid, bool visible = true) {
-		auto effect = RE::TESDataHandler::GetSingleton()->LookupForm<RE::EffectSetting>(effect_formid, "Devious Curses.esp");
+		auto effect = StaticDataHolder::GetSingleton()->LookupForm<RE::EffectSetting>(effect_formid, "Devious Curses.esp");
 		if (!effect) {
 			log::warn("No EffectSetting for id {:x}", effect_formid);
 			return;
@@ -79,8 +79,8 @@ namespace DCURSES {
 	}
 
 	void MGEFOnGameLoad() {
-		auto perk = DCURSES::StaticDataHolder::GetSingleton()->LookupForm<RE::BGSPerk>(DCURSES::MGEF_CONTROLLER, "Devious Curses.esp");
-		auto spell = DCURSES::StaticDataHolder::GetSingleton()->LookupForm<RE::SpellItem>(DCURSES::MGEF_SPELL, "Devious Curses.esp");
+		auto perk = StaticDataHolder::GetSingleton()->LookupForm<RE::BGSPerk>(DCURSES::MGEF_CONTROLLER, "Devious Curses.esp");
+		auto spell = StaticDataHolder::GetSingleton()->LookupForm<RE::SpellItem>(DCURSES::MGEF_SPELL, "Devious Curses.esp");
 		auto player = RE::PlayerCharacter::GetSingleton();
 
 		if (!player->HasPerk(perk)) {
@@ -98,11 +98,14 @@ namespace DCURSES {
 		}
 
 		for (std::pair<uint32_t, float> &id : list) {
-			id.second = GetEffectMagnitude(id.first);
+			float value = GetEffectMagnitude(id.first);
+			id.second = value > 0.0f ? value : 0.0f;
 		}
 		player->GetMagicCaster(RE::MagicSystem::CastingSource::kOther)->CastSpellImmediate(spell, true, player, 1.0, false, 0.0, nullptr);
+		StaticDataHolder::GetSingleton()->InvalidateCache();
 		for (std::pair<uint32_t, float>& id : list) {
 			SetEffectMagnitude(id.first, id.second);
+			SetEffectVisible(id.first, false);
 		}
 	}
 }

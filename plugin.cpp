@@ -90,7 +90,7 @@ namespace DCURSES {
         log::trace("DCURSES test");
         auto player = RE::PlayerCharacter::GetSingleton();
         
-        /*
+        
         auto mark = GetLewdMark();
         if (mark) {
             RemoveLewdMark();
@@ -98,8 +98,8 @@ namespace DCURSES {
         else {
             DoLewdMarkEvent("", false);
         }
-        */
 
+        /*
         auto ref = GetContraptionForActor(player);
         if (ref) {
             ContraptionsUnlockActor(player);
@@ -107,6 +107,7 @@ namespace DCURSES {
         else {
             CreateAndLockContraption(player);
         }
+        */
 
     }
 
@@ -171,6 +172,8 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
         case SKSE::MessagingInterface::kPostLoadGame: {
             DCURSES::MGEFOnGameLoad();
 
+            DCURSES::StaticDataHolder::GetSingleton()->InvalidateCache();
+
             bool DDNG_loaded = DeviousDevicesAPI::LoadAPI();
 
             if (!DDNG_loaded) {
@@ -185,7 +188,6 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
                 log::info("Quick Loot IE Not Loaded.");
             }
 
-            DCURSES::StartPapyrusTimer();
             DCURSES::EventsStartup();
 
             DCURSES::LoadMCMSettings();

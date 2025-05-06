@@ -78,16 +78,6 @@ namespace DCURSES {
         return actor->GetFactionRank(faction, actor == RE::PlayerCharacter::GetSingleton());
     }
 
-    void StartPapyrusTimer() {
-        RE::TESForm* mcm = StaticDataHolder::GetSingleton()->LookupForm<RE::TESForm>(DCURSES_MCM, "Devious Curses.esp");
-        auto handle = GetHP()->GetHandleForObject(RE::FormType::Quest, mcm);
-        RE::BSTSmartPointer<RE::BSScript::Object> mcmObject;
-        GetVM()->FindBoundObject(handle, "DCurses_MCM", mcmObject);
-
-        RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> callback;
-        GetVM()->DispatchMethodCall(mcmObject, "OnGameStarted", new RE::BSScript::ZeroFunctionArguments, callback);
-    }
-
     void StartSex(RE::Actor* aggressor) {
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> result;
         GetVM()->DispatchStaticCall("DCursesLib", "StartSex", RE::MakeFunctionArguments<RE::Actor*>(std::move(aggressor)), result);

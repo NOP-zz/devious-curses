@@ -126,15 +126,13 @@ function UpdateSKSE() global Native
 bool function CheckSTNG() global Native
 bool function CheckLM() global Native
 
-Perk Property PerkLooted Auto
-
-Event OnGameStarted()
-	Debug.trace("DCurses player alias on load game")
+Function StartTimer()
+	Debug.trace("DCurses Timer Started")
 	UnregisterForUpdate()
 	RegisterForUpdate(1)
 	RegisterForModEvent("HookAnimationStart", "OnSexStart")
 	RegisterForModEvent("HookAnimationEnd", "OnSexEnd")
-EndEvent
+EndFunction
 
 Event OnUpdate()
 	DCursesLib.OnUpdate()
@@ -180,10 +178,12 @@ ConfigInit += "\nEndFunction"
 ConfigInit += """
 
 Event OnConfigInit()
+	StartTimer()
 	Initialize()
 EndEvent
 
 Event OnConfigOpen()
+	StartTimer()
 	Initialize()
 EndEvent
 """
