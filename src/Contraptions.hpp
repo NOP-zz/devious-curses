@@ -69,7 +69,7 @@ namespace DCURSES {
 			}
 
 			object->data.angle = RE::NiPoint3(0, actor->GetAngleY(), actor->GetAngleZ());
-			Util::ExecuteWithDelay(250ms, [actor, object] {ContraptionsLockActor(actor, object); });
+			Util::ExecuteWithDelay(1000ms, [actor, object] {ContraptionsLockActor(actor, object); });
 		});
 	}
 }

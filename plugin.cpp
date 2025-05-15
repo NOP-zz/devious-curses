@@ -51,6 +51,10 @@ namespace DCURSES {
     }
 
     void P_OnUpdate(RE::StaticFunctionTag*) {
+        if (IsModDisabled()) {
+            log::trace("Event timer skipped, mod is disabled.");
+            return;
+        }
         auto c1 = std::chrono::high_resolution_clock::now();
         EventsUpdate();
         auto c2 = std::chrono::high_resolution_clock::now();

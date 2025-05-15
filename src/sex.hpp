@@ -25,10 +25,12 @@ namespace DCURSES {
 		//RE::TESFaction* arousalFaction = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("03FC36", 0, 16), "SexLabAroused.esm");
 		//RE::TESFaction* SexlabGenderFaction = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("043A43", 0, 16), "SexLab.esm");
 		//RE::TESFaction* PlayerMarriedFaction = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("0C6472", 0, 16), "Skyrim.esm");
-		RE::TESFaction* SexlabAnimatingFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("00E50F", 0, 16), "SexLab.esm");
-		RE::TESFaction* ZadAnimatingFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("029567", 0, 16), "Devious Devices - Integration.esm");
+		RE::TESFaction* SexlabAnimatingFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x00E50F, "SexLab.esm");
+		RE::TESFaction* ZadAnimatingFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x029567, "Devious Devices - Integration.esm");
 
-		if (actor->IsInCombat() || actor->IsInFaction(SexlabAnimatingFaction) || actor->IsInFaction(ZadAnimatingFaction) || actor->IsInWater() || actor->IsInRagdollState() || actor->IsChild() || actor->AsActorState()->GetSitSleepState() == RE::SIT_SLEEP_STATE::kIsSleeping || actor->IsHostileToActor(player)) {
+		RE::TESRace* ManakinRace = StaticDataHolder::GetSingleton()->LookupForm<RE::TESRace>(0x10760a, "Skyrim.esm");
+
+		if (actor->IsInCombat() || actor->IsInFaction(SexlabAnimatingFaction) || actor->IsInFaction(ZadAnimatingFaction) || actor->IsInWater() || actor->IsInRagdollState() || actor->IsChild() || actor->AsActorState()->GetSitSleepState() == RE::SIT_SLEEP_STATE::kIsSleeping || actor->IsHostileToActor(player) || actor->GetRace() == ManakinRace) {
 			return false;
 		}
 
@@ -51,9 +53,6 @@ namespace DCURSES {
 			isMale = actorSex == 0;
 			isFemale = actorSex == 1;
 		}
-
-
-		log::trace("Gender testing actor {}: {} ({})", actor->GetName(), isFuta ? "futa" : isFemale ? "female" : isMale ? "male" : isCreature ? "creature" : "unknown", GetActorArousal(actor));
 
 		if ((isMale && settings.sexAllowMale) ||
 			(isFemale && settings.sexAllowFemale) ||
@@ -86,6 +85,8 @@ namespace DCURSES {
 		RE::TESFaction* PlayerMarriedFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("0C6472", 0, 16), "Skyrim.esm");
 		RE::TESGlobal* GameHour = StaticDataHolder::GetSingleton()->LookupForm<RE::TESGlobal>(std::stoi("38", 0, 16), "Skyrim.esm");
 
+		RE::TESFaction* zadDisable = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x4653B, "Devious Devices - Integration.esm");
+		
 		int playerArousal = GetActorArousal(player);
 
 		std::vector<std::pair<RE::Actor*, std::string>> result;
@@ -96,7 +97,10 @@ namespace DCURSES {
 					auto actorPtr = actorHandle.get();
 					auto actor = actorPtr.get();
 					if (actor && actor->Is3DLoaded() && !actor->IsDead() && actor->GetPosition().GetDistance(playerPosition) <= settings.sexSearchRadius) {
-
+						if (actor && actor->IsInFaction(zadDisable)) {
+							log::trace("Ignoring NPC {}.", actor->GetName());
+							continue;
+						}
 						bool actorIsCreature = !actor->GetRace()->HasKeywordString("ActorTypeNPC") && (actor->GetRace()->HasKeywordString("ActorTypeCreature") || actor->GetRace()->HasKeywordString("ActorTypeDwarven") || actor->GetRace()->HasKeywordString("ActorTypeAnimal"));
 						//log::info("testing actor {}", actor->GetName());
 						//Check aggressor against normal filters
@@ -433,6 +437,10 @@ namespace DCURSES {
 	void OppOnSexEnd(RE::Actor* actor);
 
 	void P_SexEnded(RE::StaticFunctionTag*, RE::BSTArray<RE::Actor*> actors) {
+		if (IsModDisabled()) {
+			log::trace("Sex ended skipped, mod is disabled.");
+			return;
+		}
 		for (auto actor : actors) {
 			if (actor && actor != RE::PlayerCharacter::GetSingleton()) {
 				log::trace("Sex ended with {}", actor->GetName());

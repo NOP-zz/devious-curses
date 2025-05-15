@@ -126,12 +126,16 @@ function UpdateSKSE() global Native
 bool function CheckSTNG() global Native
 bool function CheckLM() global Native
 
+Bool Property ModSuspended = False Auto Hidden
+
 Function StartTimer()
 	Debug.trace("DCurses Timer Started")
 	UnregisterForUpdate()
 	RegisterForUpdate(1)
 	RegisterForModEvent("HookAnimationStart", "OnSexStart")
 	RegisterForModEvent("HookAnimationEnd", "OnSexEnd")
+	RegisterForModEvent("dhlp-Suspend", "OnDhlpSuspend")
+	RegisterForModEvent("dhlp-Resume", "OnDhlpResume")
 EndFunction
 
 Event OnUpdate()
@@ -154,6 +158,15 @@ Event OnSexStart(int tid, bool HasPlayer)
 		Actor[] positions = thread.positions
 		DCursesLib.SexStarted(positions)
 	EndIf
+EndEvent
+
+;dhlp event handlers
+Event OnDhlpSuspend( string eventName, string strArg, float numArg, Form sender )
+    ModSuspended = True
+EndEvent
+
+Event OnDhlpResume( string eventName, string strArg, float numArg, Form sender )
+    ModSuspended = False
 EndEvent
 
 """

@@ -5,12 +5,16 @@ function UpdateSKSE() global Native
 bool function CheckSTNG() global Native
 bool function CheckLM() global Native
 
+Bool Property ModSuspended = False Auto Hidden
+
 Function StartTimer()
 	Debug.trace("DCurses Timer Started")
 	UnregisterForUpdate()
 	RegisterForUpdate(1)
 	RegisterForModEvent("HookAnimationStart", "OnSexStart")
 	RegisterForModEvent("HookAnimationEnd", "OnSexEnd")
+	RegisterForModEvent("dhlp-Suspend", "OnDhlpSuspend")
+	RegisterForModEvent("dhlp-Resume", "OnDhlpResume")
 EndFunction
 
 Event OnUpdate()
@@ -33,6 +37,15 @@ Event OnSexStart(int tid, bool HasPlayer)
 		Actor[] positions = thread.positions
 		DCursesLib.SexStarted(positions)
 	EndIf
+EndEvent
+
+;dhlp event handlers
+Event OnDhlpSuspend( string eventName, string strArg, float numArg, Form sender )
+    ModSuspended = True
+EndEvent
+
+Event OnDhlpResume( string eventName, string strArg, float numArg, Form sender )
+    ModSuspended = False
 EndEvent
 
 
@@ -366,6 +379,8 @@ Bool Property useThemes = false Auto
 Int useThemesOID
 Bool Property enableSlowStrip = false Auto
 Int enableSlowStripOID
+Bool Property resumeEvents = false Auto
+Int resumeEventsOID
 Bool Property setAllDefaultSettings = false Auto
 Int setAllDefaultSettingsOID
 Bool Property consAllowFollowers = false Auto
@@ -581,6 +596,7 @@ Event OnPageReset(string page)
 		AddHeaderOption("Contraption Curse ")
 		eventContraptionWeightOID = AddSliderOption("Contraption Curse Weight  ", eventContraptionWeight, "{0}", 0)
 		eventContraptionTimeOID = AddSliderOption("Contraption Release Time  ", eventContraptionTime, "{1}", 0)
+		SetCursorPosition(1)
 		AddHeaderOption("Tattoo Curse ")
 		eventTattooWeightOID = AddSliderOption("Tattoo Curse Weight  ", eventTattooWeight, "{0}", flag_RapeTats)
 		eventTattooMinOID = AddSliderOption("Tattoo Curse Min  ", eventTattooMin, "{0}", flag_RapeTats)
@@ -664,6 +680,10 @@ Event OnPageReset(string page)
 		enableQIMalkoranOID = AddToggleOption("Malkoran  ", enableQIMalkoran, 0)
 		enableQISanguineOID = AddToggleOption("Sanguine  ", enableQISanguine, 0)
 	Elseif page == "Misc "
+		int flag_events_disabled = 1
+		If ModSuspended
+			flag_events_disabled = 0
+		EndIf
 		noMessageBoxesOID = AddToggleOption("Remove Message Boxes  ", noMessageBoxes, 0)
 		bossChestUseModelPathOID = AddToggleOption("Boss Chest Models  ", bossChestUseModelPath, 0)
 		rDeviceBaseChanceOID = AddSliderOption("Device Base Chance  ", rDeviceBaseChance, "{1}%", 0)
@@ -673,6 +693,7 @@ Event OnPageReset(string page)
 		SetCursorPosition(1)
 		enableSlowStripOID = AddToggleOption("Use Sexlab Strip  ", enableSlowStrip, 0)
 		tatSolventChanceOID = AddSliderOption("Universal Solvent Chance  ", tatSolventChance, "{1}", 0)
+		resumeEventsOID = AddToggleOption("Resume Events  ", resumeEvents, flag_events_disabled)
 		setAllDefaultSettingsOID = AddToggleOption("Return to Default [WARNING]  ", setAllDefaultSettings, 0)
 	Elseif page == "Consequences "
 		AddHeaderOption("Triggers ")
@@ -1313,6 +1334,10 @@ Event OnOptionHighlight(int option)
 		SetInfoText("Chance to find universal solvent when looting dead bodies. Universal solvent will remove all lewd marks and tattoos.\nHaving more tattoos will slightly increase the chance of finding one.\nSet to 0 to disable.")
 		Return
 	Endif
+	If option == resumeEventsOID
+		SetInfoText("Events have been disabled by another mod. Enable this and exit the MCM to re-enable events.")
+		Return
+	Endif
 	If option == setAllDefaultSettingsOID
 		SetInfoText("If you exit the menu with this enabled all settings in the MCM will be reset to default.")
 		Return
@@ -1649,6 +1674,11 @@ Event OnOptionSelect(int option)
 	If option == enableSlowStripOID
 		enableSlowStrip = !enableSlowStrip
 		SetToggleOptionValue(enableSlowStripOID, enableSlowStrip)
+		Return
+	Endif
+	If option == resumeEventsOID
+		resumeEvents = !resumeEvents
+		SetToggleOptionValue(resumeEventsOID, resumeEvents)
 		Return
 	Endif
 	If option == setAllDefaultSettingsOID

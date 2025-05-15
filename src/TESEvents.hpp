@@ -37,6 +37,10 @@ namespace DCURSES {
                     counters.clock_SexTimeout = settings.sexSearchInterval - 3;
                 }
                 QICheckObjectActivation(activatedObject); // Must do first!
+                if (IsModDisabled()) {
+                    log::trace("Activate skipped, mod is disabled.");
+                    return RE::BSEventNotifyControl::kContinue;
+                }
                 CalculateEventChance(activatedObject);
             }
             return RE::BSEventNotifyControl::kContinue;
@@ -63,7 +67,6 @@ namespace DCURSES {
             }
             auto actor = object->As<RE::Actor>();
             if (actor && actor == RE::PlayerCharacter::GetSingleton()) {
-                log::trace("Updating actors arousal");
                 counters.clock_SexTimeout -= 2;
                 //Callbacks::GetSingleton().ResetArousalDatabase();
                 //Callbacks::GetSingleton().InitializeAllActorsArousal();

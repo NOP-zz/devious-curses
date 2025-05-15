@@ -424,7 +424,7 @@ namespace DCURSES {
 
 		int counter = 0;
 
-		if (RE::TESDataHandler::GetSingleton()->LookupLoadedModByName("UnforgivingDevices.esp") == nullptr) {
+		if (!CheckUD()) {
 			settings.onlyUseUnforgivingDevices = false;
 			SetMCMBool("onlyUseUnforgivingDevices", false);
 		}

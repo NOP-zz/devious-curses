@@ -76,8 +76,8 @@ namespace DCURSES {
         return false;
     }
 
-    bool UndressAndUnequipActor(RE::Actor* akActor) {
-        if (!akActor) return false;
+    void UnequipItems(RE::Actor* akActor) {
+        if (!akActor) return;
 
         SKSE::GetTaskInterface()->AddTask([akActor] {
             auto rightHand = akActor->GetEquippedObject(false);
@@ -88,6 +88,10 @@ namespace DCURSES {
             UnequipItem(akActor, leftHand);
             akActor->DrawWeaponMagicHands(false);
         });
+    }
+
+    bool UndressAndUnequipActor(RE::Actor* akActor) {
+        UnequipItems(akActor);
 
         return UndressActor(akActor, true);
     }
@@ -253,7 +257,7 @@ namespace DCURSES {
 
     bool DoSimpleSlaveryEvent(std::string contName) {
         auto player = RE::PlayerCharacter::GetSingleton();
-        if (!RE::TESDataHandler::GetSingleton()->LookupLoadedModByName("SimpleSlavery.esp")) {
+        if (!CheckSimpleSlavery()) {
             return false;
         }
         if (GetWornDeviceCount(player) < settings.eventSSMinRestraints) {
@@ -396,8 +400,9 @@ namespace DCURSES {
 
         
         if (r < settings.eventContraptionWeight && DoContraptionEvent(contName)) {
+            UnequipItems(player);
             if (settings.stripPlayerOnEvent) {
-                UndressAndUnequipActor(player);
+                UndressActor(player, true);
             }
             return;
         }
@@ -621,7 +626,13 @@ namespace DCURSES {
 
         PopulateContainer(std::move(activatedObject), data);
 
+        RE::TESFaction* zadDisable = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x4653B, "Devious Devices - Integration.esm");
         RE::Actor* actor = activatedObject->As<RE::Actor>();
+        if (actor && actor->IsInFaction(zadDisable)) {
+            log::trace("Ignoring NPC.");
+            return;
+        }
+
         if (actor && !actor->IsDead() && !actor->IsChild() && !player->IsSneaking() && actor->CanTalkToPlayer()) {
             CheckConsequenceDialogue(actor);
         }
@@ -924,7 +935,7 @@ namespace DCURSES {
                         PlayerMessage(fmt::format("You loose {} gold as punishment for loosing tattoos!", toRemove));
                     }
 
-                    if (Util::randomDouble() < settings.LMBrandingChance && RE::TESDataHandler::GetSingleton()->LookupLoadedModByName("RapeTattoos.esp")) {
+                    if (Util::randomDouble() < settings.LMBrandingChance && CheckRapeTattoos()) {
                         RTDoTattooEvent(player, 1);
                         PlayerMessage("You feel a sharp pain as the mark brands you!");
                     }
@@ -992,19 +1003,16 @@ namespace DCURSES {
     }
 
     void EventsStartup() {
-        if (RE::TESDataHandler::GetSingleton()->LookupLoadedModByName("SimpleSlavery.esp") == nullptr) {
+        if (!CheckSimpleSlavery()) {
             settings.eventSimpleSlaveryWeight = 0;
             SetMCMInt("eventSimpleSlaveryWeight", 0);
         }
-        /*if (RE::TESDataHandler::GetSingleton()->LookupModByName("Sgo4IF.esp") == nullptr) {
-            settings.eventSGOWeight = 0;
-            SetMCMInt("eventSGOWeight", 0);
-        }*/
         if (!CheckLewdMarksInstalled()) {
             settings.eventLewdMarkWeight = 0;
             SetMCMInt("eventLewdMarkWeight", 0);
         }
-        if (!P_CheckSTNG(nullptr) || RE::TESDataHandler::GetSingleton()->LookupLoadedModByName("RapeTattoos.esp") == nullptr) {
+        if (!CheckRapeTattoos()) {
+            log::info("Setting tattoo weight to 0");
             settings.eventTattooWeight = 0;
             SetMCMInt("eventTattooWeight", 0);
             settings.LMBrandingChance = 0;

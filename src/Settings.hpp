@@ -127,6 +127,7 @@ namespace DCURSES {
 		//Header Contraption Curse
 		int eventContraptionWeight = 25;		//Contraption Curse Weight//Chance to be bound in a contraption from DDC.//{0}//(0,500,1)
 		float eventContraptionTime = 0.0;		//Contraption Release Time//Will be automatically released after this many in game hours. Set to 0 to disable automatic release.//{1}//(0,24,0.1)
+		//Column
 		//Header Tattoo Curse
 		int eventTattooWeight = 15;				//Tattoo Curse Weight//Chance to receive random tattoos.\nRequires Rape Tattoos.//{0}//(0,500,1)							?:? flag_RapeTats
 		int eventTattooMin = 1;					//Tattoo Curse Min//Minimum number of tattoos that can be put on.//{0}//(1,10,1)											?:? flag_RapeTats
@@ -204,6 +205,7 @@ namespace DCURSES {
 		bool enableQIMalkoran = true;			//Malkoran//The Malkoran event.
 		bool enableQISanguine = true;			//Sanguine//The Sanguine events.
 		//Page Misc
+		//Flag flag_events_disabled				//VAR:ModSuspended
 		bool noMessageBoxes = false;			//Remove Message Boxes//No message boxes will be shown.
 		bool bossChestUseModelPath = true;		//Boss Chest Models//Use the model of chests to determine if they are a boss chest.\nThere will be a higher chance for non-vanilla chests being marked correctly, but also for some non-boss chests to be treated like one.\nThis includes the models for standard, dwarven, falmer, apocrypha, soul cairn, and snow elf boss chests.
 		float rDeviceBaseChance = 1.5;			//Device Base Chance//Chance to loot a random bondage item from a container or a dead body.//{1}%//(0,100,0.1)
@@ -214,6 +216,7 @@ namespace DCURSES {
 		//SKIP bool enableQuestInteractions = false;	//Quest Interactions//Enable interactions with vanilla quests. This might include sex with NPCs, equipped devices, added tattoos, and more.
 		bool enableSlowStrip = false;			//Use Sexlab Strip//Replace the built in stripping algorithm with the one from sexlab.\nCan fix rare cases of crashing on stripping and also give more control over what gets stripped.
 		float tatSolventChance = 0.5;			//Universal Solvent Chance//Chance to find universal solvent when looting dead bodies. Universal solvent will remove all lewd marks and tattoos.\nHaving more tattoos will slightly increase the chance of finding one.\nSet to 0 to disable.//{1}//(0,50,0.1)
+		bool resumeEvents = false;				//Resume Events//Events have been disabled by another mod. Enable this and exit the MCM to re-enable events.				?:? flag_events_disabled
 		bool setAllDefaultSettings = false;		//Return to Default [WARNING]//If you exit the menu with this enabled all settings in the MCM will be reset to default.
 		//Page Consequences
 		//Header Triggers
@@ -641,6 +644,8 @@ namespace DCURSES {
 		SetMCMBool("useThemes",settings.useThemes);
 		settings.enableSlowStrip = false;
 		SetMCMBool("enableSlowStrip",settings.enableSlowStrip);
+		settings.resumeEvents = false;
+		SetMCMBool("resumeEvents",settings.resumeEvents);
 		settings.setAllDefaultSettings = false;
 		SetMCMBool("setAllDefaultSettings",settings.setAllDefaultSettings);
 		settings.consAllowFollowers = false;
@@ -853,6 +858,7 @@ namespace DCURSES {
 			{"bossExtraGold", settings.bossExtraGold},
 			{"useThemes", settings.useThemes},
 			{"enableSlowStrip", settings.enableSlowStrip},
+			{"resumeEvents", settings.resumeEvents},
 			{"setAllDefaultSettings", settings.setAllDefaultSettings},
 			{"consAllowFollowers", settings.consAllowFollowers},
 			{"consUseRelationships", settings.consUseRelationships},
@@ -1244,6 +1250,8 @@ namespace DCURSES {
 		SetMCMBool("useThemes",settings.useThemes);
 		settings.enableSlowStrip = static_cast<bool>(j.value("enableSlowStrip", false));
 		SetMCMBool("enableSlowStrip",settings.enableSlowStrip);
+		settings.resumeEvents = static_cast<bool>(j.value("resumeEvents", false));
+		SetMCMBool("resumeEvents",settings.resumeEvents);
 		settings.setAllDefaultSettings = static_cast<bool>(j.value("setAllDefaultSettings", false));
 		SetMCMBool("setAllDefaultSettings",settings.setAllDefaultSettings);
 		settings.consAllowFollowers = static_cast<bool>(j.value("consAllowFollowers", false));
@@ -1460,6 +1468,7 @@ namespace DCURSES {
 		settings.bossExtraGold = GetMCMSetting("bossExtraGold")->GetBool();
 		settings.useThemes = GetMCMSetting("useThemes")->GetBool();
 		settings.enableSlowStrip = GetMCMSetting("enableSlowStrip")->GetBool();
+		settings.resumeEvents = GetMCMSetting("resumeEvents")->GetBool();
 		settings.setAllDefaultSettings = GetMCMSetting("setAllDefaultSettings")->GetBool();
 		settings.consAllowFollowers = GetMCMSetting("consAllowFollowers")->GetBool();
 		settings.consUseRelationships = GetMCMSetting("consUseRelationships")->GetBool();
@@ -1483,6 +1492,10 @@ namespace DCURSES {
 		//CODEGEN_END_UPDATE
 		if (settings.setAllDefaultSettings) {
 			ResetMCMSettings();
+		}
+
+		if (settings.resumeEvents) {
+			SetMCMBool("ModDisabled", false);
 		}
 
 		counters.clock_SexTimeout -= 2;
