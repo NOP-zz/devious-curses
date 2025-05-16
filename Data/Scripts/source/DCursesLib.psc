@@ -8,6 +8,8 @@ function OnUpdate() global Native
 function SexStarted(Actor[] akActors) global Native
 function SexEnded(Actor[] akActors) global Native
 
+Function PauseEvents(Bool value) global Native
+
 string function GetAnimationFilterTags(Actor akActor) global Native
 string function GetAnimationFilterTagsP(Actor akActor) global Native
 

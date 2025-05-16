@@ -70,5 +70,11 @@ constexpr auto DDX_RED_CATSUIT = 0x3D8fC;
 				return (form && form->Is(T::FORMTYPE)) ? static_cast<T*>(form) : nullptr;
 			}
 		}
+
+		void InvalidateCache() {
+			mutex.lock();
+			_internalData = std::map<std::pair<uint32_t, std::string>, RE::TESForm*>();
+			mutex.unlock();
+		}
 	};
 }

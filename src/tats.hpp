@@ -145,7 +145,7 @@ namespace DCURSES {
 
 		using namespace jcontainers;
 		std::string mark = fmt::format("{:03}", index);
-		log::trace("adding tattoo {}", mark);
+		log::trace("adding tattoo glow {}", mark);
 		int a_template = JValue::addToPool(JMap::object(), "DCURSES");
 		int matches = JValue::addToPool(JArray::object(), "DCURSES");
 		int tattoo = 0;
@@ -168,7 +168,7 @@ namespace DCURSES {
 		tattoo = JValue::addToPool(JArray::getObj(matches, 0), "DCURSES");
 		JMap::setInt(tattoo, "color", color);
 		JMap::setInt(tattoo, "glow", glow);
-		JMap::setInt(tattoo, "locked", 1);
+		//JMap::setInt(tattoo, "locked", 1);
 		JMap::setFlt(tattoo, "invertedAlpha", 0.0f);
 
 		JArray::clear(matches);
@@ -200,7 +200,7 @@ namespace DCURSES {
 
 		using namespace jcontainers;
 		std::string mark = fmt::format("{:03}", index);
-		log::trace("adding tattoo glow {}", mark);
+		log::trace("adding tattoo {}", mark);
 		int a_template = JValue::addToPool(JMap::object(), "DCURSES");
 		int matches = JValue::addToPool(JArray::object(), "DCURSES");
 		int tattoo = 0;
@@ -217,7 +217,7 @@ namespace DCURSES {
 		tattoo = JValue::addToPool(JArray::getObj(matches, 0), "DCURSES");
 		JMap::setInt(tattoo, "color", color);
 		JMap::setInt(tattoo, "glow", glow);
-		JMap::setInt(tattoo, "locked", 1);
+		//JMap::setInt(tattoo, "locked", 1);
 		JMap::setFlt(tattoo, "invertedAlpha", 0.0f);
 
 		JArray::clear(matches);

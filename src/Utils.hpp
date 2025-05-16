@@ -166,7 +166,7 @@ namespace DCURSES {
 				size_t i1 = comp.find('(');
 				size_t i2 = findMatchingParen(comp, i1);
 				std::string p1 = comp.substr(0, i1);
-				std::string p2 = testFormComp(comp.substr(i1 + 1, i2 - i1 - 1), form) ? "valueTrue" : "valueFalse";
+				std::string p2 = testFormComp(comp.substr(i1 + 1, i2 - i1 - 1), form) ? "" : "!";
 				std::string p3 = comp.substr(i2 + 1);
 				return testFormComp(p1 + p2 + p3, form);
 			}
@@ -192,8 +192,6 @@ namespace DCURSES {
 				return !testFormComp(comp.substr(1), form);
 			}
 			else {
-				if (comp == "valueTrue") return true;
-				else if (comp == "valueFalse") return false;
 				return
 					tolower(form->GetName()).find(tolower(comp)) != std::string::npos ||
 					tolower(GetFormEditorId(form)).find(tolower(comp)) != std::string::npos;

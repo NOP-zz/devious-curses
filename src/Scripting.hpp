@@ -24,6 +24,30 @@ namespace DCURSES {
         return true;
     }
 
+    bool CheckRapeTattoos() {
+        RE::TESForm* form = RE::TESDataHandler::GetSingleton()->LookupForm(0xd62, "RapeTattoos.esp");
+        if (form == nullptr) {
+            return false;
+        }
+        return true;
+    }
+
+    bool CheckUD() {
+        RE::TESForm* form = RE::TESDataHandler::GetSingleton()->LookupForm(0x5901, "UnforgivingDevices.esp");
+        if (form == nullptr) {
+            return false;
+        }
+        return true;
+    }
+
+    bool CheckSimpleSlavery() {
+        RE::TESForm* form = RE::TESDataHandler::GetSingleton()->LookupForm(0x492e, "SimpleSlavery.esp");
+        if (form == nullptr) {
+            return false;
+        }
+        return true;
+    }
+
     RE::BSScript::Variable* GetMCMSetting(std::string name) {
         
         RE::TESForm* form = RE::TESDataHandler::GetSingleton()->LookupForm(DCURSES_MCM, "Devious Curses.esp");
@@ -37,6 +61,14 @@ namespace DCURSES {
             return nullptr;
         }
         return variable;
+    }
+
+    bool IsModDisabled() {
+        auto v = GetMCMSetting("ModSuspended");
+        if (v && v->IsBool()) {
+            return v->GetBool();
+        }
+        return false;
     }
 
     void SetMCMSetting(std::string name, RE::BSScript::Variable& value) {
@@ -76,16 +108,6 @@ namespace DCURSES {
     int GetActorArousal(RE::Actor* actor) {
         auto faction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x03fc36, "SexLabAroused.esm");
         return actor->GetFactionRank(faction, actor == RE::PlayerCharacter::GetSingleton());
-    }
-
-    void StartPapyrusTimer() {
-        RE::TESForm* mcm = StaticDataHolder::GetSingleton()->LookupForm<RE::TESForm>(DCURSES_MCM, "Devious Curses.esp");
-        auto handle = GetHP()->GetHandleForObject(RE::FormType::Quest, mcm);
-        RE::BSTSmartPointer<RE::BSScript::Object> mcmObject;
-        GetVM()->FindBoundObject(handle, "DCurses_MCM", mcmObject);
-
-        RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> callback;
-        GetVM()->DispatchMethodCall(mcmObject, "OnGameStarted", new RE::BSScript::ZeroFunctionArguments, callback);
     }
 
     void StartSex(RE::Actor* aggressor) {
@@ -236,8 +258,8 @@ namespace DCURSES {
 
     void RTDoTattooEvent(RE::Actor* akActor, int count) {
         RE::BSTSmartPointer<RE::BSScript::Object> rapeTatsObject;
-        RE::TESForm* sla = RE::TESDataHandler::GetSingleton()->LookupForm(std::stoi("d62", 0, 16), "RapeTattoos.esp");
-        RE::VMHandle hand = GetHP()->GetHandleForObject(RE::FormType::Quest, sla);
+        RE::TESForm* form = RE::TESDataHandler::GetSingleton()->LookupForm(0xd62, "RapeTattoos.esp");
+        RE::VMHandle hand = GetHP()->GetHandleForObject(RE::FormType::Quest, form);
         GetVM()->FindBoundObject(hand, "rapeTattoos", rapeTatsObject);
 
         if (akActor == nullptr) { return; }

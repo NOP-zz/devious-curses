@@ -5,15 +5,17 @@ function UpdateSKSE() global Native
 bool function CheckSTNG() global Native
 bool function CheckLM() global Native
 
-Perk Property PerkLooted Auto
+Bool Property ModSuspended = False Auto Hidden
 
-Event OnGameStarted()
-	Debug.trace("DCurses player alias on load game")
+Function StartTimer()
+	Debug.trace("DCurses Timer Started")
 	UnregisterForUpdate()
 	RegisterForUpdate(1)
 	RegisterForModEvent("HookAnimationStart", "OnSexStart")
 	RegisterForModEvent("HookAnimationEnd", "OnSexEnd")
-EndEvent
+	RegisterForModEvent("dhlp-Suspend", "OnDhlpSuspend")
+	RegisterForModEvent("dhlp-Resume", "OnDhlpResume")
+EndFunction
 
 Event OnUpdate()
 	DCursesLib.OnUpdate()
@@ -37,7 +39,18 @@ Event OnSexStart(int tid, bool HasPlayer)
 	EndIf
 EndEvent
 
+;dhlp event handlers
+Event OnDhlpSuspend( string eventName, string strArg, float numArg, Form sender )
+    ModSuspended = True
+EndEvent
 
+Event OnDhlpResume( string eventName, string strArg, float numArg, Form sender )
+    ModSuspended = False
+EndEvent
+
+
+Int Property minGoldRequired = 20 Auto
+Int minGoldRequiredOID
 Int Property eventScalingMod = 15 Auto
 Int eventScalingModOID
 Int Property minRestraints = 1 Auto
@@ -138,6 +151,8 @@ Int Property eventOppressiveWeight = 15 Auto
 Int eventOppressiveWeightOID
 Int Property eventContraptionWeight = 25 Auto
 Int eventContraptionWeightOID
+Int Property eventContDeviceOverride = 0 Auto
+Int eventContDeviceOverrideOID
 Int Property eventTattooWeight = 15 Auto
 Int eventTattooWeightOID
 Int Property eventTattooMin = 1 Auto
@@ -340,6 +355,10 @@ Bool Property preferRelevantKeys = true Auto
 Int preferRelevantKeysOID
 Bool Property vanishingKeys = true Auto
 Int vanishingKeysOID
+Bool Property eventContDevices = true Auto
+Int eventContDevicesOID
+Bool Property eventContAllDevices = false Auto
+Int eventContAllDevicesOID
 Bool Property LMBrandingPunish = true Auto
 Int LMBrandingPunishOID
 Bool Property LMNudityChestOnly = false Auto
@@ -368,6 +387,8 @@ Bool Property useThemes = false Auto
 Int useThemesOID
 Bool Property enableSlowStrip = false Auto
 Int enableSlowStripOID
+Bool Property resumeEvents = false Auto
+Int resumeEventsOID
 Bool Property setAllDefaultSettings = false Auto
 Int setAllDefaultSettingsOID
 Bool Property consAllowFollowers = false Auto
@@ -435,10 +456,12 @@ Function Initialize()
 EndFunction
 
 Event OnConfigInit()
+	StartTimer()
 	Initialize()
 EndEvent
 
 Event OnConfigOpen()
+	StartTimer()
 	Initialize()
 EndEvent
 
@@ -493,6 +516,7 @@ Event OnPageReset(string page)
 		onlyLockedDoorsOID = AddToggleOption("Only Locked Doors  ", onlyLockedDoors, 0)
 		lockedModifierOID = AddSliderOption("Locked Modifier  ", lockedModifier, "{1}x", 0)
 		lockDifficultyModifierOID = AddSliderOption("Lock Difficulty Modifier  ", lockDifficultyModifier, "{1}", 0)
+		minGoldRequiredOID = AddSliderOption("Container Gold Value  ", minGoldRequired, "{0}", 0)
 		eventScalingOID = AddToggleOption("Event Scaling  ", eventScaling, 0)
 		eventScalingModOID = AddSliderOption("Event Scaling Target  ", eventScalingMod, "{0}", 0)
 		SetCursorPosition(1)
@@ -581,6 +605,10 @@ Event OnPageReset(string page)
 		AddHeaderOption("Contraption Curse ")
 		eventContraptionWeightOID = AddSliderOption("Contraption Curse Weight  ", eventContraptionWeight, "{0}", 0)
 		eventContraptionTimeOID = AddSliderOption("Contraption Release Time  ", eventContraptionTime, "{1}", 0)
+		eventContDevicesOID = AddToggleOption("Contraption Devices  ", eventContDevices, 0)
+		eventContAllDevicesOID = AddToggleOption("Use All Devices  ", eventContAllDevices, 0)
+		eventContDeviceOverrideOID = AddSliderOption("Device Count Override  ", eventContDeviceOverride, "{0}", 0)
+		SetCursorPosition(1)
 		AddHeaderOption("Tattoo Curse ")
 		eventTattooWeightOID = AddSliderOption("Tattoo Curse Weight  ", eventTattooWeight, "{0}", flag_RapeTats)
 		eventTattooMinOID = AddSliderOption("Tattoo Curse Min  ", eventTattooMin, "{0}", flag_RapeTats)
@@ -664,6 +692,10 @@ Event OnPageReset(string page)
 		enableQIMalkoranOID = AddToggleOption("Malkoran  ", enableQIMalkoran, 0)
 		enableQISanguineOID = AddToggleOption("Sanguine  ", enableQISanguine, 0)
 	Elseif page == "Misc "
+		int flag_events_disabled = 1
+		If ModSuspended
+			flag_events_disabled = 0
+		EndIf
 		noMessageBoxesOID = AddToggleOption("Remove Message Boxes  ", noMessageBoxes, 0)
 		bossChestUseModelPathOID = AddToggleOption("Boss Chest Models  ", bossChestUseModelPath, 0)
 		rDeviceBaseChanceOID = AddSliderOption("Device Base Chance  ", rDeviceBaseChance, "{1}%", 0)
@@ -673,6 +705,7 @@ Event OnPageReset(string page)
 		SetCursorPosition(1)
 		enableSlowStripOID = AddToggleOption("Use Sexlab Strip  ", enableSlowStrip, 0)
 		tatSolventChanceOID = AddSliderOption("Universal Solvent Chance  ", tatSolventChance, "{1}", 0)
+		resumeEventsOID = AddToggleOption("Resume Events  ", resumeEvents, flag_events_disabled)
 		setAllDefaultSettingsOID = AddToggleOption("Return to Default [WARNING]  ", setAllDefaultSettings, 0)
 	Elseif page == "Consequences "
 		AddHeaderOption("Triggers ")
@@ -791,6 +824,10 @@ Event OnOptionHighlight(int option)
 	Endif
 	If option == lockDifficultyModifierOID
 		SetInfoText("If this is greater than 1, locked things will have a higher chance to cause a curse the harder the lock is to pick.\nIf set to 10 a master level lock will multiply the chance by 10 while an adept lock would multiply the chance by 5.")
+		Return
+	Endif
+	If option == minGoldRequiredOID
+		SetInfoText("Requires a container to have at least this total value of items in it to trigger any events.")
 		Return
 	Endif
 	If option == eventScalingOID
@@ -1065,6 +1102,18 @@ Event OnOptionHighlight(int option)
 		SetInfoText("Will be automatically released after this many in game hours. Set to 0 to disable automatic release.")
 		Return
 	Endif
+	If option == eventContDevicesOID
+		SetInfoText("Will allow certain devices such as collars, gags, cuffs, and plugs to be equipped when triggering a contraption event.\nWill follow all other rules set for devices.")
+		Return
+	Endif
+	If option == eventContAllDevicesOID
+		SetInfoText("Will allow any device other than heavy bondage to be equipped when triggering a contraption event.\nWill follow all other rules set for devices.")
+		Return
+	Endif
+	If option == eventContDeviceOverrideOID
+		SetInfoText("When equipping devices for contraption events this number will be used instead of the min / max on the main page.\nSet to 0 to use the default number of devices.")
+		Return
+	Endif
 	If option == eventTattooWeightOID
 		SetInfoText("Chance to receive random tattoos.\nRequires Rape Tattoos.")
 		Return
@@ -1311,6 +1360,10 @@ Event OnOptionHighlight(int option)
 	Endif
 	If option == tatSolventChanceOID
 		SetInfoText("Chance to find universal solvent when looting dead bodies. Universal solvent will remove all lewd marks and tattoos.\nHaving more tattoos will slightly increase the chance of finding one.\nSet to 0 to disable.")
+		Return
+	Endif
+	If option == resumeEventsOID
+		SetInfoText("Events have been disabled by another mod. Enable this and exit the MCM to re-enable events.")
 		Return
 	Endif
 	If option == setAllDefaultSettingsOID
@@ -1580,6 +1633,16 @@ Event OnOptionSelect(int option)
 		SetToggleOptionValue(vanishingKeysOID, vanishingKeys)
 		Return
 	Endif
+	If option == eventContDevicesOID
+		eventContDevices = !eventContDevices
+		SetToggleOptionValue(eventContDevicesOID, eventContDevices)
+		Return
+	Endif
+	If option == eventContAllDevicesOID
+		eventContAllDevices = !eventContAllDevices
+		SetToggleOptionValue(eventContAllDevicesOID, eventContAllDevices)
+		Return
+	Endif
 	If option == LMBrandingPunishOID
 		LMBrandingPunish = !LMBrandingPunish
 		SetToggleOptionValue(LMBrandingPunishOID, LMBrandingPunish)
@@ -1649,6 +1712,11 @@ Event OnOptionSelect(int option)
 	If option == enableSlowStripOID
 		enableSlowStrip = !enableSlowStrip
 		SetToggleOptionValue(enableSlowStripOID, enableSlowStrip)
+		Return
+	Endif
+	If option == resumeEventsOID
+		resumeEvents = !resumeEvents
+		SetToggleOptionValue(resumeEventsOID, resumeEvents)
 		Return
 	Endif
 	If option == setAllDefaultSettingsOID
@@ -1751,6 +1819,13 @@ Event OnOptionSelect(int option)
 EndEvent
 
 Event OnOptionSliderOpen(int option)
+	If option == minGoldRequiredOID
+		SetSliderDialogStartValue(minGoldRequired)
+		SetSliderDialogDefaultValue(20)
+		SetSliderDialogRange(0, 5000)
+		SetSliderDialogInterval(10)
+		Return
+	Endif
 	If option == eventScalingModOID
 		SetSliderDialogStartValue(eventScalingMod)
 		SetSliderDialogDefaultValue(15)
@@ -2098,6 +2173,13 @@ Event OnOptionSliderOpen(int option)
 		SetSliderDialogStartValue(eventContraptionWeight)
 		SetSliderDialogDefaultValue(25)
 		SetSliderDialogRange(0, 500)
+		SetSliderDialogInterval(1)
+		Return
+	Endif
+	If option == eventContDeviceOverrideOID
+		SetSliderDialogStartValue(eventContDeviceOverride)
+		SetSliderDialogDefaultValue(0)
+		SetSliderDialogRange(0, 10)
 		SetSliderDialogInterval(1)
 		Return
 	Endif
@@ -2728,6 +2810,12 @@ EndEvent
 
 Event OnOptionSliderAccept(int option, float value)
 
+	If option == minGoldRequiredOID
+		minGoldRequired = value as int
+		SetSliderOptionValue(option, value, "{0}")
+		
+		Return
+	Endif
 	If option == eventScalingModOID
 		eventScalingMod = value as int
 		SetSliderOptionValue(option, value, "{0}")
@@ -3024,6 +3112,12 @@ Event OnOptionSliderAccept(int option, float value)
 	Endif
 	If option == eventContraptionWeightOID
 		eventContraptionWeight = value as int
+		SetSliderOptionValue(option, value, "{0}")
+		
+		Return
+	Endif
+	If option == eventContDeviceOverrideOID
+		eventContDeviceOverride = value as int
 		SetSliderOptionValue(option, value, "{0}")
 		
 		Return

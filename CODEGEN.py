@@ -126,15 +126,17 @@ function UpdateSKSE() global Native
 bool function CheckSTNG() global Native
 bool function CheckLM() global Native
 
-Perk Property PerkLooted Auto
+Bool Property ModSuspended = False Auto Hidden
 
-Event OnGameStarted()
-	Debug.trace("DCurses player alias on load game")
+Function StartTimer()
+	Debug.trace("DCurses Timer Started")
 	UnregisterForUpdate()
 	RegisterForUpdate(1)
 	RegisterForModEvent("HookAnimationStart", "OnSexStart")
 	RegisterForModEvent("HookAnimationEnd", "OnSexEnd")
-EndEvent
+	RegisterForModEvent("dhlp-Suspend", "OnDhlpSuspend")
+	RegisterForModEvent("dhlp-Resume", "OnDhlpResume")
+EndFunction
 
 Event OnUpdate()
 	DCursesLib.OnUpdate()
@@ -156,6 +158,15 @@ Event OnSexStart(int tid, bool HasPlayer)
 		Actor[] positions = thread.positions
 		DCursesLib.SexStarted(positions)
 	EndIf
+EndEvent
+
+;dhlp event handlers
+Event OnDhlpSuspend( string eventName, string strArg, float numArg, Form sender )
+    ModSuspended = True
+EndEvent
+
+Event OnDhlpResume( string eventName, string strArg, float numArg, Form sender )
+    ModSuspended = False
 EndEvent
 
 """
@@ -180,10 +191,12 @@ ConfigInit += "\nEndFunction"
 ConfigInit += """
 
 Event OnConfigInit()
+	StartTimer()
 	Initialize()
 EndEvent
 
 Event OnConfigOpen()
+	StartTimer()
 	Initialize()
 EndEvent
 """
@@ -384,5 +397,3 @@ devices_raw = pre + mid + post
 
 with open(r"src\Devices.hpp", "w") as f:
 	f.write(devices_raw)
-
-time.sleep(1.0)

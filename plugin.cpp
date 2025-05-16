@@ -51,6 +51,10 @@ namespace DCURSES {
     }
 
     void P_OnUpdate(RE::StaticFunctionTag*) {
+        if (IsModDisabled()) {
+            log::trace("Event timer skipped, mod is disabled.");
+            return;
+        }
         auto c1 = std::chrono::high_resolution_clock::now();
         EventsUpdate();
         auto c2 = std::chrono::high_resolution_clock::now();
@@ -98,15 +102,17 @@ namespace DCURSES {
         else {
             DoLewdMarkEvent("", false);
         }
-        */
+        //*/
 
+        //*
         auto ref = GetContraptionForActor(player);
         if (ref) {
             ContraptionsUnlockActor(player);
         }
         else {
-            CreateAndLockContraption(player);
+            DoContraptionEvent("fjdskjfhjskl");
         }
+        //*/
 
     }
 
@@ -171,6 +177,8 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
         case SKSE::MessagingInterface::kPostLoadGame: {
             DCURSES::MGEFOnGameLoad();
 
+            DCURSES::StaticDataHolder::GetSingleton()->InvalidateCache();
+
             bool DDNG_loaded = DeviousDevicesAPI::LoadAPI();
 
             if (!DDNG_loaded) {
@@ -185,7 +193,6 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
                 log::info("Quick Loot IE Not Loaded.");
             }
 
-            DCURSES::StartPapyrusTimer();
             DCURSES::EventsStartup();
 
             DCURSES::LoadMCMSettings();
