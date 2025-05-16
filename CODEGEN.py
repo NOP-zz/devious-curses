@@ -397,5 +397,3 @@ devices_raw = pre + mid + post
 
 with open(r"src\Devices.hpp", "w") as f:
 	f.write(devices_raw)
-
-time.sleep(1.0)

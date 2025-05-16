@@ -38,6 +38,7 @@ namespace DCURSES {
 		bool onlyLockedDoors = true;			//Only Locked Doors//Only trigger events when the door is locked.
 		float lockedModifier = 2;				//Locked Modifier//Modifier for locked doors and chests.\nThis will not apply if the lock requires a key or you already have the key to the lock.//{1}x//(0,10,0.1)
 		float lockDifficultyModifier = 1.3f;	//Lock Difficulty Modifier//If this is greater than 1, locked things will have a higher chance to cause a curse the harder the lock is to pick.\nIf set to 10 a master level lock will multiply the chance by 10 while an adept lock would multiply the chance by 5.//{1}//(1,10,0.1)
+		int minGoldRequired = 20;				//Container Gold Value//Requires a container to have at least this total value of items in it to trigger any events.//{0}//(0,5000,10)
 		bool eventScaling = true;				//Event Scaling//Make events less likely right after triggering one, and more likely if not triggered in a while.
 		int eventScalingMod = 15;				//Event Scaling Target//The number of events before traps start becoming more likely.//{0}//(1,50,1)
 		//Column
@@ -125,8 +126,11 @@ namespace DCURSES {
 		//Header Oppresive Curse
 		int eventOppressiveWeight = 15;			//Oppressive Curse Weight//Chance to receive an oppressive device event.//{0}//(0,500,1)
 		//Header Contraption Curse
-		int eventContraptionWeight = 25;		//Contraption Curse Weight//Chance to be bound in a contraption from DDC.//{0}//(0,500,1)
-		float eventContraptionTime = 0.0;		//Contraption Release Time//Will be automatically released after this many in game hours. Set to 0 to disable automatic release.//{1}//(0,24,0.1)
+		int eventContraptionWeight = 25;		//Contraption Curse Weight//Chance to be bound in a contraption from DDC.//{0}//(0,500,1)																											
+		float eventContraptionTime = 0.0;		//Contraption Release Time//Will be automatically released after this many in game hours. Set to 0 to disable automatic release.//{1}//(0,24,0.1)													
+		bool eventContDevices = true;			//Contraption Devices//Will allow certain devices such as collars, gags, cuffs, and plugs to be equipped when triggering a contraption event.\nWill follow all other rules set for devices.			
+		bool eventContAllDevices = false;		//Use All Devices//Will allow any device other than heavy bondage to be equipped when triggering a contraption event.\nWill follow all other rules set for devices.									
+		int eventContDeviceOverride = 0;		//Device Count Override//When equipping devices for contraption events this number will be used instead of the min / max on the main page.\nSet to 0 to use the default number of devices.//{0}//(0,10,1)
 		//Column
 		//Header Tattoo Curse
 		int eventTattooWeight = 15;				//Tattoo Curse Weight//Chance to receive random tattoos.\nRequires Rape Tattoos.//{0}//(0,500,1)							?:? flag_RapeTats
@@ -304,6 +308,8 @@ namespace DCURSES {
 
 	void ResetMCMSettings() {
 		//CODEGEN_START_RESET
+		settings.minGoldRequired = 20;
+		SetMCMInt("minGoldRequired",settings.minGoldRequired);
 		settings.eventScalingMod = 15;
 		SetMCMInt("eventScalingMod",settings.eventScalingMod);
 		settings.minRestraints = 1;
@@ -404,6 +410,8 @@ namespace DCURSES {
 		SetMCMInt("eventOppressiveWeight",settings.eventOppressiveWeight);
 		settings.eventContraptionWeight = 25;
 		SetMCMInt("eventContraptionWeight",settings.eventContraptionWeight);
+		settings.eventContDeviceOverride = 0;
+		SetMCMInt("eventContDeviceOverride",settings.eventContDeviceOverride);
 		settings.eventTattooWeight = 15;
 		SetMCMInt("eventTattooWeight",settings.eventTattooWeight);
 		settings.eventTattooMin = 1;
@@ -616,6 +624,10 @@ namespace DCURSES {
 		SetMCMBool("preferRelevantKeys",settings.preferRelevantKeys);
 		settings.vanishingKeys = true;
 		SetMCMBool("vanishingKeys",settings.vanishingKeys);
+		settings.eventContDevices = true;
+		SetMCMBool("eventContDevices",settings.eventContDevices);
+		settings.eventContAllDevices = false;
+		SetMCMBool("eventContAllDevices",settings.eventContAllDevices);
 		settings.LMBrandingPunish = true;
 		SetMCMBool("LMBrandingPunish",settings.LMBrandingPunish);
 		settings.LMNudityChestOnly = false;
@@ -693,6 +705,7 @@ namespace DCURSES {
 		std::ofstream o(SETTINGS_FILE);
 		nlohmann::json j = nlohmann::json{
 			//CODEGEN_START_TOJSON
+			{"minGoldRequired", settings.minGoldRequired},
 			{"eventScalingMod", settings.eventScalingMod},
 			{"minRestraints", settings.minRestraints},
 			{"maxRestraints", settings.maxRestraints},
@@ -743,6 +756,7 @@ namespace DCURSES {
 			{"eventStandardBossReduction", settings.eventStandardBossReduction},
 			{"eventOppressiveWeight", settings.eventOppressiveWeight},
 			{"eventContraptionWeight", settings.eventContraptionWeight},
+			{"eventContDeviceOverride", settings.eventContDeviceOverride},
 			{"eventTattooWeight", settings.eventTattooWeight},
 			{"eventTattooMin", settings.eventTattooMin},
 			{"eventTattooMax", settings.eventTattooMax},
@@ -844,6 +858,8 @@ namespace DCURSES {
 			{"keyForgiveness", settings.keyForgiveness},
 			{"preferRelevantKeys", settings.preferRelevantKeys},
 			{"vanishingKeys", settings.vanishingKeys},
+			{"eventContDevices", settings.eventContDevices},
+			{"eventContAllDevices", settings.eventContAllDevices},
 			{"LMBrandingPunish", settings.LMBrandingPunish},
 			{"LMNudityChestOnly", settings.LMNudityChestOnly},
 			{"oppSCollarDrainsMagicka", settings.oppSCollarDrainsMagicka},
@@ -910,6 +926,8 @@ namespace DCURSES {
 		}
 
 		//CODEGEN_START_FROMJSON
+		settings.minGoldRequired = static_cast<int>(j.value("minGoldRequired", 20));
+		SetMCMInt("minGoldRequired",settings.minGoldRequired);
 		settings.eventScalingMod = static_cast<int>(j.value("eventScalingMod", 15));
 		SetMCMInt("eventScalingMod",settings.eventScalingMod);
 		settings.minRestraints = static_cast<int>(j.value("minRestraints", 1));
@@ -1010,6 +1028,8 @@ namespace DCURSES {
 		SetMCMInt("eventOppressiveWeight",settings.eventOppressiveWeight);
 		settings.eventContraptionWeight = static_cast<int>(j.value("eventContraptionWeight", 25));
 		SetMCMInt("eventContraptionWeight",settings.eventContraptionWeight);
+		settings.eventContDeviceOverride = static_cast<int>(j.value("eventContDeviceOverride", 0));
+		SetMCMInt("eventContDeviceOverride",settings.eventContDeviceOverride);
 		settings.eventTattooWeight = static_cast<int>(j.value("eventTattooWeight", 15));
 		SetMCMInt("eventTattooWeight",settings.eventTattooWeight);
 		settings.eventTattooMin = static_cast<int>(j.value("eventTattooMin", 1));
@@ -1222,6 +1242,10 @@ namespace DCURSES {
 		SetMCMBool("preferRelevantKeys",settings.preferRelevantKeys);
 		settings.vanishingKeys = static_cast<bool>(j.value("vanishingKeys", true));
 		SetMCMBool("vanishingKeys",settings.vanishingKeys);
+		settings.eventContDevices = static_cast<bool>(j.value("eventContDevices", true));
+		SetMCMBool("eventContDevices",settings.eventContDevices);
+		settings.eventContAllDevices = static_cast<bool>(j.value("eventContAllDevices", false));
+		SetMCMBool("eventContAllDevices",settings.eventContAllDevices);
 		settings.LMBrandingPunish = static_cast<bool>(j.value("LMBrandingPunish", true));
 		SetMCMBool("LMBrandingPunish",settings.LMBrandingPunish);
 		settings.LMNudityChestOnly = static_cast<bool>(j.value("LMNudityChestOnly", false));
@@ -1298,6 +1322,7 @@ namespace DCURSES {
 	void P_UpdateSKSE(RE::StaticFunctionTag*) {
 		log::trace("Called Update SKSE");
 		//CODEGEN_START_UPDATE
+		settings.minGoldRequired = GetMCMSetting("minGoldRequired")->GetSInt();
 		settings.eventScalingMod = GetMCMSetting("eventScalingMod")->GetSInt();
 		settings.minRestraints = GetMCMSetting("minRestraints")->GetSInt();
 		settings.maxRestraints = GetMCMSetting("maxRestraints")->GetSInt();
@@ -1348,6 +1373,7 @@ namespace DCURSES {
 		settings.eventStandardBossReduction = GetMCMSetting("eventStandardBossReduction")->GetSInt();
 		settings.eventOppressiveWeight = GetMCMSetting("eventOppressiveWeight")->GetSInt();
 		settings.eventContraptionWeight = GetMCMSetting("eventContraptionWeight")->GetSInt();
+		settings.eventContDeviceOverride = GetMCMSetting("eventContDeviceOverride")->GetSInt();
 		settings.eventTattooWeight = GetMCMSetting("eventTattooWeight")->GetSInt();
 		settings.eventTattooMin = GetMCMSetting("eventTattooMin")->GetSInt();
 		settings.eventTattooMax = GetMCMSetting("eventTattooMax")->GetSInt();
@@ -1454,6 +1480,8 @@ namespace DCURSES {
 		settings.keyForgiveness = GetMCMSetting("keyForgiveness")->GetBool();
 		settings.preferRelevantKeys = GetMCMSetting("preferRelevantKeys")->GetBool();
 		settings.vanishingKeys = GetMCMSetting("vanishingKeys")->GetBool();
+		settings.eventContDevices = GetMCMSetting("eventContDevices")->GetBool();
+		settings.eventContAllDevices = GetMCMSetting("eventContAllDevices")->GetBool();
 		settings.LMBrandingPunish = GetMCMSetting("LMBrandingPunish")->GetBool();
 		settings.LMNudityChestOnly = GetMCMSetting("LMNudityChestOnly")->GetBool();
 		settings.oppSCollarDrainsMagicka = GetMCMSetting("oppSCollarDrainsMagicka")->GetBool();
@@ -1495,7 +1523,7 @@ namespace DCURSES {
 		}
 
 		if (settings.resumeEvents) {
-			SetMCMBool("ModDisabled", false);
+			SetMCMBool("ModSuspended", false);
 		}
 
 		counters.clock_SexTimeout -= 2;

@@ -94,7 +94,7 @@ namespace DCURSES {
         log::trace("DCURSES test");
         auto player = RE::PlayerCharacter::GetSingleton();
         
-        
+        /*
         auto mark = GetLewdMark();
         if (mark) {
             RemoveLewdMark();
@@ -102,16 +102,17 @@ namespace DCURSES {
         else {
             DoLewdMarkEvent("", false);
         }
+        //*/
 
-        /*
+        //*
         auto ref = GetContraptionForActor(player);
         if (ref) {
             ContraptionsUnlockActor(player);
         }
         else {
-            CreateAndLockContraption(player);
+            DoContraptionEvent("fjdskjfhjskl");
         }
-        */
+        //*/
 
     }
 

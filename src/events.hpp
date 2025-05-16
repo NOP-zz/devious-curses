@@ -297,8 +297,17 @@ namespace DCURSES {
     bool DoContraptionEvent(std::string containerName) {
         auto player = RE::PlayerCharacter::GetSingleton();
 
+        if (settings.eventContAllDevices) {
+            DoStandardEvent(false, "", "", settings.eventContDeviceOverride, { "zad_DeviousHeavyBondage" });
+        }
+        else if (settings.eventContDevices) {
+            DoStandardEvent(false, "", "", settings.eventContDeviceOverride, { "zad_DeviousHeavyBondage", "zad_DeviousBelt", "zad_DeviousBra", "zad_DeviousHarness", "zad_DeviousBlindfold", "zad_DeviousHood", "zad_DeviousBoots", "zad_DeviousGloves", "zad_DeviousSuit", "zad_DeviousCorset"});
+        }
+
         CreateAndLockContraption(player);
         SendModEventContraption(player, containerName);
+
+        PlayerMessage(fmt::format("As you touch the {} you feel yourself get dizzy as you are strung up into some sort of contraption!", containerName));
 
         return true;
     }
@@ -461,6 +470,7 @@ namespace DCURSES {
         bool isLocked = false;
         bool isDragon = false;
         int lockLevel = 0;
+        int goldValue = 0;
     };
 
     ContainerData GetContainerData(RE::TESObjectREFR* activatedObject) {
@@ -494,6 +504,9 @@ namespace DCURSES {
             for (auto const& [k, v] : inventory) {
                 if (v.second->IsLeveled()) {
                     data.isLeveled = true;
+                }
+                if (k->GetGoldValue() > 0) {
+                    data.goldValue += k->GetGoldValue() * v.first;
                 }
             }
 
@@ -655,6 +668,11 @@ namespace DCURSES {
 
         if (data.isDoor && !data.isLocked && settings.onlyLockedDoors) {
             log::trace("No event: Only locked doors.");
+            return;
+        }
+
+        if (data.goldValue < settings.minGoldRequired && !data.isDoor) {
+            log::trace("No event: Not enough gold value ({} < {})", data.goldValue, settings.minGoldRequired);
             return;
         }
 
@@ -1012,7 +1030,6 @@ namespace DCURSES {
             SetMCMInt("eventLewdMarkWeight", 0);
         }
         if (!CheckRapeTattoos()) {
-            log::info("Setting tattoo weight to 0");
             settings.eventTattooWeight = 0;
             SetMCMInt("eventTattooWeight", 0);
             settings.LMBrandingChance = 0;
