@@ -143,7 +143,7 @@ namespace DCURSES {
 
 		auto player = RE::PlayerCharacter::GetSingleton();
 
-		auto heavy = GetWornDeviceByKeyword(player, "zad_DeviousHeavyBondage");
+		auto heavy = GetWornInventoryDeviceByKeyword(player, "zad_DeviousHeavyBondage");
 		if (heavy && !(source == consequenceSource::kSex)) {
 			UnlockDevice(player, heavy);
 			PlayerMessage(fmt::format("{} feels bad for you and unlocks your restraints.", actor->GetName()));
@@ -244,7 +244,7 @@ namespace DCURSES {
 				}
 			}
 		}
-		if (GetWornDeviceByKeyword(player, "zad_DeviousHeavyBondage") && Util::randomDouble() < settings.consTriggerRestrained) {
+		if (GetWornInventoryDeviceByKeyword(player, "zad_DeviousHeavyBondage") && Util::randomDouble() < settings.consTriggerRestrained) {
 			log::trace("Bondage Trigger");
 			if (DoConsequence(actor, consequenceSource::kRestrained)) {
 				//actor->EndDialogue();

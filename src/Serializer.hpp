@@ -11,11 +11,11 @@ namespace DCURSES {
     public:
         int64_t clock_SexTimeout = 0;
         int64_t clock_lastSex = 0;
-        int64_t clock_LMEventTimer = 0;
+        uint64_t clock_GlobalTicker = 0;
         void tick() {
             clock_SexTimeout += 1;
             clock_lastSex += 1;
-            clock_LMEventTimer += 1;
+            clock_GlobalTicker += 1;
         }
         int64_t SinceLastKey = 0;
         int64_t SinceLastEvent = 0;

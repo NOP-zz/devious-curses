@@ -9,6 +9,8 @@ constexpr auto DCURSES_MCM = 0x800;
 
 // DEVICES
 constexpr auto SUMMONER_COLLAR = 0x810;
+constexpr auto LIVING_LATEX = 0x812;
+constexpr auto LIVING_LATEX_OPEN = 0x819;
 
 // KEYS
 constexpr auto MAGIC_KEY = 0x806;
@@ -25,6 +27,7 @@ constexpr auto NUDITY_EFFECT = 0x80F;
 constexpr auto BONDAGE_EFFECT = 0x811;
 constexpr auto BRANDING_EFFECT = 0x808;
 constexpr auto SUMMONER_COLLAR_EFFECT = 0x803;
+constexpr auto LIVING_LATEX_EFFECT = 0x816;
 
 // PERKS
 constexpr auto MGEF_CONTROLLER = 0x818;

@@ -16,6 +16,15 @@ constexpr auto EXCLUSIONS_FILE = "Data/SKSE/Plugins/DeviousCursesExclusions.json
 using namespace SKSE;
 
 namespace DCURSES {
+
+	static std::optional<std::filesystem::file_time_type> lastExclusionsEditTime = std::nullopt;
+
+	bool NeedUpdateForExclusions() {
+		if (lastExclusionsEditTime.has_value()) {
+			return lastExclusionsEditTime != std::filesystem::last_write_time(EXCLUSIONS_FILE);
+		}
+		return true;
+	}
 	
 	struct DeviceData {
 		RE::TESObjectARMO* inv;
@@ -415,6 +424,36 @@ namespace DCURSES {
 		return false;
 	}
 
+	bool DeviceInventoryIsGeneric(RE::TESObjectARMO* inv) {
+		if (!inv) { return false; }
+		auto rend = DeviousDevicesAPI::g_API->GetDeviceRender(inv);
+		if (!rend) { return false; }
+		if (
+			rend->HasKeywordString("zad_BlockGeneric") ||
+			rend->HasKeywordString("zad_QuestItem") ||
+			inv->HasKeywordString("zad_BlockGeneric") ||
+			inv->HasKeywordString("zad_QuestItem")
+			) {
+			return false;
+		}
+		return true;
+	}
+
+	bool DeviceRenderedIsGeneric(RE::TESObjectARMO* rend) {
+		if (!rend) { return false; }
+		auto inv = DeviousDevicesAPI::g_API->GetDeviceInventory(rend);
+		if (!inv) { return false; }
+		if (
+			rend->HasKeywordString("zad_BlockGeneric") ||
+			rend->HasKeywordString("zad_QuestItem") ||
+			inv->HasKeywordString("zad_BlockGeneric") ||
+			inv->HasKeywordString("zad_QuestItem")
+			) {
+			return false;
+		}
+		return true;
+	}
+
 	void createDevices() {
 		auto API = DeviousDevicesAPI::g_API;
 		if (!API) {
@@ -504,6 +543,8 @@ namespace DCURSES {
 			}
 		}
 		log::info("Total accepted devices: {}", counter);
+
+		lastExclusionsEditTime = std::filesystem::last_write_time(EXCLUSIONS_FILE);
 
 		//CODEGEN_START_DEVICES_NAMES
 		devices.belts.second = "belts";
@@ -603,7 +644,7 @@ namespace DCURSES {
 		return keys;
 	}
 
-	RE::TESObjectARMO* GetWornDeviceByKeyword(RE::Actor* actor, std::string keyword) {
+	RE::TESObjectARMO* GetWornInventoryDeviceByKeyword(RE::Actor* actor, std::string keyword) {
 		if (!actor) return nullptr;
 
 		auto inventory = actor->GetInventory();
@@ -1037,7 +1078,7 @@ namespace DCURSES {
 		auto inventory = actor->GetInventory();
 		for (auto const& [k, v] : inventory) {
 			RE::TESObjectARMO* armor = k->As<RE::TESObjectARMO>();
-			if (armor && armor->HasKeywordString("zad_InventoryDevice") && !armor->HasKeywordString("zad_BlockGeneric") && !armor->HasKeywordString("zad_QuestItem") && v.second.get() && v.second.get()->IsWorn()) {
+			if (armor && DeviceInventoryIsGeneric(armor) && v.second.get() && v.second.get()->IsWorn()) {
 				auto render = DeviousDevicesAPI::g_API->GetDeviceRender(armor);
 				if (render) {
 					removes.push_back(std::make_pair(armor, render));

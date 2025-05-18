@@ -32,6 +32,7 @@ namespace DCURSES {
             if (!activateEvent) return RE::BSEventNotifyControl::kContinue;
             auto activatedObject = activateEvent->objectActivated.get();
             auto activatingActor = activateEvent->actionRef.get();
+
             if (activatedObject && activatingActor && activatingActor == RE::PlayerCharacter::GetSingleton()) {
                 if (counters.clock_SexTimeout >= settings.sexSearchInterval - 1) {
                     counters.clock_SexTimeout = settings.sexSearchInterval - 3;
@@ -107,12 +108,14 @@ namespace DCURSES {
                     RemoveAllRestraints(player, true);
 
                     player->RemoveItem((RE::TESBoundObject*)magicKey, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+                    AIEventMagicKey();
                     PlayerMessage("All of the devices you were wearing have magically dissapeared!");
                 }
                 else if (equipmentForm == tattooCharm) {
                     RemoveAllTattoos(player);
 
                     player->RemoveItem((RE::TESBoundObject*)tattooCharm, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+                    AIEventTattooCharm();
                     PlayerMessage("All of your tattoos have faded from your body!");
                 }
             }
@@ -132,6 +135,35 @@ namespace DCURSES {
         }
     };
 
+    class MGEFEventSink : public RE::BSTEventSink<RE::TESMagicEffectApplyEvent>
+    {
+        virtual RE::BSEventNotifyControl ProcessEvent(const RE::TESMagicEffectApplyEvent* magicEvent, RE::BSTEventSource<RE::TESMagicEffectApplyEvent>*) override {
+            //OppDeviceOnHitEvent();
+            auto effect = RE::TESForm::LookupByID(magicEvent->magicEffect)->As<RE::EffectSetting>();
+            if (effect && 
+                    (effect->HasArchetype(RE::EffectSetting::Archetype::kValueModifier) || effect->HasArchetype(RE::EffectSetting::Archetype::kDualValueModifier)) &&
+                    effect->IsDetrimental() &&
+                    (effect->data.primaryAV == RE::ActorValue::kHealth || effect->data.secondaryAV == RE::ActorValue::kHealth)) {
+                if (effect->data.resistVariable == RE::ActorValue::kResistShock || Util::FormEditorIdContains(effect, "traprunelightning")) {
+                    OppDeviceOnHitEvent();
+                }
+            }
+            return RE::BSEventNotifyControl::kContinue;
+        }
+
+    public:
+        static void RegisterEvent() {
+            static MGEFEventSink eventSink;
+            auto ScriptEventSource = RE::ScriptEventSourceHolder::GetSingleton();
+            if (!ScriptEventSource) {
+                return;
+            }
+            ScriptEventSource->AddEventSink(&eventSink);
+
+            log::trace("Attached magic event sink.");
+        }
+    };
+
 
 
     void RegisterEventSinks() {
@@ -139,5 +171,6 @@ namespace DCURSES {
         EquipEventSink::RegisterEvent();
         //LocationEventSink::RegisterEvent();
         QuestStageEventSink::RegisterEvent();
+        MGEFEventSink::RegisterEvent();
     }
 }

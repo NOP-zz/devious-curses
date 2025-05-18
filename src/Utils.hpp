@@ -27,6 +27,18 @@ namespace DCURSES {
 			return randomDouble(0, 100);
 		}
 
+		float randomFloat(float min, float max) {
+			if (min >= max) {
+				return min;
+			}
+			auto seed1 = (unsigned int)std::chrono::system_clock::now().time_since_epoch().count();
+			std::mt19937 e2(seed1);
+			std::uniform_real_distribution<float> dist(min, max);
+			float x = dist(e2);
+			//log::trace("random: {}", x);
+			return x;
+		}
+
 		int randomInt(int min, int max) {
 			if (min >= max) {
 				return min;
@@ -228,6 +240,8 @@ namespace DCURSES {
 			log::trace("{}: {:.4f} ms", name, dt);
 		}
 
+
+		// MUST NOT BORROW ANYTHING!
 		void ExecuteWithDelay(std::chrono::milliseconds time, std::function<void()> func) {
 			std::thread{ [func, time] {
 				std::this_thread::sleep_for(time);

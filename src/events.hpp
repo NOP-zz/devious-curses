@@ -6,6 +6,7 @@
 #include "themes.hpp"
 #include "Contraptions.hpp"
 #include "O_Devices.hpp"
+#include "MinAI.hpp"
 
 #include "../include/DDNG_API.h"
 #include "../include/form_ids.h"
@@ -233,7 +234,7 @@ namespace DCURSES {
             ForceThirdPerson();
         }
 
-        SKSE::GetTaskInterface()->AddTask([player, to_equip] {
+        SKSE::GetTaskInterface()->AddTask( [to_equip, player] {
             for (auto device : to_equip) {
                 log::trace("Locking device {}", device->GetName());
                 LockDevice(player, device);
@@ -247,11 +248,11 @@ namespace DCURSES {
 
         if (!contName.empty()) {
             PlayerMessage(fmt::format("As you touch the {} you see restraints magically appear and wrap themselves around you!", contName));
+            SendModEventDevices(player, contName, static_cast<int>(to_equip.size()), device_names, device_ids);
+            AIEventBondage(contName, device_names);
         }
         device_names.pop_back();
         device_ids.pop_back();
-
-        SendModEventDevices(player, contName, static_cast<int>(to_equip.size()), device_names, device_ids);
         return true;
     }
 
@@ -290,6 +291,7 @@ namespace DCURSES {
 
         std::string str = num_tattoos == 1 ? "a tattoo appears on your body!" : num_tattoos < 4 ? "a few tattoos appear on your body!" : "your body is covered in tattoos!";
         PlayerMessage(fmt::format("As you touch the {} you feel a sharp pain as {}", containerName, str));
+        AIEventTattoos(num_tattoos);
         SendModEventTattoo(player, containerName, num_tattoos);
         return true;
     }
@@ -304,7 +306,8 @@ namespace DCURSES {
             DoStandardEvent(false, "", "", settings.eventContDeviceOverride, { "zad_DeviousHeavyBondage", "zad_DeviousBelt", "zad_DeviousBra", "zad_DeviousHarness", "zad_DeviousBlindfold", "zad_DeviousHood", "zad_DeviousBoots", "zad_DeviousGloves", "zad_DeviousSuit", "zad_DeviousCorset"});
         }
 
-        CreateAndLockContraption(player);
+        auto contraption = CreateAndLockContraption(player);
+        AIEventContraption(contraption->GetName());
         SendModEventContraption(player, containerName);
 
         PlayerMessage(fmt::format("As you touch the {} you feel yourself get dizzy as you are strung up into some sort of contraption!", containerName));
@@ -336,6 +339,8 @@ namespace DCURSES {
             SetEffectMagnitude(BRANDING_EFFECT, static_cast<float>(tattoo_count));
             if (doMessage) PlayerMessage("After a sharp pain, you see that you have a mark of branding.");
             SendModEventMark(player, containerName, "Branding", TAT_BRANDING);
+            TatsUpdateContext(TAT_BRANDING);
+            AIEventAddLewdMark();
             return true;
         }
         else if (r > settings.LMBrandingWeight) {
@@ -347,6 +352,8 @@ namespace DCURSES {
             SetEffectMagnitude(ALLURE_EFFECT, static_cast<float>(settings.LMAllureSex * Util::randomDouble(0.8, 1.2)));
             if (doMessage) PlayerMessage("After a sharp pain, you see that you have a mark of allure.");
             SendModEventMark(player, containerName, "Allure", TAT_ALLURE);
+            TatsUpdateContext(TAT_ALLURE);
+            AIEventAddLewdMark();
             return true;
         }
         else if (r > settings.LMAllureWeight) {
@@ -358,6 +365,8 @@ namespace DCURSES {
             SetEffectMagnitude(HEAT_EFFECT, static_cast<float>(settings.LMHeatContainerCount * Util::randomDouble(0.8, 1.2)));
             if (doMessage) PlayerMessage("After a sharp pain, you see that you have a mark of heat.");
             SendModEventMark(player, containerName, "Heat", TAT_HEAT);
+            TatsUpdateContext(TAT_HEAT);
+            AIEventAddLewdMark();
             return true;
         }
         else if (r > settings.LMHeatWeight) {
@@ -369,6 +378,8 @@ namespace DCURSES {
             SetEffectMagnitude(BONDAGE_EFFECT, static_cast<float>(settings.LMBondageDeviceCount * Util::randomDouble(0.8, 1.2)));
             if (doMessage) PlayerMessage("After a sharp pain, you see that you have a mark of bondage.");
             SendModEventMark(player, containerName, "Bondage", TAT_BONDAGE);
+            TatsUpdateContext(TAT_BONDAGE);
+            AIEventAddLewdMark();
             return true;
         }
         else if (r > settings.LMBondageWeight) {
@@ -380,6 +391,8 @@ namespace DCURSES {
             SetEffectMagnitude(NUDITY_EFFECT, static_cast<float>(settings.LMNudityTalkTimes * Util::randomDouble(0.8, 1.2)));
             if (doMessage) PlayerMessage("After a sharp pain, you see that you have a mark of nudity.");
             SendModEventMark(player, containerName, "Nudity", TAT_NUDITY);
+            TatsUpdateContext(TAT_NUDITY);
+            AIEventAddLewdMark();
             return true;
         }
         else if (r > settings.LMNudityWeight) {
@@ -592,7 +605,7 @@ namespace DCURSES {
                 RE::TESKey* magicKey = StaticDataHolder::GetSingleton()->LookupForm<RE::TESKey>(MAGIC_KEY, "Devious Curses.esp");
                 double c2 = settings.magicKeyChance * pow(1.5, (GetWornDeviceCount(player) - 1.0) / 9.0);
                 double r2 = Util::randomDouble();
-                log::trace("Magic Key: {} ({})", c2, r2);
+                log::trace("Magic Key: {:.2f} ({:.2f})", c2, r2);
                 if (GetItemCount(player, magicKey) == 0 && !addedKey && r2 < c2) {
                     activatedObject->AddObjectToContainer((RE::TESBoundObject*)magicKey, nullptr, 1, nullptr);
                 }
@@ -601,7 +614,7 @@ namespace DCURSES {
                 RE::TESObjectMISC* solvent = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectMISC>(TATTOO_CHARM, "Devious Curses.esp");
                 double c2 = settings.tatSolventChance * pow(1.5, (GetTattooCount(player) - 1.0) / 9.0);
                 double r2 = Util::randomDouble();
-                log::trace("Solvent: {} ({})", c2, r2);
+                log::trace("Solvent: {:.2f} ({:.2f})", c2, r2);
                 if (GetItemCount(player, solvent) == 0 && !addedKey && r2 < c2) {
                     activatedObject->AddObjectToContainer((RE::TESBoundObject*)solvent, nullptr, 1, nullptr);
                 }
@@ -619,6 +632,12 @@ namespace DCURSES {
 
         auto player = RE::PlayerCharacter::GetSingleton();
 
+        auto data = GetContainerData(activatedObject);
+
+        if (!(data.isDeadActor || data.isLeveled || data.isPickpocket || data.isDoor)) {
+            return;
+        }
+
         //log::trace("Worn items: {}", GetWornDeviceCount(GetPlayer()));
         if (IsObjectRefKnown(activatedObject->formID)) {
             if (settings.vanishingKeys && activatedObject != player) {
@@ -628,16 +647,12 @@ namespace DCURSES {
             return;
         }
 
-        auto data = GetContainerData(activatedObject);
-
         if (data.isDeadActor || data.isLeveled || data.isDoor) {
             SetObjectRefKnown(activatedObject->formID);
         }
         else if (data.isPickpocket) {
             SetPickpocketTargetKnown(activatedObject->formID);
         }
-
-        PopulateContainer(std::move(activatedObject), data);
 
         RE::TESFaction* zadDisable = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x4653B, "Devious Devices - Integration.esm");
         RE::Actor* actor = activatedObject->As<RE::Actor>();
@@ -671,9 +686,14 @@ namespace DCURSES {
             return;
         }
 
-        if (data.goldValue < settings.minGoldRequired && !data.isDoor) {
-            log::trace("No event: Not enough gold value ({} < {})", data.goldValue, settings.minGoldRequired);
-            return;
+        if (data.isDeadActor || data.isLeveled || data.isPickpocket) {
+            if (data.goldValue < settings.minGoldRequired) {
+                log::trace("No event: Not enough gold value ({} < {})", data.goldValue, settings.minGoldRequired);
+                return;
+            }
+            else {
+                PopulateContainer(std::move(activatedObject), data);
+            }
         }
 
         //RE::TESFaction* arousalFaction = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("03FC36", 0, 16), "SexLabAroused.esm");
@@ -862,9 +882,8 @@ namespace DCURSES {
         int mark = GetLewdMark();
         if (mark > 0) {
             //int base_color = mark == 11 ? settings.LMHeatColor : (mark == 13 ? settings.LMAllureColor : (mark == 71 ? settings.LMBondageColor : (mark == 79 ? settings.LMNudityColor : 0)));
-            if (counters.clock_LMEventTimer >= 15) {
+            if (counters.clock_GlobalTicker % 15 == 0) {
                 log::trace("events marks update");
-                counters.clock_LMEventTimer = 0;
                 switch (mark) {
                 case TAT_HEAT: {
                     ModifyArousal(player, settings.LMHeatMod / 4);

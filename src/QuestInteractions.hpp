@@ -33,7 +33,7 @@ namespace DCURSES {
 		if (!settings.enableQISanguine) { return; }
 		auto player = RE::PlayerCharacter::GetSingleton();
 
-		auto belt = GetWornDeviceByKeyword(player, "zad_DeviousBelt");
+		auto belt = GetWornInventoryDeviceByKeyword(player, "zad_DeviousBelt");
 		if (belt) {
 			UnlockDevice(player, belt);
 		}
@@ -50,7 +50,7 @@ namespace DCURSES {
 			RemoveLewdMark();
 		}
 		AddLewdMark(TAT_NUDITY);
-		SetEffectMagnitude(NUDITY_EFFECT, 100);
+		SetEffectMagnitude(NUDITY_EFFECT, static_cast<float>(settings.LMNudityTalkTimes));
 
 		SendModEventMark(player, "Sanguine", "Nudity", TAT_NUDITY);
 		Util::ExecuteWithDelay(4s, [] {PlayerMessage("As you awaken you notice that you're covered in chains and have a strange mark on you. Hopefully Sam can fix this..."); });
@@ -77,7 +77,7 @@ namespace DCURSES {
 		if (!settings.enableQISaarthal) { return; }
 		RE::TESObjectARMO* amulet = RE::TESForm::LookupByID(0x233D0)->As<RE::TESObjectARMO>();
 		auto player = RE::PlayerCharacter::GetSingleton();
-		if (OppSummonerCollarEvent("", false)) {
+		if (OppSummonerCollarEvent("")) {
 			player->RemoveItem(amulet, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr, nullptr, nullptr);
 			PlayerMessage("Strange magic interacts with the amulet transforming it into a collar!");
 		}

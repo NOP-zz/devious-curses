@@ -51,10 +51,11 @@ namespace DCURSES {
 		return ref;
 	}
 
-	void CreateAndLockContraption(RE::Actor* actor) {
+	RE::TESObjectACTI* CreateAndLockContraption(RE::Actor* actor) {
+		auto contraption = GetRandomContraption();
 		ForceThirdPerson();
-		SKSE::GetTaskInterface()->AddTask([actor]() {
-			auto ptr = actor->PlaceObjectAtMe(GetRandomContraption(), false);
+		SKSE::GetTaskInterface()->AddTask([actor, contraption]() {
+			auto ptr = actor->PlaceObjectAtMe(contraption, false);
 			auto object = ptr.get();
 
 			auto scriptObject = ContraptionsGetRefScript(object);
@@ -70,5 +71,6 @@ namespace DCURSES {
 			object->data.angle = RE::NiPoint3(0, actor->GetAngleY(), actor->GetAngleZ());
 			Util::ExecuteWithDelay(1000ms, [actor, object] {ContraptionsLockActor(actor, object); });
 		});
+		return contraption;
 	}
 }

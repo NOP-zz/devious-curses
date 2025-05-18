@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../include/form_ids.h"
-
+#include "../include/DDNG_API.h"
 
 using namespace SKSE;
 
@@ -112,32 +112,44 @@ namespace DCURSES {
 
     void StartSex(RE::Actor* aggressor) {
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> result;
-        GetVM()->DispatchStaticCall("DCursesLib", "StartSex", RE::MakeFunctionArguments<RE::Actor*>(std::move(aggressor)), result);
+        RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::Actor*>(std::move(aggressor));
+        GetVM()->DispatchStaticCall("DCursesLib", "StartSex", args, result);
+        delete args;
     }
 
     void SlowStrip(RE::Actor* actor) {
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> result;
-        GetVM()->DispatchStaticCall("DCursesLib", "SlowStrip", RE::MakeFunctionArguments<RE::Actor*>(std::move(actor)), result);
+        RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::Actor*>(std::move(actor));
+        GetVM()->DispatchStaticCall("DCursesLib", "SlowStrip", args, result);
+        delete args;
     }
 
     void SendModEventDevices(RE::Actor* who, std::string what, int device_count, std::string devices, std::string device_ids) {
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> result;
-        GetVM()->DispatchStaticCall("DCursesLib", "SendModEventDevices", RE::MakeFunctionArguments<RE::Actor*, std::string, int, std::string, std::string>(std::move(who), std::move(what), std::move(device_count), std::move(devices), std::move(device_ids)), result);
+        RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::Actor*, std::string, int, std::string, std::string>(std::move(who), std::move(what), std::move(device_count), std::move(devices), std::move(device_ids));
+        GetVM()->DispatchStaticCall("DCursesLib", "SendModEventDevices", args, result);
+        delete args;
     }
 
     void SendModEventMark(RE::Actor* who, std::string what, std::string mark_name, int mark_id) {
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> result;
-        GetVM()->DispatchStaticCall("DCursesLib", "SendModEventMark", RE::MakeFunctionArguments<RE::Actor*, std::string, std::string, int>(std::move(who), std::move(what), std::move(mark_name), std::move(mark_id)), result);
+        RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::Actor*, std::string, std::string, int>(std::move(who), std::move(what), std::move(mark_name), std::move(mark_id));
+        GetVM()->DispatchStaticCall("DCursesLib", "SendModEventMark", args, result);
+        delete args;
     }
 
     void SendModEventTattoo(RE::Actor* who, std::string what, int tattoo_count) {
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> result;
-        GetVM()->DispatchStaticCall("DCursesLib", "SendModEventTattoo", RE::MakeFunctionArguments<RE::Actor*, std::string, int>(std::move(who), std::move(what), std::move(tattoo_count)), result);
+        RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::Actor*, std::string, int>(std::move(who), std::move(what), std::move(tattoo_count));
+        GetVM()->DispatchStaticCall("DCursesLib", "SendModEventTattoo", args, result);
+        delete args;
     }
 
     void SendModEventContraption(RE::Actor* who, std::string what) {
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> result;
-        GetVM()->DispatchStaticCall("DCursesLib", "SendModEventContraption", RE::MakeFunctionArguments<RE::Actor*, std::string>(std::move(who), std::move(what)), result);
+        RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::Actor*, std::string>(std::move(who), std::move(what));
+        GetVM()->DispatchStaticCall("DCursesLib", "SendModEventContraption", args, result);
+        delete args;
     }
 
     void SetArousal(RE::Actor* actor, int arousal) {
@@ -147,7 +159,9 @@ namespace DCURSES {
         GetVM()->FindBoundObject(hand, "slaFrameworkScr", arousedObject);
 
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> result;
-        GetVM()->DispatchMethodCall(arousedObject, "SetActorExposure", RE::MakeFunctionArguments<RE::Actor*, int>(std::move(actor), std::move(arousal)), result);
+        RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::Actor*, int>(std::move(actor), std::move(arousal));
+        GetVM()->DispatchMethodCall(arousedObject, "SetActorExposure", args, result);
+        delete args;
     }
 
     void ModifyArousal(RE::Actor* actor, int arousal) {
@@ -157,7 +171,9 @@ namespace DCURSES {
         GetVM()->FindBoundObject(hand, "slaFrameworkScr", arousedObject);
 
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> result;
-        GetVM()->DispatchMethodCall(arousedObject, "UpdateActorExposure", RE::MakeFunctionArguments<RE::Actor*, int, std::string>(std::move(actor), std::move(arousal), std::move("")), result);
+        RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::Actor*, int, std::string>(std::move(actor), std::move(arousal), std::move(""));
+        GetVM()->DispatchMethodCall(arousedObject, "UpdateActorExposure", args, result);
+        delete args;
     }
 
     void LockDevice(RE::Actor* akActor, RE::TESObjectARMO* deviceInventory, bool force = false) {
@@ -168,10 +184,15 @@ namespace DCURSES {
 
         if (akActor == nullptr || deviceInventory == nullptr) { return; }
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> callback;
-        GetVM()->DispatchMethodCall(zadlibsObject, "LockDevice", RE::MakeFunctionArguments<RE::Actor*, RE::TESObjectARMO*, bool>(std::move(akActor), std::move(deviceInventory), std::move(force)), callback);
+        RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::Actor*, RE::TESObjectARMO*, bool>(std::move(akActor), std::move(deviceInventory), std::move(force));
+        GetVM()->DispatchMethodCall(zadlibsObject, "LockDevice", args, callback);
+        delete args;
     }
 
     void UnlockDevice(RE::Actor* akActor, RE::TESObjectARMO* deviceInventory, RE::TESObjectARMO* deviceRendered = nullptr, RE::BGSKeyword* zad_DeviousDevice = nullptr, bool destroyDevice = false, bool genericonly = true) {
+        if (deviceRendered == nullptr) {
+            deviceRendered = DeviousDevicesAPI::g_API->GetDeviceRender(deviceInventory);
+        }
         RE::TESForm* libs = RE::TESDataHandler::GetSingleton()->LookupForm(std::stoi("f624", 0, 16), "Devious Devices - Integration.esm");
         RE::VMHandle hand = GetHP()->GetHandleForObject(RE::FormType::Quest, libs);
         RE::BSTSmartPointer<RE::BSScript::Object> zadlibsObject;
@@ -179,7 +200,9 @@ namespace DCURSES {
 
         if (akActor == nullptr || deviceInventory == nullptr) { return; }
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> callback;
-        GetVM()->DispatchMethodCall(zadlibsObject, "UnlockDevice", RE::MakeFunctionArguments<RE::Actor*, RE::TESObjectARMO*, RE::TESObjectARMO*, RE::BGSKeyword*, bool, bool>(std::move(akActor), std::move(deviceInventory), std::move(deviceRendered), std::move(zad_DeviousDevice), std::move(destroyDevice), std::move(genericonly)), callback);
+        RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::Actor*, RE::TESObjectARMO*, RE::TESObjectARMO*, RE::BGSKeyword*, bool, bool>(std::move(akActor), std::move(deviceInventory), std::move(deviceRendered), std::move(zad_DeviousDevice), std::move(destroyDevice), std::move(genericonly));
+        GetVM()->DispatchMethodCall(zadlibsObject, "UnlockDevice", args, callback);
+        delete args;
     }
 
     void RemoveQuestDevice(RE::Actor* akActor, RE::TESObjectARMO* deviceInventory, RE::TESObjectARMO* deviceRendered, bool destroyDevice = false) {
@@ -191,7 +214,9 @@ namespace DCURSES {
 
         if (akActor == nullptr || deviceInventory == nullptr) { return; }
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> callback;
-        GetVM()->DispatchMethodCall(zadlibsObject, "RemoveQuestDevice", RE::MakeFunctionArguments<RE::Actor*, RE::TESObjectARMO*, RE::TESObjectARMO*, RE::BGSKeyword*, RE::BGSKeyword*, bool, bool>(std::move(akActor), std::move(deviceInventory), std::move(deviceRendered), std::move(nullptr), std::move(removalToken), std::move(destroyDevice), std::move(false)), callback);
+        RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::Actor*, RE::TESObjectARMO*, RE::TESObjectARMO*, RE::BGSKeyword*, RE::BGSKeyword*, bool, bool>(std::move(akActor), std::move(deviceInventory), std::move(deviceRendered), std::move(nullptr), std::move(removalToken), std::move(destroyDevice), std::move(false));
+        GetVM()->DispatchMethodCall(zadlibsObject, "RemoveQuestDevice", args, callback);
+        delete args;
     }
 
     void SwapDevices(RE::Actor* akActor, RE::TESObjectARMO* deviceInventory, RE::BGSKeyword* zad_DeviousDevice = nullptr, bool destroyDevice = false, bool genericonly = true) {
@@ -202,7 +227,9 @@ namespace DCURSES {
 
         if (akActor == nullptr || deviceInventory == nullptr) { return; }
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> callback;
-        GetVM()->DispatchMethodCall(zadlibsObject, "SwapDevices", RE::MakeFunctionArguments<RE::Actor*, RE::TESObjectARMO*, RE::BGSKeyword*, bool, bool>(std::move(akActor), std::move(deviceInventory), std::move(zad_DeviousDevice), std::move(destroyDevice), std::move(genericonly)), callback);
+        RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::Actor*, RE::TESObjectARMO*, RE::BGSKeyword*, bool, bool>(std::move(akActor), std::move(deviceInventory), std::move(zad_DeviousDevice), std::move(destroyDevice), std::move(genericonly));
+        GetVM()->DispatchMethodCall(zadlibsObject, "SwapDevices", args, callback);
+        delete args;
     }
 
     void VibrateEffect(RE::Actor* akActor, int vibStrength, int duration, bool teaseOnly = false, bool silent = false) {
@@ -213,7 +240,9 @@ namespace DCURSES {
 
         if (akActor == nullptr) { return; }
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> callback;
-        GetVM()->DispatchMethodCall(zadlibsObject, "VibrateEffect", RE::MakeFunctionArguments<RE::Actor*, int, int, bool, bool>(std::move(akActor), std::move(vibStrength), std::move(duration), std::move(teaseOnly), std::move(silent)), callback);
+        RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::Actor*, int, int, bool, bool>(std::move(akActor), std::move(vibStrength), std::move(duration), std::move(teaseOnly), std::move(silent));
+        GetVM()->DispatchMethodCall(zadlibsObject, "VibrateEffect", args, callback);
+        delete args;
     }
 
     void ShockActor(RE::Actor* akActor) {
@@ -224,7 +253,9 @@ namespace DCURSES {
 
         if (akActor == nullptr) { return; }
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> callback;
-        GetVM()->DispatchMethodCall(zadlibsObject, "ShockActor", RE::MakeFunctionArguments<RE::Actor*>(std::move(akActor)), callback);
+        RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::Actor*>(std::move(akActor));
+        GetVM()->DispatchMethodCall(zadlibsObject, "ShockActor", args, callback);
+        delete args;
     }
 
     void UnequipItem(RE::Actor* akActor, RE::TESForm* item) {
@@ -233,7 +264,9 @@ namespace DCURSES {
         RE::BSTSmartPointer<RE::BSScript::Object> obj;
         GetVM()->FindBoundObject(hand, "Actor", obj);
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> callback;
-        GetVM()->DispatchMethodCall(obj, "UnequipItem", RE::MakeFunctionArguments<RE::TESForm*, bool, bool>(std::move(item), std::move(false), std::move(true)), callback);
+        RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::TESForm*, bool, bool>(std::move(item), std::move(false), std::move(true));
+        GetVM()->DispatchMethodCall(obj, "UnequipItem", args, callback);
+        delete args;
     }
 
     void UnequipSpell(RE::Actor* akActor, RE::TESForm* spell, int akSource) {
@@ -242,7 +275,9 @@ namespace DCURSES {
         RE::BSTSmartPointer<RE::BSScript::Object> obj;
         GetVM()->FindBoundObject(hand, "Actor", obj);
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> callback;
-        GetVM()->DispatchMethodCall(obj, "UnequipSpell", RE::MakeFunctionArguments<RE::TESForm*, int>(std::move(spell), std::move(akSource)), callback);
+        RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::TESForm*, int>(std::move(spell), std::move(akSource));
+        GetVM()->DispatchMethodCall(obj, "UnequipSpell", args, callback);
+        delete args;
     }
 
     void UpdateArousal(RE::Actor* akActor) {
@@ -253,7 +288,9 @@ namespace DCURSES {
 
         if (akActor == nullptr) { return; }
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> callback;
-        GetVM()->DispatchMethodCall(slaObject, "GetActorArousal", RE::MakeFunctionArguments<RE::Actor*>(std::move(akActor)), callback);
+        RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::Actor*>(std::move(akActor));
+        GetVM()->DispatchMethodCall(slaObject, "GetActorArousal", args, callback);
+        delete args;
     }
 
     void RTDoTattooEvent(RE::Actor* akActor, int count) {
@@ -264,7 +301,9 @@ namespace DCURSES {
 
         if (akActor == nullptr) { return; }
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> callback;
-        GetVM()->DispatchMethodCall(rapeTatsObject, "doTattooActionFor", RE::MakeFunctionArguments<RE::Actor*, int>(std::move(akActor), std::move(count)), callback);
+        RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::Actor*, int>(std::move(akActor), std::move(count));
+        GetVM()->DispatchMethodCall(rapeTatsObject, "doTattooActionFor", args, callback);
+        delete args;
     }
 
     RE::BSTSmartPointer<RE::BSScript::Object> ContraptionsGetRefScript(RE::TESObjectREFR* furniture) {
@@ -287,7 +326,9 @@ namespace DCURSES {
 
         if (akActor == nullptr || furniture == nullptr) { return; }
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> callback;
-        GetVM()->DispatchMethodCall(zadclibsObject, "LockActorV2", RE::MakeFunctionArguments<RE::Actor*, RE::TESObjectREFR*, RE::TESPackage*, bool>(std::move(akActor), std::move(furniture), nullptr, false), callback);
+        RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::Actor*, RE::TESObjectREFR*, RE::TESPackage*, bool>(std::move(akActor), std::move(furniture), nullptr, false);
+        GetVM()->DispatchMethodCall(zadclibsObject, "LockActorV2", args, callback);
+        delete args;
     }
 
     void ContraptionsUnlockActor(RE::Actor* akActor) {
@@ -298,38 +339,56 @@ namespace DCURSES {
 
         if (akActor == nullptr) { return; }
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> callback;
-        GetVM()->DispatchMethodCall(zadclibsObject, "UnlockActor", RE::MakeFunctionArguments<RE::Actor*>(std::move(akActor)), callback);
+        RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::Actor*>(std::move(akActor));
+        GetVM()->DispatchMethodCall(zadclibsObject, "UnlockActor", args, callback);
+        delete args;
     }
 
     void ForceThirdPerson() {
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> result;
-        GetVM()->DispatchStaticCall("Game", "ForceThirdPerson", new RE::BSScript::ZeroFunctionArguments, result);
+        RE::BSScript::IFunctionArguments* args = new RE::BSScript::ZeroFunctionArguments;
+        GetVM()->DispatchStaticCall("Game", "ForceThirdPerson", args, result);
+        delete args;
     }
 
     void DisableMenus() {
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> result;
-        GetVM()->DispatchStaticCall("Game", "DisablePlayerControls", RE::MakeFunctionArguments<bool, bool, bool, bool, bool, bool, bool, bool, int>(std::move(false), std::move(false), std::move(false), std::move(false), std::move(false), std::move(true), std::move(true), std::move(false), std::move(0)), result);
+        RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<bool, bool, bool, bool, bool, bool, bool, bool, int>(std::move(false), std::move(false), std::move(false), std::move(false), std::move(false), std::move(true), std::move(true), std::move(false), std::move(0));
+        GetVM()->DispatchStaticCall("Game", "DisablePlayerControls", args, result);
+        delete args;
     }
 
     void EnableMenus() {
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> result;
-        GetVM()->DispatchStaticCall("Game", "EnablePlayerControls", RE::MakeFunctionArguments<bool, bool, bool, bool, bool, bool, bool, bool, int>(std::move(false), std::move(false), std::move(false), std::move(false), std::move(false), std::move(true), std::move(true), std::move(false), std::move(0)), result);
+        RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<bool, bool, bool, bool, bool, bool, bool, bool, int>(std::move(false), std::move(false), std::move(false), std::move(false), std::move(false), std::move(true), std::move(true), std::move(false), std::move(0));
+        GetVM()->DispatchStaticCall("Game", "EnablePlayerControls", args, result);
+        delete args;
     }
 
     void CloseContinerMenus() {
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> result;
-        GetVM()->DispatchStaticCall("UI", "InvokeString", RE::MakeFunctionArguments<std::string, std::string, std::string>("HUD Menu", "_global.skse.CloseMenu", "InventoryMenu"), result);
-        GetVM()->DispatchStaticCall("UI", "InvokeString", RE::MakeFunctionArguments<std::string, std::string, std::string>("HUD Menu", "_global.skse.CloseMenu", "ContainerMenu"), result);
-        GetVM()->DispatchStaticCall("UI", "InvokeString", RE::MakeFunctionArguments<std::string, std::string, std::string>("HUD Menu", "_global.skse.CloseMenu", "Lockpicking Menu"), result); 
+        RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<std::string, std::string, std::string>("HUD Menu", "_global.skse.CloseMenu", "InventoryMenu");
+        GetVM()->DispatchStaticCall("UI", "InvokeString", args, result);
+        delete args;
+        args = RE::MakeFunctionArguments<std::string, std::string, std::string>("HUD Menu", "_global.skse.CloseMenu", "ContainerMenu");
+        GetVM()->DispatchStaticCall("UI", "InvokeString", args, result);
+        delete args;
+        args = RE::MakeFunctionArguments<std::string, std::string, std::string>("HUD Menu", "_global.skse.CloseMenu", "Lockpicking Menu");
+        GetVM()->DispatchStaticCall("UI", "InvokeString", args, result); 
+        delete args;
     }
 
     void DBGMessageBox(std::string message) {
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> result;
-        GetVM()->DispatchStaticCall("Debug", "MessageBox", RE::MakeFunctionArguments<std::string>(std::move(message)), result);
+        RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<std::string>(std::move(message));
+        GetVM()->DispatchStaticCall("Debug", "MessageBox", args, result);
+        delete args;
     }
 
     void DBGNotification(std::string message) {
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> result;
-        GetVM()->DispatchStaticCall("Debug", "Notification", RE::MakeFunctionArguments<std::string>(std::move(message)), result);
+        RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<std::string>(std::move(message));
+        GetVM()->DispatchStaticCall("Debug", "Notification", args, result);
+        delete args;
     }
 }

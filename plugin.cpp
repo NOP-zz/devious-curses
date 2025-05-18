@@ -12,6 +12,8 @@
 #include "src/Contraptions.hpp"
 #include "src/O_Devices.hpp"
 #include "src/QuestInteractions.hpp"
+#include "src/ModEvents.hpp"
+#include "src/MinAI.hpp"
 
 #include "include/DDNG_API.h"
 
@@ -61,7 +63,7 @@ namespace DCURSES {
         SexUpdate();
         //QIUpdate();
         auto c3 = std::chrono::high_resolution_clock::now();
-        MarkControllerUpdate();
+        TatsUpdate();
         auto c4 = std::chrono::high_resolution_clock::now();
         OppDeviceUpdate();
         auto c5 = std::chrono::high_resolution_clock::now();
@@ -93,7 +95,7 @@ namespace DCURSES {
     void P_Test(RE::StaticFunctionTag*) {
         log::trace("DCURSES test");
         auto player = RE::PlayerCharacter::GetSingleton();
-        
+
         /*
         auto mark = GetLewdMark();
         if (mark) {
@@ -104,7 +106,7 @@ namespace DCURSES {
         }
         //*/
 
-        //*
+        /*
         auto ref = GetContraptionForActor(player);
         if (ref) {
             ContraptionsUnlockActor(player);
@@ -114,6 +116,11 @@ namespace DCURSES {
         }
         //*/
 
+        //if (GetWornDeviceCount(player) == 0) {
+        //    DoStandardEvent(false, "", "(black & (ebonite | rubber)) | grand | shock", 10, { "zad_DeviousBelt", "zad_DeviousBlindfold", "zad_DeviousHeavyBondage" });
+        //}
+
+        //OppSummonerCollarEvent("");
     }
 
     bool PapyrusFunctions(RE::BSScript::IVirtualMachine* ivm) {

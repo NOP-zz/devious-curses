@@ -14,15 +14,22 @@ colors = [] # List of pairs [[name, default, rel]...]
 texts = [] # List of pairs [[name, default, rel]...]
 page_data = [] # List of pairs [[pagename, [lines]]]
 descriptions = [] # List of pairs [[name, description]...]
+recalcs = [] # List of lists
+frecalcs = []
+brecalcs = []
 
 def processLine(line, page_lines):
 	rel = False
+	recalc = False
 	flag = 0
 	if line == "":
 		return page_lines
 	if "**RELOAD" in line:
 		line = line.replace("**RELOAD", "").strip()
 		rel = True
+	if "**RECALC" in line:
+		line = line.replace("**RECALC", "").strip()
+		recalc = True
 	if "?:?" in line:
 		line, flag = [x.strip() for x in line.split("?:?")]
 	if line.startswith("//"):
@@ -59,6 +66,8 @@ def processLine(line, page_lines):
 		sliders.append([var_name, var_def, form, range_min, range_max, step, rel])
 		descriptions.append([var_name, desc])
 		page_lines.append(f'{var_name}OID = AddSliderOption("{title}  ", {var_name}, "{form}", {flag})')
+		if (recalc):
+			recalcs.append(var_name)
 	elif line.startswith("float "):
 		if len(line.split("//")) != 5:
 			print(f'Error on line: {line}')
@@ -73,6 +82,8 @@ def processLine(line, page_lines):
 		fsliders.append([var_name, var_def, form, range_min, range_max, step, rel])
 		descriptions.append([var_name, desc])
 		page_lines.append(f'{var_name}OID = AddSliderOption("{title}  ", {var_name}, "{form}", {flag})')
+		if (recalc):
+			frecalcs.append(var_name)
 	elif line.startswith("bool "):
 		if len(line.split("//")) != 3:
 			print(f'Error on line: {line}')
@@ -82,6 +93,8 @@ def processLine(line, page_lines):
 		options.append([var_name, var_def, rel])
 		descriptions.append([var_name, desc])
 		page_lines.append(f'{var_name}OID = AddToggleOption("{title}  ", {var_name}, {flag})')
+		if (recalc):
+			brecalcs.append(var_name)
 	elif line.startswith("color "):
 		if len(line.split("//")) != 3:
 			print(f'Error on line: {line}')
@@ -91,6 +104,8 @@ def processLine(line, page_lines):
 		colors.append([var_name, var_def, rel])
 		descriptions.append([var_name, desc])
 		page_lines.append(f'{var_name}OID = AddColorOption("{title}  ", {var_name}, {flag})')
+		if (recalc):
+			recalcs.append(var_name)
 	elif line.startswith("text "):
 		if len(line.split("//")) != 3:
 			print(f'Error on line: {line}')
@@ -303,8 +318,19 @@ indent = settings_raw.split("//CODEGEN_START_UPDATE")[0][index:]
 pre = settings_raw.split("//CODEGEN_START_UPDATE")[0] + "//CODEGEN_START_UPDATE"
 post = f"{indent}//CODEGEN_END_UPDATE" + settings_raw.split("//CODEGEN_END_UPDATE")[1]
 
+mid = f'{indent}bool recalculate = false;'
+
+parse = lambda x: f'{indent}if (settings.{x} != GetMCMSetting("{x}")->GetSInt()) {{recalculate = true;}}'
+mid += ''.join(parse(x) for x in recalcs)
+
+parse = lambda x: f'{indent}if (settings.{x} != GetMCMSetting("{x}")->GetFloat()) {{recalculate = true;}}'
+mid += ''.join(parse(x) for x in frecalcs)
+
+parse = lambda x: f'{indent}if (settings.{x} != GetMCMSetting("{x}")->GetBool()) {{recalculate = true;}}'
+mid += ''.join(parse(x) for x in brecalcs)
+
 parse = lambda x: f'{indent}settings.{x} = GetMCMSetting("{x}")->GetSInt();'
-mid = ''.join(parse(x[0]) for x in sliders)
+mid += ''.join(parse(x[0]) for x in sliders)
 mid += ''.join(parse(x[0]) for x in colors)
 
 parsef = lambda x: f'{indent}settings.{x} = GetMCMSetting("{x}")->GetFloat();'

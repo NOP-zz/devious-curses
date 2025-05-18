@@ -3,6 +3,7 @@
 #include "jcontainers.hpp"
 #include "Settings.hpp"
 #include "MGEF_Controller.hpp"
+#include "MinAI.hpp"
 
 #include "../include/SlaveTatsNG_Interface.h"
 
@@ -327,7 +328,29 @@ namespace DCURSES {
 		}
 	}
 
-	void MarkControllerUpdate() {
+	void TatsUpdateContext(int mark) {
+		switch (mark) {
+		case TAT_ALLURE:
+			AIContextAddAllureMark();
+			break;
+		case TAT_HEAT:
+			AIContextAddHeatMark();
+			break;
+		case TAT_NUDITY:
+			AIContextAddNudityMark();
+			break;
+		case TAT_BONDAGE:
+			AIContextAddBondageMark();
+			break;
+		case TAT_BRANDING:
+			AIContextAddBrandingMark();
+			break;
+		default:
+			AIContextRemoveLewdMark();
+		}
+	}
+
+	void TatsUpdate() {
 		auto mark = GetLewdMark();
 		auto applied = GetLewdMarkApplied();
 
@@ -368,6 +391,12 @@ namespace DCURSES {
 			SetEffectVisible(BRANDING_EFFECT);
 			break;
 		}
+
+
+		if (counters.clock_GlobalTicker % 90 == 0) {
+			TatsUpdateContext(mark);
+		}
+
 	}
 
 	bool P_CheckSTNG(RE::StaticFunctionTag*) {

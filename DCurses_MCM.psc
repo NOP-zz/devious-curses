@@ -197,6 +197,10 @@ Int Property oppSummonerSexCount = 15 Auto
 Int oppSummonerSexCountOID
 Int Property oppSMinSummonArousal = 90 Auto
 Int oppSMinSummonArousalOID
+Int Property oppLivingLatexWeight = 20 Auto
+Int oppLivingLatexWeightOID
+Int Property oppLivingLatexStartTime = 15 Auto
+Int oppLivingLatexStartTimeOID
 Int Property consSexWeight = 15 Auto
 Int consSexWeightOID
 Int Property consFineWeight = 10 Auto
@@ -287,6 +291,8 @@ Float Property LMBondageChance = 5.0 Auto
 Int LMBondageChanceOID
 Float Property oppSummonChance = 1.5 Auto
 Int oppSummonChanceOID
+Float Property oppLivingLatexMore = 0.0 Auto
+Int oppLivingLatexMoreOID
 Float Property playerHomeModifier = 0.0 Auto
 Int playerHomeModifierOID
 Float Property cityModifier = 0.0 Auto
@@ -365,6 +371,12 @@ Bool Property LMNudityChestOnly = false Auto
 Int LMNudityChestOnlyOID
 Bool Property oppSCollarDrainsMagicka = true Auto
 Int oppSCollarDrainsMagickaOID
+Bool Property oppLivingLatexHeavy = false Auto
+Int oppLivingLatexHeavyOID
+Bool Property oppLivingLatexRequireRem = true Auto
+Int oppLivingLatexRequireRemOID
+Bool Property oppLivingLatexOpen = false Auto
+Int oppLivingLatexOpenOID
 Bool Property useLocationModifiers = true Auto
 Int useLocationModifiersOID
 Bool Property enableQuestInteractions = true Auto
@@ -659,6 +671,14 @@ Event OnPageReset(string page)
 		oppSCollarDrainsMagickaOID = AddToggleOption("Magicka Drain  ", oppSCollarDrainsMagicka, 0)
 		oppSMinSummonArousalOID = AddSliderOption("Summon Arousal  ", oppSMinSummonArousal, "{0}", 0)
 		oppSummonChanceOID = AddSliderOption("Summon Chance  ", oppSummonChance, "{1}%", 0)
+		SetCursorPosition(1)
+		AddHeaderOption("Living Latex ")
+		oppLivingLatexWeightOID = AddSliderOption("Weight  ", oppLivingLatexWeight, "{0}", 0)
+		oppLivingLatexStartTimeOID = AddSliderOption("Start Time  ", oppLivingLatexStartTime, "{0}", 0)
+		oppLivingLatexHeavyOID = AddToggleOption("Heavy Bondage  ", oppLivingLatexHeavy, 0)
+		oppLivingLatexMoreOID = AddSliderOption("Periodic Devices  ", oppLivingLatexMore, "{1}", 0)
+		oppLivingLatexRequireRemOID = AddToggleOption("Clinging  ", oppLivingLatexRequireRem, 0)
+		oppLivingLatexOpenOID = AddToggleOption("Use Open Catsuit  ", oppLivingLatexOpen, 0)
 	Elseif page == "Locations "
 		useLocationModifiersOID = AddToggleOption("Use Location Modifiers  ", useLocationModifiers, 0)
 		AddEmptyOption()
@@ -1250,6 +1270,30 @@ Event OnOptionHighlight(int option)
 		SetInfoText("The chance per second that the collar summons an atronach to have sex with you.\nThis won't happen if you already have a different summon.")
 		Return
 	Endif
+	If option == oppLivingLatexWeightOID
+		SetInfoText("How likely that you will be encased in latex that will bind you with ebonite.")
+		Return
+	Endif
+	If option == oppLivingLatexStartTimeOID
+		SetInfoText("How long in minutes do you have to wear the latex before it isn't dormant.\n")
+		Return
+	Endif
+	If option == oppLivingLatexHeavyOID
+		SetInfoText("The latex will bind you with heavy bondage devices.\nWarning: this will happen in combat.")
+		Return
+	Endif
+	If option == oppLivingLatexMoreOID
+		SetInfoText("How frequently in minutes the latex will bind you when active. Set to 0 to disable.\nWarning: this will happen in combat.")
+		Return
+	Endif
+	If option == oppLivingLatexRequireRemOID
+		SetInfoText("The latex will cling to your other devices, requiring you to remove all of them before it will dissapear.")
+		Return
+	Endif
+	If option == oppLivingLatexOpenOID
+		SetInfoText("Will replace the default catsuit with the open variant. Will only work if you don't have the device yet.")
+		Return
+	Endif
 	If option == useLocationModifiersOID
 		SetInfoText("Weather or not to apply the location modifiers listed below to event chances.")
 		Return
@@ -1657,6 +1701,21 @@ Event OnOptionSelect(int option)
 	If option == oppSCollarDrainsMagickaOID
 		oppSCollarDrainsMagicka = !oppSCollarDrainsMagicka
 		SetToggleOptionValue(oppSCollarDrainsMagickaOID, oppSCollarDrainsMagicka)
+		Return
+	Endif
+	If option == oppLivingLatexHeavyOID
+		oppLivingLatexHeavy = !oppLivingLatexHeavy
+		SetToggleOptionValue(oppLivingLatexHeavyOID, oppLivingLatexHeavy)
+		Return
+	Endif
+	If option == oppLivingLatexRequireRemOID
+		oppLivingLatexRequireRem = !oppLivingLatexRequireRem
+		SetToggleOptionValue(oppLivingLatexRequireRemOID, oppLivingLatexRequireRem)
+		Return
+	Endif
+	If option == oppLivingLatexOpenOID
+		oppLivingLatexOpen = !oppLivingLatexOpen
+		SetToggleOptionValue(oppLivingLatexOpenOID, oppLivingLatexOpen)
 		Return
 	Endif
 	If option == useLocationModifiersOID
@@ -2337,6 +2396,20 @@ Event OnOptionSliderOpen(int option)
 		SetSliderDialogInterval(1)
 		Return
 	Endif
+	If option == oppLivingLatexWeightOID
+		SetSliderDialogStartValue(oppLivingLatexWeight)
+		SetSliderDialogDefaultValue(20)
+		SetSliderDialogRange(1, 500)
+		SetSliderDialogInterval(1)
+		Return
+	Endif
+	If option == oppLivingLatexStartTimeOID
+		SetSliderDialogStartValue(oppLivingLatexStartTime)
+		SetSliderDialogDefaultValue(15)
+		SetSliderDialogRange(1, 60)
+		SetSliderDialogInterval(1)
+		Return
+	Endif
 	If option == consSexWeightOID
 		SetSliderDialogStartValue(consSexWeight)
 		SetSliderDialogDefaultValue(15)
@@ -2649,6 +2722,13 @@ Event OnOptionSliderOpen(int option)
 		SetSliderDialogStartValue(oppSummonChance)
 		SetSliderDialogDefaultValue(1.5)
 		SetSliderDialogRange(0, 100)
+		SetSliderDialogInterval(0.1)
+		Return
+	Endif
+	If option == oppLivingLatexMoreOID
+		SetSliderDialogStartValue(oppLivingLatexMore)
+		SetSliderDialogDefaultValue(0.0)
+		SetSliderDialogRange(0, 10)
 		SetSliderDialogInterval(0.1)
 		Return
 	Endif
@@ -3255,6 +3335,18 @@ Event OnOptionSliderAccept(int option, float value)
 		
 		Return
 	Endif
+	If option == oppLivingLatexWeightOID
+		oppLivingLatexWeight = value as int
+		SetSliderOptionValue(option, value, "{0}")
+		
+		Return
+	Endif
+	If option == oppLivingLatexStartTimeOID
+		oppLivingLatexStartTime = value as int
+		SetSliderOptionValue(option, value, "{0}")
+		
+		Return
+	Endif
 	If option == consSexWeightOID
 		consSexWeight = value as int
 		SetSliderOptionValue(option, value, "{0}")
@@ -3505,6 +3597,11 @@ Event OnOptionSliderAccept(int option, float value)
 	If option == oppSummonChanceOID
 		oppSummonChance = value
 		SetSliderOptionValue(option, value, "{1}%")
+		Return
+	Endif
+	If option == oppLivingLatexMoreOID
+		oppLivingLatexMore = value
+		SetSliderOptionValue(option, value, "{1}")
 		Return
 	Endif
 	If option == playerHomeModifierOID
