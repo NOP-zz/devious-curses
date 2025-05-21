@@ -49,7 +49,6 @@ namespace DCURSES {
 		auto effect = GetEffectByFormID(effect_formid);
 		if (effect) {
 			effect->magnitude += amount;
-			log::trace("Modifying effect {:X} by {:.2f}", effect_formid, amount);
 			return;
 		}
 		log::error("Unable to get Active Effect for {:X}", effect_formid);
@@ -59,7 +58,6 @@ namespace DCURSES {
 		auto effect = GetEffectByFormID(effect_formid);
 		if (effect) {
 			effect->magnitude = value;
-			log::trace("Setting effect {:X} to {:.2f}", effect_formid, value);
 			return;
 		}
 		log::error("Unable to get Active Effect for {:X}", effect_formid);

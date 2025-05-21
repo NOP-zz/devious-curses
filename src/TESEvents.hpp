@@ -102,6 +102,9 @@ namespace DCURSES {
             if (equipActor == player && equipmentForm) {
                 RE::TESKey* magicKey = StaticDataHolder::GetSingleton()->LookupForm<RE::TESKey>(MAGIC_KEY, "Devious Curses.esp");
                 RE::TESObjectMISC* tattooCharm = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectMISC>(TATTOO_CHARM, "Devious Curses.esp");
+                RE::TESObjectARMO* latex = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(LIVING_LATEX, "Devious Curses.esp");
+                RE::TESObjectARMO* latex_open = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(LIVING_LATEX_OPEN, "Devious Curses.esp");
+                RE::TESObjectARMO* summoner_collar = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(SUMMONER_COLLAR, "Devious Curses.esp");
                 //RE::TESObjectARMO* collar = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectARMO>(SAARTHAL_COLLAR, "Devious Curses.esp");
 
                 if (equipmentForm == magicKey) {
@@ -117,6 +120,12 @@ namespace DCURSES {
                     player->RemoveItem((RE::TESBoundObject*)tattooCharm, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
                     AIEventTattooCharm();
                     PlayerMessage("All of your tattoos have faded from your body!");
+                }
+                else if (equipmentForm == latex || equipmentForm == latex_open) {
+                    oppdCounters.livingLatexCounter = static_cast<int>(settings.oppLivingLatexStartTime * 60 * Util::randomFloat(0.9f, 1.2f));
+                }
+                else if (equipmentForm == summoner_collar) {
+                    oppdCounters.summonCollarCounter = static_cast<int>(settings.oppSummonerSexCount);
                 }
             }
             return RE::BSEventNotifyControl::kContinue;

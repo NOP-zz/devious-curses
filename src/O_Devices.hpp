@@ -64,10 +64,6 @@ namespace DCURSES {
 		else {
 			LockDevice(player, latex, true);
 		}
-
-		//Util::ExecuteWithDelay(500ms, [] {
-		//	SetEffectMagnitude(LIVING_LATEX_EFFECT, static_cast<float>(settings.oppLivingLatexStartTime) * 60 * Util::randomFloat(0.9f, 1.2f));
-		//});
 		
 		if (!containerName.empty()) { PlayerMessage(fmt::format("As you touch the {} a ball of goo jumps out at you and covers your body!", containerName)); };
 		return true;
@@ -109,16 +105,15 @@ namespace DCURSES {
 		//Living Latex
 		RE::TESObjectARMO* latex = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(LIVING_LATEX, "Devious Curses.esp");
 		RE::TESObjectARMO* latex_open = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(LIVING_LATEX_OPEN, "Devious Curses.esp");
-		int magnitude = static_cast<int>(GetEffectMagnitude(LIVING_LATEX_EFFECT));
 		bool isWearingLatex = ActorIsWearingDevice(player, latex) || ActorIsWearingDevice(player, latex_open);
-		if (isWearingLatex && magnitude == 2) {
-			std::vector<std::string> skips = {"zad_"};
+		if (isWearingLatex && oppdCounters.livingLatexCounter == 2) {
+			std::vector<std::string> skips;
 			if (!settings.oppLivingLatexHeavy) {
 				skips.push_back("zad_DeviousHeavyBondage");
 			}
 			DoStandardEvent(false, "", "(black & (ebonite | rubber))", 4, skips);
 			PlayerMessage("The latex writhes while being shocked. It seems as if it has been weakened significantly!");
-			SetEffectMagnitude(LIVING_LATEX_EFFECT, 1.0f);
+			oppdCounters.livingLatexCounter = 1;
 			SetEffectDescription(LIVING_LATEX_EFFECT, "The latex is clinging to you only by your other devices, removing them should do the trick!");
 		}
 	}
@@ -133,12 +128,7 @@ namespace DCURSES {
 			//Summoner Collar
 			bool isWearingSummonerCollar = ActorIsWearingDevice(player, summoner_collar);
 			if (isWearingSummonerCollar) {
-				int magnitude = static_cast<int>(GetEffectMagnitude(SUMMONER_COLLAR_EFFECT));
-				if (magnitude < -10000) {
-					magnitude = static_cast<int>(settings.oppSummonerSexCount);
-					SetEffectMagnitude(SUMMONER_COLLAR_EFFECT, static_cast<float>(magnitude));
-				}
-
+				log::trace("Latex counter: {}", oppdCounters.summonCollarCounter);
 				auto summons_list = getPlayerCommandedActors();
 				if (summons_list.empty()) {
 					if (Util::randomDouble() < settings.oppSummonChance) {
@@ -160,12 +150,13 @@ namespace DCURSES {
 						}
 					}
 				}
-				if (magnitude <= 0) {
+				if (oppdCounters.summonCollarCounter <= 0) {
 					if (GetItemCount(player, summoner_collar_key) == 0) {
 						player->AddObjectToContainer((RE::TESBoundObject*)summoner_collar_key, nullptr, 1, nullptr);
 						PlayerMessage("The Summoner Collar is now satisfied and you can unlock it!");
 					}
 				}
+				SetEffectMagnitude(SUMMONER_COLLAR_EFFECT, static_cast<float>(oppdCounters.summonCollarCounter));
 			}
 
 			//Living Latex
@@ -174,17 +165,13 @@ namespace DCURSES {
 			
 			bool isWearingLatex = ActorIsWearingDevice(player, latex) || ActorIsWearingDevice(player, latex_open);
 			if (isWearingLatex) {
-				int magnitude = static_cast<int>(GetEffectMagnitude(LIVING_LATEX_EFFECT));
-				if (magnitude <= -10000) {
-					magnitude = static_cast<int>(settings.oppLivingLatexStartTime * 60 * Util::randomFloat(0.9f, 1.2f));
-				}
-
-				if (magnitude >= 3) {
+				log::trace("Latex counter: {}", oppdCounters.livingLatexCounter);
+				if (oppdCounters.livingLatexCounter >= 3) {
 					SetEffectDescription(LIVING_LATEX_EFFECT, "The latex suit seems to be dormant.");
-					magnitude -= ODEVICE_TICK;
-					if (magnitude <= 2) {
+					oppdCounters.livingLatexCounter -= ODEVICE_TICK;
+					if (oppdCounters.livingLatexCounter <= 2) {
 						SetEffectDescription(LIVING_LATEX_EFFECT, "The latex suit seems to be dormant. Maybe it would do something if it was attacked.");
-						magnitude = 3;
+						oppdCounters.livingLatexCounter = 3;
 						if (player->IsInCombat()) {
 							std::vector<std::string> skips;
 							if (!settings.oppLivingLatexHeavy) {
@@ -194,11 +181,11 @@ namespace DCURSES {
 							AIEventLivingLatexActivate();
 							PlayerMessage("Suddenly the latex suit springs to life, covering you in ebonite! Is it trying to protect itself?");
 							SetEffectDescription(LIVING_LATEX_EFFECT, "The latex has awoken! Maybe you can weaken it by shocking it.");
-							magnitude = 2;
+							oppdCounters.livingLatexCounter = 2;
 						}
 					}
 				}
-				else if (magnitude == 2) {
+				else if (oppdCounters.livingLatexCounter == 2) {
 					SetEffectDescription(LIVING_LATEX_EFFECT, "The latex has awoken! Maybe you can weaken it by shocking it.");
 					if (settings.oppLivingLatexMore > 0.0f && counters.clock_GlobalTicker % static_cast<int>(settings.oppLivingLatexMore * 60) < ODEVICE_TICK) {
 						std::vector<std::string> skips;
@@ -210,7 +197,7 @@ namespace DCURSES {
 						}
 					}
 				}
-				else if (magnitude == 1) {
+				else if (oppdCounters.livingLatexCounter == 1) {
 					if (GetWornDeviceCount(player) == 1 || !settings.oppLivingLatexRequireRem) {
 						UnlockDevice(player, latex, nullptr, nullptr, true, false);
 						UnlockDevice(player, latex_open, nullptr, nullptr, true, false);
@@ -221,8 +208,6 @@ namespace DCURSES {
 						SetEffectDescription(LIVING_LATEX_EFFECT, "The latex is clinging to you only by your other devices, removing them should do the trick!");
 					}
 				}
-
-				SetEffectMagnitude(LIVING_LATEX_EFFECT, static_cast<float>(magnitude));
 			}
 		}
 	}
@@ -233,8 +218,9 @@ namespace DCURSES {
 			if (Util::GetFormEditorId(actor->GetActorBase()) == "DCurses_SummonAtronachFrost") {
 				actor->KillImmediate();
 			}
-			if (GetEffectMagnitude(SUMMONER_COLLAR_EFFECT) >= 0) {
-				ModifyEffectMagnitude(SUMMONER_COLLAR_EFFECT, -1.0);
+			if (oppdCounters.summonCollarCounter >= 0) {
+				oppdCounters.summonCollarCounter -= 1;
+				SetEffectMagnitude(SUMMONER_COLLAR_EFFECT, static_cast<float>(oppdCounters.summonCollarCounter));
 			}
 		}
 	}

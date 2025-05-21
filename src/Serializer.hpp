@@ -12,15 +12,46 @@ namespace DCURSES {
         int64_t clock_SexTimeout = 0;
         int64_t clock_lastSex = 0;
         uint64_t clock_GlobalTicker = 0;
+        int64_t SinceLastKey = 0;
+        int64_t SinceLastEvent = 0;
+        int64_t ActiveLewdMark = 0;
+        int64_t dummyDoNotUse00 = 0;
+        int64_t dummyDoNotUse01 = 0;
+        int64_t dummyDoNotUse02 = 0;
+        int64_t dummyDoNotUse03 = 0;
+        int64_t dummyDoNotUse04 = 0;
+        int64_t dummyDoNotUse05 = 0;
+        int64_t dummyDoNotUse06 = 0;
+        int64_t dummyDoNotUse07 = 0;
+        int64_t dummyDoNotUse08 = 0;
+        int64_t dummyDoNotUse09 = 0;
+
         void tick() {
             clock_SexTimeout += 1;
             clock_lastSex += 1;
             clock_GlobalTicker += 1;
         }
-        int64_t SinceLastKey = 0;
-        int64_t SinceLastEvent = 0;
-        int ActiveLewdMark = 0;
     } counters;
+
+    static_assert(sizeof(Counters) == 0x8 * 16); //Set version 0.5.1
+
+    class OppDeviceCounters {
+    public:
+        int64_t summonCollarCounter = 0;
+        int64_t livingLatexCounter = 0;
+        int64_t dummyDoNotUse00 = 0;
+        int64_t dummyDoNotUse01 = 0;
+        int64_t dummyDoNotUse02 = 0;
+        int64_t dummyDoNotUse03 = 0;
+        int64_t dummyDoNotUse04 = 0;
+        int64_t dummyDoNotUse05 = 0;
+        int64_t dummyDoNotUse06 = 0;
+        int64_t dummyDoNotUse07 = 0;
+        int64_t dummyDoNotUse08 = 0;
+        int64_t dummyDoNotUse09 = 0;
+    } oppdCounters;
+
+    static_assert(sizeof(OppDeviceCounters) == 0x8 * 12); //Set version 0.5.1
 
     class RefLists {
     public:
@@ -43,7 +74,7 @@ namespace DCURSES {
 
 
     inline const auto RefListsRecord = _byteswap_ulong('REFL');
-
+    inline const auto OppDeviceCounterRecord = _byteswap_ulong('ODCR');
     inline const auto ClocksRecord = _byteswap_ulong('CLKS');
 
     bool IsObjectRefKnown(uint32_t refId) {
@@ -117,6 +148,12 @@ namespace DCURSES {
             return;
         }
         serde->WriteRecordData(&counters, sizeof(Counters));
+
+        if (!serde->OpenRecord(OppDeviceCounterRecord, 0)) {
+            log::error("Unable to open record to write cosave data.");
+            return;
+        }
+        serde->WriteRecordData(&oppdCounters, sizeof(OppDeviceCounters));
     }
 
     void OnGameLoaded(SerializationInterface* serde) {
@@ -141,12 +178,21 @@ namespace DCURSES {
                     log::warn("Error reading clocks info, all timers reset.");
                 }
             }
+            if (type == OppDeviceCounterRecord) {
+                if (sizeof(OppDeviceCounters) == size) {
+                    serde->ReadRecordData(&oppdCounters, sizeof(OppDeviceCounters));
+                }
+                else {
+                    log::warn("Error reading odevice info, all timers reset.");
+                }
+            }
         }
     }
 
     void OnRevert(SerializationInterface*) {
         refLists = RefLists();
         counters = Counters();
+        oppdCounters = OppDeviceCounters();
     }
 
 
