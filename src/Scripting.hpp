@@ -25,7 +25,7 @@ namespace DCURSES {
     }
 
     bool CheckRapeTattoos() {
-        RE::TESForm* form = RE::TESDataHandler::GetSingleton()->LookupForm(0xd62, "RapeTattoos.esp");
+        RE::TESForm* form = StaticDataHolder::GetSingleton()->LookupForm(0xd62, "RapeTattoos.esp");
         if (form == nullptr) {
             return false;
         }
@@ -33,7 +33,7 @@ namespace DCURSES {
     }
 
     bool CheckUD() {
-        RE::TESForm* form = RE::TESDataHandler::GetSingleton()->LookupForm(0x5901, "UnforgivingDevices.esp");
+        RE::TESForm* form = StaticDataHolder::GetSingleton()->LookupForm(0x5901, "UnforgivingDevices.esp");
         if (form == nullptr) {
             return false;
         }
@@ -41,7 +41,7 @@ namespace DCURSES {
     }
 
     bool CheckSimpleSlavery() {
-        RE::TESForm* form = RE::TESDataHandler::GetSingleton()->LookupForm(0x492e, "SimpleSlavery.esp");
+        RE::TESForm* form = StaticDataHolder::GetSingleton()->LookupForm(0x492e, "SimpleSlavery.esp");
         if (form == nullptr) {
             return false;
         }
@@ -50,7 +50,7 @@ namespace DCURSES {
 
     RE::BSScript::Variable* GetMCMSetting(std::string name) {
         
-        RE::TESForm* form = RE::TESDataHandler::GetSingleton()->LookupForm(DCURSES_MCM, "Devious Curses.esp");
+        RE::TESForm* form = StaticDataHolder::GetSingleton()->LookupForm(DCURSES_MCM, "Devious Curses.esp");
         auto handle = GetHP()->GetHandleForObject(RE::FormType::Quest, form);
         RE::BSTSmartPointer<RE::BSScript::Object> mcmObject;
         GetVM()->FindBoundObject(handle, "DCurses_MCM", mcmObject);
@@ -73,7 +73,7 @@ namespace DCURSES {
 
     void SetMCMSetting(std::string name, RE::BSScript::Variable& value) {
 
-        RE::TESForm* form = RE::TESDataHandler::GetSingleton()->LookupForm(DCURSES_MCM, "Devious Curses.esp");
+        RE::TESForm* form = StaticDataHolder::GetSingleton()->LookupForm(DCURSES_MCM, "Devious Curses.esp");
         auto handle = GetHP()->GetHandleForObject(RE::FormType::Quest, form);
         RE::BSTSmartPointer<RE::BSScript::Object> mcmObject;
         GetVM()->FindBoundObject(handle, "DCurses_MCM", mcmObject);
@@ -103,6 +103,18 @@ namespace DCURSES {
         RE::BSScript::Variable var;
         var.SetString(value);
         SetMCMSetting(name, var);
+    }
+
+    void StartMCMTimer() {
+        RE::TESForm* form = StaticDataHolder::GetSingleton()->LookupForm(DCURSES_MCM, "Devious Curses.esp");
+        auto handle = GetHP()->GetHandleForObject(RE::FormType::Quest, form);
+        RE::BSTSmartPointer<RE::BSScript::Object> mcmObject;
+        GetVM()->FindBoundObject(handle, "DCurses_MCM", mcmObject);
+
+        RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> callback;
+        RE::BSScript::IFunctionArguments* args = new RE::BSScript::ZeroFunctionArguments;
+        GetVM()->DispatchMethodCall(mcmObject, "StartTimer", args, callback);
+        delete args;
     }
 
     int GetActorArousal(RE::Actor* actor) {
@@ -153,7 +165,7 @@ namespace DCURSES {
     }
 
     void SetArousal(RE::Actor* actor, int arousal) {
-        RE::TESForm* aroused = RE::TESDataHandler::GetSingleton()->LookupForm(0x4290f, "SexLabAroused.esm");
+        RE::TESForm* aroused = StaticDataHolder::GetSingleton()->LookupForm(0x4290f, "SexLabAroused.esm");
         RE::VMHandle hand = GetHP()->GetHandleForObject(RE::FormType::Quest, aroused);
         RE::BSTSmartPointer<RE::BSScript::Object> arousedObject;
         GetVM()->FindBoundObject(hand, "slaFrameworkScr", arousedObject);
@@ -165,7 +177,7 @@ namespace DCURSES {
     }
 
     void ModifyArousal(RE::Actor* actor, int arousal) {
-        RE::TESForm* aroused = RE::TESDataHandler::GetSingleton()->LookupForm(0x4290f, "SexLabAroused.esm");
+        RE::TESForm* aroused = StaticDataHolder::GetSingleton()->LookupForm(0x4290f, "SexLabAroused.esm");
         RE::VMHandle hand = GetHP()->GetHandleForObject(RE::FormType::Quest, aroused);
         RE::BSTSmartPointer<RE::BSScript::Object> arousedObject;
         GetVM()->FindBoundObject(hand, "slaFrameworkScr", arousedObject);
@@ -177,7 +189,7 @@ namespace DCURSES {
     }
 
     void LockDevice(RE::Actor* akActor, RE::TESObjectARMO* deviceInventory, bool force = false) {
-        RE::TESForm* libs = RE::TESDataHandler::GetSingleton()->LookupForm(std::stoi("f624", 0, 16), "Devious Devices - Integration.esm");
+        RE::TESForm* libs = StaticDataHolder::GetSingleton()->LookupForm(std::stoi("f624", 0, 16), "Devious Devices - Integration.esm");
         RE::VMHandle hand = GetHP()->GetHandleForObject(RE::FormType::Quest, libs);
         RE::BSTSmartPointer<RE::BSScript::Object> zadlibsObject;
         GetVM()->FindBoundObject(hand, "zadLibs", zadlibsObject);
@@ -193,7 +205,7 @@ namespace DCURSES {
         if (deviceRendered == nullptr) {
             deviceRendered = DeviousDevicesAPI::g_API->GetDeviceRender(deviceInventory);
         }
-        RE::TESForm* libs = RE::TESDataHandler::GetSingleton()->LookupForm(std::stoi("f624", 0, 16), "Devious Devices - Integration.esm");
+        RE::TESForm* libs = StaticDataHolder::GetSingleton()->LookupForm(std::stoi("f624", 0, 16), "Devious Devices - Integration.esm");
         RE::VMHandle hand = GetHP()->GetHandleForObject(RE::FormType::Quest, libs);
         RE::BSTSmartPointer<RE::BSScript::Object> zadlibsObject;
         GetVM()->FindBoundObject(hand, "zadLibs", zadlibsObject);
@@ -207,7 +219,7 @@ namespace DCURSES {
 
     void RemoveQuestDevice(RE::Actor* akActor, RE::TESObjectARMO* deviceInventory, RE::TESObjectARMO* deviceRendered, bool destroyDevice = false) {
         auto removalToken = RE::TESForm::LookupByEditorID("DCurses_QuestItem")->As<RE::BGSKeyword>();
-        RE::TESForm* libs = RE::TESDataHandler::GetSingleton()->LookupForm(std::stoi("f624", 0, 16), "Devious Devices - Integration.esm");
+        RE::TESForm* libs = StaticDataHolder::GetSingleton()->LookupForm(std::stoi("f624", 0, 16), "Devious Devices - Integration.esm");
         RE::VMHandle hand = GetHP()->GetHandleForObject(RE::FormType::Quest, libs);
         RE::BSTSmartPointer<RE::BSScript::Object> zadlibsObject;
         GetVM()->FindBoundObject(hand, "zadLibs", zadlibsObject);
@@ -220,7 +232,7 @@ namespace DCURSES {
     }
 
     void SwapDevices(RE::Actor* akActor, RE::TESObjectARMO* deviceInventory, RE::BGSKeyword* zad_DeviousDevice = nullptr, bool destroyDevice = false, bool genericonly = true) {
-        RE::TESForm* libs = RE::TESDataHandler::GetSingleton()->LookupForm(std::stoi("f624", 0, 16), "Devious Devices - Integration.esm");
+        RE::TESForm* libs = StaticDataHolder::GetSingleton()->LookupForm(std::stoi("f624", 0, 16), "Devious Devices - Integration.esm");
         RE::VMHandle hand = GetHP()->GetHandleForObject(RE::FormType::Quest, libs);
         RE::BSTSmartPointer<RE::BSScript::Object> zadlibsObject;
         GetVM()->FindBoundObject(hand, "zadLibs", zadlibsObject);
@@ -233,7 +245,7 @@ namespace DCURSES {
     }
 
     void VibrateEffect(RE::Actor* akActor, int vibStrength, int duration, bool teaseOnly = false, bool silent = false) {
-        RE::TESForm* libs = RE::TESDataHandler::GetSingleton()->LookupForm(std::stoi("f624", 0, 16), "Devious Devices - Integration.esm");
+        RE::TESForm* libs = StaticDataHolder::GetSingleton()->LookupForm(std::stoi("f624", 0, 16), "Devious Devices - Integration.esm");
         RE::VMHandle hand = GetHP()->GetHandleForObject(RE::FormType::Quest, libs);
         RE::BSTSmartPointer<RE::BSScript::Object> zadlibsObject;
         GetVM()->FindBoundObject(hand, "zadLibs", zadlibsObject);
@@ -246,7 +258,7 @@ namespace DCURSES {
     }
 
     void ShockActor(RE::Actor* akActor) {
-        RE::TESForm* libs = RE::TESDataHandler::GetSingleton()->LookupForm(std::stoi("f624", 0, 16), "Devious Devices - Integration.esm");
+        RE::TESForm* libs = StaticDataHolder::GetSingleton()->LookupForm(std::stoi("f624", 0, 16), "Devious Devices - Integration.esm");
         RE::VMHandle hand = GetHP()->GetHandleForObject(RE::FormType::Quest, libs);
         RE::BSTSmartPointer<RE::BSScript::Object> zadlibsObject;
         GetVM()->FindBoundObject(hand, "zadLibs", zadlibsObject);
@@ -282,7 +294,7 @@ namespace DCURSES {
 
     void UpdateArousal(RE::Actor* akActor) {
         RE::BSTSmartPointer<RE::BSScript::Object> slaObject;
-        RE::TESForm* sla = RE::TESDataHandler::GetSingleton()->LookupForm(std::stoi("4290f", 0, 16), "SexLabAroused.esm");
+        RE::TESForm* sla = StaticDataHolder::GetSingleton()->LookupForm(std::stoi("4290f", 0, 16), "SexLabAroused.esm");
         RE::VMHandle hand = GetHP()->GetHandleForObject(RE::FormType::Quest, sla);
         GetVM()->FindBoundObject(hand, "slaFrameworkScr", slaObject);
 
@@ -295,7 +307,7 @@ namespace DCURSES {
 
     void RTDoTattooEvent(RE::Actor* akActor, int count) {
         RE::BSTSmartPointer<RE::BSScript::Object> rapeTatsObject;
-        RE::TESForm* form = RE::TESDataHandler::GetSingleton()->LookupForm(0xd62, "RapeTattoos.esp");
+        RE::TESForm* form = StaticDataHolder::GetSingleton()->LookupForm(0xd62, "RapeTattoos.esp");
         RE::VMHandle hand = GetHP()->GetHandleForObject(RE::FormType::Quest, form);
         GetVM()->FindBoundObject(hand, "rapeTattoos", rapeTatsObject);
 
@@ -319,7 +331,7 @@ namespace DCURSES {
     }
 
     void ContraptionsLockActor(RE::Actor* akActor, RE::TESObjectREFR* furniture) {
-        RE::TESForm* clibs = RE::TESDataHandler::GetSingleton()->LookupForm(0x22fd, "Devious Devices - Contraptions.esm");
+        RE::TESForm* clibs = StaticDataHolder::GetSingleton()->LookupForm(0x22fd, "Devious Devices - Contraptions.esm");
         RE::VMHandle hand = GetHP()->GetHandleForObject(RE::FormType::Quest, clibs);
         RE::BSTSmartPointer<RE::BSScript::Object> zadclibsObject;
         GetVM()->FindBoundObject(hand, "zadcLibs", zadclibsObject);
@@ -332,7 +344,7 @@ namespace DCURSES {
     }
 
     void ContraptionsUnlockActor(RE::Actor* akActor) {
-        RE::TESForm* clibs = RE::TESDataHandler::GetSingleton()->LookupForm(0x22fd, "Devious Devices - Contraptions.esm");
+        RE::TESForm* clibs = StaticDataHolder::GetSingleton()->LookupForm(0x22fd, "Devious Devices - Contraptions.esm");
         RE::VMHandle hand = GetHP()->GetHandleForObject(RE::FormType::Quest, clibs);
         RE::BSTSmartPointer<RE::BSScript::Object> zadclibsObject;
         GetVM()->FindBoundObject(hand, "zadcLibs", zadclibsObject);

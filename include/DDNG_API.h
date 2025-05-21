@@ -153,7 +153,7 @@ namespace DeviousDevicesAPI
     inline bool LoadAPI()
     {
         if (g_API != nullptr) return true;
-        SKSE::WinAPI::HMODULE dllHandle = GetModuleHandle(L"DeviousDevices.dll");
+        HMODULE dllHandle = GetModuleHandle(L"DeviousDevices.dll");
         if (dllHandle != NULL)
         {
             auto pGetAPI = GetProcAddress(dllHandle, "GetAPI");

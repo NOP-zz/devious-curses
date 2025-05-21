@@ -44,12 +44,17 @@ endif()
 # Otherwise, you can set OUTPUT_FOLDER to any place you'd like :) USED FOR VR
 # set(OUTPUT_FOLDER "S:/SkyrimVR/mo2/mods/DeviousCurses")
 
+# set(CommonLibSSE_DIR "S:/Skyrim/modding/CommonLibVR/build/debug-msvc-vcpkg-all")
+
 # Setup your SKSE plugin as an SKSE plugin!
+find_package(directxtk CONFIG REQUIRED)
 find_package(CommonLibSSE CONFIG REQUIRED)
 add_commonlibsse_plugin(${PROJECT_NAME} SOURCES ${sources}) # <--- specifies plugin.cpp
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_23) # <--- use C++23 standard
 target_precompile_headers(${PROJECT_NAME} PRIVATE PCH.h) # <--- PCH.h is required!
 target_link_libraries(${PROJECT_NAME} PRIVATE d3d11.dll)
+target_link_libraries(${PROJECT_NAME} PRIVATE Microsoft::DirectXTK)
+target_link_libraries(${PROJECT_NAME} PUBLIC CommonLibSSE::CommonLibSSE)
 add_dependencies(${PROJECT_NAME} Codegen)
 
 

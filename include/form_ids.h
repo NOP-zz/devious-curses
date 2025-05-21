@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../src/Utils.hpp"
+
 using namespace SKSE;
 
 namespace DCURSES {
@@ -54,24 +56,38 @@ constexpr auto DDX_RED_CATSUIT = 0x3D8fC;
 			return &instance;
 		}
 
+		RE::TESForm* LookupFormNoCache(uint32_t a_localFormID, std::string modname) {
+			return RE::TESDataHandler::GetSingleton()->LookupForm(a_localFormID, modname);
+		}
+
 		template<class T>
-		T* LookupForm(uint32_t formid, std::string modname) {
+		T* LookupFormNoCache(uint32_t a_localFormID, std::string modname) {
+			RE::TESForm* form = LookupFormNoCache(a_localFormID, modname);
+			return (form && form->Is(T::FORMTYPE)) ? static_cast<T*>(form) : nullptr;
+		}
+
+		RE::TESForm* LookupForm(uint32_t formid, std::string modname) {
 			auto pair = std::make_pair(formid, modname);
 			if (_internalData.count(pair)) {
 				//log::trace("StaticDataHolder Returning stored data {:X} from {}", formid, modname);
-				auto form = _internalData.at(pair);
-				return (form && form->Is(T::FORMTYPE)) ? static_cast<T*>(form) : nullptr;
+				return _internalData.at(pair);
 			}
 			else {
 				//log::trace("StaticDataHolder grabbing {:X} from {}", formid, modname);
-				RE::TESForm* form = RE::TESDataHandler::GetSingleton()->LookupForm(formid, modname);
+				RE::TESForm* form = LookupFormNoCache(formid, modname);
 				if (form) {
 					mutex.lock();
 					_internalData.insert({ pair, form });
 					mutex.unlock();
 				}
-				return (form && form->Is(T::FORMTYPE)) ? static_cast<T*>(form) : nullptr;
+				return form;
 			}
+		}
+
+		template<class T>
+		T* LookupForm(uint32_t formid, std::string modname) {
+			RE::TESForm* form = LookupForm(formid, modname);
+			return (form && form->Is(T::FORMTYPE)) ? static_cast<T*>(form) : nullptr;
 		}
 
 		void InvalidateCache() {

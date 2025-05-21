@@ -28,10 +28,7 @@ namespace DCURSES {
 
 		RE::TESObjectARMO* summoner_collar = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(SUMMONER_COLLAR, "Devious Curses.esp");
 
-		counters.clock_GlobalTicker -= (counters.clock_GlobalTicker + ODEVICE_TICK - 1) % ODEVICE_TICK;
-		Util::ExecuteWithDelay(500ms, [] {
-			SetEffectMagnitude(SUMMONER_COLLAR_EFFECT, static_cast<float>(settings.oppSummonerSexCount));
-		});
+		counters.clock_GlobalTicker -= counters.clock_GlobalTicker;
 
 		auto magic = player->AsActorValueOwner()->GetActorValue(RE::ActorValue::kMagicka);
 		player->AsActorValueOwner()->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kDamage, RE::ActorValue::kMagicka, -magic);
@@ -54,10 +51,7 @@ namespace DCURSES {
 		RE::TESObjectARMO* latex = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(LIVING_LATEX, "Devious Curses.esp");
 		RE::TESObjectARMO* latex_open = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(LIVING_LATEX_OPEN, "Devious Curses.esp");
 
-		counters.clock_GlobalTicker -= (counters.clock_GlobalTicker + ODEVICE_TICK - 1) % ODEVICE_TICK;
-		Util::ExecuteWithDelay(500ms, [] {
-			SetEffectMagnitude(LIVING_LATEX_EFFECT, static_cast<float>(settings.oppLivingLatexStartTime) * 60 * Util::randomFloat(0.9f, 1.2f));
-		});
+		counters.clock_GlobalTicker -= counters.clock_GlobalTicker % ODEVICE_TICK;
 
 		auto stamina = player->AsActorValueOwner()->GetActorValue(RE::ActorValue::kStamina);
 		player->AsActorValueOwner()->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kDamage, RE::ActorValue::kStamina, -stamina / 2);
@@ -70,6 +64,10 @@ namespace DCURSES {
 		else {
 			LockDevice(player, latex, true);
 		}
+
+		//Util::ExecuteWithDelay(500ms, [] {
+		//	SetEffectMagnitude(LIVING_LATEX_EFFECT, static_cast<float>(settings.oppLivingLatexStartTime) * 60 * Util::randomFloat(0.9f, 1.2f));
+		//});
 		
 		if (!containerName.empty()) { PlayerMessage(fmt::format("As you touch the {} a ball of goo jumps out at you and covers your body!", containerName)); };
 		return true;
@@ -135,6 +133,12 @@ namespace DCURSES {
 			//Summoner Collar
 			bool isWearingSummonerCollar = ActorIsWearingDevice(player, summoner_collar);
 			if (isWearingSummonerCollar) {
+				int magnitude = static_cast<int>(GetEffectMagnitude(SUMMONER_COLLAR_EFFECT));
+				if (magnitude < -10000) {
+					magnitude = static_cast<int>(settings.oppSummonerSexCount);
+					SetEffectMagnitude(SUMMONER_COLLAR_EFFECT, static_cast<float>(magnitude));
+				}
+
 				auto summons_list = getPlayerCommandedActors();
 				if (summons_list.empty()) {
 					if (Util::randomDouble() < settings.oppSummonChance) {
@@ -156,8 +160,8 @@ namespace DCURSES {
 						}
 					}
 				}
-				if (GetEffectMagnitude(SUMMONER_COLLAR_EFFECT) <= 0) {
-					if (isWearingSummonerCollar && GetItemCount(player, summoner_collar_key) == 0) {
+				if (magnitude <= 0) {
+					if (GetItemCount(player, summoner_collar_key) == 0) {
 						player->AddObjectToContainer((RE::TESBoundObject*)summoner_collar_key, nullptr, 1, nullptr);
 						PlayerMessage("The Summoner Collar is now satisfied and you can unlock it!");
 					}
@@ -171,11 +175,15 @@ namespace DCURSES {
 			bool isWearingLatex = ActorIsWearingDevice(player, latex) || ActorIsWearingDevice(player, latex_open);
 			if (isWearingLatex) {
 				int magnitude = static_cast<int>(GetEffectMagnitude(LIVING_LATEX_EFFECT));
+				if (magnitude <= -10000) {
+					magnitude = static_cast<int>(settings.oppLivingLatexStartTime * 60 * Util::randomFloat(0.9f, 1.2f));
+				}
 
 				if (magnitude >= 3) {
 					SetEffectDescription(LIVING_LATEX_EFFECT, "The latex suit seems to be dormant.");
 					magnitude -= ODEVICE_TICK;
 					if (magnitude <= 2) {
+						SetEffectDescription(LIVING_LATEX_EFFECT, "The latex suit seems to be dormant. Maybe it would do something if it was attacked.");
 						magnitude = 3;
 						if (player->IsInCombat()) {
 							std::vector<std::string> skips;
@@ -225,7 +233,9 @@ namespace DCURSES {
 			if (Util::GetFormEditorId(actor->GetActorBase()) == "DCurses_SummonAtronachFrost") {
 				actor->KillImmediate();
 			}
-			ModifyEffectMagnitude(SUMMONER_COLLAR_EFFECT, -1.0);
+			if (GetEffectMagnitude(SUMMONER_COLLAR_EFFECT) >= 0) {
+				ModifyEffectMagnitude(SUMMONER_COLLAR_EFFECT, -1.0);
+			}
 		}
 	}
 }

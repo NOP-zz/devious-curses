@@ -95,7 +95,7 @@ namespace QuickLoot::API
 		QuickLootAPI operator=(QuickLootAPI&) = delete;
 		QuickLootAPI operator=(QuickLootAPI&&) = delete;
 
-		static constexpr const char* SERVER_PLUGIN_NAME = "QuickLootIE";
+		static constexpr const LPCWSTR SERVER_PLUGIN_NAME = L"QuickLootIE";
 
 		// Call this before any other API function and pass your own plugin name.
 		static bool Init(const char* plugin)

@@ -24,9 +24,7 @@ namespace DCURSES {
 		if (!actor) return nullptr;
 		RE::TESObjectREFR* ref = nullptr;
 
-		actor->GetParentCell()->ForEachReferenceInRange(actor->GetPosition(), 500, [&](RE::TESObjectREFR& akRef) {
-			RE::TESObjectREFR* refr = &akRef;
-
+		actor->GetParentCell()->ForEachReferenceInRange(actor->GetPosition(), 500, [&](RE::TESObjectREFR* refr) {
 			auto scriptObject = ContraptionsGetRefScript(refr);
 
 			if (!scriptObject) {

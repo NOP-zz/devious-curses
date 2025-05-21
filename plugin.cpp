@@ -120,7 +120,7 @@ namespace DCURSES {
         //    DoStandardEvent(false, "", "(black & (ebonite | rubber)) | grand | shock", 10, { "zad_DeviousBelt", "zad_DeviousBlindfold", "zad_DeviousHeavyBondage" });
         //}
 
-        //OppSummonerCollarEvent("");
+        OppLivingLatexEvent("test");
     }
 
     bool PapyrusFunctions(RE::BSScript::IVirtualMachine* ivm) {
@@ -164,7 +164,6 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
         {
         case SKSE::MessagingInterface::kDataLoaded: {
             if (!DCURSES::CheckESPLoaded()) {
-                log::critical("Devious curses ESP not loaded. Mod will be disabled.");
                 stl::report_and_fail("Devious Curses ESP is not loaded. If you are on skyrim version older than 1.6.1130 (Not AE) make sure to install Backported Extended ESL Support.");
                 return;
             }
@@ -204,8 +203,11 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
 
             DCURSES::LoadMCMSettings();
             DCURSES::RecalculateDeviceLists();
-            //DCURSES::P_UpdateSKSE(nullptr);
-            //DCURSES::counters.clock_lastSex = -10;
+            
+            DCURSES::Util::ExecuteWithDelay(1000ms, [] {
+                DCURSES::StartMCMTimer();
+            });
+
             break;
         }
         case SKSE::MessagingInterface::kPostLoad: {

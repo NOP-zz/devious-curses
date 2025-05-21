@@ -38,9 +38,9 @@ namespace DCURSES {
 			UnlockDevice(player, belt);
 		}
 
-		auto plug = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectARMO>(DDX_RUSTY_PEAR_ANAL_SIGN, "Devious Devices - Expansion.esm");
+		auto plug = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(DDX_RUSTY_PEAR_ANAL_SIGN, "Devious Devices - Expansion.esm");
 		LockDevice(player, plug, true);
-		plug = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectARMO>(DDX_RUSTY_PEAR_VAGINAL, "Devious Devices - Expansion.esm");
+		plug = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(DDX_RUSTY_PEAR_VAGINAL, "Devious Devices - Expansion.esm");
 		LockDevice(player, plug, true);
 
 		DoStandardEvent(false, "", "(rust | (iron & belt))", 20, { "zad_DeviousGag", "zad_DeviousHeavyBondage", "zad_DeviousBondageMittens", "zad_DeviousPlugVaginal", "zad_DeviousPlugAnal" });
@@ -58,7 +58,7 @@ namespace DCURSES {
 
 	void QISanguineInteractionEnd() {
 		if (!settings.enableQISanguine) { return; }
-		RE::TESKey* magic_key = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESKey>(MAGIC_KEY, "Devious Curses.esp");
+		RE::TESKey* magic_key = StaticDataHolder::GetSingleton()->LookupForm<RE::TESKey>(MAGIC_KEY, "Devious Curses.esp");
 		auto player = RE::PlayerCharacter::GetSingleton();
 
 		player->AddObjectToContainer((RE::TESBoundObject*)magic_key, nullptr, 1, nullptr);

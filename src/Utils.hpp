@@ -217,9 +217,7 @@ namespace DCURSES {
 		RE::TESObjectREFR* GetClosestRefr(RE::Actor* actor) {
 			if (!actor) return nullptr;
 			RE::TESObjectREFR* ref = nullptr;
-			actor->GetParentCell()->ForEachReference([&](RE::TESObjectREFR& akRef) {
-				RE::TESObjectREFR* refr = &akRef;
-
+			actor->GetParentCell()->ForEachReference([&](RE::TESObjectREFR* refr) {
 				if (actor->GetPosition().GetDistance(refr->GetPosition()) < ref->GetPosition().GetDistance(refr->GetPosition()) && actor != ref && actor->GetPosition().GetDistance(refr->GetPosition()) > 100.0) {
 					ref = refr;
 				}
