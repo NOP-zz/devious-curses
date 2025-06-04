@@ -110,7 +110,7 @@ namespace DCURSES {
 							if (actor->IsPlayerTeammate() && !getIsPlayerCommandedActor(actor) && settings.sexAlwaysAllowFollowers) {
 								enabled = true;
 							}
-							else if (playerLewdMark == TAT_ALLURE) {
+							else if (playerLewdMark == MARK::TAT_ALLURE) {
 								enabled = true;
 							}
 							else if (actor->IsInFaction(PlayerMarriedFaction) && settings.sexAlwaysAllowSpouse) {
@@ -445,7 +445,7 @@ namespace DCURSES {
 			if (actor && actor != RE::PlayerCharacter::GetSingleton()) {
 				log::trace("Sex ended with {}", actor->GetName());
 				OppOnSexEnd(actor);
-				DecrementCounterForMark(TAT_ALLURE);
+				DecrementCounterForMark(MARK::TAT_ALLURE);
 				ConsSexEnded(actor);
 				break;
 			}

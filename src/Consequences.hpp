@@ -235,8 +235,9 @@ namespace DCURSES {
 		SetConsequenceTargetKnown(actor->formID);
 		auto player = RE::PlayerCharacter::GetSingleton();
 		log::trace("Checking consequence dialogue");
-		if (player->GetWornArmor((RE::BIPED_MODEL::BipedObjectSlot::kBody)) == nullptr) {
-			DecrementCounterForMark(TAT_NUDITY);
+		DecrementCounterForMark(MARK::TAT_NUDITY);
+		auto body = player->GetWornArmor((RE::BIPED_MODEL::BipedObjectSlot::kBody));
+		if (body == nullptr || body->HasKeywordString("zad_Lockable")) {
 			if (Util::randomDouble() < settings.consTriggerNude) {
 				log::trace("Nude Trigger");
 				if (DoConsequence(actor, consequenceSource::kNude)) {

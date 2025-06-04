@@ -47,11 +47,14 @@ namespace slavetats_ng {
 }
 
 namespace DCURSES {
-	static const int TAT_ALLURE = 13;
-	static const int TAT_HEAT = 11;
-	static const int TAT_BONDAGE = 71;
-	static const int TAT_NUDITY = 79;
-	static const int TAT_BRANDING = 74;
+	enum class MARK : int64_t {
+		TAT_NONE = 0,
+		TAT_HEAT = 11,
+		TAT_ALLURE = 13,
+		TAT_BONDAGE = 71,
+		TAT_BRANDING = 74,
+		TAT_NUDITY = 79,
+	};
 
 	int GetTattooCount(RE::Actor* actor) {
 		if (!actor) return 0;
@@ -98,44 +101,52 @@ namespace DCURSES {
 		return true;
 	}
 
-	int GetLewdMark() {
-		return counters.ActiveLewdMark;
+	MARK GetLewdMark() {
+		return static_cast<MARK>(counters.ActiveLewdMark);
 	}
 
-	int GetColorForMark(int mark) {
+	int GetColorForMark(MARK mark) {
 		switch (mark) {
-		case TAT_ALLURE:
+		case MARK::TAT_NONE:
+			return 0;
+		case MARK::TAT_ALLURE:
 			return settings.LMAllureColor;
-		case TAT_HEAT:
+		case MARK::TAT_HEAT:
 			return settings.LMHeatColor;
-		case TAT_BONDAGE:
+		case MARK::TAT_BONDAGE:
 			return settings.LMBondageColor;
-		case TAT_NUDITY:
+		case MARK::TAT_NUDITY:
 			return settings.LMNudityColor;
-		case TAT_BRANDING:
+		case MARK::TAT_BRANDING:
 			return settings.LMBrandingColor;
 		}
 		return 0;
 	}
 
-	void DecrementCounterForMark(int mark) {
+	void DecrementCounterForMark(MARK mark) {
 		if (mark == GetLewdMark()) {
 			switch (mark) {
-			case TAT_ALLURE:
+			case MARK::TAT_NONE:
+				log::warn("Incrementing counter for NONE mark.");
+				break;
+			case MARK::TAT_ALLURE:
 				ModifyEffectMagnitude(ALLURE_EFFECT, -1);
 				log::info("Incrementing counter for Allure mark.");
 				break;
-			case TAT_HEAT:
+			case MARK::TAT_HEAT:
 				ModifyEffectMagnitude(HEAT_EFFECT, -1);
 				log::info("Incrementing counter for Heat mark.");
 				break;
-			case TAT_BONDAGE:
+			case MARK::TAT_BONDAGE:
 				ModifyEffectMagnitude(BONDAGE_EFFECT, -1);
 				log::info("Incrementing counter for Bondage mark.");
 				break;
-			case TAT_NUDITY:
+			case MARK::TAT_NUDITY:
 				ModifyEffectMagnitude(NUDITY_EFFECT, -1);
 				log::info("Incrementing counter for Nudity mark.");
+				break;
+			case MARK::TAT_BRANDING:
+				log::warn("Incrementing counter for Branding mark.");
 				break;
 			}
 		}
@@ -280,12 +291,14 @@ namespace DCURSES {
 		return 0;
 	}
 
-	bool AddLewdMark(int index) {
+	bool AddLewdMark(MARK mark) {
 		if (!slavetats_ng::iface) return false;
 		if (!jcontainers::JCWrapper::GetSingleton()->IsInitialized()) return false;
 		if (!CheckLewdMarksInstalled()) return false;
 		
-		auto base_color = GetColorForMark(index);
+		int index = static_cast<int>(mark);
+
+		auto base_color = GetColorForMark(mark);
 		auto glowColor = Util::ColorScale(base_color, 0.8);
 
 		if (_AddLewdMarkGlow(index, glowColor, glowColor) && _AddLewdMarkMain(index, base_color, glowColor)) {
@@ -296,7 +309,7 @@ namespace DCURSES {
 		
 	}
 
-	void RemoveLewdMark(int index = -1) {
+	void RemoveLewdMark(int64_t index = -1) {
 		if (!slavetats_ng::iface) return;
 		if (!jcontainers::JCWrapper::GetSingleton()->IsInitialized()) return;
 		if (!CheckLewdMarksInstalled()) return;
@@ -304,7 +317,7 @@ namespace DCURSES {
 		auto actor = RE::PlayerCharacter::GetSingleton();
 
 		if (index == -1) {
-			index = GetLewdMark();
+			index = static_cast<int64_t>(GetLewdMark());
 		}
 
 		counters.ActiveLewdMark = 0;
@@ -328,35 +341,36 @@ namespace DCURSES {
 		}
 	}
 
-	void TatsUpdateContext(int mark) {
+	void TatsUpdateContext(MARK mark) {
 		switch (mark) {
-		case TAT_ALLURE:
+		case MARK::TAT_NONE:
+			break;
+		case MARK::TAT_ALLURE:
 			AIContextAddAllureMark();
 			break;
-		case TAT_HEAT:
+		case MARK::TAT_HEAT:
 			AIContextAddHeatMark();
 			break;
-		case TAT_NUDITY:
+		case MARK::TAT_NUDITY:
 			AIContextAddNudityMark();
 			break;
-		case TAT_BONDAGE:
+		case MARK::TAT_BONDAGE:
 			AIContextAddBondageMark();
 			break;
-		case TAT_BRANDING:
+		case MARK::TAT_BRANDING:
 			AIContextAddBrandingMark();
 			break;
-		default:
-			AIContextRemoveLewdMark();
 		}
 	}
 
 	void TatsUpdate() {
 		auto mark = GetLewdMark();
+		auto index = static_cast<int64_t>(mark);
 		auto applied = GetLewdMarkApplied();
 
-		if (applied != mark) {
-			log::trace("Resolving mark discrepancy, expected {}, had {}", mark, applied);
-			if (mark == -1) {
+		if (applied != index) {
+			log::trace("Resolving mark discrepancy, expected {}, had {}", index, applied);
+			if (mark == MARK::TAT_NONE) {
 				RemoveLewdMark(applied);
 			}
 			else if (applied > 0) {
@@ -375,19 +389,21 @@ namespace DCURSES {
 		SetEffectVisible(BRANDING_EFFECT, false);
 
 		switch (mark) {
-		case TAT_ALLURE:
+		case MARK::TAT_NONE:
+			break;
+		case MARK::TAT_ALLURE:
 			SetEffectVisible(ALLURE_EFFECT);
 			break;
-		case TAT_HEAT:
+		case MARK::TAT_HEAT:
 			SetEffectVisible(HEAT_EFFECT);
 			break;
-		case TAT_NUDITY:
+		case MARK::TAT_NUDITY:
 			SetEffectVisible(NUDITY_EFFECT);
 			break;
-		case TAT_BONDAGE:
+		case MARK::TAT_BONDAGE:
 			SetEffectVisible(BONDAGE_EFFECT);
 			break;
-		case TAT_BRANDING:
+		case MARK::TAT_BRANDING:
 			SetEffectVisible(BRANDING_EFFECT);
 			break;
 		}

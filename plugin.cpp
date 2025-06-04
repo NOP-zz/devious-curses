@@ -1,6 +1,12 @@
+#include "include/DDNG_API.h"
+#include "include/form_ids.h"
+#include "include/quicklootAPI.h"
+#include "include/SexLabPPFunctions.h"
+#include "include/SlaveTatsNG_Interface.h"
+
+#include "src/Utils.hpp"
 #include "src/Settings.hpp"
 #include "src/Devices.hpp"
-#include "src/Utils.hpp"
 #include "src/Scripting.hpp"
 #include "src/Serializer.hpp"
 #include "src/sex.hpp"
@@ -14,8 +20,6 @@
 #include "src/QuestInteractions.hpp"
 #include "src/ModEvents.hpp"
 #include "src/MinAI.hpp"
-
-#include "include/DDNG_API.h"
 
 #include <d3d11.h>
 #include <windows.h>

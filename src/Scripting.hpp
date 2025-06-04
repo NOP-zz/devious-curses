@@ -143,9 +143,9 @@ namespace DCURSES {
         delete args;
     }
 
-    void SendModEventMark(RE::Actor* who, std::string what, std::string mark_name, int mark_id) {
+    void SendModEventMark(RE::Actor* who, std::string what, std::string mark_name, int mark) {
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> result;
-        RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::Actor*, std::string, std::string, int>(std::move(who), std::move(what), std::move(mark_name), std::move(mark_id));
+        RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::Actor*, std::string, std::string, int>(std::move(who), std::move(what), std::move(mark_name), std::move(mark));
         GetVM()->DispatchStaticCall("DCursesLib", "SendModEventMark", args, result);
         delete args;
     }

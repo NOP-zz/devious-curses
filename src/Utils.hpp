@@ -148,11 +148,11 @@ namespace DCURSES {
 			std::string token;
 			while ((pos = s.find(delimiter, index)) != std::string::npos) {
 				token = s.substr(index, index + pos);
-				tokens.push_back(trim(token));
+				tokens.push_back(token);
 				index = pos + delimiter.length();
 			}
 			token = s.substr(index);
-			tokens.push_back(trim(token));
+			tokens.push_back(token);
 
 			return tokens;
 		}
@@ -169,8 +169,9 @@ namespace DCURSES {
 			return str.size() - 1;
 		}
 
-		bool testFormComp(const std::string& comp, RE::TESForm* form) {
+		bool testFormComp(const std::string& theme, RE::TESForm* form) {
 			//log::trace("{}", comp);
+			const std::string comp = trim(theme);
 			if (comp == "") return true;
 			if (!form) return false;
 

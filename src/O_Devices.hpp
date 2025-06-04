@@ -197,7 +197,7 @@ namespace DCURSES {
 						}
 					}
 				}
-				else if (oppdCounters.livingLatexCounter == 1) {
+				else if (oppdCounters.livingLatexCounter <= 1) {
 					if (GetWornDeviceCount(player) == 1 || !settings.oppLivingLatexRequireRem) {
 						UnlockDevice(player, latex, nullptr, nullptr, true, false);
 						UnlockDevice(player, latex_open, nullptr, nullptr, true, false);

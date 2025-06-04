@@ -16,17 +16,17 @@ namespace DCURSES {
 		CloseContinerMenus();
 		auto player = RE::PlayerCharacter::GetSingleton();
 		auto mark = GetLewdMark();
-		if (mark == TAT_BRANDING) {
+		if (mark == MARK::TAT_BRANDING) {
 			return;
 		}
-		if (mark > 0) {
+		if (mark != MARK::TAT_NONE) {
 			RemoveLewdMark();
 		}
 
-		AddLewdMark(TAT_BRANDING);
+		AddLewdMark(MARK::TAT_BRANDING);
 		SetEffectMagnitude(BRANDING_EFFECT, static_cast<float>(GetTattooCount(player)));
 		PlayerMessage("As you kill Malkoran he curses you with a mark of branding!");
-		SendModEventMark(player, "Malkoran", "Branding", TAT_BRANDING);
+		SendModEventMark(player, "Malkoran", "Branding", static_cast<int>(MARK::TAT_BRANDING));
 	}
 
 	void QISanguineInteraction1() {
@@ -46,13 +46,13 @@ namespace DCURSES {
 		DoStandardEvent(false, "", "(rust | (iron & belt))", 20, { "zad_DeviousGag", "zad_DeviousHeavyBondage", "zad_DeviousBondageMittens", "zad_DeviousPlugVaginal", "zad_DeviousPlugAnal" });
 
 		auto mark = GetLewdMark();
-		if (mark > 0) {
+		if (mark != MARK::TAT_NONE) {
 			RemoveLewdMark();
 		}
-		AddLewdMark(TAT_NUDITY);
+		AddLewdMark(MARK::TAT_NUDITY);
 		SetEffectMagnitude(NUDITY_EFFECT, static_cast<float>(settings.LMNudityTalkTimes));
 
-		SendModEventMark(player, "Sanguine", "Nudity", TAT_NUDITY);
+		SendModEventMark(player, "Sanguine", "Nudity", static_cast<int>(MARK::TAT_NUDITY));
 		Util::ExecuteWithDelay(4s, [] {PlayerMessage("As you awaken you notice that you're covered in chains and have a strange mark on you. Hopefully Sam can fix this..."); });
 	}
 
@@ -64,11 +64,11 @@ namespace DCURSES {
 		player->AddObjectToContainer((RE::TESBoundObject*)magic_key, nullptr, 1, nullptr);
 
 		auto mark = GetLewdMark();
-		if (mark == TAT_NUDITY) {
+		if (mark == MARK::TAT_NUDITY) {
 			RemoveLewdMark();
 		}
 
-		PlayerMessage(fmt::format("Now that your wild adventure with Sanguine is over, he gives you a magic key{}!", (mark == TAT_NUDITY) ? " and removes your nudity mark" : ""));
+		PlayerMessage(fmt::format("Now that your wild adventure with Sanguine is over, he gives you a magic key{}!", (mark == MARK::TAT_NUDITY) ? " and removes your nudity mark" : ""));
 	}
 
 	void QIPotemaInteraction(); // Add a curse during the potema questline. Sugestion was to have a curse that periodically summons devices. Gets stronger when fighting potema??
