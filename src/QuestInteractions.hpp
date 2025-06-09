@@ -10,6 +10,8 @@ namespace DCURSES {
 
 	constexpr auto QUEST_MG04 = 0x1F254;
 
+	constexpr auto QUEST_TG06 = 0x21552;
+
 	void QIMeridiaInteraction() {
 		if (!settings.enableQIMalkoran) { return; }
 
@@ -24,8 +26,10 @@ namespace DCURSES {
 		}
 
 		AddLewdMark(MARK::TAT_BRANDING);
+		AIContextAddBrandingMark();
 		SetEffectMagnitude(BRANDING_EFFECT, static_cast<float>(GetTattooCount(player)));
-		PlayerMessage("As you kill Malkoran he curses you with a mark of branding!");
+		//PlayerMessage("As you kill Malkoran he curses you with a mark of branding!");
+		PlayerMessage(Translator(Translation::QIMalkoranCurse));
 		SendModEventMark(player, "Malkoran", "Branding", static_cast<int>(MARK::TAT_BRANDING));
 	}
 
@@ -50,10 +54,14 @@ namespace DCURSES {
 			RemoveLewdMark();
 		}
 		AddLewdMark(MARK::TAT_NUDITY);
+		AIContextAddNudityMark();
 		SetEffectMagnitude(NUDITY_EFFECT, static_cast<float>(settings.LMNudityTalkTimes));
 
 		SendModEventMark(player, "Sanguine", "Nudity", static_cast<int>(MARK::TAT_NUDITY));
-		Util::ExecuteWithDelay(4s, [] {PlayerMessage("As you awaken you notice that you're covered in chains and have a strange mark on you. Hopefully Sam can fix this..."); });
+		Util::ExecuteWithDelay(4s, [] {
+			//PlayerMessage("As you awaken you notice that you're covered in chains and have a strange mark on you. Hopefully Sam can fix this..."); 
+			PlayerMessage(Translator(Translation::QISanguineStart));
+		});
 	}
 
 	void QISanguineInteractionEnd() {
@@ -66,20 +74,46 @@ namespace DCURSES {
 		auto mark = GetLewdMark();
 		if (mark == MARK::TAT_NUDITY) {
 			RemoveLewdMark();
+			AIContextRemoveLewdMark();
 		}
 
-		PlayerMessage(fmt::format("Now that your wild adventure with Sanguine is over, he gives you a magic key{}!", (mark == MARK::TAT_NUDITY) ? " and removes your nudity mark" : ""));
+		//PlayerMessage(fmt::format("Now that your wild adventure with Sanguine is over, he gives you a magic key{}!", (mark == MARK::TAT_NUDITY) ? " and removes your nudity mark" : ""));
+		if (mark == MARK::TAT_NUDITY) {
+			PlayerMessage(Translator(Translation::QISanguineKeyMark));
+		}
+		else {
+			PlayerMessage(Translator(Translation::QISanguineKey));
+		}
 	}
 
-	void QIPotemaInteraction(); // Add a curse during the potema questline. Sugestion was to have a curse that periodically summons devices. Gets stronger when fighting potema??
+	//void QIPotemaInteraction(); // Add a curse during the potema questline. Sugestion was to have a curse that periodically summons devices. Gets stronger when fighting potema??
 
 	void QIMGInteraction1() {
 		if (!settings.enableQISaarthal) { return; }
 		RE::TESObjectARMO* amulet = RE::TESForm::LookupByID(0x233D0)->As<RE::TESObjectARMO>();
 		auto player = RE::PlayerCharacter::GetSingleton();
+
 		if (OppSummonerCollarEvent("")) {
 			player->RemoveItem(amulet, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr, nullptr, nullptr);
-			PlayerMessage("Strange magic interacts with the amulet transforming it into a collar!");
+			//PlayerMessage("Strange magic interacts with the amulet transforming it into a collar!");
+			PlayerMessage(Translator(Translation::QISaarthal));
+		}
+	}
+
+	void QIDwemerMuseum() {
+		if (!settings.enableQIDwemerMuseum) { return; }
+
+		auto mark = GetLewdMark();
+		if (mark != MARK::TAT_NONE) {
+			RemoveLewdMark();
+		}
+		AddLewdMark(MARK::TAT_HEAT);
+
+		if (OppDwarvenCuirassEvent("")) {
+			PlayerMessage(Translator(Translation::QIDwemerMuseumCurias));
+		}
+		else {
+			PlayerMessage(Translator(Translation::QIDwemerMuseum));
 		}
 	}
 
@@ -94,6 +128,9 @@ namespace DCURSES {
 		if (quest == RE::TESForm::LookupByID(QUEST_DA14)->As<RE::TESQuest>()) {
 			if (stage == 5) QISanguineInteraction1();
 			if (stage == 200) QISanguineInteractionEnd();
+		}
+		if (quest == RE::TESForm::LookupByID(QUEST_TG06)->As<RE::TESQuest>()) {
+			if (stage == 50) QIDwemerMuseum();
 		}
 	}
 

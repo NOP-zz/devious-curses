@@ -11,8 +11,15 @@ constexpr auto DCURSES_MCM = 0x800;
 
 // DEVICES
 constexpr auto SUMMONER_COLLAR = 0x810;
+constexpr auto SUMMONER_COLLAR_R = 0x80A;
 constexpr auto LIVING_LATEX = 0x812;
+constexpr auto LIVING_LATEX_R = 0x813;
 constexpr auto LIVING_LATEX_OPEN = 0x819;
+constexpr auto LIVING_LATEX_OPEN_R = 0x81A;
+constexpr auto DWARVEN_CURIAS = 0x828;
+constexpr auto DWARVEN_CURIAS_R = 0x81B;
+constexpr auto DWARVEN_CURIAS_HEAVY = 0x82E;
+constexpr auto DWARVEN_CURIAS_HEAVY_R = 0x82D;
 
 // KEYS
 constexpr auto MAGIC_KEY = 0x806;
@@ -30,10 +37,10 @@ constexpr auto BONDAGE_EFFECT = 0x811;
 constexpr auto BRANDING_EFFECT = 0x808;
 constexpr auto SUMMONER_COLLAR_EFFECT = 0x803;
 constexpr auto LIVING_LATEX_EFFECT = 0x816;
+constexpr auto DWARVEN_CUIRASS_EFFECT = 0x82B;
 
 // PERKS
 constexpr auto MGEF_CONTROLLER = 0x818;
-
 
 // DDX
 constexpr auto DDX_RUSTY_PEAR_ANAL_SIGN = 0x1FC45;

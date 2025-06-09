@@ -10,7 +10,7 @@ namespace DCURSES {
 		class CallbackFunctor : public RE::BSScript::IStackCallbackFunctor {
 		public:
 			RE::BSTSmartPointer<CallbackFunctor> nextCallback = nullptr;
-			int _handle;
+			int _handle = -1;
 
 			virtual void dispatch(int handle) = 0;
 

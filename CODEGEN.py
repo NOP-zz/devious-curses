@@ -1,4 +1,4 @@
-import sys, os, time
+import sys, os, time, json
 
 if len(sys.argv) == 2:
 	os.chdir(sys.argv[1])
@@ -7,6 +7,7 @@ if len(sys.argv) == 2:
 settings_raw = open(r"src\Settings.hpp", "r").read()
 settings = settings_raw.split("//MCM_START")[1].split("//MCM_END")[0]
 
+mcm_strings = dict() # Dictionary of translation strings
 sliders = [] # List of pairs [[name, default, format, ranemin, rangemax, step, rel]...]
 fsliders = [] # List of pairs [[name, default, format, ranemin, rangemax, step, rel]...]
 options = [] # List of pairs [[name, default, rel]...]
@@ -35,8 +36,10 @@ def processLine(line, page_lines):
 	if line.startswith("//"):
 		command = line.split(" ")[0].strip()
 		if command == "//Header":
-			the_rest = " ".join(line.split(" ")[1:]).strip() + " "
-			page_lines.append(f'AddHeaderOption("{the_rest}")')
+			the_rest = " ".join(line.split(" ")[1:]).strip()
+			header_key = f'$DCURSES_HEADER_{the_rest.replace(" ", "")}'
+			mcm_strings[header_key] = the_rest
+			page_lines.append(f'AddHeaderOption("{header_key}")')
 		if command == "//Column":
 			page_lines.append('SetCursorPosition(1)')
 		if command == "//Empty":
@@ -61,11 +64,17 @@ def processLine(line, page_lines):
 			print(f'Error on line: {line}')
 		var, title, desc, form, rang = line.split("//")
 		var_name = var.strip().split(" ")[1]
+
+		title_key = f'$DCURSES_{var_name}'
+		mcm_strings[title_key] = title
+		desc_key = f'$DCURSES_DESCRIPTION_{var_name}'
+		mcm_strings[desc_key] = desc
+
 		var_def = var.strip().split(" ")[3][:-1]
 		range_min, range_max, step = [x.strip() for x in rang[1:-1].split(",")]
 		sliders.append([var_name, var_def, form, range_min, range_max, step, rel])
-		descriptions.append([var_name, desc])
-		page_lines.append(f'{var_name}OID = AddSliderOption("{title}  ", {var_name}, "{form}", {flag})')
+		descriptions.append([var_name, desc_key])
+		page_lines.append(f'{var_name}OID = AddSliderOption("{title_key}", {var_name}, "{form}", {flag})')
 		if (recalc):
 			recalcs.append(var_name)
 	elif line.startswith("float "):
@@ -73,6 +82,12 @@ def processLine(line, page_lines):
 			print(f'Error on line: {line}')
 		var, title, desc, form, rang = line.split("//")
 		var_name = var.strip().split(" ")[1]
+
+		title_key = f'$DCURSES_{var_name}'
+		mcm_strings[title_key] = title
+		desc_key = f'$DCURSES_DESCRIPTION_{var_name}'
+		mcm_strings[desc_key] = desc
+
 		var_def = var.strip().split(" ")[3][:-1]
 		if var_def[-1] == "f":
 			var_def = var_def[:-1]
@@ -80,8 +95,8 @@ def processLine(line, page_lines):
 			var_def = var_def + '.0'
 		range_min, range_max, step = [x.strip() for x in rang[1:-1].split(",")]
 		fsliders.append([var_name, var_def, form, range_min, range_max, step, rel])
-		descriptions.append([var_name, desc])
-		page_lines.append(f'{var_name}OID = AddSliderOption("{title}  ", {var_name}, "{form}", {flag})')
+		descriptions.append([var_name, desc_key])
+		page_lines.append(f'{var_name}OID = AddSliderOption("{title_key}", {var_name}, "{form}", {flag})')
 		if (recalc):
 			frecalcs.append(var_name)
 	elif line.startswith("bool "):
@@ -89,10 +104,16 @@ def processLine(line, page_lines):
 			print(f'Error on line: {line}')
 		var, title, desc = line.split("//")
 		var_name = var.strip().split(" ")[1]
+
+		title_key = f'$DCURSES_{var_name}'
+		mcm_strings[title_key] = title
+		desc_key = f'$DCURSES_DESCRIPTION_{var_name}'
+		mcm_strings[desc_key] = desc
+
 		var_def = var.strip().split(" ")[3][:-1]
 		options.append([var_name, var_def, rel])
-		descriptions.append([var_name, desc])
-		page_lines.append(f'{var_name}OID = AddToggleOption("{title}  ", {var_name}, {flag})')
+		descriptions.append([var_name, desc_key])
+		page_lines.append(f'{var_name}OID = AddToggleOption("{title_key}", {var_name}, {flag})')
 		if (recalc):
 			brecalcs.append(var_name)
 	elif line.startswith("color "):
@@ -100,10 +121,16 @@ def processLine(line, page_lines):
 			print(f'Error on line: {line}')
 		var, title, desc = line.split("//")
 		var_name = var.strip().split(" ")[1]
+
+		title_key = f'$DCURSES_{var_name}'
+		mcm_strings[title_key] = title
+		desc_key = f'$DCURSES_DESCRIPTION_{var_name}'
+		mcm_strings[desc_key] = desc
+
 		var_def = var.strip().split(" ")[3][:-1]
 		colors.append([var_name, var_def, rel])
-		descriptions.append([var_name, desc])
-		page_lines.append(f'{var_name}OID = AddColorOption("{title}  ", {var_name}, {flag})')
+		descriptions.append([var_name, desc_key])
+		page_lines.append(f'{var_name}OID = AddColorOption("{title_key}", {var_name}, {flag})')
 		if (recalc):
 			recalcs.append(var_name)
 	elif line.startswith("text "):
@@ -111,27 +138,39 @@ def processLine(line, page_lines):
 			print(f'Error on line: {line}')
 		var, title, desc = line.split("//")
 		var_name = var.strip().split(" ")[1]
+
+		title_key = f'$DCURSES_{var_name}'
+		mcm_strings[title_key] = title
+		desc_key = f'$DCURSES_DESCRIPTION_{var_name}'
+		mcm_strings[desc_key] = desc
+
 		var_def = var.strip().split(" ")[3][:-1]
 		texts.append([var_name, var_def, rel])
-		descriptions.append([var_name, desc])
-		page_lines.append(f'{var_name}OID = AddInputOption("{title}  ", {var_name}, {flag})')
+		descriptions.append([var_name, desc_key])
+		page_lines.append(f'{var_name}OID = AddInputOption("{title_key}", {var_name}, {flag})')
 
 	return page_lines
 
 pages = settings.split("//Page")[1:]
 for page in pages:
-	page_name = page.split('\n')[0].strip() + " "
-	#print(f"Creating page {page_name}")
+	page_name = page.split('\n')[0].strip()
+	page_key = f'$DCURSES_PAGE_{page_name.replace(" ", "")}'
+	mcm_strings[page_key] = page_name
 	page_lines = []
 	for line in [x.strip() for x in page.split('\n')[1:]]:
 		page_lines = processLine(line, page_lines)
 
-	page_data.append([page_name, page_lines])
+	page_data.append([page_key, page_lines])
 
 pre_page = settings.split("//Page")[0]
 pages_flags = []
 for line in [x.strip() for x in pre_page.split('\n')[1:]]:
 	pages_flags = processLine(line, pages_flags)
+
+#mcm_keys = list(mcm_strings.keys())
+#mcm_keys.sort()
+#temp_dict = {key: mcm_strings[key] for key in mcm_keys}
+#mcm_strings = temp_dict
 
 
 Head = """;THIS SCRIPT IS AUTO GENERATED
@@ -307,6 +346,31 @@ with open("DCurses_MCM.psc", "w") as f:
 	f.write(ColorAccept)
 
 
+MCMTranslationData = ""
+parse = lambda x, y: f'{x}\t{y} \n'
+MCMTranslationData += ''.join([parse(x, y) for x, y in mcm_strings.items()])
+
+with open("translationData/Devious Curses_ENGLISH.txt", "w", encoding='utf-16') as f:
+	f.write(MCMTranslationData)
+
+
+
+# TRANSLATIONS CODEGEN
+
+translations_raw = open(r"src\Translation.hpp", "r").read()
+translations = translations_raw.split("//TRNASLATIONS_START")[1].split("//TRNASLATIONS_END")[0].strip()
+translation_map = dict()
+for line in [x.strip() for x in translations.split('\n')[1:]]:
+	if line == "":
+		continue
+
+	enum_part, text = line.split("//")
+	key = enum_part.strip()[:-1]
+	translation_map[key.strip()] = text.strip()
+
+with open("translationData/Devious Curses_ENGLISH.json", "w") as f:
+	f.write(json.dumps(translation_map, indent=2))
+
 
 
 # C++ CODEGEN
@@ -423,3 +487,18 @@ devices_raw = pre + mid + post
 
 with open(r"src\Devices.hpp", "w") as f:
 	f.write(devices_raw)
+
+#Translation Keys
+
+index = translations_raw.split("//CODEGEN_START_KEYNAME")[0].replace('\r', '').rfind('\n')
+indent = translations_raw.split("//CODEGEN_START_KEYNAME")[0][index:]
+pre = translations_raw.split("//CODEGEN_START_KEYNAME")[0] + "//CODEGEN_START_KEYNAME"
+post = f"{indent}//CODEGEN_END_KEYNAME" + translations_raw.split("//CODEGEN_END_KEYNAME")[1]
+
+parse = lambda x: f'{indent}case (Translation::{x}): return "{x}";'
+mid = ''.join(parse(x) for x in translation_map.keys())
+
+translations_raw = pre + mid + post
+
+with open(r"src\Translation.hpp", "w") as f:
+	f.write(translations_raw)

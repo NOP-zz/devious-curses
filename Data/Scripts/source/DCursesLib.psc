@@ -17,7 +17,7 @@ int Function NumDevicesVisible(Actor akActor) global Native
 
 Function Test() global Native
 
-Function StartSex(Actor aggressor) global
+Function StartSex(Actor aggressor, Bool preferAggressive) global
 	SexLabFramework sexlab = Game.GetFormFromFile(0x0d62, "SexLab.esm") as SexLabFramework
 	Actor player = Game.getPlayer()
 	Actor[] positions = new Actor[2]
@@ -25,25 +25,46 @@ Function StartSex(Actor aggressor) global
 	positions[1] = aggressor
 
 	if sexlab.GetVersion() <= 16601
-
+		Debug.Trace("DCURSES animation tags: " + DCursesLib.GetAnimationFilterTags(player))
 		sslBaseAnimation[] anims
 		if sexlab.ActorLib.GetGender(aggressor) == 2
 			anims = sexlab.GetCreatureAnimationsByActors(2, positions)
 			anims = sexlab.RemoveTagged(anims, DCursesLib.GetAnimationFilterTags(player))
 		else
-			anims = sexlab.GetAnimationsByTags(2, "Aggressive", DCursesLib.GetAnimationFilterTags(player))
+			if preferAggressive
+				anims = sexlab.GetAnimationsByTags(2, "Aggressive", DCursesLib.GetAnimationFilterTags(player))
+			endif
+			if anims.Length == 0
+				anims = sexlab.GetAnimationsByTags(2, "", DCursesLib.GetAnimationFilterTags(player))
+			endif
 		endif
 		if anims.Length == 0
 			debug.Trace("[DCURSES] [sex] No Anims")
 			return
 		endif
-		sexlab.StartSex(Positions, anims, hook = "DCURSES")
+		sexlab.StartSex(Positions, anims)
 	else
-		SexLabThread thread = sexlab.StartScene(positions, "Aggressive,"+DCursesLib.GetAnimationFilterTagsP(player), player)
+		Debug.Trace("DCURSES animation tags: " + DCursesLib.GetAnimationFilterTagsP(player))
+		SexLabThread thread = None
+		if (preferAggressive)
+			thread = sexlab.StartScene(positions, "Aggressive,"+DCursesLib.GetAnimationFilterTagsP(player), player)
+		endif
 		if (thread == None)
 			;Attempt scene without aggressive tag if no scenes were found.
 			sexlab.StartScene(positions, DCursesLib.GetAnimationFilterTagsP(player), player)
 		endif
+	EndIf
+EndFunction
+
+Function StartMasturbation(Actor akActor) global
+	SexLabFramework sexlab = Game.GetFormFromFile(0x0d62, "SexLab.esm") as SexLabFramework
+	Actor[] positions = new Actor[1]
+	positions[0] = akActor
+
+	if sexlab.GetVersion() <= 16601
+		sexlab.QuickStart(akActor)
+	else
+		sexlab.StartScene(positions, DCursesLib.GetAnimationFilterTagsP(akActor))
 	EndIf
 EndFunction
 

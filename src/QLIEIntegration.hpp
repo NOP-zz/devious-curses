@@ -15,7 +15,9 @@ namespace DCURSES {
 	}
 
 	void QLIETakeItemCallback(QuickLoot::API::TakingItemEvent* e) {
-		CalculateEventChance(e->container);
+		Util::ProfileExecutionTime("Calculate Event Chance", [e] {
+			CalculateEventChance(e->container);
+		});
 	}
 
 	void QLIEOpenContainerCallback(QuickLoot::API::OpeningLootMenuEvent* e) {

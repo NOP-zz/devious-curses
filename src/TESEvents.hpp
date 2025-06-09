@@ -42,7 +42,9 @@ namespace DCURSES {
                     log::trace("Activate skipped, mod is disabled.");
                     return RE::BSEventNotifyControl::kContinue;
                 }
-                CalculateEventChance(activatedObject);
+                Util::ProfileExecutionTime("Calculate Event Chance", [activatedObject] {
+                    CalculateEventChance(activatedObject);
+                });
             }
             return RE::BSEventNotifyControl::kContinue;
         }
@@ -69,11 +71,10 @@ namespace DCURSES {
             auto actor = object->As<RE::Actor>();
             if (actor && actor == RE::PlayerCharacter::GetSingleton()) {
                 counters.clock_SexTimeout -= 2;
-                //Callbacks::GetSingleton().ResetArousalDatabase();
-                //Callbacks::GetSingleton().InitializeAllActorsArousal();
+                Callbacks::GetSingleton()->UpdateAllActorsArousal();
             }
             else if (actor && locationEvent->newLoc == RE::PlayerCharacter::GetSingleton()->GetCurrentLocation()) {
-               // UpdateActorArousal(actor);
+                GetActorArousal(actor);
             }
             return RE::BSEventNotifyControl::kContinue;
         }
@@ -102,9 +103,11 @@ namespace DCURSES {
             if (equipActor == player && equipmentForm) {
                 RE::TESKey* magicKey = StaticDataHolder::GetSingleton()->LookupForm<RE::TESKey>(MAGIC_KEY, "Devious Curses.esp");
                 RE::TESObjectMISC* tattooCharm = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectMISC>(TATTOO_CHARM, "Devious Curses.esp");
-                RE::TESObjectARMO* latex = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(LIVING_LATEX, "Devious Curses.esp");
-                RE::TESObjectARMO* latex_open = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(LIVING_LATEX_OPEN, "Devious Curses.esp");
-                RE::TESObjectARMO* summoner_collar = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(SUMMONER_COLLAR, "Devious Curses.esp");
+                RE::TESObjectARMO* latex = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(LIVING_LATEX_R, "Devious Curses.esp");
+                RE::TESObjectARMO* latex_open = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(LIVING_LATEX_OPEN_R, "Devious Curses.esp");
+                RE::TESObjectARMO* summoner_collar = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(SUMMONER_COLLAR_R, "Devious Curses.esp");
+                RE::TESObjectARMO* dwarven_cuirass = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(DWARVEN_CURIAS_R, "Devious Curses.esp");
+                RE::TESObjectARMO* dwarven_heavy = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(DWARVEN_CURIAS_HEAVY_R, "Devious Curses.esp");
                 //RE::TESObjectARMO* collar = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectARMO>(SAARTHAL_COLLAR, "Devious Curses.esp");
 
                 if (equipmentForm == magicKey) {
@@ -112,20 +115,27 @@ namespace DCURSES {
 
                     player->RemoveItem((RE::TESBoundObject*)magicKey, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
                     AIEventMagicKey();
-                    PlayerMessage("All of the devices you were wearing have magically dissapeared!");
+                    //PlayerMessage("All of the devices you were wearing have magically dissapeared!");
+                    PlayerMessage(Translator(Translation::ItemMagicKey));
                 }
                 else if (equipmentForm == tattooCharm) {
                     RemoveAllTattoos(player);
 
                     player->RemoveItem((RE::TESBoundObject*)tattooCharm, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
                     AIEventTattooCharm();
-                    PlayerMessage("All of your tattoos have faded from your body!");
+                    //PlayerMessage("All of your tattoos have faded from your body!");
+                    PlayerMessage(Translator(Translation::ItemTattooCharm));
                 }
-                else if (equipmentForm == latex || equipmentForm == latex_open) {
+                else if ((equipmentForm == latex || equipmentForm == latex_open) && equipEvent->equipped) {
                     oppdCounters.livingLatexCounter = static_cast<int>(settings.oppLivingLatexStartTime * 60 * Util::randomFloat(0.9f, 1.2f));
                 }
-                else if (equipmentForm == summoner_collar) {
-                    oppdCounters.summonCollarCounter = static_cast<int>(settings.oppSummonerSexCount);
+                else if (equipmentForm == summoner_collar && equipEvent->equipped) {
+                    oppdCounters.summonCollarCounter = settings.oppSummonerSexCount;
+                }
+                else if ((equipmentForm == dwarven_cuirass || equipmentForm == dwarven_heavy) && equipEvent->equipped) {
+                    log::trace("Dwarven Equipped");
+                    oppdCounters.dwarvenCuirassCounter = settings.oppDwarvenValueNeeded;
+                    RemoveDwarvenStuff();
                 }
             }
             return RE::BSEventNotifyControl::kContinue;
@@ -147,16 +157,7 @@ namespace DCURSES {
     class MGEFEventSink : public RE::BSTEventSink<RE::TESMagicEffectApplyEvent>
     {
         virtual RE::BSEventNotifyControl ProcessEvent(const RE::TESMagicEffectApplyEvent* magicEvent, RE::BSTEventSource<RE::TESMagicEffectApplyEvent>*) override {
-            //OppDeviceOnHitEvent();
-            auto effect = RE::TESForm::LookupByID(magicEvent->magicEffect)->As<RE::EffectSetting>();
-            if (effect && 
-                    (effect->HasArchetype(RE::EffectSetting::Archetype::kValueModifier) || effect->HasArchetype(RE::EffectSetting::Archetype::kDualValueModifier)) &&
-                    effect->IsDetrimental() &&
-                    (effect->data.primaryAV == RE::ActorValue::kHealth || effect->data.secondaryAV == RE::ActorValue::kHealth)) {
-                if (effect->data.resistVariable == RE::ActorValue::kResistShock || Util::FormEditorIdContains(effect, "traprunelightning")) {
-                    OppDeviceOnHitEvent();
-                }
-            }
+            OppDeviceOnMagicHitEvent(magicEvent);
             return RE::BSEventNotifyControl::kContinue;
         }
 
@@ -178,7 +179,7 @@ namespace DCURSES {
     void RegisterEventSinks() {
         ActivateEventSink::RegisterEvent();
         EquipEventSink::RegisterEvent();
-        //LocationEventSink::RegisterEvent();
+        LocationEventSink::RegisterEvent();
         QuestStageEventSink::RegisterEvent();
         MGEFEventSink::RegisterEvent();
     }

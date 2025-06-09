@@ -21,6 +21,8 @@
 #include "src/ModEvents.hpp"
 #include "src/MinAI.hpp"
 
+#include "src/Translation.hpp"
+
 #include <d3d11.h>
 #include <windows.h>
 #include <debugapi.h>
@@ -61,24 +63,31 @@ namespace DCURSES {
             log::trace("Event timer skipped, mod is disabled.");
             return;
         }
+
+        auto player = RE::PlayerCharacter::GetSingleton();
+        RE::TESFaction* SexlabAnimatingFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("00E50F", 0, 16), "SexLab.esm");
+        RE::TESFaction* ZadAnimatingFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("029567", 0, 16), "Devious Devices - Integration.esm");
+        bool isAnimating = player->IsInFaction(SexlabAnimatingFaction) || player->IsInFaction(ZadAnimatingFaction);
+
         auto c1 = std::chrono::high_resolution_clock::now();
-        EventsUpdate();
+        if (!isAnimating) { EventsUpdate(); }
         auto c2 = std::chrono::high_resolution_clock::now();
         SexUpdate();
-        //QIUpdate();
         auto c3 = std::chrono::high_resolution_clock::now();
-        TatsUpdate();
+        if (!isAnimating) { TatsUpdate(); }
         auto c4 = std::chrono::high_resolution_clock::now();
-        OppDeviceUpdate();
+        if (!isAnimating) { OppDeviceUpdate(); }
         auto c5 = std::chrono::high_resolution_clock::now();
         
-        auto d1 = (c2 - c1).count() / 1000.0;
-        auto d2 = (c3 - c2).count() / 1000.0;
-        auto d3 = (c4 - c3).count() / 1000.0;
-        auto d4 = (c5 - c4).count() / 1000.0;
-        auto dt = (c5 - c1).count() / 1000.0;
+        auto d1 = (c2 - c1).count() / 1000000.0;
+        auto d2 = (c3 - c2).count() / 1000000.0;
+        auto d3 = (c4 - c3).count() / 1000000.0;
+        auto d4 = (c5 - c4).count() / 1000000.0;
+        auto dt = (c5 - c1).count() / 1000000.0;
 
-        log::trace("UPDATE: E: {:.2f}, S: {:.2f}, M: {:.2f}, O: {:.2f} total: {:.2f}", d1, d2, d3, d4, dt);
+        if (dt >= 1) {
+            log::warn("Long Update Time: E: {:.4f}, S: {:.4f}, M: {:.4f}, O: {:.4f} total: {:.4f}ms", d1, d2, d3, d4, dt);
+        }
 
         //Always do last!
         counters.tick();
@@ -96,35 +105,25 @@ namespace DCURSES {
         return numDevicesVisible(akActor);
     }
 
+    /*class TestSink : public RE::BSTEventSink<RE::BSAnimationGraphEvent> {
+        // Inherited via BSTEventSink
+        virtual RE::BSEventNotifyControl ProcessEvent(const RE::BSAnimationGraphEvent* a_event, RE::BSTEventSource<RE::BSAnimationGraphEvent>* a_eventSource) override
+        {
+            log::info("Animation event: {}, tag: {}, holder: {:X} ({:X})", a_event->payload, a_event->tag, a_event->holder->GetFormID(), a_event->holder->GetBaseObject()->GetFormID());
+            return RE::BSEventNotifyControl::kContinue;
+        }
+    };*/
+
     void P_Test(RE::StaticFunctionTag*) {
         log::trace("DCURSES test");
-        auto player = RE::PlayerCharacter::GetSingleton();
+        //auto player = RE::PlayerCharacter::GetSingleton();
 
-        /*
-        auto mark = GetLewdMark();
-        if (mark) {
-            RemoveLewdMark();
-        }
-        else {
-            DoLewdMarkEvent("", false);
-        }
-        //*/
+        //AddLewdMark(MARK::TAT_NUDITY);
+        //SetEffectMagnitude(NUDITY_EFFECT, 4.0f);
 
-        /*
-        auto ref = GetContraptionForActor(player);
-        if (ref) {
-            ContraptionsUnlockActor(player);
-        }
-        else {
-            DoContraptionEvent("fjdskjfhjskl");
-        }
-        //*/
+        OppDwarvenCuirassEvent("test");
 
-        //if (GetWornDeviceCount(player) == 0) {
-        //    DoStandardEvent(false, "", "(black & (ebonite | rubber)) | grand | shock", 10, { "zad_DeviousBelt", "zad_DeviousBlindfold", "zad_DeviousHeavyBondage" });
-        //}
-
-        OppLivingLatexEvent("test");
+        //DoStandardEvent(false, "", "(black & (ebonite | rubber) & !chastity & !strait & !boxb & !butter) | grand | piercing", 20, {"zad_DeviousBlindfold", "zad_DeviousPlugAnal", "zad_DeviousGag"});
     }
 
     bool PapyrusFunctions(RE::BSScript::IVirtualMachine* ivm) {
@@ -161,8 +160,6 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
 
     log::info("Initializing DeviousCurses");
 
-    //
-
     SKSE::GetMessagingInterface()->RegisterListener([](SKSE::MessagingInterface::Message *message) {
         switch (message->type)
         {
@@ -183,6 +180,7 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
 
             break;
         }
+
         case SKSE::MessagingInterface::kNewGame:
         case SKSE::MessagingInterface::kPostLoadGame: {
             DCURSES::MGEFOnGameLoad();
@@ -212,6 +210,8 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
                 DCURSES::StartMCMTimer();
             });
 
+            DCURSES::Callbacks::GetSingleton()->UpdateAllActorsArousal();
+
             break;
         }
         case SKSE::MessagingInterface::kPostLoad: {
@@ -235,6 +235,10 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
         case SKSE::MessagingInterface::kSaveGame: {
             DCURSES::counters.clock_SexTimeout -= 2;
             DCURSES::SaveMCMSettings();
+        }
+        case SKSE::MessagingInterface::kInputLoaded: {
+            DCURSES::Translator::CheckMCMTranslations();
+            DCURSES::Translator::UpdateTranslations();
         }
         }
         

@@ -122,6 +122,7 @@ namespace DCURSES {
         }
 
         std::list<RE::TESObjectARMO*> to_equip;
+        RE::TESObjectARMO* heavy = nullptr;
 
         std::string device_names = "";
         std::string device_ids = "";
@@ -151,8 +152,8 @@ namespace DCURSES {
         int bailout = 10;
 
         for (int i = 0; i < count && bailout > 0; i++) {
-            log::trace("I: {}, C: {}, B: {}", i, count, bailout);
-            log::trace("player exists: {}", player != nullptr);
+            //log::trace("I: {}, C: {}, B: {}", i, count, bailout);
+            //log::trace("player exists: {}", player != nullptr);
             auto dev = GetRandomEquipableDevice(player, usedKeys, theme);
             if (!dev) {
                 bailout--;
@@ -163,7 +164,8 @@ namespace DCURSES {
             auto inv = dev.value().inv;
 
             if (settings.beltPlugs && rend->HasKeywordString("zad_DeviousBelt")) {
-                if (std::find(usedKeys.begin(), usedKeys.end(), "zad_DeviousPlugAnal") == usedKeys.end()) {
+                if (!vectorContains(usedKeys, "zad_DeviousPlugAnal") && !rend->HasKeywordString("zad_PermitAnal")) {
+                //if (std::find(usedKeys.begin(), usedKeys.end(), "zad_DeviousPlugAnal") == usedKeys.end()) {
                     std::optional<DeviceData> plug;
                     plug = GetRandomDevice(&devices.plugsABasic, {}, theme);
                     if (!plug) {
@@ -171,14 +173,15 @@ namespace DCURSES {
                     }
                     if (plug) {
                         //LockDevice(player, plug.value().inv);
-                        to_equip.push_back(plug.value().inv);
+                        to_equip.push_front(plug.value().inv);
                         device_names += plug.value().inv->GetName();
                         device_names += ",";
                         device_ids += Util::GetFormEditorId(plug.value().inv);
                         device_ids += ",";
                     }
                 }
-                if (std::find(usedKeys.begin(), usedKeys.end(), "zad_DeviousPlugVaginal") == usedKeys.end()) {
+                if (!vectorContains(usedKeys, "zad_DeviousPlugVaginal") && !rend->HasKeywordString("zad_PermitVaginal")) {
+                //if (std::find(usedKeys.begin(), usedKeys.end(), "zad_DeviousPlugVaginal") == usedKeys.end()) {
                     std::optional<DeviceData> plug;
                     plug = GetRandomDevice(&devices.plugsVBasic, {}, theme);
                     if (!plug) {
@@ -186,7 +189,7 @@ namespace DCURSES {
                     }
                     if (plug) {
                         //LockDevice(player, plug.value().inv);
-                        to_equip.push_back(plug.value().inv);
+                        to_equip.push_front(plug.value().inv);
                         device_names += plug.value().inv->GetName();
                         device_names += ",";
                         device_ids += Util::GetFormEditorId(plug.value().inv);
@@ -205,8 +208,12 @@ namespace DCURSES {
             }
 
             if (rend->HasKeywordString("zad_DeviousHeavyBondage")) {
-                to_equip.push_front(inv);
+                //to_equip.push_front(inv);
+                heavy = inv;
                 removeHandItems = true;
+            }
+            else if (rend->HasKeywordString("zad_DeviousPlugVaginal") || rend->HasKeywordString("zad_DeviousPlugAnal")) {
+                to_equip.push_front(inv);
             }
             else {
                 //LockDevice(player, inv);
@@ -217,6 +224,10 @@ namespace DCURSES {
             device_names += ",";
             device_ids += Util::GetFormEditorId(inv);
             device_ids += ",";
+        }
+
+        if (heavy) {
+            to_equip.push_back(heavy);
         }
 
         if (bailout == 0) {
@@ -235,12 +246,21 @@ namespace DCURSES {
             ForceThirdPerson();
         }
 
-        SKSE::GetTaskInterface()->AddTask( [to_equip, player] {
+        SKSE::GetTaskInterface()->AddTask([to_equip, player] {
             for (auto device : to_equip) {
                 log::trace("Locking device {}", device->GetName());
                 LockDevice(player, device);
             }
         });
+
+        /*int i = -1;
+        for (auto device : to_equip) {
+            i++;
+            Util::ExecuteWithDelay(75ms * i, [device, player] {
+                log::trace("Locking device {}", device->GetName());
+                LockDevice(player, device);
+            });
+        }*/
 
         std::string msg = "";
         for (auto const& i : usedKeys) { msg += (i + ", "); }
@@ -248,7 +268,8 @@ namespace DCURSES {
         log::trace("usedKeys: {}", msg);
 
         if (!contName.empty()) {
-            PlayerMessage(fmt::format("As you touch the {} you see restraints magically appear and wrap themselves around you!", contName));
+            //PlayerMessage(fmt::format("As you touch the {} you see restraints magically appear and wrap themselves around you!", contName));
+            PlayerMessage(Translator(Translation::EventDevices, contName));
             SendModEventDevices(player, contName, static_cast<int>(to_equip.size()), device_names, device_ids);
             AIEventBondage(contName, device_names);
         }
@@ -275,7 +296,8 @@ namespace DCURSES {
 
         auto modevent = SKSE::ModCallbackEvent{ "SSLV Entry", "", 0, 0 };
         SKSE::GetModCallbackEventSource()->SendEvent(&modevent);
-        PlayerMessage(fmt::format("As you touch the {} you see a flash of light and immediately pass out. Through intermittent consciousness you can feel someone carrying you somewhere...", contName));
+        //PlayerMessage(fmt::format("As you touch the {} you see a flash of light and immediately pass out. Through intermittent consciousness you can feel someone carrying you somewhere...", contName));
+        PlayerMessage(Translator(Translation::EventSimpleSlavery, contName));
         return true;
 
     }
@@ -290,8 +312,16 @@ namespace DCURSES {
         int num_tattoos = Util::randomInt(settings.eventTattooMin, settings.eventTattooMax);
         RTDoTattooEvent(player, num_tattoos);
 
-        std::string str = num_tattoos == 1 ? "a tattoo appears on your body!" : num_tattoos < 4 ? "a few tattoos appear on your body!" : "your body is covered in tattoos!";
-        PlayerMessage(fmt::format("As you touch the {} you feel a sharp pain as {}", containerName, str));
+        if (num_tattoos == 1) {
+            PlayerMessage(Translator(Translation::EventTattooOne, containerName));
+        }
+        else if (num_tattoos <= 3) {
+            PlayerMessage(Translator(Translation::EventTattooTwoThree, containerName));
+        }
+        else {
+            PlayerMessage(Translator(Translation::EventTattooMany, containerName));
+        }
+
         AIEventTattoos(num_tattoos);
         SendModEventTattoo(player, containerName, num_tattoos);
         return true;
@@ -311,12 +341,13 @@ namespace DCURSES {
         AIEventContraption(contraption->GetName());
         SendModEventContraption(player, containerName);
 
-        PlayerMessage(fmt::format("As you touch the {} you feel yourself get dizzy as you are strung up into some sort of contraption!", containerName));
+        //PlayerMessage(fmt::format("As you touch the {} you feel yourself get dizzy as you are strung up into some sort of contraption!", containerName));
+        PlayerMessage(Translator(Translation::EventContraption, containerName));
 
         return true;
     }
 
-    bool DoLewdMarkEvent(std::string containerName, bool doMessage = true) {
+    bool DoLewdMarkEvent(std::string containerName) {
         //45 no orgasm / edging
         if (!CheckLewdMarksInstalled()) {
             return false;
@@ -338,7 +369,8 @@ namespace DCURSES {
             AddLewdMark(MARK::TAT_BRANDING);
             int tattoo_count = GetTattooCount(player);
             SetEffectMagnitude(BRANDING_EFFECT, static_cast<float>(tattoo_count));
-            if (doMessage) PlayerMessage("After a sharp pain, you see that you have a mark of branding.");
+            //if (doMessage) PlayerMessage("After a sharp pain, you see that you have a mark of branding.");
+            if (!containerName.empty()) { PlayerMessage(Translator(Translation::EventMarkBranding)); }
             SendModEventMark(player, containerName, "Branding", static_cast<int>(MARK::TAT_BRANDING));
             TatsUpdateContext(MARK::TAT_BRANDING);
             AIEventAddLewdMark();
@@ -351,7 +383,8 @@ namespace DCURSES {
         if (r < settings.LMAllureWeight) {
             AddLewdMark(MARK::TAT_ALLURE);
             SetEffectMagnitude(ALLURE_EFFECT, static_cast<float>(settings.LMAllureSex * Util::randomDouble(0.8, 1.2)));
-            if (doMessage) PlayerMessage("After a sharp pain, you see that you have a mark of allure.");
+            //if (doMessage) PlayerMessage("After a sharp pain, you see that you have a mark of allure.");
+            if (!containerName.empty()) { PlayerMessage(Translator(Translation::EventMarkAllure)); }
             SendModEventMark(player, containerName, "Allure", static_cast<int>(MARK::TAT_ALLURE));
             TatsUpdateContext(MARK::TAT_ALLURE);
             AIEventAddLewdMark();
@@ -364,7 +397,8 @@ namespace DCURSES {
         if (r < settings.LMHeatWeight) {
             AddLewdMark(MARK::TAT_HEAT);
             SetEffectMagnitude(HEAT_EFFECT, static_cast<float>(settings.LMHeatContainerCount * Util::randomDouble(0.8, 1.2)));
-            if (doMessage) PlayerMessage("After a sharp pain, you see that you have a mark of heat.");
+            //if (doMessage) PlayerMessage("After a sharp pain, you see that you have a mark of heat.");
+            if (!containerName.empty()) { PlayerMessage(Translator(Translation::EventMarkHeat)); }
             SendModEventMark(player, containerName, "Heat", static_cast<int>(MARK::TAT_HEAT));
             TatsUpdateContext(MARK::TAT_HEAT);
             AIEventAddLewdMark();
@@ -377,7 +411,8 @@ namespace DCURSES {
         if (r < settings.LMBondageWeight) {
             AddLewdMark(MARK::TAT_BONDAGE);
             SetEffectMagnitude(BONDAGE_EFFECT, static_cast<float>(settings.LMBondageDeviceCount * Util::randomDouble(0.8, 1.2)));
-            if (doMessage) PlayerMessage("After a sharp pain, you see that you have a mark of bondage.");
+            //if (doMessage) PlayerMessage("After a sharp pain, you see that you have a mark of bondage.");
+            if (!containerName.empty()) { PlayerMessage(Translator(Translation::EventMarkBondage)); }
             SendModEventMark(player, containerName, "Bondage", static_cast<int>(MARK::TAT_BONDAGE));
             TatsUpdateContext(MARK::TAT_BONDAGE);
             AIEventAddLewdMark();
@@ -390,20 +425,8 @@ namespace DCURSES {
         if (r < settings.LMNudityWeight) {
             AddLewdMark(MARK::TAT_NUDITY);
             SetEffectMagnitude(NUDITY_EFFECT, static_cast<float>(settings.LMNudityTalkTimes * Util::randomDouble(0.8, 1.2)));
-            if (doMessage) PlayerMessage("After a sharp pain, you see that you have a mark of nudity.");
-            SendModEventMark(player, containerName, "Nudity", static_cast<int>(MARK::TAT_NUDITY));
-            TatsUpdateContext(MARK::TAT_NUDITY);
-            AIEventAddLewdMark();
-            return true;
-        }
-        else if (r > settings.LMNudityWeight) {
-            r -= settings.LMNudityWeight;
-        }
-
-        if (r < settings.LMNudityWeight) {
-            AddLewdMark(MARK::TAT_NUDITY);
-            SetEffectMagnitude(NUDITY_EFFECT, static_cast<float>(settings.LMNudityTalkTimes * Util::randomDouble(0.8, 1.2)));
-            if (doMessage) PlayerMessage("After a sharp pain, you see that you have a mark of nudity.");
+            //if (doMessage) PlayerMessage("After a sharp pain, you see that you have a mark of nudity.");
+            if (!containerName.empty()) { PlayerMessage(Translator(Translation::EventMarkNudity)); }
             SendModEventMark(player, containerName, "Nudity", static_cast<int>(MARK::TAT_NUDITY));
             TatsUpdateContext(MARK::TAT_NUDITY);
             AIEventAddLewdMark();
@@ -574,8 +597,8 @@ namespace DCURSES {
             bool hasKey = false;
             if (level != RE::LOCK_LEVEL::kRequiresKey && level != RE::LOCK_LEVEL::kUnlocked) {
                 data.lockLevel = static_cast<int>(level) + 1;
-                RE::TESObjectREFR::InventoryItemMap inventory = player->GetInventory();
-                for (auto const& [k, v] : inventory) {
+                RE::TESObjectREFR::InventoryItemMap playerInventory = player->GetInventory();
+                for (auto const& [k, v] : playerInventory) {
                     if (lockref->key == k) {
                         hasKey = true;
                         break;
@@ -613,13 +636,13 @@ namespace DCURSES {
             RemoveKeys(activatedObject);
         }
 
-        RE::TESKey* addedKey = nullptr;
+        std::vector<RE::TESKey*> addedKeys;
         if (data.isLeveled || data.isDeadActor || (data.isPickpocket && !IsPickpocketTargetKnown(activatedObject->formID))) {
-            addedKey = GenerateKeys(activatedObject, false);
+            addedKeys = GenerateKeys(activatedObject, false);
             GenerateRandomDevices(activatedObject);
         }
 
-        SKSE::GetTaskInterface()->AddTask([data, activatedObject, player, addedKey] {
+        SKSE::GetTaskInterface()->AddTask([data, activatedObject, player, addedKeys] {
             if (data.isLeveled && data.isBoss && settings.bossExtraGold) {
                 log::trace("Adding extra gold to boss chest.");
                 RE::TESForm* gold = RE::TESForm::LookupByID(std::stoi("0f", 0, 16));
@@ -636,18 +659,22 @@ namespace DCURSES {
                 RE::TESKey* magicKey = StaticDataHolder::GetSingleton()->LookupForm<RE::TESKey>(MAGIC_KEY, "Devious Curses.esp");
                 double c2 = settings.magicKeyChance * pow(1.5, (GetWornDeviceCount(player) - 1.0) / 9.0);
                 double r2 = Util::randomDouble();
-                log::trace("Magic Key: {:.2f} ({:.2f})", c2, r2);
-                if (GetItemCount(player, magicKey) == 0 && !addedKey && r2 < c2) {
-                    activatedObject->AddObjectToContainer((RE::TESBoundObject*)magicKey, nullptr, 1, nullptr);
+                if (GetItemCount(player, magicKey) == 0 && addedKeys.size() == 0) {
+                    log::trace("Magic Key: {:.2f} ({:.2f})", c2, r2);
+                    if (r2 < c2) {
+                        activatedObject->AddObjectToContainer((RE::TESBoundObject*)magicKey, nullptr, 1, nullptr);
+                    }
                 }
             }
             else if (data.isDeadActor && settings.tatSolventChance > 0) {
                 RE::TESObjectMISC* solvent = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectMISC>(TATTOO_CHARM, "Devious Curses.esp");
                 double c2 = settings.tatSolventChance * pow(1.5, (GetTattooCount(player) - 1.0) / 9.0);
                 double r2 = Util::randomDouble();
-                log::trace("Solvent: {:.2f} ({:.2f})", c2, r2);
-                if (GetItemCount(player, solvent) == 0 && !addedKey && r2 < c2) {
-                    activatedObject->AddObjectToContainer((RE::TESBoundObject*)solvent, nullptr, 1, nullptr);
+                if (GetItemCount(player, solvent) == 0) {
+                    log::trace("Solvent: {:.2f} ({:.2f})", c2, r2);
+                    if (r2 < c2) {
+                        activatedObject->AddObjectToContainer((RE::TESBoundObject*)solvent, nullptr, 1, nullptr);
+                    }
                 }
             }
         });
@@ -703,6 +730,7 @@ namespace DCURSES {
 
         if (data.isTalking) {
             CheckConsequenceDialogue(actor);
+            return;
         }
 
         if (data.isPickpocket && IsPickpocketTargetKnown(activatedObject->formID)) {
@@ -737,7 +765,7 @@ namespace DCURSES {
         }
 
         //RE::TESFaction* arousalFaction = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("03FC36", 0, 16), "SexLabAroused.esm");
-        int playerArousal = GetActorArousal(player);
+        float playerArousal = GetActorArousal(player);
 
         float chance = settings.baseChance;
         std::string logMessage = "modifiers: ";
@@ -929,7 +957,9 @@ namespace DCURSES {
                     ModifyArousal(player, settings.LMHeatMod / 4);
                     if (GetEffectMagnitude(HEAT_EFFECT) <= 0) {
                         RemoveLewdMark();
-                        PlayerMessage("You feel a sense of calm as the heat mark fades from your body.");
+                        AIContextRemoveLewdMark();
+                        //PlayerMessage("You feel a sense of calm as the heat mark fades from your body.");
+                        PlayerMessage(Translator(Translation::MarkHeatRemove));
                     }
                     break;
                 }
@@ -949,7 +979,9 @@ namespace DCURSES {
                     }
                     if (GetEffectMagnitude(ALLURE_EFFECT) <= 0) {
                         RemoveLewdMark();
-                        PlayerMessage("You sense that people are no longer staring at you as the allure mark fades from your body.");
+                        AIContextRemoveLewdMark();
+                        //PlayerMessage("You sense that people are no longer staring at you as the allure mark fades from your body.");
+                        PlayerMessage(Translator(Translation::MarkAllureRemove));
                     }
                     break;
                 }
@@ -986,18 +1018,23 @@ namespace DCURSES {
                         log::trace("Equipping device: {}", device->GetName());
                         DecrementCounterForMark(MARK::TAT_BONDAGE);
                         LockDevice(player, device);
-                        PlayerMessage(fmt::format("Your mark pulses with light as your {} appears on your body!", device->GetName()));
+                        //PlayerMessage(fmt::format("Your mark pulses with light as your {} appears on your body!", device->GetName()));
+                        PlayerMessage(Translator(Translation::MarkBondageDevice, device->GetName()));
                     }
                     if (GetEffectMagnitude(BONDAGE_EFFECT) <= 0) {
                         RemoveLewdMark();
-                        PlayerMessage("You feel much less oppressed as the bondage mark fades from your body.");
+                        AIContextRemoveLewdMark();
+                        //PlayerMessage("You feel much less oppressed as the bondage mark fades from your body.");
+                        PlayerMessage(Translator(Translation::MarkBondageRemove));
                     }
                     break;
                 }
                 case MARK::TAT_NUDITY: {
                     if (GetEffectMagnitude(NUDITY_EFFECT) <= 0) {
                         RemoveLewdMark();
-                        PlayerMessage("You feel less helpless as the nudity mark fades from your body.");
+                        AIContextRemoveLewdMark();
+                        //PlayerMessage("You feel less helpless as the nudity mark fades from your body.");
+                        PlayerMessage(Translator(Translation::MarkNudityRemove));
                     }
                     break;
                 }
@@ -1009,16 +1046,20 @@ namespace DCURSES {
                         int goldCount = GetItemCount(player, gold);
                         int toRemove = static_cast<int>(goldCount * Util::randomDouble(0.2, 0.4));
                         player->RemoveItem((RE::TESBoundObject*)gold, toRemove, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
-                        PlayerMessage(fmt::format("You loose {} gold as punishment for loosing tattoos!", toRemove));
+                        //PlayerMessage(fmt::format("You loose {} gold as punishment for loosing tattoos!", toRemove));
+                        PlayerMessage(Translator(Translation::MarkBrandingPunish, toRemove));
                     }
 
                     if (Util::randomDouble() < settings.LMBrandingChance && CheckRapeTattoos()) {
                         RTDoTattooEvent(player, 1);
-                        PlayerMessage("You feel a sharp pain as the mark brands you!");
+                        //PlayerMessage("You feel a sharp pain as the mark brands you!");
+                        PlayerMessage(Translator(Translation::MarkBrandingTattoo));
                     }
                     if (tattoo_count >= settings.LMBrndingTotal) {
                         RemoveLewdMark();
-                        PlayerMessage("You feel the branding mark fade from your body.");
+                        AIContextRemoveLewdMark();
+                        //PlayerMessage("You feel the branding mark fade from your body.");
+                        PlayerMessage(Translator(Translation::MarkBrandingRemove));
                     }
                     else {
                         Util::ExecuteWithDelay(750ms, [player] {SetEffectMagnitude(BRANDING_EFFECT, static_cast<float>(GetTattooCount(player))); });

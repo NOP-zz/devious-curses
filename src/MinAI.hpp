@@ -43,6 +43,14 @@ namespace DCURSES {
 		CustomModEvent("MinAI_RegisterEvent").PushString(line).PushString("info_dcurses").Send();
 	}
 
+	void AIEventStartSex(RE::Actor* aggressor) {
+		auto playerName = RE::PlayerCharacter::GetSingleton()->GetName();
+		auto aggressorName = aggressor->GetName();
+		auto line = fmt::format("{} is overcome with lust and sexually assaults {}! {} has no agency in this and must endure.", aggressorName, playerName, playerName);
+
+		CustomModEvent("MinAI_RegisterEvent").PushString(line).PushString("info_dcurses").Send();
+	}
+
 	void AIEventAddLewdMark() {
 		auto playerName = RE::PlayerCharacter::GetSingleton()->GetName();
 		auto line = fmt::format("{} has just been painfully branded with a strange lewd tattoo!", playerName);
@@ -74,6 +82,13 @@ namespace DCURSES {
 	void AIEventLivingLatexRemove() {
 		auto playerName = RE::PlayerCharacter::GetSingleton()->GetName();
 		auto line = fmt::format("{} has finally escaped from the living latex that has been binding them.", playerName);
+
+		CustomModEvent("MinAI_RegisterEvent").PushString(line).PushString("info_dcurses").Send();
+	}
+
+	void AIEventDwarvenCuirassAdd() {
+		auto playerName = RE::PlayerCharacter::GetSingleton()->GetName();
+		auto line = fmt::format("{} has just been forced into a dwarven cuirass that will control their actions!", playerName);
 
 		CustomModEvent("MinAI_RegisterEvent").PushString(line).PushString("info_dcurses").Send();
 	}

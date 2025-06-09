@@ -17,6 +17,11 @@ namespace DCURSES {
 		return actor->IsCommandedActor() && actor->GetCommandingActor().get() == RE::PlayerCharacter::GetSingleton();
 	}
 
+	bool ActorIsCreature(RE::Actor* actor) {
+		auto actorRace = actor->GetRace();
+		return !actorRace->HasKeywordString("ActorTypeNPC") && (actorRace->HasKeywordString("ActorTypeCreature") || actorRace->HasKeywordString("ActorTypeDwarven") || actorRace->HasKeywordString("ActorTypeAnimal"));
+	}
+
 	bool SexActorFilter(RE::Actor* actor) {
 		if (!settings.sexEnabled || !actor) {
 			return false;
@@ -29,14 +34,23 @@ namespace DCURSES {
 		RE::TESFaction* ZadAnimatingFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x029567, "Devious Devices - Integration.esm");
 
 		RE::TESRace* ManakinRace = StaticDataHolder::GetSingleton()->LookupForm<RE::TESRace>(0x10760a, "Skyrim.esm");
+		RE::TESRace* ChickenRace = StaticDataHolder::GetSingleton()->LookupForm<RE::TESRace>(0xa919d, "Skyrim.esm");
+		RE::TESRace* GoatRace = StaticDataHolder::GetSingleton()->LookupForm<RE::TESRace>(0x131fa, "Skyrim.esm");
+		RE::TESRace* CowRace = StaticDataHolder::GetSingleton()->LookupForm<RE::TESRace>(0x4e785, "Skyrim.esm");
+		RE::TESRace* HareRace = StaticDataHolder::GetSingleton()->LookupForm<RE::TESRace>(0x6dc99, "Skyrim.esm");
+		//RE::TESRace* OldPeopleRace = StaticDataHolder::GetSingleton()->LookupForm<RE::TESRace>(0x67cd8, "Skyrim.esm");
 
-		if (actor->IsInCombat() || actor->IsInFaction(SexlabAnimatingFaction) || actor->IsInFaction(ZadAnimatingFaction) || actor->IsInWater() || actor->IsInRagdollState() || actor->IsChild() || actor->AsActorState()->GetSitSleepState() == RE::SIT_SLEEP_STATE::kIsSleeping || actor->IsHostileToActor(player) || actor->GetRace() == ManakinRace) {
+		auto actorRace = actor->GetRace();
+
+		if (actor->IsInCombat() || actor->IsInFaction(SexlabAnimatingFaction) || actor->IsInFaction(ZadAnimatingFaction) || actor->IsInWater() || actor->IsInRagdollState() || actor->IsChild() || actor->AsActorState()->GetSitSleepState() == RE::SIT_SLEEP_STATE::kIsSleeping || actor->IsHostileToActor(player) || actorRace == ManakinRace) {
 			return false;
 		}
 
-		bool isCreature = !actor->GetRace()->HasKeywordString("ActorTypeNPC") && (actor->GetRace()->HasKeywordString("ActorTypeCreature") || actor->GetRace()->HasKeywordString("ActorTypeDwarven") || actor->GetRace()->HasKeywordString("ActorTypeAnimal"));
+		if (!settings.sexAllowFarmAnimals && (actorRace == ChickenRace || actorRace == GoatRace || actorRace == CowRace || actorRace == HareRace)) {
+			return false;
+		}
 
-		int actorSex = actor->GetActorBase()->GetSex();
+		bool isCreature = ActorIsCreature(actor);
 
 		bool isFuta = false;
 
@@ -49,10 +63,10 @@ namespace DCURSES {
 			isFemale = sex == 1;
 			isFuta = sex == 2;
 		}
-		else {
-			isMale = actorSex == 0;
-			isFemale = actorSex == 1;
-		}
+		//else {
+		//	isMale = actorSex == 0;
+		//	isFemale = actorSex == 1;
+		//}
 
 		if ((isMale && settings.sexAllowMale) ||
 			(isFemale && settings.sexAllowFemale) ||
@@ -87,7 +101,7 @@ namespace DCURSES {
 
 		RE::TESFaction* zadDisable = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x4653B, "Devious Devices - Integration.esm");
 		
-		int playerArousal = GetActorArousal(player);
+		float playerArousal = GetActorArousal(player);
 
 		std::vector<std::pair<RE::Actor*, std::string>> result;
 		if (const auto processLists = RE::ProcessLists::GetSingleton(); processLists) {
@@ -101,7 +115,7 @@ namespace DCURSES {
 							log::trace("Ignoring NPC {}.", actor->GetName());
 							continue;
 						}
-						bool actorIsCreature = !actor->GetRace()->HasKeywordString("ActorTypeNPC") && (actor->GetRace()->HasKeywordString("ActorTypeCreature") || actor->GetRace()->HasKeywordString("ActorTypeDwarven") || actor->GetRace()->HasKeywordString("ActorTypeAnimal"));
+						bool actorIsCreature = ActorIsCreature(actor);
 						//log::info("testing actor {}", actor->GetName());
 						//Check aggressor against normal filters
 						if (SexActorFilter(actor)) {
@@ -141,13 +155,11 @@ namespace DCURSES {
 
 							if (enabled) {
 								//Check aggressor arousal
-								int actorArousal = GetActorArousal(actor);
+								float actorArousal = GetActorArousal(actor);
 
 								//if (actorArousal <= 0) {
 								//UpdateArousal(actor);
 								//}
-
-								UpdateArousal(actor);
 
 								float arousal = static_cast<float>(settings.sexBaseArousal);
 								int chance = settings.sexChance;
@@ -307,13 +319,14 @@ namespace DCURSES {
 	}
 
 	void SexUpdate() {
+		auto player = RE::PlayerCharacter::GetSingleton();
+		Callbacks::GetSingleton()->GetArousal(player);
+
 		if (!settings.sexEnabled || !settings.sexRandomEnabled) {
 			return;
 		}
 		RE::TESFaction* SexlabAnimatingFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("00E50F", 0, 16), "SexLab.esm");
 		RE::TESFaction* ZadAnimatingFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("029567", 0, 16), "Devious Devices - Integration.esm");
-
-		auto player = RE::PlayerCharacter::GetSingleton();
 
 		if (player->IsInFaction(SexlabAnimatingFaction)) {
 			counters.clock_lastSex = 0;
@@ -353,7 +366,8 @@ namespace DCURSES {
 
 		log::info("{}", actorData.second);
 
-		StartSex(actorData.first);
+		AIEventStartSex(actorData.first);
+		StartSex(actorData.first, settings.sexAggressiveAnims);
 
 		counters.clock_lastSex = -10;
 	}
@@ -381,21 +395,34 @@ namespace DCURSES {
 	std::string P_GetAnimationFilterTagsP(RE::StaticFunctionTag*, RE::Actor* akActor) {
 		int mask = GetDeviceMask(akActor);
 
-		std::string tagsToRemove;
+		std::string tags;
 
 		if (!(mask & 0b0100)) {
-			tagsToRemove = "-Oral," + tagsToRemove;
+			tags = "-Oral," + tags;
 		}
+		//else {
+		//	tags = "~Oral," + tags;
+		//}
 		if (!(mask & 0b0001)) {
-			tagsToRemove = "-Anal," + tagsToRemove;
+			tags = "-Anal," + tags;
 		}
+		//else {
+		//	tags = "~Anal," + tags;
+		//}
 		if (!(mask & 0b0010)) {
-			tagsToRemove = "-Vaginal,-Fisting,-Fingering,-Masturbation," + tagsToRemove;
+			tags = "-Vaginal,-Fisting,-Fingering,-Masturbation," + tags;
 		}
+		//else {
+		//	tags = "~Vaginal," + tags;
+		//}
 		if (!(mask & 0b1000)) {
-			tagsToRemove = "-Boobjob," + tagsToRemove;
+			tags = "-Boobjob," + tags;
 		}
-		return tagsToRemove;
+		//else {
+		//	tags = "~Boobjob," + tags;
+		//}
+		tags.pop_back();
+		return tags;
 	}
 
 	
@@ -409,7 +436,7 @@ namespace DCURSES {
 				RE::TESNPC* actor_base = a_effect->GetBaseObject()->data.associatedForm->As<RE::TESNPC>();
 				if (actor_base && actor_base == match->GetActorBase()) {
 					log::info("Increasing summon time for {}", match->GetName());
-					a_effect->duration += 120;
+					a_effect->duration += 180;
 				}
 			}
 			return RE::BSContainer::ForEachResult::kContinue;

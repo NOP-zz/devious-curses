@@ -8,41 +8,18 @@ project(DeviousCurses VERSION 0.0.1 LANGUAGES CXX)
 
 set(sources
         plugin.cpp
-        
 )
 
 add_custom_target(
     Codegen ALL
+    COMMENT "Running Python Codegen"
     COMMAND python CODEGEN.py
     WORKING_DIRECTORY ./../../
     VERBATIM
 )
 
-
-# #
-# YOU DO NOT NEED TO EDIT ANYTHING BELOW HERE
-# #
-
-# If you're not using a mod manager, you probably want the SKSE plugin to go
-# inside of your Skyrim "Data" folder.
-#
-# To do this automatically, set the `SKYRIM_FOLDER` environment variable
-# to the path of your Skyrim Special Edition folder
-if(DEFINED ENV{SKYRIM_FOLDER} AND IS_DIRECTORY "$ENV{SKYRIM_FOLDER}/Data")
-    set(OUTPUT_FOLDER "$ENV{SKYRIM_FOLDER}/Data")
-endif()
-
-# If you're using Mod Organizer 2 or Vortex, you might want this to go inside
-# of your "mods" folder, inside of a subfolder named "<your mod>".
-#
-# To do this automatically, set the `SKYRIM_MODS_FOLDER` environment variable
-# to the path of your "mods" folder
-if(DEFINED ENV{SKYRIM_MODS_FOLDER} AND IS_DIRECTORY "$ENV{SKYRIM_MODS_FOLDER}")
-    set(OUTPUT_FOLDER "$ENV{SKYRIM_MODS_FOLDER}/${PROJECT_NAME}")
-endif()
-
-# Otherwise, you can set OUTPUT_FOLDER to any place you'd like :) USED FOR VR
-# set(OUTPUT_FOLDER "S:/SkyrimVR/mo2/mods/DeviousCurses")
+set(OUTPUT_FOLDER "S:/Skyrim/MO2/mods/DeviousCurses")
+set(OUTPUT_FOLDER_VR "S:/SkyrimVR/mo2/mods/DeviousCurses")
 
 # set(CommonLibSSE_DIR "S:/Skyrim/modding/CommonLibVR/build/debug-msvc-vcpkg-all")
 
@@ -58,35 +35,40 @@ target_link_libraries(${PROJECT_NAME} PUBLIC CommonLibSSE::CommonLibSSE)
 add_dependencies(${PROJECT_NAME} Codegen)
 
 
-# When your SKSE .dll is compiled, this will automatically copy the .dll into your mods folder.
-# Only works if you configure DEPLOY_ROOT above (or set the SKYRIM_MODS_FOLDER environment variable)
-if(DEFINED OUTPUT_FOLDER)
-    # If you specify an <OUTPUT_FOLDER> (including via environment variables)
-    # then we'll copy your mod files into Skyrim or a mod manager for you!
+set(SKYRIM_FOLDER "S:/SteamLibrary/steamapps/common/Skyrim Special Edition") # Change this to your skyrim instalation location
+set(SCRIPTS_SOURCE "${CMAKE_SOURCE_DIR}/SourceScripts/")
 
-    # Copy the SKSE plugin .dll files into the SKSE/Plugins/ folder
-    set(DLL_FOLDER "${OUTPUT_FOLDER}/SKSE/Plugins")
-    set(PAP_FOLDER "${OUTPUT_FOLDER}/scripts")
-    set(SKYRIM_FOLDER "S:/SteamLibrary/steamapps/common/Skyrim Special Edition") # Change this to your skyrim instalation location
-    set(SCRIPTS_SOURCE "${CMAKE_SOURCE_DIR}/SourceScripts/")
+add_custom_command(
+    TARGET "${PROJECT_NAME}"
+    POST_BUILD
+    COMMAND "${CMAKE_COMMAND}" -E make_directory "${OUTPUT_FOLDER}/SKSE/Plugins"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different "$<TARGET_FILE:${PROJECT_NAME}>" "${OUTPUT_FOLDER}/SKSE/Plugins/$<TARGET_FILE_NAME:${PROJECT_NAME}>"
+    
+    COMMAND "${CMAKE_COMMAND}" -E make_directory "${OUTPUT_FOLDER_VR}/SKSE/Plugins"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different "$<TARGET_FILE:${PROJECT_NAME}>" "${OUTPUT_FOLDER_VR}/SKSE/Plugins/$<TARGET_FILE_NAME:${PROJECT_NAME}>"
+    VERBATIM
+)
 
-    message(STATUS "SKSE plugin output folder: ${DLL_FOLDER}")
+add_custom_target(
+    Papyrus ALL
+    COMMENT "Compiling MCM"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_SOURCE_DIR}/DCurses_MCM.psc" "${OUTPUT_FOLDER}/scripts/source/DCurses_MCM.psc"
+    COMMAND "${SKYRIM_FOLDER}/Papyrus Compiler/PapyrusCompiler.exe" DCurses_MCM.psc -f="${SKYRIM_FOLDER}/Data/Scripts/Source/TESV_Papyrus_Flags.flg" -i="${SCRIPTS_SOURCE}\;${SKYRIM_FOLDER}/Data/Scripts/Source/" -o="${OUTPUT_FOLDER}/scripts" -q
+    
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_SOURCE_DIR}/DCurses_MCM.psc" "${OUTPUT_FOLDER_VR}/scripts/source/DCurses_MCM.psc"
+    COMMAND "${SKYRIM_FOLDER}/Papyrus Compiler/PapyrusCompiler.exe" DCurses_MCM.psc -f="${SKYRIM_FOLDER}/Data/Scripts/Source/TESV_Papyrus_Flags.flg" -i="${SCRIPTS_SOURCE}\;${SKYRIM_FOLDER}/Data/Scripts/Source/" -o="${OUTPUT_FOLDER_VR}/scripts" -q
+    WORKING_DIRECTORY "${OUTPUT_FOLDER}/scripts/source"
+)
+add_dependencies(Papyrus Codegen)
 
-    add_custom_command(
-        TARGET "${PROJECT_NAME}"
-        POST_BUILD
-        COMMAND "${CMAKE_COMMAND}" -E make_directory "${DLL_FOLDER}"
-        COMMAND "${CMAKE_COMMAND}" -E copy_if_different "$<TARGET_FILE:${PROJECT_NAME}>" "${DLL_FOLDER}/$<TARGET_FILE_NAME:${PROJECT_NAME}>"
-        VERBATIM
-    )
+add_custom_target(
+    Translations ALL
+    COMMENT "Preparing Translation Files"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_SOURCE_DIR}/translationData/Devious Curses_English.json" "${OUTPUT_FOLDER}/translations/Devious Curses_ENGLISH.json"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_SOURCE_DIR}/translationData/Devious Curses_English.txt" "${OUTPUT_FOLDER}/interface/translations/Devious Curses_ENGLISH.txt"
 
-    add_custom_target(
-        Papyrus ALL
-        COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_SOURCE_DIR}/DCurses_MCM.psc" "${PAP_FOLDER}/source/DCurses_MCM.psc"
-        COMMAND "${SKYRIM_FOLDER}/Papyrus Compiler/PapyrusCompiler.exe" DCurses_MCM.psc -f="${SKYRIM_FOLDER}/Data/Scripts/Source/TESV_Papyrus_Flags.flg" -i="${SCRIPTS_SOURCE}\;${SKYRIM_FOLDER}/Data/Scripts/Source/" -o="${PAP_FOLDER}" -q
-        WORKING_DIRECTORY "${PAP_FOLDER}/source"
-    )
-    add_dependencies(Papyrus Codegen)
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_SOURCE_DIR}/translationData/Devious Curses_English.json" "${OUTPUT_FOLDER_VR}/translations/Devious Curses_ENGLISH.json"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_SOURCE_DIR}/translationData/Devious Curses_English.txt" "${OUTPUT_FOLDER_VR}/interface/translations/Devious Curses_ENGLISH.txt"
+)
+add_dependencies(Translations Codegen)
 
-
-endif()

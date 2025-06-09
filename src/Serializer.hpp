@@ -39,7 +39,7 @@ namespace DCURSES {
     public:
         int64_t summonCollarCounter = 0;
         int64_t livingLatexCounter = 0;
-        int64_t dummyDoNotUse00 = 0;
+        int64_t dwarvenCuirassCounter = 0;
         int64_t dummyDoNotUse01 = 0;
         int64_t dummyDoNotUse02 = 0;
         int64_t dummyDoNotUse03 = 0;

@@ -338,12 +338,14 @@ namespace DCURSES {
 		JValue::cleanPool("DCURSES");
 		if (actor == RE::PlayerCharacter::GetSingleton()) {
 			RemoveLewdMark();
+			AIContextRemoveLewdMark();
 		}
 	}
 
 	void TatsUpdateContext(MARK mark) {
 		switch (mark) {
 		case MARK::TAT_NONE:
+			AIContextRemoveLewdMark();
 			break;
 		case MARK::TAT_ALLURE:
 			AIContextAddAllureMark();
@@ -412,7 +414,6 @@ namespace DCURSES {
 		if (counters.clock_GlobalTicker % 90 == 0) {
 			TatsUpdateContext(mark);
 		}
-
 	}
 
 	bool P_CheckSTNG(RE::StaticFunctionTag*) {

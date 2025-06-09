@@ -57,16 +57,16 @@ namespace DCURSES {
 
 	std::optional<DeviceData> GetRandomDevice(DeviceList* list, std::vector<std::string> skipList = std::vector<std::string>(), std::string theme = "") {
 		if (list == nullptr) { return std::nullopt; }
-		//if (theme == "") {
-		if (list->first.size() == 0) { return std::nullopt; }
-		int r = Util::randomInt(static_cast<int>(list->first.size()));
-		return (list->first)[r];
-		//}
+		if (theme == "" && skipList.empty()) {
+			if (list->first.size() == 0) { return std::nullopt; }
+			int r = Util::randomInt(static_cast<int>(list->first.size()));
+			return (list->first)[r];
+		}
 
-		//auto adj = GetAdjustedDeviceList(list, skipList, theme);
-		//if (adj.first.size() == 0) { return std::nullopt; }
-		//int r = Util::randomInt(static_cast<int>(adj.first.size()));
-		//return (adj.first)[r];
+		auto adj = GetAdjustedDeviceList(list, skipList, theme);
+		if (adj.first.size() == 0) { return std::nullopt; }
+		int r = Util::randomInt(static_cast<int>(adj.first.size()));
+		return (adj.first)[r];
 	}
 
 	struct Devices {
@@ -222,10 +222,10 @@ namespace DCURSES {
 			if (rend->HasKeywordString("zad_DeviousBra") && !rend->HasKeywordString("zad_DeviousSuit") && !rend->HasKeywordString("zad_DeviousHarness")) { // Bras
 				devices.bras.first.push_back(dev);
 			}
-			if (rend->HasKeywordString("zad_DeviousPlug") && deviceTypeCount == 1) { // All Plugs
+			if (rend->HasKeywordString("zad_DeviousPlug") && deviceTypeCount <= 1) { // All Plugs
 				devices.plugs.first.push_back(dev);
 			}
-			if (rend->HasKeywordString("zad_DeviousPlugVaginal") && deviceTypeCount == 1) { // VPlugs
+			if (rend->HasKeywordString("zad_DeviousPlugVaginal") && deviceTypeCount <= 1) { // VPlugs
 				devices.plugsV.first.push_back(dev);
 				if (rend->HasKeywordString("zad_HasPumps")) {
 					devices.plugsVInf.first.push_back(dev);
@@ -237,7 +237,7 @@ namespace DCURSES {
 					devices.plugsVLock.first.push_back(dev);
 				}
 			}
-			if (rend->HasKeywordString("zad_DeviousPlugAnal") && deviceTypeCount == 1) { // APlugs
+			if (rend->HasKeywordString("zad_DeviousPlugAnal") && deviceTypeCount <= 1) { // APlugs
 				devices.plugsA.first.push_back(dev);
 				if (rend->HasKeywordString("zad_HasPumps")) {
 					devices.plugsAInf.first.push_back(dev);
@@ -496,7 +496,7 @@ namespace DCURSES {
 				continue;
 			}
 			
-			if (!deviceKey && API->GetPropertyFloat(device, "LockAccessDifficulty", 0.0, 0) == 0) {
+			if (!deviceKey && API->GetPropertyFloat(device, "LockAccessDifficulty", 0.0, 0) >= 100) {
 				continue;
 			}
 
@@ -527,7 +527,7 @@ namespace DCURSES {
 			}
 
 			bool isLockless = false;
-			if (!deviceKey && API->GetPropertyFloat(device, "LockAccessDifficulty", 0.0, 0) > 0) {
+			if (!deviceKey && API->GetPropertyFloat(device, "LockAccessDifficulty", 0.0, 0) == 0) {
 				isLockless = true;
 			}
 
@@ -926,7 +926,7 @@ namespace DCURSES {
 		return 0;
 	}
 
-	RE::TESKey* GenerateKeys(RE::TESObjectREFR* activatedObject, bool skipRand = false) {
+	std::vector<RE::TESKey*> GenerateKeys(RE::TESObjectREFR* activatedObject, bool skipRand = false, bool onlyOne = false) {
 		auto player = RE::PlayerCharacter::GetSingleton();
 
 		RE::TESKey* restraintsKey = StaticDataHolder::GetSingleton()->LookupForm<RE::TESKey>(std::stoi("1775f", 0, 16), "Devious Devices - Integration.esm");
@@ -936,11 +936,11 @@ namespace DCURSES {
 		int total_keys = GetItemCount(player, restraintsKey) + GetItemCount(player, chastityKey) + GetItemCount(player, piercingKey);
 
 		if (total_keys >= settings.maxHeldKeys && settings.maxHeldKeys > 0) {
-			return nullptr;
+			return std::vector<RE::TESKey*>();
 		}
 
 		if (!(activatedObject && activatedObject->HasContainer())) {
-			return nullptr;
+			return std::vector<RE::TESKey*>();
 		}
 
 		double restraintsWeight = settings.restraintsKeyWeight;
@@ -1008,36 +1008,35 @@ namespace DCURSES {
 		double r = Util::randomDouble();
 		log::trace("key chance {:.2f}% ({:.2f})", chance, r);
 
+		int count = onlyOne ? 1 : Util::randomInt(settings.minKeysLooted, settings.maxKeysLooted);
+
+		std::vector<RE::TESKey*> keys;
+
 		if (r < chance || skipRand) {
+			for (int i = 0; i < count; i++) {
+				double weightSum = restraintsWeight + chastityWeight + piercingWeight;
 
-			double weightSum = restraintsWeight + chastityWeight + piercingWeight;
-
-			double roll = Util::randomDouble(weightSum);
-			if (roll < piercingWeight) {
-				//SKSE::GetTaskInterface()->AddTask([activatedObject, piercingKey] {
+				double roll = Util::randomDouble(weightSum);
+				if (roll < piercingWeight) {
 					activatedObject->AddObjectToContainer((RE::TESBoundObject*)piercingKey, nullptr, 1, nullptr);
 					counters.SinceLastKey = 0;
-				//});
-				return piercingKey;
-			}
-			else if (roll - piercingWeight < chastityWeight) {
-				//SKSE::GetTaskInterface()->AddTask([activatedObject, chastityKey] {
+					keys.push_back(piercingKey);
+				}
+				else if (roll - piercingWeight < chastityWeight) {
 					activatedObject->AddObjectToContainer((RE::TESBoundObject*)chastityKey, nullptr, 1, nullptr);
 					counters.SinceLastKey = 0;
-				//});
-				return chastityKey;
-			}
-			else {
-				//SKSE::GetTaskInterface()->AddTask([activatedObject, restraintsKey] {
+					keys.push_back(chastityKey);
+				}
+				else {
 					activatedObject->AddObjectToContainer((RE::TESBoundObject*)restraintsKey, nullptr, 1, nullptr);
 					counters.SinceLastKey = 0;
-				//});
-				return restraintsKey;
+					keys.push_back(restraintsKey);
+				}
 			}
 		}
 
 		counters.SinceLastKey++;
-		return nullptr;
+		return keys;
 	}
 
 	void RemoveKeys(RE::TESObjectREFR* activatedObject) {

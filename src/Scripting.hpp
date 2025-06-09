@@ -3,6 +3,8 @@
 #include "../include/form_ids.h"
 #include "../include/DDNG_API.h"
 
+#include "Translation.hpp"
+
 using namespace SKSE;
 
 namespace DCURSES {
@@ -14,6 +16,89 @@ namespace DCURSES {
     RE::BSScript::IObjectHandlePolicy* GetHP() {
         auto vm = GetVM();
         return vm->GetObjectHandlePolicy();
+    }
+
+    void CallbackSetActorArousal(RE::Actor*, float);
+
+    class ArousalCallbackFunctor : public RE::BSScript::IStackCallbackFunctor {
+        RE::Actor* actor = nullptr;
+
+        virtual void SetObject(const RE::BSTSmartPointer<RE::BSScript::Object>&) override {}
+
+        // Inherited via IStackCallbackFunctor
+        virtual void operator()(RE::BSScript::Variable a_result) override
+        {
+            float arousal = -1.0f;
+            if (a_result.IsFloat()) {
+                arousal = a_result.GetFloat();
+            }
+            else if (a_result.IsInt()) {
+                arousal = static_cast<float>(a_result.GetSInt());
+            }
+            else {
+                log::warn("Arousal callback got incompatible type: {}", a_result.GetType().TypeAsString());
+            }
+            CallbackSetActorArousal(actor, arousal);
+        }
+    public:
+        ArousalCallbackFunctor(RE::Actor* a) {
+            actor = a;
+        }
+    };
+
+    class Callbacks {
+    private:
+        std::mutex mutex = std::mutex();
+        std::map<RE::FormID, float> _internalArousalData;
+        Callbacks() {}
+    public:
+        Callbacks(Callbacks const&) = delete;
+        void operator=(Callbacks const&) = delete;
+
+        static Callbacks* GetSingleton() {
+            static Callbacks instance;
+            return &instance;
+        }
+
+        void SetArousalCallback(RE::Actor* actor, float value) {
+            //log::trace("Got arousal {} for {}", value, actor->GetName());
+            _internalArousalData[actor->formID] = value;
+        }
+
+        float GetArousal(RE::Actor* actor) {
+            if (_internalArousalData.count(actor->formID) == 0) {
+                _internalArousalData[actor->formID] = -1.0f;
+            }
+            RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> callback = RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor>(new ArousalCallbackFunctor(actor));
+            RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::Actor*>(std::move(actor));
+            RE::BSTSmartPointer<RE::BSScript::Object> slaObject;
+            RE::TESForm* sla = StaticDataHolder::GetSingleton()->LookupForm(std::stoi("4290f", 0, 16), "SexLabAroused.esm");
+            RE::VMHandle hand = GetHP()->GetHandleForObject(RE::FormType::Quest, sla);
+            GetVM()->FindBoundObject(hand, "slaFrameworkScr", slaObject);
+            GetVM()->DispatchMethodCall(slaObject, "GetActorExposure", args, callback);
+            delete args;
+
+            return _internalArousalData[actor->formID];
+        }
+
+        void UpdateAllActorsArousal() {
+            if (const auto processLists = RE::ProcessLists::GetSingleton(); processLists) {
+                RE::BSSimpleList<RE::ActorHandle>* arr = &(processLists->aliveActorList);
+                if (arr) {
+                    for (auto& actorHandle : *arr) {
+                        auto actorPtr = actorHandle.get();
+                        auto actor = actorPtr.get();
+                        if (actor && actor->Is3DLoaded() && !actor->IsDead() && !actor->IsChild()) {
+                            GetArousal(actor);
+                        }
+                    }
+                }
+            }
+        }
+    };
+
+    void CallbackSetActorArousal(RE::Actor* actor, float arousal) {
+        Callbacks::GetSingleton()->SetArousalCallback(actor, arousal);
     }
 
     bool CheckESPLoaded() {
@@ -117,15 +202,17 @@ namespace DCURSES {
         delete args;
     }
 
-    int GetActorArousal(RE::Actor* actor) {
-        auto faction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x03fc36, "SexLabAroused.esm");
-        return actor->GetFactionRank(faction, actor == RE::PlayerCharacter::GetSingleton());
+    void StartSex(RE::Actor* aggressor, bool preferAggressive) {
+        RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> result;
+        RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::Actor*, bool>(std::move(aggressor), std::move(preferAggressive));
+        GetVM()->DispatchStaticCall("DCursesLib", "StartSex", args, result);
+        delete args;
     }
 
-    void StartSex(RE::Actor* aggressor) {
+    void StartMasturbation(RE::Actor* actor) {
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> result;
-        RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::Actor*>(std::move(aggressor));
-        GetVM()->DispatchStaticCall("DCursesLib", "StartSex", args, result);
+        RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::Actor*>(std::move(actor));
+        GetVM()->DispatchStaticCall("DCursesLib", "StartMasturbation", args, result);
         delete args;
     }
 
@@ -164,12 +251,17 @@ namespace DCURSES {
         delete args;
     }
 
+    float GetActorArousal(RE::Actor* actor) {
+        return Callbacks::GetSingleton()->GetArousal(actor);
+    }
+
     void SetArousal(RE::Actor* actor, int arousal) {
+        Callbacks::GetSingleton()->SetArousalCallback(actor, static_cast<float>(arousal));
+        
         RE::TESForm* aroused = StaticDataHolder::GetSingleton()->LookupForm(0x4290f, "SexLabAroused.esm");
         RE::VMHandle hand = GetHP()->GetHandleForObject(RE::FormType::Quest, aroused);
         RE::BSTSmartPointer<RE::BSScript::Object> arousedObject;
         GetVM()->FindBoundObject(hand, "slaFrameworkScr", arousedObject);
-
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> result;
         RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::Actor*, int>(std::move(actor), std::move(arousal));
         GetVM()->DispatchMethodCall(arousedObject, "SetActorExposure", args, result);
@@ -183,7 +275,7 @@ namespace DCURSES {
         GetVM()->FindBoundObject(hand, "slaFrameworkScr", arousedObject);
 
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> result;
-        RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::Actor*, int, std::string>(std::move(actor), std::move(arousal), std::move(""));
+        RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::Actor*, int, std::string>(std::move(actor), std::move(arousal), "");
         GetVM()->DispatchMethodCall(arousedObject, "UpdateActorExposure", args, result);
         delete args;
     }
@@ -292,19 +384,6 @@ namespace DCURSES {
         delete args;
     }
 
-    void UpdateArousal(RE::Actor* akActor) {
-        RE::BSTSmartPointer<RE::BSScript::Object> slaObject;
-        RE::TESForm* sla = StaticDataHolder::GetSingleton()->LookupForm(std::stoi("4290f", 0, 16), "SexLabAroused.esm");
-        RE::VMHandle hand = GetHP()->GetHandleForObject(RE::FormType::Quest, sla);
-        GetVM()->FindBoundObject(hand, "slaFrameworkScr", slaObject);
-
-        if (akActor == nullptr) { return; }
-        RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> callback;
-        RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::Actor*>(std::move(akActor));
-        GetVM()->DispatchMethodCall(slaObject, "GetActorArousal", args, callback);
-        delete args;
-    }
-
     void RTDoTattooEvent(RE::Actor* akActor, int count) {
         RE::BSTSmartPointer<RE::BSScript::Object> rapeTatsObject;
         RE::TESForm* form = StaticDataHolder::GetSingleton()->LookupForm(0xd62, "RapeTattoos.esp");
@@ -390,14 +469,16 @@ namespace DCURSES {
         delete args;
     }
 
-    void DBGMessageBox(std::string message) {
+    void DBGMessageBox(Translator trans) {
+        auto message = trans.GetTranslation();
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> result;
         RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<std::string>(std::move(message));
         GetVM()->DispatchStaticCall("Debug", "MessageBox", args, result);
         delete args;
     }
 
-    void DBGNotification(std::string message) {
+    void DBGNotification(Translator trans) {
+        auto message = trans.GetTranslation();
         RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> result;
         RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<std::string>(std::move(message));
         GetVM()->DispatchStaticCall("Debug", "Notification", args, result);

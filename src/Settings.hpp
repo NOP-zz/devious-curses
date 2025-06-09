@@ -108,6 +108,8 @@ namespace DCURSES {
 		//Page Keys
 		float keyLossChance = 80;				//Key Loss Chance//How likely you are to lose your keys during an event.//{1}%//(0,100,0.1)
 		float keyChance = 7;					//Key Find Chance//How likely you are to find a key in a container.//{1}%//(0,100,0.1)
+		int minKeysLooted = 1;					//Min Keys//The minimum number of keys that can be found at a time.//{0}//(1,10,1)
+		int maxKeysLooted = 1;					//Max Keys//The maximum number of keys that can be found at a time.//{0}//(1,10,1)
 		float keyBonus = 1.0f;					//Bonus Chance Per Device//A bonus chance to get a key per locking device worn.//{1}%//(0,10,0.1)
 		bool keyForgiveness = true;				//Key Forgiveness//Make keys more likely if it has been a while since you got any.
 		float keyPickpocketBonus = 2.0;			//Pickpocket Bonus//Multiplier to key chance when pickpocketing someone.\nSet to 0 to disable keys when pickpocketing.//{1}x//(0,10,0.1)
@@ -128,7 +130,7 @@ namespace DCURSES {
 		int eventOppressiveWeight = 15;			//Oppressive Curse Weight//Chance to receive an oppressive device event.//{0}//(0,500,1)
 		//Header Contraption Curse
 		int eventContraptionWeight = 25;		//Contraption Curse Weight//Chance to be bound in a contraption from DDC.//{0}//(0,500,1)																											
-		float eventContraptionTime = 0.0;		//Contraption Release Time//Will be automatically released after this many in game hours. Set to 0 to disable automatic release.//{1}//(0,24,0.1)													
+		float eventContraptionTime = 4.0;		//Contraption Release Time//Will be automatically released after this many in game hours. Set to 0 to disable automatic release.//{1}//(0,24,0.1)													
 		bool eventContDevices = true;			//Contraption Devices//Will allow certain devices such as collars, gags, cuffs, and plugs to be equipped when triggering a contraption event.\nWill follow all other rules set for devices.			
 		bool eventContAllDevices = false;		//Use All Devices//Will allow any device other than heavy bondage to be equipped when triggering a contraption event.\nWill follow all other rules set for devices.									
 		int eventContDeviceOverride = 0;		//Device Count Override//When equipping devices for contraption events this number will be used instead of the min / max on the main page.\nSet to 0 to use the default number of devices.//{0}//(0,10,1)
@@ -180,6 +182,12 @@ namespace DCURSES {
 		bool oppSCollarDrainsMagicka = true;	//Magicka Drain//The collar will drain all of your magicka when summoning.
 		int oppSMinSummonArousal = 90;			//Summon Arousal//Will change the arousal of all of your summons to be at least this value.//{0}//(0,100,1)
 		float oppSummonChance = 1.5;			//Summon Chance//The chance per second that the collar summons an atronach to have sex with you.\nThis won't happen if you already have a different summon.//{1}%//(0,100,0.1)
+		//Header Dwarven Cuirass
+		int oppDwarvenCuirassWeight = 15;		//Weight//How likely that you will be equipped with a devious dwarven cuirass that will control your actions.//{0}//(1,500,1)
+		int oppDwarvenValueNeeded = 200;		//Dwarven Parts Value//How much value of dwarven parts like gears and gyros the dwarven cuirass needs to take before it is removed.\nDoes not count ingots, centurion dynamos, or pots, pans, cups, etc.//{0}//(30,2000,10)
+		bool oppDwarvenHeavyRestraint = false;	//Heavy Restraint//The cuirass will count as a heavy restraint.
+		bool oppDwarvenRequireLoc = true;		//Require Location//The cuirass can only be found in dwarven locations.
+		int oppDwarvenArousal = 25;				//Masturbation Arousal//If your arousal is above this there is a chance that the dwarven cuirass will force you to masturbate!\nSet to 100 to disable//{0}//(10,100,1)
 		//Column
 		//Header Living Latex
 		int oppLivingLatexWeight = 20;			//Weight//How likely that you will be encased in latex that will bind you with ebonite.//{0}//(1,500,1)
@@ -215,6 +223,7 @@ namespace DCURSES {
 		//Column
 		//Header Quest Toggles
 		bool enableQISaarthal = true;			//Saarthal//The Saarthal event.
+		bool enableQIDwemerMuseum = true;		//Dwemer Museam//The Dwemer Museum event.
 		bool enableQIMalkoran = true;			//Malkoran//The Malkoran event.
 		bool enableQISanguine = true;			//Sanguine//The Sanguine events.
 		//Page Misc
@@ -238,26 +247,31 @@ namespace DCURSES {
 		float consTriggerSex = 10.0;			//Sex//Chance for a consequence after having sex with an actor.\nOnly applied to scenes started by this mod.//{1}%//(0,100,0.1)
 		//Empty
 		bool consAllowFollowers = false;		//Allow Followers//Talking to or having sex with followers can trigger consequences.
+		bool consAllowCreatures = false;		//Allow Creatures//Talking to or having sex with creatures can trigger consequences.
 		//Empty
 		bool consUseRelationships = true;		//Use Relationships//The relationship rank of the target actor will affect how they treat you. You are less likely to see all consequences except mercy when the relationship is better.
 		bool consRelationBondage = false;		//Relationship Bondage//Your friends want to tie you up so this is affected like mercy when Use Relationships is on.
+		//Empty
+		bool consFallthrough = false;			//Try All Consequences//With this enabled if a consequence can't trigger it will try all the other consequences.\nThis will make it so that consequences are more likely to happen, but consequences with low weights might also be more common.
 		//Column
 		//Header Results
-		int consSexWeight = 15;					//Sex Weight//Chance for an actor to have sex with the player.//{0}//(0,100,1)
+		int consSexWeight = 15;					//Sex Weight//Chance for an actor to have sex with the player.\nFollows the Allowed Actors set on the Sex page.//{0}//(0,100,1)
 		//Empty
-		int consFineWeight = 10;				//Fine Weight//Chance for you to receive a fine.//{0}//(0,100,1)
+		int consFineWeight = 10;				//Fine Weight//Chance for you to receive a fine.\nMust be in a town or have guards around.//{0}//(0,100,1)
 		int consFineAmount = 100;				//Fine Amount//How much you will owe.//{0}//(50,1000,10)
 		//Empty
-		int consRandomBondageWeight = 10;		//Random Bondage Weight//Chance for a random item to be equipped.//{0}//(0,100,1)
+		int consRandomBondageWeight = 10;		//Random Bondage Weight//Chance for a random item to be equipped.\nNothing will happen if no device can be equipped.//{0}//(0,100,1)
 		bool consRandomHeavyBondage = false;	//Allow Heavy Bondage//Allow for heavy bondage to be equipped.
+		bool consBondageIgnoreMax = false;		//Ignore Restraint Cap//Will ignore the restraint cap set on the main page.
 		//Empty
-		int consMercyWeight = 5;				//Mercy Weight//Chance that a character will feel bad for you and unlock a device, give you a key, or give you something moderately useful.//{0}//(0,100,1)
+		int consMercyWeight = 5;				//Mercy Weight//Chance that a character will feel bad for you and unlock a device, give you a key, or give you something mildly useful.//{0}//(0,100,1)
 		//Page Sex
 		//Flag flag_enable_sex					//VAR:sexEnabled
 		//Flag flag_enable_random_sex			//VAR:sexRandomEnabled
 		//Flag flag_sex_slave_tats				//VAR:sexRandomEnabled, CheckSTNG()
 		//Header General
 		bool sexEnabled = false;				//Enabled//Toggles sex on or off.\nSex will only occur from friendly characters.																						**RELOAD
+		bool sexAggressiveAnims = false;		//Prefer Aggressive Animations//Prefer using aggressive animations for all sex started by this mod.																		?:? flag_enable_sex
 		bool sexRandomEnabled = false;			//Random Sex//Characters that you encounter on your journey might have sex with you!																					**RELOAD
 		int sexCooldown = 30;					//Cooldown//How long after a scene ends before another can trigger.//{0}//(5,300,1)																						?:? flag_enable_random_sex
 		int sexChance = 50;						//Chance//How likely a potential actor will have sex with the player.//{0}%//(0,100,1)																					?:? flag_enable_random_sex
@@ -286,6 +300,7 @@ namespace DCURSES {
 		bool sexAllowFemale = true;				//Allow Female Actors//Female actors will be allowed.																													?:? flag_enable_sex
 		bool sexAllowFuta = true;				//Allow Futa Actors//Futa actors will be allowed.\nFuta actors have a female body while being defined as male in sexlab.												?:? flag_enable_sex
 		bool sexAllowCreature = false;			//Allow Creature Actors//Creature actors will be allowed.																												?:? flag_enable_sex
+		bool sexAllowFarmAnimals = false;		//Allow Farm Animals//Creatures like chickens, cows, and goats will be available in scenes.																				?:? flag_enable_sex
 		//Header Requirements
 		bool sexRequireAll = false;				//Require All//If set sex will only happen if every requirement below is met.\nIf unset sex will happen if any requirement is met.										?:? flag_enable_random_sex
 		bool sexRequireBindings = true;			//Bondage//Will allow sex if the player has visible restraints.																											?:? flag_enable_random_sex
@@ -304,12 +319,12 @@ namespace DCURSES {
 		//MCM_END
 	} settings;
 
-	void PlayerMessage(std::string message) {
+	void PlayerMessage(Translator trans) {
 		if (settings.noMessageBoxes) {
-			DBGNotification(message);
+			DBGNotification(trans);
 		}
 		else {
-			DBGMessageBox(message);
+			DBGMessageBox(trans);
 		}
 	}
 
@@ -403,6 +418,10 @@ namespace DCURSES {
 		SetMCMInt("glovesWeight",settings.glovesWeight);
 		settings.mittensWeight = 0;
 		SetMCMInt("mittensWeight",settings.mittensWeight);
+		settings.minKeysLooted = 1;
+		SetMCMInt("minKeysLooted",settings.minKeysLooted);
+		settings.maxKeysLooted = 1;
+		SetMCMInt("maxKeysLooted",settings.maxKeysLooted);
 		settings.maxHeldKeys = 3;
 		SetMCMInt("maxHeldKeys",settings.maxHeldKeys);
 		settings.restraintsKeyWeight = 80;
@@ -465,6 +484,12 @@ namespace DCURSES {
 		SetMCMInt("oppSummonerSexCount",settings.oppSummonerSexCount);
 		settings.oppSMinSummonArousal = 90;
 		SetMCMInt("oppSMinSummonArousal",settings.oppSMinSummonArousal);
+		settings.oppDwarvenCuirassWeight = 15;
+		SetMCMInt("oppDwarvenCuirassWeight",settings.oppDwarvenCuirassWeight);
+		settings.oppDwarvenValueNeeded = 200;
+		SetMCMInt("oppDwarvenValueNeeded",settings.oppDwarvenValueNeeded);
+		settings.oppDwarvenArousal = 25;
+		SetMCMInt("oppDwarvenArousal",settings.oppDwarvenArousal);
 		settings.oppLivingLatexWeight = 20;
 		SetMCMInt("oppLivingLatexWeight",settings.oppLivingLatexWeight);
 		settings.oppLivingLatexStartTime = 15;
@@ -561,7 +586,7 @@ namespace DCURSES {
 		SetMCMFloat("keyPickpocketBonus",settings.keyPickpocketBonus);
 		settings.magicKeyChance = 10.0f;
 		SetMCMFloat("magicKeyChance",settings.magicKeyChance);
-		settings.eventContraptionTime = 0.0f;
+		settings.eventContraptionTime = 4.0f;
 		SetMCMFloat("eventContraptionTime",settings.eventContraptionTime);
 		settings.LMBrandingChance = 1.5f;
 		SetMCMFloat("LMBrandingChance",settings.LMBrandingChance);
@@ -649,6 +674,10 @@ namespace DCURSES {
 		SetMCMBool("LMNudityChestOnly",settings.LMNudityChestOnly);
 		settings.oppSCollarDrainsMagicka = true;
 		SetMCMBool("oppSCollarDrainsMagicka",settings.oppSCollarDrainsMagicka);
+		settings.oppDwarvenHeavyRestraint = false;
+		SetMCMBool("oppDwarvenHeavyRestraint",settings.oppDwarvenHeavyRestraint);
+		settings.oppDwarvenRequireLoc = true;
+		SetMCMBool("oppDwarvenRequireLoc",settings.oppDwarvenRequireLoc);
 		settings.oppLivingLatexHeavy = false;
 		SetMCMBool("oppLivingLatexHeavy",settings.oppLivingLatexHeavy);
 		settings.oppLivingLatexRequireRem = true;
@@ -661,6 +690,8 @@ namespace DCURSES {
 		SetMCMBool("enableQuestInteractions",settings.enableQuestInteractions);
 		settings.enableQISaarthal = true;
 		SetMCMBool("enableQISaarthal",settings.enableQISaarthal);
+		settings.enableQIDwemerMuseum = true;
+		SetMCMBool("enableQIDwemerMuseum",settings.enableQIDwemerMuseum);
 		settings.enableQIMalkoran = true;
 		SetMCMBool("enableQIMalkoran",settings.enableQIMalkoran);
 		settings.enableQISanguine = true;
@@ -683,14 +714,22 @@ namespace DCURSES {
 		SetMCMBool("setAllDefaultSettings",settings.setAllDefaultSettings);
 		settings.consAllowFollowers = false;
 		SetMCMBool("consAllowFollowers",settings.consAllowFollowers);
+		settings.consAllowCreatures = false;
+		SetMCMBool("consAllowCreatures",settings.consAllowCreatures);
 		settings.consUseRelationships = true;
 		SetMCMBool("consUseRelationships",settings.consUseRelationships);
 		settings.consRelationBondage = false;
 		SetMCMBool("consRelationBondage",settings.consRelationBondage);
+		settings.consFallthrough = false;
+		SetMCMBool("consFallthrough",settings.consFallthrough);
 		settings.consRandomHeavyBondage = false;
 		SetMCMBool("consRandomHeavyBondage",settings.consRandomHeavyBondage);
+		settings.consBondageIgnoreMax = false;
+		SetMCMBool("consBondageIgnoreMax",settings.consBondageIgnoreMax);
 		settings.sexEnabled = false;
 		SetMCMBool("sexEnabled",settings.sexEnabled);
+		settings.sexAggressiveAnims = false;
+		SetMCMBool("sexAggressiveAnims",settings.sexAggressiveAnims);
 		settings.sexRandomEnabled = false;
 		SetMCMBool("sexRandomEnabled",settings.sexRandomEnabled);
 		settings.sexAllowMale = true;
@@ -701,6 +740,8 @@ namespace DCURSES {
 		SetMCMBool("sexAllowFuta",settings.sexAllowFuta);
 		settings.sexAllowCreature = false;
 		SetMCMBool("sexAllowCreature",settings.sexAllowCreature);
+		settings.sexAllowFarmAnimals = false;
+		SetMCMBool("sexAllowFarmAnimals",settings.sexAllowFarmAnimals);
 		settings.sexRequireAll = false;
 		SetMCMBool("sexRequireAll",settings.sexRequireAll);
 		settings.sexRequireBindings = true;
@@ -769,6 +810,8 @@ namespace DCURSES {
 			{"bootsWeight", settings.bootsWeight},
 			{"glovesWeight", settings.glovesWeight},
 			{"mittensWeight", settings.mittensWeight},
+			{"minKeysLooted", settings.minKeysLooted},
+			{"maxKeysLooted", settings.maxKeysLooted},
 			{"maxHeldKeys", settings.maxHeldKeys},
 			{"restraintsKeyWeight", settings.restraintsKeyWeight},
 			{"chastityKeyWeight", settings.chastityKeyWeight},
@@ -800,6 +843,9 @@ namespace DCURSES {
 			{"oppSummonerCollarWeight", settings.oppSummonerCollarWeight},
 			{"oppSummonerSexCount", settings.oppSummonerSexCount},
 			{"oppSMinSummonArousal", settings.oppSMinSummonArousal},
+			{"oppDwarvenCuirassWeight", settings.oppDwarvenCuirassWeight},
+			{"oppDwarvenValueNeeded", settings.oppDwarvenValueNeeded},
+			{"oppDwarvenArousal", settings.oppDwarvenArousal},
 			{"oppLivingLatexWeight", settings.oppLivingLatexWeight},
 			{"oppLivingLatexStartTime", settings.oppLivingLatexStartTime},
 			{"consSexWeight", settings.consSexWeight},
@@ -887,12 +933,15 @@ namespace DCURSES {
 			{"LMBrandingPunish", settings.LMBrandingPunish},
 			{"LMNudityChestOnly", settings.LMNudityChestOnly},
 			{"oppSCollarDrainsMagicka", settings.oppSCollarDrainsMagicka},
+			{"oppDwarvenHeavyRestraint", settings.oppDwarvenHeavyRestraint},
+			{"oppDwarvenRequireLoc", settings.oppDwarvenRequireLoc},
 			{"oppLivingLatexHeavy", settings.oppLivingLatexHeavy},
 			{"oppLivingLatexRequireRem", settings.oppLivingLatexRequireRem},
 			{"oppLivingLatexOpen", settings.oppLivingLatexOpen},
 			{"useLocationModifiers", settings.useLocationModifiers},
 			{"enableQuestInteractions", settings.enableQuestInteractions},
 			{"enableQISaarthal", settings.enableQISaarthal},
+			{"enableQIDwemerMuseum", settings.enableQIDwemerMuseum},
 			{"enableQIMalkoran", settings.enableQIMalkoran},
 			{"enableQISanguine", settings.enableQISanguine},
 			{"noMessageBoxes", settings.noMessageBoxes},
@@ -904,15 +953,20 @@ namespace DCURSES {
 			{"resumeEvents", settings.resumeEvents},
 			{"setAllDefaultSettings", settings.setAllDefaultSettings},
 			{"consAllowFollowers", settings.consAllowFollowers},
+			{"consAllowCreatures", settings.consAllowCreatures},
 			{"consUseRelationships", settings.consUseRelationships},
 			{"consRelationBondage", settings.consRelationBondage},
+			{"consFallthrough", settings.consFallthrough},
 			{"consRandomHeavyBondage", settings.consRandomHeavyBondage},
+			{"consBondageIgnoreMax", settings.consBondageIgnoreMax},
 			{"sexEnabled", settings.sexEnabled},
+			{"sexAggressiveAnims", settings.sexAggressiveAnims},
 			{"sexRandomEnabled", settings.sexRandomEnabled},
 			{"sexAllowMale", settings.sexAllowMale},
 			{"sexAllowFemale", settings.sexAllowFemale},
 			{"sexAllowFuta", settings.sexAllowFuta},
 			{"sexAllowCreature", settings.sexAllowCreature},
+			{"sexAllowFarmAnimals", settings.sexAllowFarmAnimals},
 			{"sexRequireAll", settings.sexRequireAll},
 			{"sexRequireBindings", settings.sexRequireBindings},
 			{"sexRequireCollar", settings.sexRequireCollar},
@@ -1039,6 +1093,10 @@ namespace DCURSES {
 		SetMCMInt("glovesWeight",settings.glovesWeight);
 		settings.mittensWeight = static_cast<int>(j.value("mittensWeight", 0));
 		SetMCMInt("mittensWeight",settings.mittensWeight);
+		settings.minKeysLooted = static_cast<int>(j.value("minKeysLooted", 1));
+		SetMCMInt("minKeysLooted",settings.minKeysLooted);
+		settings.maxKeysLooted = static_cast<int>(j.value("maxKeysLooted", 1));
+		SetMCMInt("maxKeysLooted",settings.maxKeysLooted);
 		settings.maxHeldKeys = static_cast<int>(j.value("maxHeldKeys", 3));
 		SetMCMInt("maxHeldKeys",settings.maxHeldKeys);
 		settings.restraintsKeyWeight = static_cast<int>(j.value("restraintsKeyWeight", 80));
@@ -1101,6 +1159,12 @@ namespace DCURSES {
 		SetMCMInt("oppSummonerSexCount",settings.oppSummonerSexCount);
 		settings.oppSMinSummonArousal = static_cast<int>(j.value("oppSMinSummonArousal", 90));
 		SetMCMInt("oppSMinSummonArousal",settings.oppSMinSummonArousal);
+		settings.oppDwarvenCuirassWeight = static_cast<int>(j.value("oppDwarvenCuirassWeight", 15));
+		SetMCMInt("oppDwarvenCuirassWeight",settings.oppDwarvenCuirassWeight);
+		settings.oppDwarvenValueNeeded = static_cast<int>(j.value("oppDwarvenValueNeeded", 200));
+		SetMCMInt("oppDwarvenValueNeeded",settings.oppDwarvenValueNeeded);
+		settings.oppDwarvenArousal = static_cast<int>(j.value("oppDwarvenArousal", 25));
+		SetMCMInt("oppDwarvenArousal",settings.oppDwarvenArousal);
 		settings.oppLivingLatexWeight = static_cast<int>(j.value("oppLivingLatexWeight", 20));
 		SetMCMInt("oppLivingLatexWeight",settings.oppLivingLatexWeight);
 		settings.oppLivingLatexStartTime = static_cast<int>(j.value("oppLivingLatexStartTime", 15));
@@ -1197,7 +1261,7 @@ namespace DCURSES {
 		SetMCMFloat("keyPickpocketBonus",settings.keyPickpocketBonus);
 		settings.magicKeyChance = static_cast<float>(j.value("magicKeyChance", 10.0));
 		SetMCMFloat("magicKeyChance",settings.magicKeyChance);
-		settings.eventContraptionTime = static_cast<float>(j.value("eventContraptionTime", 0.0));
+		settings.eventContraptionTime = static_cast<float>(j.value("eventContraptionTime", 4.0));
 		SetMCMFloat("eventContraptionTime",settings.eventContraptionTime);
 		settings.LMBrandingChance = static_cast<float>(j.value("LMBrandingChance", 1.5));
 		SetMCMFloat("LMBrandingChance",settings.LMBrandingChance);
@@ -1285,6 +1349,10 @@ namespace DCURSES {
 		SetMCMBool("LMNudityChestOnly",settings.LMNudityChestOnly);
 		settings.oppSCollarDrainsMagicka = static_cast<bool>(j.value("oppSCollarDrainsMagicka", true));
 		SetMCMBool("oppSCollarDrainsMagicka",settings.oppSCollarDrainsMagicka);
+		settings.oppDwarvenHeavyRestraint = static_cast<bool>(j.value("oppDwarvenHeavyRestraint", false));
+		SetMCMBool("oppDwarvenHeavyRestraint",settings.oppDwarvenHeavyRestraint);
+		settings.oppDwarvenRequireLoc = static_cast<bool>(j.value("oppDwarvenRequireLoc", true));
+		SetMCMBool("oppDwarvenRequireLoc",settings.oppDwarvenRequireLoc);
 		settings.oppLivingLatexHeavy = static_cast<bool>(j.value("oppLivingLatexHeavy", false));
 		SetMCMBool("oppLivingLatexHeavy",settings.oppLivingLatexHeavy);
 		settings.oppLivingLatexRequireRem = static_cast<bool>(j.value("oppLivingLatexRequireRem", true));
@@ -1297,6 +1365,8 @@ namespace DCURSES {
 		SetMCMBool("enableQuestInteractions",settings.enableQuestInteractions);
 		settings.enableQISaarthal = static_cast<bool>(j.value("enableQISaarthal", true));
 		SetMCMBool("enableQISaarthal",settings.enableQISaarthal);
+		settings.enableQIDwemerMuseum = static_cast<bool>(j.value("enableQIDwemerMuseum", true));
+		SetMCMBool("enableQIDwemerMuseum",settings.enableQIDwemerMuseum);
 		settings.enableQIMalkoran = static_cast<bool>(j.value("enableQIMalkoran", true));
 		SetMCMBool("enableQIMalkoran",settings.enableQIMalkoran);
 		settings.enableQISanguine = static_cast<bool>(j.value("enableQISanguine", true));
@@ -1319,14 +1389,22 @@ namespace DCURSES {
 		SetMCMBool("setAllDefaultSettings",settings.setAllDefaultSettings);
 		settings.consAllowFollowers = static_cast<bool>(j.value("consAllowFollowers", false));
 		SetMCMBool("consAllowFollowers",settings.consAllowFollowers);
+		settings.consAllowCreatures = static_cast<bool>(j.value("consAllowCreatures", false));
+		SetMCMBool("consAllowCreatures",settings.consAllowCreatures);
 		settings.consUseRelationships = static_cast<bool>(j.value("consUseRelationships", true));
 		SetMCMBool("consUseRelationships",settings.consUseRelationships);
 		settings.consRelationBondage = static_cast<bool>(j.value("consRelationBondage", false));
 		SetMCMBool("consRelationBondage",settings.consRelationBondage);
+		settings.consFallthrough = static_cast<bool>(j.value("consFallthrough", false));
+		SetMCMBool("consFallthrough",settings.consFallthrough);
 		settings.consRandomHeavyBondage = static_cast<bool>(j.value("consRandomHeavyBondage", false));
 		SetMCMBool("consRandomHeavyBondage",settings.consRandomHeavyBondage);
+		settings.consBondageIgnoreMax = static_cast<bool>(j.value("consBondageIgnoreMax", false));
+		SetMCMBool("consBondageIgnoreMax",settings.consBondageIgnoreMax);
 		settings.sexEnabled = static_cast<bool>(j.value("sexEnabled", false));
 		SetMCMBool("sexEnabled",settings.sexEnabled);
+		settings.sexAggressiveAnims = static_cast<bool>(j.value("sexAggressiveAnims", false));
+		SetMCMBool("sexAggressiveAnims",settings.sexAggressiveAnims);
 		settings.sexRandomEnabled = static_cast<bool>(j.value("sexRandomEnabled", false));
 		SetMCMBool("sexRandomEnabled",settings.sexRandomEnabled);
 		settings.sexAllowMale = static_cast<bool>(j.value("sexAllowMale", true));
@@ -1337,6 +1415,8 @@ namespace DCURSES {
 		SetMCMBool("sexAllowFuta",settings.sexAllowFuta);
 		settings.sexAllowCreature = static_cast<bool>(j.value("sexAllowCreature", false));
 		SetMCMBool("sexAllowCreature",settings.sexAllowCreature);
+		settings.sexAllowFarmAnimals = static_cast<bool>(j.value("sexAllowFarmAnimals", false));
+		SetMCMBool("sexAllowFarmAnimals",settings.sexAllowFarmAnimals);
 		settings.sexRequireAll = static_cast<bool>(j.value("sexRequireAll", false));
 		SetMCMBool("sexRequireAll",settings.sexRequireAll);
 		settings.sexRequireBindings = static_cast<bool>(j.value("sexRequireBindings", true));
@@ -1409,6 +1489,8 @@ namespace DCURSES {
 			settings.bootsWeight = GetMCMSetting("bootsWeight")->GetSInt();
 			settings.glovesWeight = GetMCMSetting("glovesWeight")->GetSInt();
 			settings.mittensWeight = GetMCMSetting("mittensWeight")->GetSInt();
+			settings.minKeysLooted = GetMCMSetting("minKeysLooted")->GetSInt();
+			settings.maxKeysLooted = GetMCMSetting("maxKeysLooted")->GetSInt();
 			settings.maxHeldKeys = GetMCMSetting("maxHeldKeys")->GetSInt();
 			settings.restraintsKeyWeight = GetMCMSetting("restraintsKeyWeight")->GetSInt();
 			settings.chastityKeyWeight = GetMCMSetting("chastityKeyWeight")->GetSInt();
@@ -1440,6 +1522,9 @@ namespace DCURSES {
 			settings.oppSummonerCollarWeight = GetMCMSetting("oppSummonerCollarWeight")->GetSInt();
 			settings.oppSummonerSexCount = GetMCMSetting("oppSummonerSexCount")->GetSInt();
 			settings.oppSMinSummonArousal = GetMCMSetting("oppSMinSummonArousal")->GetSInt();
+			settings.oppDwarvenCuirassWeight = GetMCMSetting("oppDwarvenCuirassWeight")->GetSInt();
+			settings.oppDwarvenValueNeeded = GetMCMSetting("oppDwarvenValueNeeded")->GetSInt();
+			settings.oppDwarvenArousal = GetMCMSetting("oppDwarvenArousal")->GetSInt();
 			settings.oppLivingLatexWeight = GetMCMSetting("oppLivingLatexWeight")->GetSInt();
 			settings.oppLivingLatexStartTime = GetMCMSetting("oppLivingLatexStartTime")->GetSInt();
 			settings.consSexWeight = GetMCMSetting("consSexWeight")->GetSInt();
@@ -1532,12 +1617,15 @@ namespace DCURSES {
 			settings.LMBrandingPunish = GetMCMSetting("LMBrandingPunish")->GetBool();
 			settings.LMNudityChestOnly = GetMCMSetting("LMNudityChestOnly")->GetBool();
 			settings.oppSCollarDrainsMagicka = GetMCMSetting("oppSCollarDrainsMagicka")->GetBool();
+			settings.oppDwarvenHeavyRestraint = GetMCMSetting("oppDwarvenHeavyRestraint")->GetBool();
+			settings.oppDwarvenRequireLoc = GetMCMSetting("oppDwarvenRequireLoc")->GetBool();
 			settings.oppLivingLatexHeavy = GetMCMSetting("oppLivingLatexHeavy")->GetBool();
 			settings.oppLivingLatexRequireRem = GetMCMSetting("oppLivingLatexRequireRem")->GetBool();
 			settings.oppLivingLatexOpen = GetMCMSetting("oppLivingLatexOpen")->GetBool();
 			settings.useLocationModifiers = GetMCMSetting("useLocationModifiers")->GetBool();
 			settings.enableQuestInteractions = GetMCMSetting("enableQuestInteractions")->GetBool();
 			settings.enableQISaarthal = GetMCMSetting("enableQISaarthal")->GetBool();
+			settings.enableQIDwemerMuseum = GetMCMSetting("enableQIDwemerMuseum")->GetBool();
 			settings.enableQIMalkoran = GetMCMSetting("enableQIMalkoran")->GetBool();
 			settings.enableQISanguine = GetMCMSetting("enableQISanguine")->GetBool();
 			settings.noMessageBoxes = GetMCMSetting("noMessageBoxes")->GetBool();
@@ -1549,15 +1637,20 @@ namespace DCURSES {
 			settings.resumeEvents = GetMCMSetting("resumeEvents")->GetBool();
 			settings.setAllDefaultSettings = GetMCMSetting("setAllDefaultSettings")->GetBool();
 			settings.consAllowFollowers = GetMCMSetting("consAllowFollowers")->GetBool();
+			settings.consAllowCreatures = GetMCMSetting("consAllowCreatures")->GetBool();
 			settings.consUseRelationships = GetMCMSetting("consUseRelationships")->GetBool();
 			settings.consRelationBondage = GetMCMSetting("consRelationBondage")->GetBool();
+			settings.consFallthrough = GetMCMSetting("consFallthrough")->GetBool();
 			settings.consRandomHeavyBondage = GetMCMSetting("consRandomHeavyBondage")->GetBool();
+			settings.consBondageIgnoreMax = GetMCMSetting("consBondageIgnoreMax")->GetBool();
 			settings.sexEnabled = GetMCMSetting("sexEnabled")->GetBool();
+			settings.sexAggressiveAnims = GetMCMSetting("sexAggressiveAnims")->GetBool();
 			settings.sexRandomEnabled = GetMCMSetting("sexRandomEnabled")->GetBool();
 			settings.sexAllowMale = GetMCMSetting("sexAllowMale")->GetBool();
 			settings.sexAllowFemale = GetMCMSetting("sexAllowFemale")->GetBool();
 			settings.sexAllowFuta = GetMCMSetting("sexAllowFuta")->GetBool();
 			settings.sexAllowCreature = GetMCMSetting("sexAllowCreature")->GetBool();
+			settings.sexAllowFarmAnimals = GetMCMSetting("sexAllowFarmAnimals")->GetBool();
 			settings.sexRequireAll = GetMCMSetting("sexRequireAll")->GetBool();
 			settings.sexRequireBindings = GetMCMSetting("sexRequireBindings")->GetBool();
 			settings.sexRequireCollar = GetMCMSetting("sexRequireCollar")->GetBool();

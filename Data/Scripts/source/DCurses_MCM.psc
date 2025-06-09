@@ -135,6 +135,10 @@ Int Property glovesWeight = 30 Auto
 Int glovesWeightOID
 Int Property mittensWeight = 0 Auto
 Int mittensWeightOID
+Int Property minKeysLooted = 1 Auto
+Int minKeysLootedOID
+Int Property maxKeysLooted = 1 Auto
+Int maxKeysLootedOID
 Int Property maxHeldKeys = 3 Auto
 Int maxHeldKeysOID
 Int Property restraintsKeyWeight = 80 Auto
@@ -197,6 +201,12 @@ Int Property oppSummonerSexCount = 15 Auto
 Int oppSummonerSexCountOID
 Int Property oppSMinSummonArousal = 90 Auto
 Int oppSMinSummonArousalOID
+Int Property oppDwarvenCuirassWeight = 15 Auto
+Int oppDwarvenCuirassWeightOID
+Int Property oppDwarvenValueNeeded = 200 Auto
+Int oppDwarvenValueNeededOID
+Int Property oppDwarvenArousal = 25 Auto
+Int oppDwarvenArousalOID
 Int Property oppLivingLatexWeight = 20 Auto
 Int oppLivingLatexWeightOID
 Int Property oppLivingLatexStartTime = 15 Auto
@@ -283,7 +293,7 @@ Float Property keyPickpocketBonus = 2.0 Auto
 Int keyPickpocketBonusOID
 Float Property magicKeyChance = 10.0 Auto
 Int magicKeyChanceOID
-Float Property eventContraptionTime = 0.0 Auto
+Float Property eventContraptionTime = 4.0 Auto
 Int eventContraptionTimeOID
 Float Property LMBrandingChance = 1.5 Auto
 Int LMBrandingChanceOID
@@ -371,6 +381,10 @@ Bool Property LMNudityChestOnly = false Auto
 Int LMNudityChestOnlyOID
 Bool Property oppSCollarDrainsMagicka = true Auto
 Int oppSCollarDrainsMagickaOID
+Bool Property oppDwarvenHeavyRestraint = false Auto
+Int oppDwarvenHeavyRestraintOID
+Bool Property oppDwarvenRequireLoc = true Auto
+Int oppDwarvenRequireLocOID
 Bool Property oppLivingLatexHeavy = false Auto
 Int oppLivingLatexHeavyOID
 Bool Property oppLivingLatexRequireRem = true Auto
@@ -383,6 +397,8 @@ Bool Property enableQuestInteractions = true Auto
 Int enableQuestInteractionsOID
 Bool Property enableQISaarthal = true Auto
 Int enableQISaarthalOID
+Bool Property enableQIDwemerMuseum = true Auto
+Int enableQIDwemerMuseumOID
 Bool Property enableQIMalkoran = true Auto
 Int enableQIMalkoranOID
 Bool Property enableQISanguine = true Auto
@@ -405,14 +421,22 @@ Bool Property setAllDefaultSettings = false Auto
 Int setAllDefaultSettingsOID
 Bool Property consAllowFollowers = false Auto
 Int consAllowFollowersOID
+Bool Property consAllowCreatures = false Auto
+Int consAllowCreaturesOID
 Bool Property consUseRelationships = true Auto
 Int consUseRelationshipsOID
 Bool Property consRelationBondage = false Auto
 Int consRelationBondageOID
+Bool Property consFallthrough = false Auto
+Int consFallthroughOID
 Bool Property consRandomHeavyBondage = false Auto
 Int consRandomHeavyBondageOID
+Bool Property consBondageIgnoreMax = false Auto
+Int consBondageIgnoreMaxOID
 Bool Property sexEnabled = false Auto
 Int sexEnabledOID
+Bool Property sexAggressiveAnims = false Auto
+Int sexAggressiveAnimsOID
 Bool Property sexRandomEnabled = false Auto
 Int sexRandomEnabledOID
 Bool Property sexAllowMale = true Auto
@@ -423,6 +447,8 @@ Bool Property sexAllowFuta = true Auto
 Int sexAllowFutaOID
 Bool Property sexAllowCreature = false Auto
 Int sexAllowCreatureOID
+Bool Property sexAllowFarmAnimals = false Auto
+Int sexAllowFarmAnimalsOID
 Bool Property sexRequireAll = false Auto
 Int sexRequireAllOID
 Bool Property sexRequireBindings = true Auto
@@ -454,17 +480,17 @@ Int LMNudityAditionalFormsOID
 
 Function Initialize()
 	Pages = new String[11]
-	Pages[0] = "Main "
-	Pages[1] = "Devices "
-	Pages[2] = "Keys "
-	Pages[3] = "Events "
-	Pages[4] = "Lewd Marks "
-	Pages[5] = "Oppressive Devices "
-	Pages[6] = "Locations "
-	Pages[7] = "Quest Interactions "
-	Pages[8] = "Misc "
-	Pages[9] = "Consequences "
-	Pages[10] = "Sex "
+	Pages[0] = "$DCURSES_PAGE_Main"
+	Pages[1] = "$DCURSES_PAGE_Devices"
+	Pages[2] = "$DCURSES_PAGE_Keys"
+	Pages[3] = "$DCURSES_PAGE_Events"
+	Pages[4] = "$DCURSES_PAGE_LewdMarks"
+	Pages[5] = "$DCURSES_PAGE_OppressiveDevices"
+	Pages[6] = "$DCURSES_PAGE_Locations"
+	Pages[7] = "$DCURSES_PAGE_QuestInteractions"
+	Pages[8] = "$DCURSES_PAGE_Misc"
+	Pages[9] = "$DCURSES_PAGE_Consequences"
+	Pages[10] = "$DCURSES_PAGE_Sex"
 EndFunction
 
 Event OnConfigInit()
@@ -517,238 +543,251 @@ Event OnPageReset(string page)
 		flag_SGO = 0
 	EndIf
 	SetCursorFillMode(TOP_TO_BOTTOM)
-	If page == "" || page == "Main "
-		AddHeaderOption("Chances ")
-		baseChanceOID = AddSliderOption("Base Event Chance  ", baseChance, "{1}%", 0)
-		containerModifierOID = AddSliderOption("Container Modifier  ", containerModifier, "{1}x", 0)
-		bossContainerModifierOID = AddSliderOption("Boss Chest Modifier  ", bossContainerModifier, "{1}x", 0)
-		deadBodyModifierOID = AddSliderOption("Dead Body Modifier  ", deadBodyModifier, "{1}x", 0)
-		pickpocketModifierOID = AddSliderOption("Pickpocket Modifier  ", pickpocketModifier, "{1}x", 0)
-		doorModifierOID = AddSliderOption("Door Modifier  ", doorModifier, "{1}x", 0)
-		onlyLockedDoorsOID = AddToggleOption("Only Locked Doors  ", onlyLockedDoors, 0)
-		lockedModifierOID = AddSliderOption("Locked Modifier  ", lockedModifier, "{1}x", 0)
-		lockDifficultyModifierOID = AddSliderOption("Lock Difficulty Modifier  ", lockDifficultyModifier, "{1}", 0)
-		minGoldRequiredOID = AddSliderOption("Container Gold Value  ", minGoldRequired, "{0}", 0)
-		eventScalingOID = AddToggleOption("Event Scaling  ", eventScaling, 0)
-		eventScalingModOID = AddSliderOption("Event Scaling Target  ", eventScalingMod, "{0}", 0)
+	If page == "" || page == "$DCURSES_PAGE_Main"
+		AddHeaderOption("$DCURSES_HEADER_Chances")
+		baseChanceOID = AddSliderOption("$DCURSES_baseChance", baseChance, "{1}%", 0)
+		containerModifierOID = AddSliderOption("$DCURSES_containerModifier", containerModifier, "{1}x", 0)
+		bossContainerModifierOID = AddSliderOption("$DCURSES_bossContainerModifier", bossContainerModifier, "{1}x", 0)
+		deadBodyModifierOID = AddSliderOption("$DCURSES_deadBodyModifier", deadBodyModifier, "{1}x", 0)
+		pickpocketModifierOID = AddSliderOption("$DCURSES_pickpocketModifier", pickpocketModifier, "{1}x", 0)
+		doorModifierOID = AddSliderOption("$DCURSES_doorModifier", doorModifier, "{1}x", 0)
+		onlyLockedDoorsOID = AddToggleOption("$DCURSES_onlyLockedDoors", onlyLockedDoors, 0)
+		lockedModifierOID = AddSliderOption("$DCURSES_lockedModifier", lockedModifier, "{1}x", 0)
+		lockDifficultyModifierOID = AddSliderOption("$DCURSES_lockDifficultyModifier", lockDifficultyModifier, "{1}", 0)
+		minGoldRequiredOID = AddSliderOption("$DCURSES_minGoldRequired", minGoldRequired, "{0}", 0)
+		eventScalingOID = AddToggleOption("$DCURSES_eventScaling", eventScaling, 0)
+		eventScalingModOID = AddSliderOption("$DCURSES_eventScalingMod", eventScalingMod, "{0}", 0)
 		SetCursorPosition(1)
-		AddHeaderOption("Parameters ")
-		minRestraintsOID = AddSliderOption("Min Restraints  ", minRestraints, "{0}", 0)
-		maxRestraintsOID = AddSliderOption("Max Restraints  ", maxRestraints, "{0}", 0)
-		bossAditionalRestraintsOID = AddSliderOption("Boss Restraints  ", bossAditionalRestraints, "{0}", 0)
-		bossOnlyHeavyOID = AddToggleOption("Boss Heavy Restraints  ", bossOnlyHeavy, 0)
-		restraintCapOID = AddSliderOption("Restraints Cap  ", restraintCap, "{0}", 0)
-		stripPlayerOnEventOID = AddToggleOption("Strip Player  ", stripPlayerOnEvent, 0)
-		AddHeaderOption("Arousal ")
-		arousalModifierOID = AddSliderOption("Arousal Modifier  ", arousalModifier, "{1}", 0)
-		minArousalOID = AddSliderOption("Minimum Arousal  ", minArousal, "{0}", 0)
-	Elseif page == "Devices "
-		AddHeaderOption("Chastity ")
-		beltWeightOID = AddSliderOption("Belts Weight  ", beltWeight, "{0}", 0)
-		beltPlugsOID = AddToggleOption("Belt Plugs  ", beltPlugs, 0)
-		noBeltPiercingOID = AddToggleOption("No Chastity Piercings  ", noBeltPiercing, 0)
-		braWeightOID = AddSliderOption("Bras Weight  ", braWeight, "{0}", 0)
-		plugsWeightOID = AddSliderOption("Plugs Weight  ", plugsWeight, "{0}", 0)
-		lockingPlugsWeightOID = AddSliderOption("Locking Plugs Weight  ", lockingPlugsWeight, "{0}", 0)
-		inflatablePlugsWeightOID = AddSliderOption("Inflatable Plugs Weight  ", inflatablePlugsWeight, "{0}", 0)
-		plugsDontCountOID = AddToggleOption("Free Plugs  ", plugsDontCount, 0)
-		AddHeaderOption("Piercings ")
-		nipplePiercingsWeightOID = AddSliderOption("Nipple Piercings Weight  ", nipplePiercingsWeight, "{0}", 0)
-		vaginalPiercingsWeightOID = AddSliderOption("Vaginal Piercing Weight  ", vaginalPiercingsWeight, "{0}", 0)
-		AddHeaderOption("Corsets & Harnesses ")
-		corsetWeightOID = AddSliderOption("Corset Weight  ", corsetWeight, "{0}", 0)
-		beltedCorsetsWeightOID = AddSliderOption("Belted Corset Weight  ", beltedCorsetsWeight, "{0}", 0)
-		slaveHarnessWeightOID = AddSliderOption("Open Harness Weight  ", slaveHarnessWeight, "{0}", 0)
-		chastityHarnessWeightOID = AddSliderOption("Chastity Harness Weight  ", chastityHarnessWeight, "{0}", 0)
-		AddHeaderOption("Heavy Bondage ")
-		armbinderWeightOID = AddSliderOption("Armbinder Weight  ", armbinderWeight, "{0}", 0)
-		elbowbinderWeightOID = AddSliderOption("Elbowbinder Weight  ", elbowbinderWeight, "{0}", 0)
-		yokeWeightOID = AddSliderOption("Yoke Weight  ", yokeWeight, "{0}", 0)
-		shacklesWeightOID = AddSliderOption("Shackles Weight  ", shacklesWeight, "{0}", 0)
-		straitjacketWeightOID = AddSliderOption("Straitjacket Weight  ", straitjacketWeight, "{0}", 0)
-		straitjacketLegbinderWeightOID = AddSliderOption("Hobbling Straitjacket Weight  ", straitjacketLegbinderWeight, "{0}", 0)
-		petSuitWeightOID = AddSliderOption("Pet Suit Weight  ", petSuitWeight, "{0}", 0)
+		AddHeaderOption("$DCURSES_HEADER_Parameters")
+		minRestraintsOID = AddSliderOption("$DCURSES_minRestraints", minRestraints, "{0}", 0)
+		maxRestraintsOID = AddSliderOption("$DCURSES_maxRestraints", maxRestraints, "{0}", 0)
+		bossAditionalRestraintsOID = AddSliderOption("$DCURSES_bossAditionalRestraints", bossAditionalRestraints, "{0}", 0)
+		bossOnlyHeavyOID = AddToggleOption("$DCURSES_bossOnlyHeavy", bossOnlyHeavy, 0)
+		restraintCapOID = AddSliderOption("$DCURSES_restraintCap", restraintCap, "{0}", 0)
+		stripPlayerOnEventOID = AddToggleOption("$DCURSES_stripPlayerOnEvent", stripPlayerOnEvent, 0)
+		AddHeaderOption("$DCURSES_HEADER_Arousal")
+		arousalModifierOID = AddSliderOption("$DCURSES_arousalModifier", arousalModifier, "{1}", 0)
+		minArousalOID = AddSliderOption("$DCURSES_minArousal", minArousal, "{0}", 0)
+	Elseif page == "$DCURSES_PAGE_Devices"
+		AddHeaderOption("$DCURSES_HEADER_Chastity")
+		beltWeightOID = AddSliderOption("$DCURSES_beltWeight", beltWeight, "{0}", 0)
+		beltPlugsOID = AddToggleOption("$DCURSES_beltPlugs", beltPlugs, 0)
+		noBeltPiercingOID = AddToggleOption("$DCURSES_noBeltPiercing", noBeltPiercing, 0)
+		braWeightOID = AddSliderOption("$DCURSES_braWeight", braWeight, "{0}", 0)
+		plugsWeightOID = AddSliderOption("$DCURSES_plugsWeight", plugsWeight, "{0}", 0)
+		lockingPlugsWeightOID = AddSliderOption("$DCURSES_lockingPlugsWeight", lockingPlugsWeight, "{0}", 0)
+		inflatablePlugsWeightOID = AddSliderOption("$DCURSES_inflatablePlugsWeight", inflatablePlugsWeight, "{0}", 0)
+		plugsDontCountOID = AddToggleOption("$DCURSES_plugsDontCount", plugsDontCount, 0)
+		AddHeaderOption("$DCURSES_HEADER_Piercings")
+		nipplePiercingsWeightOID = AddSliderOption("$DCURSES_nipplePiercingsWeight", nipplePiercingsWeight, "{0}", 0)
+		vaginalPiercingsWeightOID = AddSliderOption("$DCURSES_vaginalPiercingsWeight", vaginalPiercingsWeight, "{0}", 0)
+		AddHeaderOption("$DCURSES_HEADER_Corsets&Harnesses")
+		corsetWeightOID = AddSliderOption("$DCURSES_corsetWeight", corsetWeight, "{0}", 0)
+		beltedCorsetsWeightOID = AddSliderOption("$DCURSES_beltedCorsetsWeight", beltedCorsetsWeight, "{0}", 0)
+		slaveHarnessWeightOID = AddSliderOption("$DCURSES_slaveHarnessWeight", slaveHarnessWeight, "{0}", 0)
+		chastityHarnessWeightOID = AddSliderOption("$DCURSES_chastityHarnessWeight", chastityHarnessWeight, "{0}", 0)
+		AddHeaderOption("$DCURSES_HEADER_HeavyBondage")
+		armbinderWeightOID = AddSliderOption("$DCURSES_armbinderWeight", armbinderWeight, "{0}", 0)
+		elbowbinderWeightOID = AddSliderOption("$DCURSES_elbowbinderWeight", elbowbinderWeight, "{0}", 0)
+		yokeWeightOID = AddSliderOption("$DCURSES_yokeWeight", yokeWeight, "{0}", 0)
+		shacklesWeightOID = AddSliderOption("$DCURSES_shacklesWeight", shacklesWeight, "{0}", 0)
+		straitjacketWeightOID = AddSliderOption("$DCURSES_straitjacketWeight", straitjacketWeight, "{0}", 0)
+		straitjacketLegbinderWeightOID = AddSliderOption("$DCURSES_straitjacketLegbinderWeight", straitjacketLegbinderWeight, "{0}", 0)
+		petSuitWeightOID = AddSliderOption("$DCURSES_petSuitWeight", petSuitWeight, "{0}", 0)
 		SetCursorPosition(1)
-		AddHeaderOption("Unforgiving Devices ")
-		onlyUseUnforgivingDevicesOID = AddToggleOption("Only Unforgiving Devices  ", onlyUseUnforgivingDevices, flag_UnforgivingDevices)
-		AddHeaderOption("Collars & Cuffs ")
-		collarWeightOID = AddSliderOption("Collar Weight  ", collarWeight, "{0}", 0)
-		armCuffsWeightOID = AddSliderOption("Arm Cuffs Weight  ", armCuffsWeight, "{0}", 0)
-		legCuffsWeightOID = AddSliderOption("Leg Cuffs Weight  ", legCuffsWeight, "{0}", 0)
-		allowLegShacklesOID = AddToggleOption("Leg Shackles  ", allowLegShackles, 0)
-		AddHeaderOption("Gags & Blindfolds ")
-		gagWeightOID = AddSliderOption("Gag Weight  ", gagWeight, "{0}", 0)
-		ringGagWeightOID = AddSliderOption("Ring Gag Weight  ", ringGagWeight, "{0}", 0)
-		largeGagWeightOID = AddSliderOption("Large Gag Weight  ", largeGagWeight, "{0}", 0)
-		largeRingGagWeightOID = AddSliderOption("Large Ring Gag Weight  ", largeRingGagWeight, "{0}", 0)
-		blindfoldWeightOID = AddSliderOption("Blindfold Weight  ", blindfoldWeight, "{0}", 0)
-		hoodBothWeightOID = AddSliderOption("Hood Weight  ", hoodBothWeight, "{0}", 0)
-		hoodGagWeightOID = AddSliderOption("Open Eyes Hood Weight  ", hoodGagWeight, "{0}", 0)
-		hoodBlindWeightOID = AddSliderOption("Open Mouth Hood Weight  ", hoodBlindWeight, "{0}", 0)
-		hoodNoneWeightOID = AddSliderOption("Open Hood Weight  ", hoodNoneWeight, "{0}", 0)
-		AddHeaderOption("Body ")
-		catsuitWeightOID = AddSliderOption("Catsuit Weight  ", catsuitWeight, "{0}", 0)
-		hobbleSkirtWeightOID = AddSliderOption("Hobble Dress Weight  ", hobbleSkirtWeight, "{0}", 0)
-		hobbleSkirtDifficultyOID = AddSliderOption("Hobble Dress Difficulty  ", hobbleSkirtDifficulty, "{0}", 0)
-		bootsWeightOID = AddSliderOption("Boots Weight  ", bootsWeight, "{0}", 0)
-		glovesWeightOID = AddSliderOption("Gloves Weight  ", glovesWeight, "{0}", 0)
-		mittensWeightOID = AddSliderOption("Mittens Weight  ", mittensWeight, "{0}", 0)
-	Elseif page == "Keys "
-		keyLossChanceOID = AddSliderOption("Key Loss Chance  ", keyLossChance, "{1}%", 0)
-		keyChanceOID = AddSliderOption("Key Find Chance  ", keyChance, "{1}%", 0)
-		keyBonusOID = AddSliderOption("Bonus Chance Per Device  ", keyBonus, "{1}%", 0)
-		keyForgivenessOID = AddToggleOption("Key Forgiveness  ", keyForgiveness, 0)
-		keyPickpocketBonusOID = AddSliderOption("Pickpocket Bonus  ", keyPickpocketBonus, "{1}x", 0)
-		maxHeldKeysOID = AddSliderOption("Max Held Keys  ", maxHeldKeys, "{0}", 0)
+		AddHeaderOption("$DCURSES_HEADER_UnforgivingDevices")
+		onlyUseUnforgivingDevicesOID = AddToggleOption("$DCURSES_onlyUseUnforgivingDevices", onlyUseUnforgivingDevices, flag_UnforgivingDevices)
+		AddHeaderOption("$DCURSES_HEADER_Collars&Cuffs")
+		collarWeightOID = AddSliderOption("$DCURSES_collarWeight", collarWeight, "{0}", 0)
+		armCuffsWeightOID = AddSliderOption("$DCURSES_armCuffsWeight", armCuffsWeight, "{0}", 0)
+		legCuffsWeightOID = AddSliderOption("$DCURSES_legCuffsWeight", legCuffsWeight, "{0}", 0)
+		allowLegShacklesOID = AddToggleOption("$DCURSES_allowLegShackles", allowLegShackles, 0)
+		AddHeaderOption("$DCURSES_HEADER_Gags&Blindfolds")
+		gagWeightOID = AddSliderOption("$DCURSES_gagWeight", gagWeight, "{0}", 0)
+		ringGagWeightOID = AddSliderOption("$DCURSES_ringGagWeight", ringGagWeight, "{0}", 0)
+		largeGagWeightOID = AddSliderOption("$DCURSES_largeGagWeight", largeGagWeight, "{0}", 0)
+		largeRingGagWeightOID = AddSliderOption("$DCURSES_largeRingGagWeight", largeRingGagWeight, "{0}", 0)
+		blindfoldWeightOID = AddSliderOption("$DCURSES_blindfoldWeight", blindfoldWeight, "{0}", 0)
+		hoodBothWeightOID = AddSliderOption("$DCURSES_hoodBothWeight", hoodBothWeight, "{0}", 0)
+		hoodGagWeightOID = AddSliderOption("$DCURSES_hoodGagWeight", hoodGagWeight, "{0}", 0)
+		hoodBlindWeightOID = AddSliderOption("$DCURSES_hoodBlindWeight", hoodBlindWeight, "{0}", 0)
+		hoodNoneWeightOID = AddSliderOption("$DCURSES_hoodNoneWeight", hoodNoneWeight, "{0}", 0)
+		AddHeaderOption("$DCURSES_HEADER_Body")
+		catsuitWeightOID = AddSliderOption("$DCURSES_catsuitWeight", catsuitWeight, "{0}", 0)
+		hobbleSkirtWeightOID = AddSliderOption("$DCURSES_hobbleSkirtWeight", hobbleSkirtWeight, "{0}", 0)
+		hobbleSkirtDifficultyOID = AddSliderOption("$DCURSES_hobbleSkirtDifficulty", hobbleSkirtDifficulty, "{0}", 0)
+		bootsWeightOID = AddSliderOption("$DCURSES_bootsWeight", bootsWeight, "{0}", 0)
+		glovesWeightOID = AddSliderOption("$DCURSES_glovesWeight", glovesWeight, "{0}", 0)
+		mittensWeightOID = AddSliderOption("$DCURSES_mittensWeight", mittensWeight, "{0}", 0)
+	Elseif page == "$DCURSES_PAGE_Keys"
+		keyLossChanceOID = AddSliderOption("$DCURSES_keyLossChance", keyLossChance, "{1}%", 0)
+		keyChanceOID = AddSliderOption("$DCURSES_keyChance", keyChance, "{1}%", 0)
+		minKeysLootedOID = AddSliderOption("$DCURSES_minKeysLooted", minKeysLooted, "{0}", 0)
+		maxKeysLootedOID = AddSliderOption("$DCURSES_maxKeysLooted", maxKeysLooted, "{0}", 0)
+		keyBonusOID = AddSliderOption("$DCURSES_keyBonus", keyBonus, "{1}%", 0)
+		keyForgivenessOID = AddToggleOption("$DCURSES_keyForgiveness", keyForgiveness, 0)
+		keyPickpocketBonusOID = AddSliderOption("$DCURSES_keyPickpocketBonus", keyPickpocketBonus, "{1}x", 0)
+		maxHeldKeysOID = AddSliderOption("$DCURSES_maxHeldKeys", maxHeldKeys, "{0}", 0)
 		SetCursorPosition(1)
-		restraintsKeyWeightOID = AddSliderOption("Restraints Key Weight  ", restraintsKeyWeight, "{0}", 0)
-		chastityKeyWeightOID = AddSliderOption("Chastity Key Weight  ", chastityKeyWeight, "{0}", 0)
-		piercingToolWeightOID = AddSliderOption("Piercing Tool Weight  ", piercingToolWeight, "{0}", 0)
+		restraintsKeyWeightOID = AddSliderOption("$DCURSES_restraintsKeyWeight", restraintsKeyWeight, "{0}", 0)
+		chastityKeyWeightOID = AddSliderOption("$DCURSES_chastityKeyWeight", chastityKeyWeight, "{0}", 0)
+		piercingToolWeightOID = AddSliderOption("$DCURSES_piercingToolWeight", piercingToolWeight, "{0}", 0)
 		AddEmptyOption()
-		magicKeyChanceOID = AddSliderOption("Magic Key Chance  ", magicKeyChance, "{1}", 0)
-		preferRelevantKeysOID = AddToggleOption("Prefer Relevant Keys  ", preferRelevantKeys, 0)
-		vanishingKeysOID = AddToggleOption("Vanishing Keys  ", vanishingKeys, 0)
-	Elseif page == "Events "
-		AddHeaderOption("Bondage Curse ")
-		eventStandardWeightOID = AddSliderOption("Bondage Curse Weight  ", eventStandardWeight, "{0}", 0)
-		eventStandardBossReductionOID = AddSliderOption("Standard Boss Reduction  ", eventStandardBossReduction, "{0}", 0)
-		AddHeaderOption("Oppresive Curse ")
-		eventOppressiveWeightOID = AddSliderOption("Oppressive Curse Weight  ", eventOppressiveWeight, "{0}", 0)
-		AddHeaderOption("Contraption Curse ")
-		eventContraptionWeightOID = AddSliderOption("Contraption Curse Weight  ", eventContraptionWeight, "{0}", 0)
-		eventContraptionTimeOID = AddSliderOption("Contraption Release Time  ", eventContraptionTime, "{1}", 0)
-		eventContDevicesOID = AddToggleOption("Contraption Devices  ", eventContDevices, 0)
-		eventContAllDevicesOID = AddToggleOption("Use All Devices  ", eventContAllDevices, 0)
-		eventContDeviceOverrideOID = AddSliderOption("Device Count Override  ", eventContDeviceOverride, "{0}", 0)
+		magicKeyChanceOID = AddSliderOption("$DCURSES_magicKeyChance", magicKeyChance, "{1}", 0)
+		preferRelevantKeysOID = AddToggleOption("$DCURSES_preferRelevantKeys", preferRelevantKeys, 0)
+		vanishingKeysOID = AddToggleOption("$DCURSES_vanishingKeys", vanishingKeys, 0)
+	Elseif page == "$DCURSES_PAGE_Events"
+		AddHeaderOption("$DCURSES_HEADER_BondageCurse")
+		eventStandardWeightOID = AddSliderOption("$DCURSES_eventStandardWeight", eventStandardWeight, "{0}", 0)
+		eventStandardBossReductionOID = AddSliderOption("$DCURSES_eventStandardBossReduction", eventStandardBossReduction, "{0}", 0)
+		AddHeaderOption("$DCURSES_HEADER_OppresiveCurse")
+		eventOppressiveWeightOID = AddSliderOption("$DCURSES_eventOppressiveWeight", eventOppressiveWeight, "{0}", 0)
+		AddHeaderOption("$DCURSES_HEADER_ContraptionCurse")
+		eventContraptionWeightOID = AddSliderOption("$DCURSES_eventContraptionWeight", eventContraptionWeight, "{0}", 0)
+		eventContraptionTimeOID = AddSliderOption("$DCURSES_eventContraptionTime", eventContraptionTime, "{1}", 0)
+		eventContDevicesOID = AddToggleOption("$DCURSES_eventContDevices", eventContDevices, 0)
+		eventContAllDevicesOID = AddToggleOption("$DCURSES_eventContAllDevices", eventContAllDevices, 0)
+		eventContDeviceOverrideOID = AddSliderOption("$DCURSES_eventContDeviceOverride", eventContDeviceOverride, "{0}", 0)
 		SetCursorPosition(1)
-		AddHeaderOption("Tattoo Curse ")
-		eventTattooWeightOID = AddSliderOption("Tattoo Curse Weight  ", eventTattooWeight, "{0}", flag_RapeTats)
-		eventTattooMinOID = AddSliderOption("Tattoo Curse Min  ", eventTattooMin, "{0}", flag_RapeTats)
-		eventTattooMaxOID = AddSliderOption("Tattoo Curse Max  ", eventTattooMax, "{0}", flag_RapeTats)
-		eventTattooCapOID = AddSliderOption("Tattoo Curse Cap  ", eventTattooCap, "{0}", flag_RapeTats)
-		AddHeaderOption("Mark Curse ")
-		eventLewdMarkWeightOID = AddSliderOption("Lewd Mark Weight  ", eventLewdMarkWeight, "{0}", flag_LewdMarks)
-		AddHeaderOption("Slavery Curse ")
-		eventSimpleSlaveryWeightOID = AddSliderOption("Simple Slavery Weight  ", eventSimpleSlaveryWeight, "{0}", flag_SimpleSlavery)
-		eventSSMinRestraintsOID = AddSliderOption("Minimum Restraints  ", eventSSMinRestraints, "{0}", flag_SSEnabled)
-	Elseif page == "Lewd Marks "
-		AddHeaderOption("Allure ")
-		LMAllureWeightOID = AddSliderOption("Allure Mark Weight  ", LMAllureWeight, "{0}", flag_LewdMarks)
-		LMAllureModOID = AddSliderOption("Allure Arousal  ", LMAllureMod, "{0}", flag_LewdMarks)
-		LMAllureSexOID = AddSliderOption("Sex Count  ", LMAllureSex, "{0}", flag_LewdMarks)
-		LMAllureColorOID = AddColorOption("Color  ", LMAllureColor, flag_LewdMarks)
-		AddHeaderOption("Heat ")
-		LMHeatWeightOID = AddSliderOption("Heat Mark  ", LMHeatWeight, "{0}", flag_LewdMarks)
-		LMHeatModOID = AddSliderOption("Heat Arousal  ", LMHeatMod, "{0}", flag_LewdMarks)
-		LMHeatContainerCountOID = AddSliderOption("Container Count  ", LMHeatContainerCount, "{0}", flag_LewdMarks)
-		LMHeatColorOID = AddColorOption("Color  ", LMHeatColor, flag_LewdMarks)
-		AddHeaderOption("Branding ")
-		LMBrandingWeightOID = AddSliderOption("Branding Mark  ", LMBrandingWeight, "{0}", flag_LewdMarks)
-		LMBrandingChanceOID = AddSliderOption("Chance  ", LMBrandingChance, "{1}%", flag_RT_LM)
-		LMBrndingTotalOID = AddSliderOption("Total Tattoos  ", LMBrndingTotal, "{0}", flag_LewdMarks)
-		LMBrandingPunishOID = AddToggleOption("Punishment  ", LMBrandingPunish, flag_LewdMarks)
-		LMBrandingColorOID = AddColorOption("Color  ", LMBrandingColor, flag_LewdMarks)
+		AddHeaderOption("$DCURSES_HEADER_TattooCurse")
+		eventTattooWeightOID = AddSliderOption("$DCURSES_eventTattooWeight", eventTattooWeight, "{0}", flag_RapeTats)
+		eventTattooMinOID = AddSliderOption("$DCURSES_eventTattooMin", eventTattooMin, "{0}", flag_RapeTats)
+		eventTattooMaxOID = AddSliderOption("$DCURSES_eventTattooMax", eventTattooMax, "{0}", flag_RapeTats)
+		eventTattooCapOID = AddSliderOption("$DCURSES_eventTattooCap", eventTattooCap, "{0}", flag_RapeTats)
+		AddHeaderOption("$DCURSES_HEADER_MarkCurse")
+		eventLewdMarkWeightOID = AddSliderOption("$DCURSES_eventLewdMarkWeight", eventLewdMarkWeight, "{0}", flag_LewdMarks)
+		AddHeaderOption("$DCURSES_HEADER_SlaveryCurse")
+		eventSimpleSlaveryWeightOID = AddSliderOption("$DCURSES_eventSimpleSlaveryWeight", eventSimpleSlaveryWeight, "{0}", flag_SimpleSlavery)
+		eventSSMinRestraintsOID = AddSliderOption("$DCURSES_eventSSMinRestraints", eventSSMinRestraints, "{0}", flag_SSEnabled)
+	Elseif page == "$DCURSES_PAGE_LewdMarks"
+		AddHeaderOption("$DCURSES_HEADER_Allure")
+		LMAllureWeightOID = AddSliderOption("$DCURSES_LMAllureWeight", LMAllureWeight, "{0}", flag_LewdMarks)
+		LMAllureModOID = AddSliderOption("$DCURSES_LMAllureMod", LMAllureMod, "{0}", flag_LewdMarks)
+		LMAllureSexOID = AddSliderOption("$DCURSES_LMAllureSex", LMAllureSex, "{0}", flag_LewdMarks)
+		LMAllureColorOID = AddColorOption("$DCURSES_LMAllureColor", LMAllureColor, flag_LewdMarks)
+		AddHeaderOption("$DCURSES_HEADER_Heat")
+		LMHeatWeightOID = AddSliderOption("$DCURSES_LMHeatWeight", LMHeatWeight, "{0}", flag_LewdMarks)
+		LMHeatModOID = AddSliderOption("$DCURSES_LMHeatMod", LMHeatMod, "{0}", flag_LewdMarks)
+		LMHeatContainerCountOID = AddSliderOption("$DCURSES_LMHeatContainerCount", LMHeatContainerCount, "{0}", flag_LewdMarks)
+		LMHeatColorOID = AddColorOption("$DCURSES_LMHeatColor", LMHeatColor, flag_LewdMarks)
+		AddHeaderOption("$DCURSES_HEADER_Branding")
+		LMBrandingWeightOID = AddSliderOption("$DCURSES_LMBrandingWeight", LMBrandingWeight, "{0}", flag_LewdMarks)
+		LMBrandingChanceOID = AddSliderOption("$DCURSES_LMBrandingChance", LMBrandingChance, "{1}%", flag_RT_LM)
+		LMBrndingTotalOID = AddSliderOption("$DCURSES_LMBrndingTotal", LMBrndingTotal, "{0}", flag_LewdMarks)
+		LMBrandingPunishOID = AddToggleOption("$DCURSES_LMBrandingPunish", LMBrandingPunish, flag_LewdMarks)
+		LMBrandingColorOID = AddColorOption("$DCURSES_LMBrandingColor", LMBrandingColor, flag_LewdMarks)
 		SetCursorPosition(1)
-		AddHeaderOption("Bondage ")
-		LMBondageWeightOID = AddSliderOption("Bondage Mark  ", LMBondageWeight, "{0}", flag_LewdMarks)
-		LMBondageChanceOID = AddSliderOption("Chance  ", LMBondageChance, "{1}%", flag_LewdMarks)
-		LMBondageDeviceCountOID = AddSliderOption("Device Count  ", LMBondageDeviceCount, "{0}", flag_LewdMarks)
-		LMBondageColorOID = AddColorOption("Color  ", LMBondageColor, flag_LewdMarks)
-		AddHeaderOption("Nudity ")
+		AddHeaderOption("$DCURSES_HEADER_Bondage")
+		LMBondageWeightOID = AddSliderOption("$DCURSES_LMBondageWeight", LMBondageWeight, "{0}", flag_LewdMarks)
+		LMBondageChanceOID = AddSliderOption("$DCURSES_LMBondageChance", LMBondageChance, "{1}%", flag_LewdMarks)
+		LMBondageDeviceCountOID = AddSliderOption("$DCURSES_LMBondageDeviceCount", LMBondageDeviceCount, "{0}", flag_LewdMarks)
+		LMBondageColorOID = AddColorOption("$DCURSES_LMBondageColor", LMBondageColor, flag_LewdMarks)
+		AddHeaderOption("$DCURSES_HEADER_Nudity")
 		int flag_LMStripBody = 1
 		If LMNudityChestOnly && flag_LewdMarks == 0
 			flag_LMStripBody = 0
 		EndIf
-		LMNudityWeightOID = AddSliderOption("Nudity Mark  ", LMNudityWeight, "{0}", flag_LewdMarks)
-		LMNudityChestOnlyOID = AddToggleOption("Chest Only  ", LMNudityChestOnly, flag_LewdMarks)
-		LMNudityAditionalFormsOID = AddInputOption("Strip Slots  ", LMNudityAditionalForms, flag_LMStripBody)
-		LMNudityTalkTimesOID = AddSliderOption("Dialogue Times  ", LMNudityTalkTimes, "{0}", flag_LewdMarks)
-		LMNudityColorOID = AddColorOption("Color  ", LMNudityColor, flag_LewdMarks)
-	Elseif page == "Oppressive Devices "
-		AddHeaderOption("Summoner Collar ")
-		oppSummonerCollarWeightOID = AddSliderOption("Weight  ", oppSummonerCollarWeight, "{0}", 0)
-		oppSummonerSexCountOID = AddSliderOption("Sex Count  ", oppSummonerSexCount, "{0}", 0)
-		oppSCollarDrainsMagickaOID = AddToggleOption("Magicka Drain  ", oppSCollarDrainsMagicka, 0)
-		oppSMinSummonArousalOID = AddSliderOption("Summon Arousal  ", oppSMinSummonArousal, "{0}", 0)
-		oppSummonChanceOID = AddSliderOption("Summon Chance  ", oppSummonChance, "{1}%", 0)
+		LMNudityWeightOID = AddSliderOption("$DCURSES_LMNudityWeight", LMNudityWeight, "{0}", flag_LewdMarks)
+		LMNudityChestOnlyOID = AddToggleOption("$DCURSES_LMNudityChestOnly", LMNudityChestOnly, flag_LewdMarks)
+		LMNudityAditionalFormsOID = AddInputOption("$DCURSES_LMNudityAditionalForms", LMNudityAditionalForms, flag_LMStripBody)
+		LMNudityTalkTimesOID = AddSliderOption("$DCURSES_LMNudityTalkTimes", LMNudityTalkTimes, "{0}", flag_LewdMarks)
+		LMNudityColorOID = AddColorOption("$DCURSES_LMNudityColor", LMNudityColor, flag_LewdMarks)
+	Elseif page == "$DCURSES_PAGE_OppressiveDevices"
+		AddHeaderOption("$DCURSES_HEADER_SummonerCollar")
+		oppSummonerCollarWeightOID = AddSliderOption("$DCURSES_oppSummonerCollarWeight", oppSummonerCollarWeight, "{0}", 0)
+		oppSummonerSexCountOID = AddSliderOption("$DCURSES_oppSummonerSexCount", oppSummonerSexCount, "{0}", 0)
+		oppSCollarDrainsMagickaOID = AddToggleOption("$DCURSES_oppSCollarDrainsMagicka", oppSCollarDrainsMagicka, 0)
+		oppSMinSummonArousalOID = AddSliderOption("$DCURSES_oppSMinSummonArousal", oppSMinSummonArousal, "{0}", 0)
+		oppSummonChanceOID = AddSliderOption("$DCURSES_oppSummonChance", oppSummonChance, "{1}%", 0)
+		AddHeaderOption("$DCURSES_HEADER_DwarvenCuirass")
+		oppDwarvenCuirassWeightOID = AddSliderOption("$DCURSES_oppDwarvenCuirassWeight", oppDwarvenCuirassWeight, "{0}", 0)
+		oppDwarvenValueNeededOID = AddSliderOption("$DCURSES_oppDwarvenValueNeeded", oppDwarvenValueNeeded, "{0}", 0)
+		oppDwarvenHeavyRestraintOID = AddToggleOption("$DCURSES_oppDwarvenHeavyRestraint", oppDwarvenHeavyRestraint, 0)
+		oppDwarvenRequireLocOID = AddToggleOption("$DCURSES_oppDwarvenRequireLoc", oppDwarvenRequireLoc, 0)
+		oppDwarvenArousalOID = AddSliderOption("$DCURSES_oppDwarvenArousal", oppDwarvenArousal, "{0}", 0)
 		SetCursorPosition(1)
-		AddHeaderOption("Living Latex ")
-		oppLivingLatexWeightOID = AddSliderOption("Weight  ", oppLivingLatexWeight, "{0}", 0)
-		oppLivingLatexStartTimeOID = AddSliderOption("Start Time  ", oppLivingLatexStartTime, "{0}", 0)
-		oppLivingLatexHeavyOID = AddToggleOption("Heavy Bondage  ", oppLivingLatexHeavy, 0)
-		oppLivingLatexMoreOID = AddSliderOption("Periodic Devices  ", oppLivingLatexMore, "{1}", 0)
-		oppLivingLatexRequireRemOID = AddToggleOption("Clinging  ", oppLivingLatexRequireRem, 0)
-		oppLivingLatexOpenOID = AddToggleOption("Use Open Catsuit  ", oppLivingLatexOpen, 0)
-	Elseif page == "Locations "
-		useLocationModifiersOID = AddToggleOption("Use Location Modifiers  ", useLocationModifiers, 0)
+		AddHeaderOption("$DCURSES_HEADER_LivingLatex")
+		oppLivingLatexWeightOID = AddSliderOption("$DCURSES_oppLivingLatexWeight", oppLivingLatexWeight, "{0}", 0)
+		oppLivingLatexStartTimeOID = AddSliderOption("$DCURSES_oppLivingLatexStartTime", oppLivingLatexStartTime, "{0}", 0)
+		oppLivingLatexHeavyOID = AddToggleOption("$DCURSES_oppLivingLatexHeavy", oppLivingLatexHeavy, 0)
+		oppLivingLatexMoreOID = AddSliderOption("$DCURSES_oppLivingLatexMore", oppLivingLatexMore, "{1}", 0)
+		oppLivingLatexRequireRemOID = AddToggleOption("$DCURSES_oppLivingLatexRequireRem", oppLivingLatexRequireRem, 0)
+		oppLivingLatexOpenOID = AddToggleOption("$DCURSES_oppLivingLatexOpen", oppLivingLatexOpen, 0)
+	Elseif page == "$DCURSES_PAGE_Locations"
+		useLocationModifiersOID = AddToggleOption("$DCURSES_useLocationModifiers", useLocationModifiers, 0)
 		AddEmptyOption()
 		AddEmptyOption()
-		playerHomeModifierOID = AddSliderOption("Player Home Modifier  ", playerHomeModifier, "{1}x", 0)
-		cityModifierOID = AddSliderOption("City Modifier  ", cityModifier, "{1}x", 0)
-		townModifierOID = AddSliderOption("Town Modifier  ", townModifier, "{1}x", 0)
-		banditModifierOID = AddSliderOption("Bandit Modifier  ", banditModifier, "{1}x", 0)
-		draugrModifierOID = AddSliderOption("Draugr Modifier  ", draugrModifier, "{1}x", 0)
+		playerHomeModifierOID = AddSliderOption("$DCURSES_playerHomeModifier", playerHomeModifier, "{1}x", 0)
+		cityModifierOID = AddSliderOption("$DCURSES_cityModifier", cityModifier, "{1}x", 0)
+		townModifierOID = AddSliderOption("$DCURSES_townModifier", townModifier, "{1}x", 0)
+		banditModifierOID = AddSliderOption("$DCURSES_banditModifier", banditModifier, "{1}x", 0)
+		draugrModifierOID = AddSliderOption("$DCURSES_draugrModifier", draugrModifier, "{1}x", 0)
 		SetCursorPosition(1)
-		lockedLocationBypassOID = AddSliderOption("Lock Bypass  ", lockedLocationBypass, "{1}x", 0)
-		theftLocationBypassOID = AddSliderOption("Theft Bypass  ", theftLocationBypass, "{1}x", 0)
+		lockedLocationBypassOID = AddSliderOption("$DCURSES_lockedLocationBypass", lockedLocationBypass, "{1}x", 0)
+		theftLocationBypassOID = AddSliderOption("$DCURSES_theftLocationBypass", theftLocationBypass, "{1}x", 0)
 		AddEmptyOption()
-		dwarvenModifierOID = AddSliderOption("Dwarven Modifier  ", dwarvenModifier, "{1}x", 0)
-		falmerModifierOID = AddSliderOption("Falmer Modifier  ", falmerModifier, "{1}x", 0)
-		forswornModifierOID = AddSliderOption("Forsworn Modifier  ", forswornModifier, "{1}x", 0)
-		vampireModifierOID = AddSliderOption("Vampire Modifier  ", vampireModifier, "{1}x", 0)
-		warlockModifierOID = AddSliderOption("Warlock Modifier  ", warlockModifier, "{1}x", 0)
-		dragonLairModifierOID = AddSliderOption("Dragon Lair Modifier  ", dragonLairModifier, "{1}x", 0)
-		apocryphaModifierOID = AddSliderOption("Apocrypha Modifier  ", apocryphaModifier, "{1}x", 0)
-		wildernessModifierOID = AddSliderOption("Wilderness Modifier  ", wildernessModifier, "{1}x", 0)
-	Elseif page == "Quest Interactions "
+		dwarvenModifierOID = AddSliderOption("$DCURSES_dwarvenModifier", dwarvenModifier, "{1}x", 0)
+		falmerModifierOID = AddSliderOption("$DCURSES_falmerModifier", falmerModifier, "{1}x", 0)
+		forswornModifierOID = AddSliderOption("$DCURSES_forswornModifier", forswornModifier, "{1}x", 0)
+		vampireModifierOID = AddSliderOption("$DCURSES_vampireModifier", vampireModifier, "{1}x", 0)
+		warlockModifierOID = AddSliderOption("$DCURSES_warlockModifier", warlockModifier, "{1}x", 0)
+		dragonLairModifierOID = AddSliderOption("$DCURSES_dragonLairModifier", dragonLairModifier, "{1}x", 0)
+		apocryphaModifierOID = AddSliderOption("$DCURSES_apocryphaModifier", apocryphaModifier, "{1}x", 0)
+		wildernessModifierOID = AddSliderOption("$DCURSES_wildernessModifier", wildernessModifier, "{1}x", 0)
+	Elseif page == "$DCURSES_PAGE_QuestInteractions"
 		int flag_enable_qi = 1
 		If enableQuestInteractions
 			flag_enable_qi = 0
 		EndIf
-		enableQuestInteractionsOID = AddToggleOption("Quest Interactions  ", enableQuestInteractions, 0)
+		enableQuestInteractionsOID = AddToggleOption("$DCURSES_enableQuestInteractions", enableQuestInteractions, 0)
 		SetCursorPosition(1)
-		AddHeaderOption("Quest Toggles ")
-		enableQISaarthalOID = AddToggleOption("Saarthal  ", enableQISaarthal, 0)
-		enableQIMalkoranOID = AddToggleOption("Malkoran  ", enableQIMalkoran, 0)
-		enableQISanguineOID = AddToggleOption("Sanguine  ", enableQISanguine, 0)
-	Elseif page == "Misc "
+		AddHeaderOption("$DCURSES_HEADER_QuestToggles")
+		enableQISaarthalOID = AddToggleOption("$DCURSES_enableQISaarthal", enableQISaarthal, 0)
+		enableQIDwemerMuseumOID = AddToggleOption("$DCURSES_enableQIDwemerMuseum", enableQIDwemerMuseum, 0)
+		enableQIMalkoranOID = AddToggleOption("$DCURSES_enableQIMalkoran", enableQIMalkoran, 0)
+		enableQISanguineOID = AddToggleOption("$DCURSES_enableQISanguine", enableQISanguine, 0)
+	Elseif page == "$DCURSES_PAGE_Misc"
 		int flag_events_disabled = 1
 		If ModSuspended
 			flag_events_disabled = 0
 		EndIf
-		noMessageBoxesOID = AddToggleOption("Remove Message Boxes  ", noMessageBoxes, 0)
-		bossChestUseModelPathOID = AddToggleOption("Boss Chest Models  ", bossChestUseModelPath, 0)
-		rDeviceBaseChanceOID = AddSliderOption("Device Base Chance  ", rDeviceBaseChance, "{1}%", 0)
-		dragonHoardOID = AddToggleOption("Dragon Hoards  ", dragonHoard, 0)
-		bossExtraGoldOID = AddToggleOption("Boss Chest Extra Gold  ", bossExtraGold, 0)
-		useThemesOID = AddToggleOption("Use Device Themes  ", useThemes, 0)
+		noMessageBoxesOID = AddToggleOption("$DCURSES_noMessageBoxes", noMessageBoxes, 0)
+		bossChestUseModelPathOID = AddToggleOption("$DCURSES_bossChestUseModelPath", bossChestUseModelPath, 0)
+		rDeviceBaseChanceOID = AddSliderOption("$DCURSES_rDeviceBaseChance", rDeviceBaseChance, "{1}%", 0)
+		dragonHoardOID = AddToggleOption("$DCURSES_dragonHoard", dragonHoard, 0)
+		bossExtraGoldOID = AddToggleOption("$DCURSES_bossExtraGold", bossExtraGold, 0)
+		useThemesOID = AddToggleOption("$DCURSES_useThemes", useThemes, 0)
 		SetCursorPosition(1)
-		enableSlowStripOID = AddToggleOption("Use Sexlab Strip  ", enableSlowStrip, 0)
-		tatSolventChanceOID = AddSliderOption("Universal Solvent Chance  ", tatSolventChance, "{1}", 0)
-		resumeEventsOID = AddToggleOption("Resume Events  ", resumeEvents, flag_events_disabled)
-		setAllDefaultSettingsOID = AddToggleOption("Return to Default [WARNING]  ", setAllDefaultSettings, 0)
-	Elseif page == "Consequences "
-		AddHeaderOption("Triggers ")
-		consTriggerNudeOID = AddSliderOption("Nudity  ", consTriggerNude, "{1}%", 0)
-		consTriggerRestrainedOID = AddSliderOption("Restrained  ", consTriggerRestrained, "{1}%", 0)
-		consTriggerSexOID = AddSliderOption("Sex  ", consTriggerSex, "{1}%", 0)
+		enableSlowStripOID = AddToggleOption("$DCURSES_enableSlowStrip", enableSlowStrip, 0)
+		tatSolventChanceOID = AddSliderOption("$DCURSES_tatSolventChance", tatSolventChance, "{1}", 0)
+		resumeEventsOID = AddToggleOption("$DCURSES_resumeEvents", resumeEvents, flag_events_disabled)
+		setAllDefaultSettingsOID = AddToggleOption("$DCURSES_setAllDefaultSettings", setAllDefaultSettings, 0)
+	Elseif page == "$DCURSES_PAGE_Consequences"
+		AddHeaderOption("$DCURSES_HEADER_Triggers")
+		consTriggerNudeOID = AddSliderOption("$DCURSES_consTriggerNude", consTriggerNude, "{1}%", 0)
+		consTriggerRestrainedOID = AddSliderOption("$DCURSES_consTriggerRestrained", consTriggerRestrained, "{1}%", 0)
+		consTriggerSexOID = AddSliderOption("$DCURSES_consTriggerSex", consTriggerSex, "{1}%", 0)
 		AddEmptyOption()
-		consAllowFollowersOID = AddToggleOption("Allow Followers  ", consAllowFollowers, 0)
+		consAllowFollowersOID = AddToggleOption("$DCURSES_consAllowFollowers", consAllowFollowers, 0)
+		consAllowCreaturesOID = AddToggleOption("$DCURSES_consAllowCreatures", consAllowCreatures, 0)
 		AddEmptyOption()
-		consUseRelationshipsOID = AddToggleOption("Use Relationships  ", consUseRelationships, 0)
-		consRelationBondageOID = AddToggleOption("Relationship Bondage  ", consRelationBondage, 0)
+		consUseRelationshipsOID = AddToggleOption("$DCURSES_consUseRelationships", consUseRelationships, 0)
+		consRelationBondageOID = AddToggleOption("$DCURSES_consRelationBondage", consRelationBondage, 0)
+		AddEmptyOption()
+		consFallthroughOID = AddToggleOption("$DCURSES_consFallthrough", consFallthrough, 0)
 		SetCursorPosition(1)
-		AddHeaderOption("Results ")
-		consSexWeightOID = AddSliderOption("Sex Weight  ", consSexWeight, "{0}", 0)
+		AddHeaderOption("$DCURSES_HEADER_Results")
+		consSexWeightOID = AddSliderOption("$DCURSES_consSexWeight", consSexWeight, "{0}", 0)
 		AddEmptyOption()
-		consFineWeightOID = AddSliderOption("Fine Weight  ", consFineWeight, "{0}", 0)
-		consFineAmountOID = AddSliderOption("Fine Amount  ", consFineAmount, "{0}", 0)
+		consFineWeightOID = AddSliderOption("$DCURSES_consFineWeight", consFineWeight, "{0}", 0)
+		consFineAmountOID = AddSliderOption("$DCURSES_consFineAmount", consFineAmount, "{0}", 0)
 		AddEmptyOption()
-		consRandomBondageWeightOID = AddSliderOption("Random Bondage Weight  ", consRandomBondageWeight, "{0}", 0)
-		consRandomHeavyBondageOID = AddToggleOption("Allow Heavy Bondage  ", consRandomHeavyBondage, 0)
+		consRandomBondageWeightOID = AddSliderOption("$DCURSES_consRandomBondageWeight", consRandomBondageWeight, "{0}", 0)
+		consRandomHeavyBondageOID = AddToggleOption("$DCURSES_consRandomHeavyBondage", consRandomHeavyBondage, 0)
+		consBondageIgnoreMaxOID = AddToggleOption("$DCURSES_consBondageIgnoreMax", consBondageIgnoreMax, 0)
 		AddEmptyOption()
-		consMercyWeightOID = AddSliderOption("Mercy Weight  ", consMercyWeight, "{0}", 0)
-	Elseif page == "Sex "
+		consMercyWeightOID = AddSliderOption("$DCURSES_consMercyWeight", consMercyWeight, "{0}", 0)
+	Elseif page == "$DCURSES_PAGE_Sex"
 		int flag_enable_sex = 1
 		If sexEnabled
 			flag_enable_sex = 0
@@ -761,857 +800,911 @@ Event OnPageReset(string page)
 		If sexRandomEnabled && CheckSTNG()
 			flag_sex_slave_tats = 0
 		EndIf
-		AddHeaderOption("General ")
-		sexEnabledOID = AddToggleOption("Enabled  ", sexEnabled, 0)
-		sexRandomEnabledOID = AddToggleOption("Random Sex  ", sexRandomEnabled, 0)
-		sexCooldownOID = AddSliderOption("Cooldown  ", sexCooldown, "{0}", flag_enable_random_sex)
-		sexChanceOID = AddSliderOption("Chance  ", sexChance, "{0}%", flag_enable_random_sex)
-		sexChanceCreatureOID = AddSliderOption("Creature Chance  ", sexChanceCreature, "{0}%", flag_enable_random_sex)
-		AddHeaderOption("Arousal ")
-		sexBaseArousalOID = AddSliderOption("Base Arousal  ", sexBaseArousal, "{0}", flag_enable_random_sex)
-		sexArousalNightModifierOID = AddSliderOption("Night Modifier  ", sexArousalNightModifier, "-{0}", flag_enable_random_sex)
-		sexArousalNudeModifierOID = AddSliderOption("Nude Modifier  ", sexArousalNudeModifier, "-{0}", flag_enable_random_sex)
-		sexArousalCollarModifierOID = AddSliderOption("Collar Modifier  ", sexArousalCollarModifier, "-{0}", flag_enable_random_sex)
-		sexArousalHeavyModifierOID = AddSliderOption("Heavy Restraints Modifier  ", sexArousalHeavyModifier, "-{0}", flag_enable_random_sex)
-		sexArousalBlindModifierOID = AddSliderOption("Blindfold Modifier  ", sexArousalBlindModifier, "-{0}", flag_enable_random_sex)
-		sexArousalBootsModifierOID = AddSliderOption("Boots Modifier  ", sexArousalBootsModifier, "-{0}", flag_enable_random_sex)
-		sexArousalHobbleModifierOID = AddSliderOption("Hobbled Modifier  ", sexArousalHobbleModifier, "-{0}", flag_enable_random_sex)
-		sexArousalVisibleModifierOID = AddSliderOption("Visible Devices Modifier  ", sexArousalVisibleModifier, "-{0}", flag_enable_random_sex)
-		sexArousalTattooModifierOID = AddSliderOption("Tattoo Modifier  ", sexArousalTattooModifier, "-{1}", flag_sex_slave_tats)
-		sexArousalCreatureModifierOID = AddSliderOption("Creature Modifier  ", sexArousalCreatureModifier, "-{0}", flag_enable_random_sex)
-		sexArousalFollowerModifierOID = AddSliderOption("Follower Modifier  ", sexArousalFollowerModifier, "-{0}", flag_enable_random_sex)
-		sexArousalSpouseModifierOID = AddSliderOption("Spouse Modifier  ", sexArousalSpouseModifier, "-{0}", flag_enable_random_sex)
-		sexArousalSummonModifierOID = AddSliderOption("Summon Modifier  ", sexArousalSummonModifier, "-{0}", flag_enable_random_sex)
-		AddHeaderOption("Search ")
-		sexSearchRadiusOID = AddSliderOption("Search Radius  ", sexSearchRadius, "{0}", flag_enable_random_sex)
-		sexSearchIntervalOID = AddSliderOption("Search Interval  ", sexSearchInterval, "{0}", flag_enable_random_sex)
+		AddHeaderOption("$DCURSES_HEADER_General")
+		sexEnabledOID = AddToggleOption("$DCURSES_sexEnabled", sexEnabled, 0)
+		sexAggressiveAnimsOID = AddToggleOption("$DCURSES_sexAggressiveAnims", sexAggressiveAnims, flag_enable_sex)
+		sexRandomEnabledOID = AddToggleOption("$DCURSES_sexRandomEnabled", sexRandomEnabled, 0)
+		sexCooldownOID = AddSliderOption("$DCURSES_sexCooldown", sexCooldown, "{0}", flag_enable_random_sex)
+		sexChanceOID = AddSliderOption("$DCURSES_sexChance", sexChance, "{0}%", flag_enable_random_sex)
+		sexChanceCreatureOID = AddSliderOption("$DCURSES_sexChanceCreature", sexChanceCreature, "{0}%", flag_enable_random_sex)
+		AddHeaderOption("$DCURSES_HEADER_Arousal")
+		sexBaseArousalOID = AddSliderOption("$DCURSES_sexBaseArousal", sexBaseArousal, "{0}", flag_enable_random_sex)
+		sexArousalNightModifierOID = AddSliderOption("$DCURSES_sexArousalNightModifier", sexArousalNightModifier, "-{0}", flag_enable_random_sex)
+		sexArousalNudeModifierOID = AddSliderOption("$DCURSES_sexArousalNudeModifier", sexArousalNudeModifier, "-{0}", flag_enable_random_sex)
+		sexArousalCollarModifierOID = AddSliderOption("$DCURSES_sexArousalCollarModifier", sexArousalCollarModifier, "-{0}", flag_enable_random_sex)
+		sexArousalHeavyModifierOID = AddSliderOption("$DCURSES_sexArousalHeavyModifier", sexArousalHeavyModifier, "-{0}", flag_enable_random_sex)
+		sexArousalBlindModifierOID = AddSliderOption("$DCURSES_sexArousalBlindModifier", sexArousalBlindModifier, "-{0}", flag_enable_random_sex)
+		sexArousalBootsModifierOID = AddSliderOption("$DCURSES_sexArousalBootsModifier", sexArousalBootsModifier, "-{0}", flag_enable_random_sex)
+		sexArousalHobbleModifierOID = AddSliderOption("$DCURSES_sexArousalHobbleModifier", sexArousalHobbleModifier, "-{0}", flag_enable_random_sex)
+		sexArousalVisibleModifierOID = AddSliderOption("$DCURSES_sexArousalVisibleModifier", sexArousalVisibleModifier, "-{0}", flag_enable_random_sex)
+		sexArousalTattooModifierOID = AddSliderOption("$DCURSES_sexArousalTattooModifier", sexArousalTattooModifier, "-{1}", flag_sex_slave_tats)
+		sexArousalCreatureModifierOID = AddSliderOption("$DCURSES_sexArousalCreatureModifier", sexArousalCreatureModifier, "-{0}", flag_enable_random_sex)
+		sexArousalFollowerModifierOID = AddSliderOption("$DCURSES_sexArousalFollowerModifier", sexArousalFollowerModifier, "-{0}", flag_enable_random_sex)
+		sexArousalSpouseModifierOID = AddSliderOption("$DCURSES_sexArousalSpouseModifier", sexArousalSpouseModifier, "-{0}", flag_enable_random_sex)
+		sexArousalSummonModifierOID = AddSliderOption("$DCURSES_sexArousalSummonModifier", sexArousalSummonModifier, "-{0}", flag_enable_random_sex)
+		AddHeaderOption("$DCURSES_HEADER_Search")
+		sexSearchRadiusOID = AddSliderOption("$DCURSES_sexSearchRadius", sexSearchRadius, "{0}", flag_enable_random_sex)
+		sexSearchIntervalOID = AddSliderOption("$DCURSES_sexSearchInterval", sexSearchInterval, "{0}", flag_enable_random_sex)
 		SetCursorPosition(1)
-		AddHeaderOption("Allowed Actors ")
-		sexAllowMaleOID = AddToggleOption("Allow Male Actors  ", sexAllowMale, flag_enable_sex)
-		sexAllowFemaleOID = AddToggleOption("Allow Female Actors  ", sexAllowFemale, flag_enable_sex)
-		sexAllowFutaOID = AddToggleOption("Allow Futa Actors  ", sexAllowFuta, flag_enable_sex)
-		sexAllowCreatureOID = AddToggleOption("Allow Creature Actors  ", sexAllowCreature, flag_enable_sex)
-		AddHeaderOption("Requirements ")
-		sexRequireAllOID = AddToggleOption("Require All  ", sexRequireAll, flag_enable_random_sex)
-		sexRequireBindingsOID = AddToggleOption("Bondage  ", sexRequireBindings, flag_enable_random_sex)
-		sexRequireCollarOID = AddToggleOption("Collar  ", sexRequireCollar, flag_enable_random_sex)
-		sexRequireHeavyOID = AddToggleOption("Heavy Restraints  ", sexRequireHeavy, flag_enable_random_sex)
-		sexRequireNudeOID = AddToggleOption("Nudity  ", sexRequireNude, flag_enable_random_sex)
-		sexRequiredPlayerArousalOID = AddSliderOption("Player Arousal  ", sexRequiredPlayerArousal, "{0}", flag_enable_random_sex)
-		sexRequiredPlayerTattoosOID = AddSliderOption("Player Tattoos  ", sexRequiredPlayerTattoos, "{0}", flag_sex_slave_tats)
-		AddHeaderOption("Requirement Exceptions ")
-		sexAlwaysAllowFollowersOID = AddToggleOption("Always Allow Followers  ", sexAlwaysAllowFollowers, flag_enable_random_sex)
-		sexAlwaysAllowSpouseOID = AddToggleOption("Always Allow Spouse  ", sexAlwaysAllowSpouse, flag_enable_random_sex)
-		sexAlwaysAllowSummonsOID = AddToggleOption("Always Allow Summons  ", sexAlwaysAllowSummons, flag_enable_random_sex)
-		sexChanceFollowerOID = AddSliderOption("Follower Chance  ", sexChanceFollower, "{0}%", flag_enable_random_sex)
-		sexChanceSpouseOID = AddSliderOption("Spouse Chance  ", sexChanceSpouse, "{0}%", flag_enable_random_sex)
-		sexChanceSummonOID = AddSliderOption("Summon Chance  ", sexChanceSummon, "{0}%", flag_enable_random_sex)
+		AddHeaderOption("$DCURSES_HEADER_AllowedActors")
+		sexAllowMaleOID = AddToggleOption("$DCURSES_sexAllowMale", sexAllowMale, flag_enable_sex)
+		sexAllowFemaleOID = AddToggleOption("$DCURSES_sexAllowFemale", sexAllowFemale, flag_enable_sex)
+		sexAllowFutaOID = AddToggleOption("$DCURSES_sexAllowFuta", sexAllowFuta, flag_enable_sex)
+		sexAllowCreatureOID = AddToggleOption("$DCURSES_sexAllowCreature", sexAllowCreature, flag_enable_sex)
+		sexAllowFarmAnimalsOID = AddToggleOption("$DCURSES_sexAllowFarmAnimals", sexAllowFarmAnimals, flag_enable_sex)
+		AddHeaderOption("$DCURSES_HEADER_Requirements")
+		sexRequireAllOID = AddToggleOption("$DCURSES_sexRequireAll", sexRequireAll, flag_enable_random_sex)
+		sexRequireBindingsOID = AddToggleOption("$DCURSES_sexRequireBindings", sexRequireBindings, flag_enable_random_sex)
+		sexRequireCollarOID = AddToggleOption("$DCURSES_sexRequireCollar", sexRequireCollar, flag_enable_random_sex)
+		sexRequireHeavyOID = AddToggleOption("$DCURSES_sexRequireHeavy", sexRequireHeavy, flag_enable_random_sex)
+		sexRequireNudeOID = AddToggleOption("$DCURSES_sexRequireNude", sexRequireNude, flag_enable_random_sex)
+		sexRequiredPlayerArousalOID = AddSliderOption("$DCURSES_sexRequiredPlayerArousal", sexRequiredPlayerArousal, "{0}", flag_enable_random_sex)
+		sexRequiredPlayerTattoosOID = AddSliderOption("$DCURSES_sexRequiredPlayerTattoos", sexRequiredPlayerTattoos, "{0}", flag_sex_slave_tats)
+		AddHeaderOption("$DCURSES_HEADER_RequirementExceptions")
+		sexAlwaysAllowFollowersOID = AddToggleOption("$DCURSES_sexAlwaysAllowFollowers", sexAlwaysAllowFollowers, flag_enable_random_sex)
+		sexAlwaysAllowSpouseOID = AddToggleOption("$DCURSES_sexAlwaysAllowSpouse", sexAlwaysAllowSpouse, flag_enable_random_sex)
+		sexAlwaysAllowSummonsOID = AddToggleOption("$DCURSES_sexAlwaysAllowSummons", sexAlwaysAllowSummons, flag_enable_random_sex)
+		sexChanceFollowerOID = AddSliderOption("$DCURSES_sexChanceFollower", sexChanceFollower, "{0}%", flag_enable_random_sex)
+		sexChanceSpouseOID = AddSliderOption("$DCURSES_sexChanceSpouse", sexChanceSpouse, "{0}%", flag_enable_random_sex)
+		sexChanceSummonOID = AddSliderOption("$DCURSES_sexChanceSummon", sexChanceSummon, "{0}%", flag_enable_random_sex)
 	EndIf
 EndEvent
 
 Event OnOptionHighlight(int option)
 	If option == baseChanceOID
-		SetInfoText("How likely are you to trigger a trap before modifiers.")
+		SetInfoText("$DCURSES_DESCRIPTION_baseChance")
 		Return
 	Endif
 	If option == containerModifierOID
-		SetInfoText("Modifier for containers.")
+		SetInfoText("$DCURSES_DESCRIPTION_containerModifier")
 		Return
 	Endif
 	If option == bossContainerModifierOID
-		SetInfoText("Modifier for boss chests.\nIs applied with the container modifier.")
+		SetInfoText("$DCURSES_DESCRIPTION_bossContainerModifier")
 		Return
 	Endif
 	If option == deadBodyModifierOID
-		SetInfoText("Modifier for corpses.")
+		SetInfoText("$DCURSES_DESCRIPTION_deadBodyModifier")
 		Return
 	Endif
 	If option == pickpocketModifierOID
-		SetInfoText("Modifier for pickpocketing.")
+		SetInfoText("$DCURSES_DESCRIPTION_pickpocketModifier")
 		Return
 	Endif
 	If option == doorModifierOID
-		SetInfoText("Modifier for doors.")
+		SetInfoText("$DCURSES_DESCRIPTION_doorModifier")
 		Return
 	Endif
 	If option == onlyLockedDoorsOID
-		SetInfoText("Only trigger events when the door is locked.")
+		SetInfoText("$DCURSES_DESCRIPTION_onlyLockedDoors")
 		Return
 	Endif
 	If option == lockedModifierOID
-		SetInfoText("Modifier for locked doors and chests.\nThis will not apply if the lock requires a key or you already have the key to the lock.")
+		SetInfoText("$DCURSES_DESCRIPTION_lockedModifier")
 		Return
 	Endif
 	If option == lockDifficultyModifierOID
-		SetInfoText("If this is greater than 1, locked things will have a higher chance to cause a curse the harder the lock is to pick.\nIf set to 10 a master level lock will multiply the chance by 10 while an adept lock would multiply the chance by 5.")
+		SetInfoText("$DCURSES_DESCRIPTION_lockDifficultyModifier")
 		Return
 	Endif
 	If option == minGoldRequiredOID
-		SetInfoText("Requires a container to have at least this total value of items in it to trigger any events.")
+		SetInfoText("$DCURSES_DESCRIPTION_minGoldRequired")
 		Return
 	Endif
 	If option == eventScalingOID
-		SetInfoText("Make events less likely right after triggering one, and more likely if not triggered in a while.")
+		SetInfoText("$DCURSES_DESCRIPTION_eventScaling")
 		Return
 	Endif
 	If option == eventScalingModOID
-		SetInfoText("The number of events before traps start becoming more likely.")
+		SetInfoText("$DCURSES_DESCRIPTION_eventScalingMod")
 		Return
 	Endif
 	If option == minRestraintsOID
-		SetInfoText("Minimum number of restraints.")
+		SetInfoText("$DCURSES_DESCRIPTION_minRestraints")
 		Return
 	Endif
 	If option == maxRestraintsOID
-		SetInfoText("Maximum number of restraints.")
+		SetInfoText("$DCURSES_DESCRIPTION_maxRestraints")
 		Return
 	Endif
 	If option == bossAditionalRestraintsOID
-		SetInfoText("Added restraints when opening a boss chest.")
+		SetInfoText("$DCURSES_DESCRIPTION_bossAditionalRestraints")
 		Return
 	Endif
 	If option == bossOnlyHeavyOID
-		SetInfoText("Heavy restraints can only be applied from boss chests.")
+		SetInfoText("$DCURSES_DESCRIPTION_bossOnlyHeavy")
 		Return
 	Endif
 	If option == restraintCapOID
-		SetInfoText("Events won't happen if you have more than this many restraints.")
+		SetInfoText("$DCURSES_DESCRIPTION_restraintCap")
 		Return
 	Endif
 	If option == stripPlayerOnEventOID
-		SetInfoText("Toggle to choose if the player should be stripped on any event.\nIf a heavy bondage device is equipped the player will be stripped anyway.")
+		SetInfoText("$DCURSES_DESCRIPTION_stripPlayerOnEvent")
 		Return
 	Endif
 	If option == arousalModifierOID
-		SetInfoText("If this is greater than 1, curses will me more likely the more aroused the player is.\nIf set to 10 with full arousal will multiply the chance by 10 while half arousal would multiply the chance by 5.")
+		SetInfoText("$DCURSES_DESCRIPTION_arousalModifier")
 		Return
 	Endif
 	If option == minArousalOID
-		SetInfoText("Curses won't trigger if the player is below this arousal level.")
+		SetInfoText("$DCURSES_DESCRIPTION_minArousal")
 		Return
 	Endif
 	If option == beltWeightOID
-		SetInfoText("Chance to be equipped with a chastity belt.")
+		SetInfoText("$DCURSES_DESCRIPTION_beltWeight")
 		Return
 	Endif
 	If option == beltPlugsOID
-		SetInfoText("Equip plugs with all belts.")
+		SetInfoText("$DCURSES_DESCRIPTION_beltPlugs")
 		Return
 	Endif
 	If option == noBeltPiercingOID
-		SetInfoText("Prevent chastity belts that also function as clitoral piercings. None of these devices exist within base DD.")
+		SetInfoText("$DCURSES_DESCRIPTION_noBeltPiercing")
 		Return
 	Endif
 	If option == braWeightOID
-		SetInfoText("Chance to be equipped with a chastity bra.")
+		SetInfoText("$DCURSES_DESCRIPTION_braWeight")
 		Return
 	Endif
 	If option == plugsWeightOID
-		SetInfoText("Chance to be equipped with plugs when no belt is worn.")
+		SetInfoText("$DCURSES_DESCRIPTION_plugsWeight")
 		Return
 	Endif
 	If option == lockingPlugsWeightOID
-		SetInfoText("Chance to be equipped with plugs that can lock.")
+		SetInfoText("$DCURSES_DESCRIPTION_lockingPlugsWeight")
 		Return
 	Endif
 	If option == inflatablePlugsWeightOID
-		SetInfoText("Chance to be equipped with plugs that are inflatable.")
+		SetInfoText("$DCURSES_DESCRIPTION_inflatablePlugsWeight")
 		Return
 	Endif
 	If option == plugsDontCountOID
-		SetInfoText("Plugs won't be considered for device limits.\nSo if a plug is rolled and the max devices is 1, another device can still be added.")
+		SetInfoText("$DCURSES_DESCRIPTION_plugsDontCount")
 		Return
 	Endif
 	If option == nipplePiercingsWeightOID
-		SetInfoText("Chance to be equipped with nipple piercings.")
+		SetInfoText("$DCURSES_DESCRIPTION_nipplePiercingsWeight")
 		Return
 	Endif
 	If option == vaginalPiercingsWeightOID
-		SetInfoText("Chance to be equipped with a vaginal piercing.")
+		SetInfoText("$DCURSES_DESCRIPTION_vaginalPiercingsWeight")
 		Return
 	Endif
 	If option == corsetWeightOID
-		SetInfoText("Chance to be equipped with a restrictive corset.")
+		SetInfoText("$DCURSES_DESCRIPTION_corsetWeight")
 		Return
 	Endif
 	If option == beltedCorsetsWeightOID
-		SetInfoText("Chance to be equipped with a restrictive corset that has an attached belt.")
+		SetInfoText("$DCURSES_DESCRIPTION_beltedCorsetsWeight")
 		Return
 	Endif
 	If option == slaveHarnessWeightOID
-		SetInfoText("Chance to be equipped with an open harness.\nThis will not act as a chastity belt.")
+		SetInfoText("$DCURSES_DESCRIPTION_slaveHarnessWeight")
 		Return
 	Endif
 	If option == chastityHarnessWeightOID
-		SetInfoText("Chance to be equipped with an open harness.\nThis will act as a chastity belt.")
+		SetInfoText("$DCURSES_DESCRIPTION_chastityHarnessWeight")
 		Return
 	Endif
 	If option == armbinderWeightOID
-		SetInfoText("Chance to be equipped with an armbinder.")
+		SetInfoText("$DCURSES_DESCRIPTION_armbinderWeight")
 		Return
 	Endif
 	If option == elbowbinderWeightOID
-		SetInfoText("Chance to be equipped with an elbowbinder.")
+		SetInfoText("$DCURSES_DESCRIPTION_elbowbinderWeight")
 		Return
 	Endif
 	If option == yokeWeightOID
-		SetInfoText("Chance to be equipped with a yoke.")
+		SetInfoText("$DCURSES_DESCRIPTION_yokeWeight")
 		Return
 	Endif
 	If option == shacklesWeightOID
-		SetInfoText("Chance to be equipped with restraining wrist shackles.")
+		SetInfoText("$DCURSES_DESCRIPTION_shacklesWeight")
 		Return
 	Endif
 	If option == straitjacketWeightOID
-		SetInfoText("Chance to be equipped with a straitjacket.")
+		SetInfoText("$DCURSES_DESCRIPTION_straitjacketWeight")
 		Return
 	Endif
 	If option == straitjacketLegbinderWeightOID
-		SetInfoText("Chance to be equipped with a straitjacket that has a legbinder.")
+		SetInfoText("$DCURSES_DESCRIPTION_straitjacketLegbinderWeight")
 		Return
 	Endif
 	If option == petSuitWeightOID
-		SetInfoText("Chance to be equipped with a pet suit.")
+		SetInfoText("$DCURSES_DESCRIPTION_petSuitWeight")
 		Return
 	Endif
 	If option == onlyUseUnforgivingDevicesOID
-		SetInfoText("Only register devices to the mod that are converted to work with UD.")
+		SetInfoText("$DCURSES_DESCRIPTION_onlyUseUnforgivingDevices")
 		Return
 	Endif
 	If option == collarWeightOID
-		SetInfoText("Chance to be equipped with a collar.")
+		SetInfoText("$DCURSES_DESCRIPTION_collarWeight")
 		Return
 	Endif
 	If option == armCuffsWeightOID
-		SetInfoText("Chance to be equipped with arm cuffs.")
+		SetInfoText("$DCURSES_DESCRIPTION_armCuffsWeight")
 		Return
 	Endif
 	If option == legCuffsWeightOID
-		SetInfoText("Chance to be equipped with leg cuffs.")
+		SetInfoText("$DCURSES_DESCRIPTION_legCuffsWeight")
 		Return
 	Endif
 	If option == allowLegShacklesOID
-		SetInfoText("Allow leg cuffs that slow the player.")
+		SetInfoText("$DCURSES_DESCRIPTION_allowLegShackles")
 		Return
 	Endif
 	If option == gagWeightOID
-		SetInfoText("Chance to be equipped with a simple gag\nThese will always block oral.")
+		SetInfoText("$DCURSES_DESCRIPTION_gagWeight")
 		Return
 	Endif
 	If option == ringGagWeightOID
-		SetInfoText("Chance to be equipped with a ring gag\nThese will never block oral.")
+		SetInfoText("$DCURSES_DESCRIPTION_ringGagWeight")
 		Return
 	Endif
 	If option == largeGagWeightOID
-		SetInfoText("Chance to be equipped with a large gag\nThese will always block speech.")
+		SetInfoText("$DCURSES_DESCRIPTION_largeGagWeight")
 		Return
 	Endif
 	If option == largeRingGagWeightOID
-		SetInfoText("Chance to be equipped with a large ring gag\nThese will always block speech and never block oral.")
+		SetInfoText("$DCURSES_DESCRIPTION_largeRingGagWeight")
 		Return
 	Endif
 	If option == blindfoldWeightOID
-		SetInfoText("Chance to be equipped with a blindfold.")
+		SetInfoText("$DCURSES_DESCRIPTION_blindfoldWeight")
 		Return
 	Endif
 	If option == hoodBothWeightOID
-		SetInfoText("Chance to be equipped with a hood.")
+		SetInfoText("$DCURSES_DESCRIPTION_hoodBothWeight")
 		Return
 	Endif
 	If option == hoodGagWeightOID
-		SetInfoText("Chance to be equipped with a hood that only blocks the mouth.")
+		SetInfoText("$DCURSES_DESCRIPTION_hoodGagWeight")
 		Return
 	Endif
 	If option == hoodBlindWeightOID
-		SetInfoText("Chance to be equipped with a hood that only blocks the eyes.")
+		SetInfoText("$DCURSES_DESCRIPTION_hoodBlindWeight")
 		Return
 	Endif
 	If option == hoodNoneWeightOID
-		SetInfoText("Chance to be equipped with a hood that doesn't block the mouth or eyes.")
+		SetInfoText("$DCURSES_DESCRIPTION_hoodNoneWeight")
 		Return
 	Endif
 	If option == catsuitWeightOID
-		SetInfoText("Chance to be equipped with a catsuit.")
+		SetInfoText("$DCURSES_DESCRIPTION_catsuitWeight")
 		Return
 	Endif
 	If option == hobbleSkirtWeightOID
-		SetInfoText("Chance to be equipped with a hobble dress.")
+		SetInfoText("$DCURSES_DESCRIPTION_hobbleSkirtWeight")
 		Return
 	Endif
 	If option == hobbleSkirtDifficultyOID
-		SetInfoText("How restraining hobble dresses will be on average.\nThe higher the number the greater chance for a strict dress vs a relaxed dress.")
+		SetInfoText("$DCURSES_DESCRIPTION_hobbleSkirtDifficulty")
 		Return
 	Endif
 	If option == bootsWeightOID
-		SetInfoText("Chance to be equipped with restrictive boots.")
+		SetInfoText("$DCURSES_DESCRIPTION_bootsWeight")
 		Return
 	Endif
 	If option == glovesWeightOID
-		SetInfoText("Chance to be equipped with restrictive gloves.")
+		SetInfoText("$DCURSES_DESCRIPTION_glovesWeight")
 		Return
 	Endif
 	If option == mittensWeightOID
-		SetInfoText("Chance to be equipped with bondage mittens.")
+		SetInfoText("$DCURSES_DESCRIPTION_mittensWeight")
 		Return
 	Endif
 	If option == keyLossChanceOID
-		SetInfoText("How likely you are to lose your keys during an event.")
+		SetInfoText("$DCURSES_DESCRIPTION_keyLossChance")
 		Return
 	Endif
 	If option == keyChanceOID
-		SetInfoText("How likely you are to find a key in a container.")
+		SetInfoText("$DCURSES_DESCRIPTION_keyChance")
+		Return
+	Endif
+	If option == minKeysLootedOID
+		SetInfoText("$DCURSES_DESCRIPTION_minKeysLooted")
+		Return
+	Endif
+	If option == maxKeysLootedOID
+		SetInfoText("$DCURSES_DESCRIPTION_maxKeysLooted")
 		Return
 	Endif
 	If option == keyBonusOID
-		SetInfoText("A bonus chance to get a key per locking device worn.")
+		SetInfoText("$DCURSES_DESCRIPTION_keyBonus")
 		Return
 	Endif
 	If option == keyForgivenessOID
-		SetInfoText("Make keys more likely if it has been a while since you got any.")
+		SetInfoText("$DCURSES_DESCRIPTION_keyForgiveness")
 		Return
 	Endif
 	If option == keyPickpocketBonusOID
-		SetInfoText("Multiplier to key chance when pickpocketing someone.\nSet to 0 to disable keys when pickpocketing.")
+		SetInfoText("$DCURSES_DESCRIPTION_keyPickpocketBonus")
 		Return
 	Endif
 	If option == maxHeldKeysOID
-		SetInfoText("Sets the maximum allowed amount of keys that you can carry while still finding more.\nWith this enabled no devices will be equipped that require more keys than you can find.\nFor example if you have two restraint keys and one chastity key and this is set to three you will no longer find keys.\nSet to 0 to disable.")
+		SetInfoText("$DCURSES_DESCRIPTION_maxHeldKeys")
 		Return
 	Endif
 	If option == restraintsKeyWeightOID
-		SetInfoText("Chance to find a restraints key.")
+		SetInfoText("$DCURSES_DESCRIPTION_restraintsKeyWeight")
 		Return
 	Endif
 	If option == chastityKeyWeightOID
-		SetInfoText("Chance to find a chastity key.")
+		SetInfoText("$DCURSES_DESCRIPTION_chastityKeyWeight")
 		Return
 	Endif
 	If option == piercingToolWeightOID
-		SetInfoText("Chance to find a piercing removal tool.")
+		SetInfoText("$DCURSES_DESCRIPTION_piercingToolWeight")
 		Return
 	Endif
 	If option == magicKeyChanceOID
-		SetInfoText("Chance that magic keys will be found in boss chests. They will destroy all restraints you are wearing.\nYou can only have a max of one at a time and they can never be lost.\nSet to 0 to disable")
+		SetInfoText("$DCURSES_DESCRIPTION_magicKeyChance")
 		Return
 	Endif
 	If option == preferRelevantKeysOID
-		SetInfoText("You will only find keys that would unlock items you are wearing.")
+		SetInfoText("$DCURSES_DESCRIPTION_preferRelevantKeys")
 		Return
 	Endif
 	If option == vanishingKeysOID
-		SetInfoText("Keys will be removed from containers after you close the menu.")
+		SetInfoText("$DCURSES_DESCRIPTION_vanishingKeys")
 		Return
 	Endif
 	If option == eventStandardWeightOID
-		SetInfoText("Chance to receive a bondage device event.")
+		SetInfoText("$DCURSES_DESCRIPTION_eventStandardWeight")
 		Return
 	Endif
 	If option == eventStandardBossReductionOID
-		SetInfoText("If the container is a boss chest, the standard event weight will be reduced by this amount.")
+		SetInfoText("$DCURSES_DESCRIPTION_eventStandardBossReduction")
 		Return
 	Endif
 	If option == eventOppressiveWeightOID
-		SetInfoText("Chance to receive an oppressive device event.")
+		SetInfoText("$DCURSES_DESCRIPTION_eventOppressiveWeight")
 		Return
 	Endif
 	If option == eventContraptionWeightOID
-		SetInfoText("Chance to be bound in a contraption from DDC.")
+		SetInfoText("$DCURSES_DESCRIPTION_eventContraptionWeight")
 		Return
 	Endif
 	If option == eventContraptionTimeOID
-		SetInfoText("Will be automatically released after this many in game hours. Set to 0 to disable automatic release.")
+		SetInfoText("$DCURSES_DESCRIPTION_eventContraptionTime")
 		Return
 	Endif
 	If option == eventContDevicesOID
-		SetInfoText("Will allow certain devices such as collars, gags, cuffs, and plugs to be equipped when triggering a contraption event.\nWill follow all other rules set for devices.")
+		SetInfoText("$DCURSES_DESCRIPTION_eventContDevices")
 		Return
 	Endif
 	If option == eventContAllDevicesOID
-		SetInfoText("Will allow any device other than heavy bondage to be equipped when triggering a contraption event.\nWill follow all other rules set for devices.")
+		SetInfoText("$DCURSES_DESCRIPTION_eventContAllDevices")
 		Return
 	Endif
 	If option == eventContDeviceOverrideOID
-		SetInfoText("When equipping devices for contraption events this number will be used instead of the min / max on the main page.\nSet to 0 to use the default number of devices.")
+		SetInfoText("$DCURSES_DESCRIPTION_eventContDeviceOverride")
 		Return
 	Endif
 	If option == eventTattooWeightOID
-		SetInfoText("Chance to receive random tattoos.\nRequires Rape Tattoos.")
+		SetInfoText("$DCURSES_DESCRIPTION_eventTattooWeight")
 		Return
 	Endif
 	If option == eventTattooMinOID
-		SetInfoText("Minimum number of tattoos that can be put on.")
+		SetInfoText("$DCURSES_DESCRIPTION_eventTattooMin")
 		Return
 	Endif
 	If option == eventTattooMaxOID
-		SetInfoText("Maximum number of tattoos that can be put on.")
+		SetInfoText("$DCURSES_DESCRIPTION_eventTattooMax")
 		Return
 	Endif
 	If option == eventTattooCapOID
-		SetInfoText("If you have this many tattoos already you won't get any more.")
+		SetInfoText("$DCURSES_DESCRIPTION_eventTattooCap")
 		Return
 	Endif
 	If option == eventLewdMarkWeightOID
-		SetInfoText("Chance to receive a lewd mark.")
+		SetInfoText("$DCURSES_DESCRIPTION_eventLewdMarkWeight")
 		Return
 	Endif
 	If option == eventSimpleSlaveryWeightOID
-		SetInfoText("Chance to trigger a Simple Slavery auction.")
+		SetInfoText("$DCURSES_DESCRIPTION_eventSimpleSlaveryWeight")
 		Return
 	Endif
 	If option == eventSSMinRestraintsOID
-		SetInfoText("Minimum restraints that need to be equipped for a Simple Slavery auction to start.")
+		SetInfoText("$DCURSES_DESCRIPTION_eventSSMinRestraints")
 		Return
 	Endif
 	If option == LMAllureWeightOID
-		SetInfoText("This mark will make everyone around you horny all the time.")
+		SetInfoText("$DCURSES_DESCRIPTION_LMAllureWeight")
 		Return
 	Endif
 	If option == LMAllureModOID
-		SetInfoText("How much each nearby character's arousal will change per minute.")
+		SetInfoText("$DCURSES_DESCRIPTION_LMAllureMod")
 		Return
 	Endif
 	If option == LMAllureSexOID
-		SetInfoText("How many times you have to have sex before the mark will fade.")
+		SetInfoText("$DCURSES_DESCRIPTION_LMAllureSex")
 		Return
 	Endif
 	If option == LMAllureColorOID
-		SetInfoText("Color for mark.")
+		SetInfoText("$DCURSES_DESCRIPTION_LMAllureColor")
 		Return
 	Endif
 	If option == LMHeatWeightOID
-		SetInfoText("This mark will constantly make you horny.")
+		SetInfoText("$DCURSES_DESCRIPTION_LMHeatWeight")
 		Return
 	Endif
 	If option == LMHeatModOID
-		SetInfoText("How much your arousal will change per minute.")
+		SetInfoText("$DCURSES_DESCRIPTION_LMHeatMod")
 		Return
 	Endif
 	If option == LMHeatContainerCountOID
-		SetInfoText("How many containers you must open before the mark will fade.")
+		SetInfoText("$DCURSES_DESCRIPTION_LMHeatContainerCount")
 		Return
 	Endif
 	If option == LMHeatColorOID
-		SetInfoText("Color for mark.")
+		SetInfoText("$DCURSES_DESCRIPTION_LMHeatColor")
 		Return
 	Endif
 	If option == LMBrandingWeightOID
-		SetInfoText("This mark will force you to have a certain number of tattoos!")
+		SetInfoText("$DCURSES_DESCRIPTION_LMBrandingWeight")
 		Return
 	Endif
 	If option == LMBrandingChanceOID
-		SetInfoText("How likely you are to receive a random tattoo per 15 seconds.\nRequires Rape Tattoos")
+		SetInfoText("$DCURSES_DESCRIPTION_LMBrandingChance")
 		Return
 	Endif
 	If option == LMBrndingTotalOID
-		SetInfoText("How many tattoos you need before the mark releases. The mark itself counts as 2.")
+		SetInfoText("$DCURSES_DESCRIPTION_LMBrndingTotal")
 		Return
 	Endif
 	If option == LMBrandingPunishOID
-		SetInfoText("You will be punished by loosing gold if your total tattoo count decreases.")
+		SetInfoText("$DCURSES_DESCRIPTION_LMBrandingPunish")
 		Return
 	Endif
 	If option == LMBrandingColorOID
-		SetInfoText("Color for mark.")
+		SetInfoText("$DCURSES_DESCRIPTION_LMBrandingColor")
 		Return
 	Endif
 	If option == LMBondageWeightOID
-		SetInfoText("With this mark devices that are in your inventory might equip themselves.")
+		SetInfoText("$DCURSES_DESCRIPTION_LMBondageWeight")
 		Return
 	Endif
 	If option == LMBondageChanceOID
-		SetInfoText("How likely an item might be equipped per 15 seconds.")
+		SetInfoText("$DCURSES_DESCRIPTION_LMBondageChance")
 		Return
 	Endif
 	If option == LMBondageDeviceCountOID
-		SetInfoText("How many devices need to be equipped before the mark will fade.")
+		SetInfoText("$DCURSES_DESCRIPTION_LMBondageDeviceCount")
 		Return
 	Endif
 	If option == LMBondageColorOID
-		SetInfoText("Color for mark.")
+		SetInfoText("$DCURSES_DESCRIPTION_LMBondageColor")
 		Return
 	Endif
 	If option == LMNudityWeightOID
-		SetInfoText("With this mark you will be unable to wear any clothes.")
+		SetInfoText("$DCURSES_DESCRIPTION_LMNudityWeight")
 		Return
 	Endif
 	If option == LMNudityChestOnlyOID
-		SetInfoText("With this enabled only chest armor will be checked and removed. Otherwise all armor will be unequipped.")
+		SetInfoText("$DCURSES_DESCRIPTION_LMNudityChestOnly")
 		Return
 	Endif
 	If option == LMNudityAditionalFormsOID
-		SetInfoText("A comma separated list of additional slots to strip. Will not strip devices.\nFor example: 46,47,49,52.")
+		SetInfoText("$DCURSES_DESCRIPTION_LMNudityAditionalForms")
 		Return
 	Endif
 	If option == LMNudityTalkTimesOID
-		SetInfoText("How many times you have to talk to different characters before the mark will fade.")
+		SetInfoText("$DCURSES_DESCRIPTION_LMNudityTalkTimes")
 		Return
 	Endif
 	If option == LMNudityColorOID
-		SetInfoText("Color for mark.")
+		SetInfoText("$DCURSES_DESCRIPTION_LMNudityColor")
 		Return
 	Endif
 	If option == oppSummonerCollarWeightOID
-		SetInfoText("How likely that you will be equipped with a collar that makes you have sex with your summons.\nRequires creatures to be enabled for sex.")
+		SetInfoText("$DCURSES_DESCRIPTION_oppSummonerCollarWeight")
 		Return
 	Endif
 	If option == oppSummonerSexCountOID
-		SetInfoText("How may time you need to have sex with your summons before the collar will unlock.")
+		SetInfoText("$DCURSES_DESCRIPTION_oppSummonerSexCount")
 		Return
 	Endif
 	If option == oppSCollarDrainsMagickaOID
-		SetInfoText("The collar will drain all of your magicka when summoning.")
+		SetInfoText("$DCURSES_DESCRIPTION_oppSCollarDrainsMagicka")
 		Return
 	Endif
 	If option == oppSMinSummonArousalOID
-		SetInfoText("Will change the arousal of all of your summons to be at least this value.")
+		SetInfoText("$DCURSES_DESCRIPTION_oppSMinSummonArousal")
 		Return
 	Endif
 	If option == oppSummonChanceOID
-		SetInfoText("The chance per second that the collar summons an atronach to have sex with you.\nThis won't happen if you already have a different summon.")
+		SetInfoText("$DCURSES_DESCRIPTION_oppSummonChance")
+		Return
+	Endif
+	If option == oppDwarvenCuirassWeightOID
+		SetInfoText("$DCURSES_DESCRIPTION_oppDwarvenCuirassWeight")
+		Return
+	Endif
+	If option == oppDwarvenValueNeededOID
+		SetInfoText("$DCURSES_DESCRIPTION_oppDwarvenValueNeeded")
+		Return
+	Endif
+	If option == oppDwarvenHeavyRestraintOID
+		SetInfoText("$DCURSES_DESCRIPTION_oppDwarvenHeavyRestraint")
+		Return
+	Endif
+	If option == oppDwarvenRequireLocOID
+		SetInfoText("$DCURSES_DESCRIPTION_oppDwarvenRequireLoc")
+		Return
+	Endif
+	If option == oppDwarvenArousalOID
+		SetInfoText("$DCURSES_DESCRIPTION_oppDwarvenArousal")
 		Return
 	Endif
 	If option == oppLivingLatexWeightOID
-		SetInfoText("How likely that you will be encased in latex that will bind you with ebonite.")
+		SetInfoText("$DCURSES_DESCRIPTION_oppLivingLatexWeight")
 		Return
 	Endif
 	If option == oppLivingLatexStartTimeOID
-		SetInfoText("How long in minutes do you have to wear the latex before it isn't dormant.\n")
+		SetInfoText("$DCURSES_DESCRIPTION_oppLivingLatexStartTime")
 		Return
 	Endif
 	If option == oppLivingLatexHeavyOID
-		SetInfoText("The latex will bind you with heavy bondage devices.\nWarning: this will happen in combat.")
+		SetInfoText("$DCURSES_DESCRIPTION_oppLivingLatexHeavy")
 		Return
 	Endif
 	If option == oppLivingLatexMoreOID
-		SetInfoText("How frequently in minutes the latex will bind you when active. Set to 0 to disable.\nWarning: this will happen in combat.")
+		SetInfoText("$DCURSES_DESCRIPTION_oppLivingLatexMore")
 		Return
 	Endif
 	If option == oppLivingLatexRequireRemOID
-		SetInfoText("The latex will cling to your other devices, requiring you to remove all of them before it will dissapear.")
+		SetInfoText("$DCURSES_DESCRIPTION_oppLivingLatexRequireRem")
 		Return
 	Endif
 	If option == oppLivingLatexOpenOID
-		SetInfoText("Will replace the default catsuit with the open variant. Will only work if you don't have the device yet.")
+		SetInfoText("$DCURSES_DESCRIPTION_oppLivingLatexOpen")
 		Return
 	Endif
 	If option == useLocationModifiersOID
-		SetInfoText("Weather or not to apply the location modifiers listed below to event chances.")
+		SetInfoText("$DCURSES_DESCRIPTION_useLocationModifiers")
 		Return
 	Endif
 	If option == playerHomeModifierOID
-		SetInfoText("Modifier for events to happen inside of player homes.")
+		SetInfoText("$DCURSES_DESCRIPTION_playerHomeModifier")
 		Return
 	Endif
 	If option == cityModifierOID
-		SetInfoText("Modifier for events to happen inside of walled cities.")
+		SetInfoText("$DCURSES_DESCRIPTION_cityModifier")
 		Return
 	Endif
 	If option == townModifierOID
-		SetInfoText("Modifier for events to happen inside of towns.")
+		SetInfoText("$DCURSES_DESCRIPTION_townModifier")
 		Return
 	Endif
 	If option == banditModifierOID
-		SetInfoText("Modifier for events to happen in or near bandit hideouts.")
+		SetInfoText("$DCURSES_DESCRIPTION_banditModifier")
 		Return
 	Endif
 	If option == draugrModifierOID
-		SetInfoText("Modifier for events to happen in draugr crypts.")
+		SetInfoText("$DCURSES_DESCRIPTION_draugrModifier")
 		Return
 	Endif
 	If option == lockedLocationBypassOID
-		SetInfoText("Locked containers can't have a location modifier less than this setting.\nUseful to make locked containers still trigger traps in cities.")
+		SetInfoText("$DCURSES_DESCRIPTION_lockedLocationBypass")
 		Return
 	Endif
 	If option == theftLocationBypassOID
-		SetInfoText("Stealing from containers can't have a location modifier less than this setting.\nUseful to make stealing from containers still trigger traps in cities.")
+		SetInfoText("$DCURSES_DESCRIPTION_theftLocationBypass")
 		Return
 	Endif
 	If option == dwarvenModifierOID
-		SetInfoText("Modifier for events to happen in dwarven ruins.")
+		SetInfoText("$DCURSES_DESCRIPTION_dwarvenModifier")
 		Return
 	Endif
 	If option == falmerModifierOID
-		SetInfoText("Modifier for events to happen in falmer hives.")
+		SetInfoText("$DCURSES_DESCRIPTION_falmerModifier")
 		Return
 	Endif
 	If option == forswornModifierOID
-		SetInfoText("Modifier for events to happen in forsworn hideouts.")
+		SetInfoText("$DCURSES_DESCRIPTION_forswornModifier")
 		Return
 	Endif
 	If option == vampireModifierOID
-		SetInfoText("Modifier for events to happen in vampire lairs.")
+		SetInfoText("$DCURSES_DESCRIPTION_vampireModifier")
 		Return
 	Endif
 	If option == warlockModifierOID
-		SetInfoText("Modifier for events to happen in warlock lairs.")
+		SetInfoText("$DCURSES_DESCRIPTION_warlockModifier")
 		Return
 	Endif
 	If option == dragonLairModifierOID
-		SetInfoText("Modifier for events to happen in dragon lairs.")
+		SetInfoText("$DCURSES_DESCRIPTION_dragonLairModifier")
 		Return
 	Endif
 	If option == apocryphaModifierOID
-		SetInfoText("Modifier for events to happen in apocrypha.")
+		SetInfoText("$DCURSES_DESCRIPTION_apocryphaModifier")
 		Return
 	Endif
 	If option == wildernessModifierOID
-		SetInfoText("Modifier for events to happen in the wilderness.")
+		SetInfoText("$DCURSES_DESCRIPTION_wildernessModifier")
 		Return
 	Endif
 	If option == enableQuestInteractionsOID
-		SetInfoText("Certain quests may have some additional events tied to them.\n The mod page has more information about each quest.")
+		SetInfoText("$DCURSES_DESCRIPTION_enableQuestInteractions")
 		Return
 	Endif
 	If option == enableQISaarthalOID
-		SetInfoText("The Saarthal event.")
+		SetInfoText("$DCURSES_DESCRIPTION_enableQISaarthal")
+		Return
+	Endif
+	If option == enableQIDwemerMuseumOID
+		SetInfoText("$DCURSES_DESCRIPTION_enableQIDwemerMuseum")
 		Return
 	Endif
 	If option == enableQIMalkoranOID
-		SetInfoText("The Malkoran event.")
+		SetInfoText("$DCURSES_DESCRIPTION_enableQIMalkoran")
 		Return
 	Endif
 	If option == enableQISanguineOID
-		SetInfoText("The Sanguine events.")
+		SetInfoText("$DCURSES_DESCRIPTION_enableQISanguine")
 		Return
 	Endif
 	If option == noMessageBoxesOID
-		SetInfoText("No message boxes will be shown.")
+		SetInfoText("$DCURSES_DESCRIPTION_noMessageBoxes")
 		Return
 	Endif
 	If option == bossChestUseModelPathOID
-		SetInfoText("Use the model of chests to determine if they are a boss chest.\nThere will be a higher chance for non-vanilla chests being marked correctly, but also for some non-boss chests to be treated like one.\nThis includes the models for standard, dwarven, falmer, apocrypha, soul cairn, and snow elf boss chests.")
+		SetInfoText("$DCURSES_DESCRIPTION_bossChestUseModelPath")
 		Return
 	Endif
 	If option == rDeviceBaseChanceOID
-		SetInfoText("Chance to loot a random bondage item from a container or a dead body.")
+		SetInfoText("$DCURSES_DESCRIPTION_rDeviceBaseChance")
 		Return
 	Endif
 	If option == dragonHoardOID
-		SetInfoText("Dragons will drop more gold, but the gold they carry is likely to be cursed.\nWith this enabled some settings might be ignored when looting dragons.")
+		SetInfoText("$DCURSES_DESCRIPTION_dragonHoard")
 		Return
 	Endif
 	If option == bossExtraGoldOID
-		SetInfoText("Boss chests will have extra gold.")
+		SetInfoText("$DCURSES_DESCRIPTION_bossExtraGold")
 		Return
 	Endif
 	If option == useThemesOID
-		SetInfoText("Events that equip the player with devices will try to keep all devices equipped to a consistent theme.\nWARNING: this will increase the time taken to run each event and may cause lag spikes.")
+		SetInfoText("$DCURSES_DESCRIPTION_useThemes")
 		Return
 	Endif
 	If option == enableSlowStripOID
-		SetInfoText("Replace the built in stripping algorithm with the one from sexlab.\nCan fix rare cases of crashing on stripping and also give more control over what gets stripped.")
+		SetInfoText("$DCURSES_DESCRIPTION_enableSlowStrip")
 		Return
 	Endif
 	If option == tatSolventChanceOID
-		SetInfoText("Chance to find universal solvent when looting dead bodies. Universal solvent will remove all lewd marks and tattoos.\nHaving more tattoos will slightly increase the chance of finding one.\nSet to 0 to disable.")
+		SetInfoText("$DCURSES_DESCRIPTION_tatSolventChance")
 		Return
 	Endif
 	If option == resumeEventsOID
-		SetInfoText("Events have been disabled by another mod. Enable this and exit the MCM to re-enable events.")
+		SetInfoText("$DCURSES_DESCRIPTION_resumeEvents")
 		Return
 	Endif
 	If option == setAllDefaultSettingsOID
-		SetInfoText("If you exit the menu with this enabled all settings in the MCM will be reset to default.")
+		SetInfoText("$DCURSES_DESCRIPTION_setAllDefaultSettings")
 		Return
 	Endif
 	If option == consTriggerNudeOID
-		SetInfoText("Chance for a consequence when talking to someone while nude.")
+		SetInfoText("$DCURSES_DESCRIPTION_consTriggerNude")
 		Return
 	Endif
 	If option == consTriggerRestrainedOID
-		SetInfoText("Chance for a consequence when talking to someone while in heavy restraints.")
+		SetInfoText("$DCURSES_DESCRIPTION_consTriggerRestrained")
 		Return
 	Endif
 	If option == consTriggerSexOID
-		SetInfoText("Chance for a consequence after having sex with an actor.\nOnly applied to scenes started by this mod.")
+		SetInfoText("$DCURSES_DESCRIPTION_consTriggerSex")
 		Return
 	Endif
 	If option == consAllowFollowersOID
-		SetInfoText("Talking to or having sex with followers can trigger consequences.")
+		SetInfoText("$DCURSES_DESCRIPTION_consAllowFollowers")
+		Return
+	Endif
+	If option == consAllowCreaturesOID
+		SetInfoText("$DCURSES_DESCRIPTION_consAllowCreatures")
 		Return
 	Endif
 	If option == consUseRelationshipsOID
-		SetInfoText("The relationship rank of the target actor will affect how they treat you. You are less likely to see all consequences except mercy when the relationship is better.")
+		SetInfoText("$DCURSES_DESCRIPTION_consUseRelationships")
 		Return
 	Endif
 	If option == consRelationBondageOID
-		SetInfoText("Your friends want to tie you up so this is affected like mercy when Use Relationships is on.")
+		SetInfoText("$DCURSES_DESCRIPTION_consRelationBondage")
+		Return
+	Endif
+	If option == consFallthroughOID
+		SetInfoText("$DCURSES_DESCRIPTION_consFallthrough")
 		Return
 	Endif
 	If option == consSexWeightOID
-		SetInfoText("Chance for an actor to have sex with the player.")
+		SetInfoText("$DCURSES_DESCRIPTION_consSexWeight")
 		Return
 	Endif
 	If option == consFineWeightOID
-		SetInfoText("Chance for you to receive a fine.")
+		SetInfoText("$DCURSES_DESCRIPTION_consFineWeight")
 		Return
 	Endif
 	If option == consFineAmountOID
-		SetInfoText("How much you will owe.")
+		SetInfoText("$DCURSES_DESCRIPTION_consFineAmount")
 		Return
 	Endif
 	If option == consRandomBondageWeightOID
-		SetInfoText("Chance for a random item to be equipped.")
+		SetInfoText("$DCURSES_DESCRIPTION_consRandomBondageWeight")
 		Return
 	Endif
 	If option == consRandomHeavyBondageOID
-		SetInfoText("Allow for heavy bondage to be equipped.")
+		SetInfoText("$DCURSES_DESCRIPTION_consRandomHeavyBondage")
+		Return
+	Endif
+	If option == consBondageIgnoreMaxOID
+		SetInfoText("$DCURSES_DESCRIPTION_consBondageIgnoreMax")
 		Return
 	Endif
 	If option == consMercyWeightOID
-		SetInfoText("Chance that a character will feel bad for you and unlock a device, give you a key, or give you something moderately useful.")
+		SetInfoText("$DCURSES_DESCRIPTION_consMercyWeight")
 		Return
 	Endif
 	If option == sexEnabledOID
-		SetInfoText("Toggles sex on or off.\nSex will only occur from friendly characters.")
+		SetInfoText("$DCURSES_DESCRIPTION_sexEnabled")
+		Return
+	Endif
+	If option == sexAggressiveAnimsOID
+		SetInfoText("$DCURSES_DESCRIPTION_sexAggressiveAnims")
 		Return
 	Endif
 	If option == sexRandomEnabledOID
-		SetInfoText("Characters that you encounter on your journey might have sex with you!")
+		SetInfoText("$DCURSES_DESCRIPTION_sexRandomEnabled")
 		Return
 	Endif
 	If option == sexCooldownOID
-		SetInfoText("How long after a scene ends before another can trigger.")
+		SetInfoText("$DCURSES_DESCRIPTION_sexCooldown")
 		Return
 	Endif
 	If option == sexChanceOID
-		SetInfoText("How likely a potential actor will have sex with the player.")
+		SetInfoText("$DCURSES_DESCRIPTION_sexChance")
 		Return
 	Endif
 	If option == sexChanceCreatureOID
-		SetInfoText("How likely a potential creature actor will have sex with the player.")
+		SetInfoText("$DCURSES_DESCRIPTION_sexChanceCreature")
 		Return
 	Endif
 	If option == sexBaseArousalOID
-		SetInfoText("Minimum arousal required before modifications.\nSetting this above 100 will require modifications for any sex to occur.")
+		SetInfoText("$DCURSES_DESCRIPTION_sexBaseArousal")
 		Return
 	Endif
 	If option == sexArousalNightModifierOID
-		SetInfoText("Modifier for arousal if it's night.")
+		SetInfoText("$DCURSES_DESCRIPTION_sexArousalNightModifier")
 		Return
 	Endif
 	If option == sexArousalNudeModifierOID
-		SetInfoText("Modifier for arousal if the player is nude.")
+		SetInfoText("$DCURSES_DESCRIPTION_sexArousalNudeModifier")
 		Return
 	Endif
 	If option == sexArousalCollarModifierOID
-		SetInfoText("Modifier for arousal if a collar is worn.")
+		SetInfoText("$DCURSES_DESCRIPTION_sexArousalCollarModifier")
 		Return
 	Endif
 	If option == sexArousalHeavyModifierOID
-		SetInfoText("Modifier for arousal if wearing heavy restraints.")
+		SetInfoText("$DCURSES_DESCRIPTION_sexArousalHeavyModifier")
 		Return
 	Endif
 	If option == sexArousalBlindModifierOID
-		SetInfoText("Modifier for arousal if wearing a blindfold.")
+		SetInfoText("$DCURSES_DESCRIPTION_sexArousalBlindModifier")
 		Return
 	Endif
 	If option == sexArousalBootsModifierOID
-		SetInfoText("Modifier for arousal if wearing restraining boots.")
+		SetInfoText("$DCURSES_DESCRIPTION_sexArousalBootsModifier")
 		Return
 	Endif
 	If option == sexArousalHobbleModifierOID
-		SetInfoText("Modifier for arousal if unable to run.\nThis can be because of a device or being over-encumbered.")
+		SetInfoText("$DCURSES_DESCRIPTION_sexArousalHobbleModifier")
 		Return
 	Endif
 	If option == sexArousalVisibleModifierOID
-		SetInfoText("Modifier for arousal if the player has any visible devices.")
+		SetInfoText("$DCURSES_DESCRIPTION_sexArousalVisibleModifier")
 		Return
 	Endif
 	If option == sexArousalTattooModifierOID
-		SetInfoText("Modifier for arousal for each tattoo the player has.")
+		SetInfoText("$DCURSES_DESCRIPTION_sexArousalTattooModifier")
 		Return
 	Endif
 	If option == sexArousalCreatureModifierOID
-		SetInfoText("Modifier for arousal if the aggressor is a creature.")
+		SetInfoText("$DCURSES_DESCRIPTION_sexArousalCreatureModifier")
 		Return
 	Endif
 	If option == sexArousalFollowerModifierOID
-		SetInfoText("Modifier for arousal if the aggressor is your follower.")
+		SetInfoText("$DCURSES_DESCRIPTION_sexArousalFollowerModifier")
 		Return
 	Endif
 	If option == sexArousalSpouseModifierOID
-		SetInfoText("Modifier for arousal if the aggressor is your spouse.")
+		SetInfoText("$DCURSES_DESCRIPTION_sexArousalSpouseModifier")
 		Return
 	Endif
 	If option == sexArousalSummonModifierOID
-		SetInfoText("Modifier for arousal if the aggressor is your summon.")
+		SetInfoText("$DCURSES_DESCRIPTION_sexArousalSummonModifier")
 		Return
 	Endif
 	If option == sexSearchRadiusOID
-		SetInfoText("How far away can actors be from the player.")
+		SetInfoText("$DCURSES_DESCRIPTION_sexSearchRadius")
 		Return
 	Endif
 	If option == sexSearchIntervalOID
-		SetInfoText("How often the actor search happens.")
+		SetInfoText("$DCURSES_DESCRIPTION_sexSearchInterval")
 		Return
 	Endif
 	If option == sexAllowMaleOID
-		SetInfoText("Male actors will be allowed.")
+		SetInfoText("$DCURSES_DESCRIPTION_sexAllowMale")
 		Return
 	Endif
 	If option == sexAllowFemaleOID
-		SetInfoText("Female actors will be allowed.")
+		SetInfoText("$DCURSES_DESCRIPTION_sexAllowFemale")
 		Return
 	Endif
 	If option == sexAllowFutaOID
-		SetInfoText("Futa actors will be allowed.\nFuta actors have a female body while being defined as male in sexlab.")
+		SetInfoText("$DCURSES_DESCRIPTION_sexAllowFuta")
 		Return
 	Endif
 	If option == sexAllowCreatureOID
-		SetInfoText("Creature actors will be allowed.")
+		SetInfoText("$DCURSES_DESCRIPTION_sexAllowCreature")
+		Return
+	Endif
+	If option == sexAllowFarmAnimalsOID
+		SetInfoText("$DCURSES_DESCRIPTION_sexAllowFarmAnimals")
 		Return
 	Endif
 	If option == sexRequireAllOID
-		SetInfoText("If set sex will only happen if every requirement below is met.\nIf unset sex will happen if any requirement is met.")
+		SetInfoText("$DCURSES_DESCRIPTION_sexRequireAll")
 		Return
 	Endif
 	If option == sexRequireBindingsOID
-		SetInfoText("Will allow sex if the player has visible restraints.")
+		SetInfoText("$DCURSES_DESCRIPTION_sexRequireBindings")
 		Return
 	Endif
 	If option == sexRequireCollarOID
-		SetInfoText("Will allow sex if the player is wearing a collar.")
+		SetInfoText("$DCURSES_DESCRIPTION_sexRequireCollar")
 		Return
 	Endif
 	If option == sexRequireHeavyOID
-		SetInfoText("Will allow sex if the player is wearing heavy restraints.")
+		SetInfoText("$DCURSES_DESCRIPTION_sexRequireHeavy")
 		Return
 	Endif
 	If option == sexRequireNudeOID
-		SetInfoText("Will allow sex if the player is naked.")
+		SetInfoText("$DCURSES_DESCRIPTION_sexRequireNude")
 		Return
 	Endif
 	If option == sexRequiredPlayerArousalOID
-		SetInfoText("Will allow sex if the player's arousal is above the set number.\nSet to 0 to ignore player arousal.")
+		SetInfoText("$DCURSES_DESCRIPTION_sexRequiredPlayerArousal")
 		Return
 	Endif
 	If option == sexRequiredPlayerTattoosOID
-		SetInfoText("Will allow sex if the player has at least this many tattoos.\nSet to 0 to ignore player tattoos.")
+		SetInfoText("$DCURSES_DESCRIPTION_sexRequiredPlayerTattoos")
 		Return
 	Endif
 	If option == sexAlwaysAllowFollowersOID
-		SetInfoText("Followers ignore requirements above.")
+		SetInfoText("$DCURSES_DESCRIPTION_sexAlwaysAllowFollowers")
 		Return
 	Endif
 	If option == sexAlwaysAllowSpouseOID
-		SetInfoText("Your spouse will ignore requirements above.")
+		SetInfoText("$DCURSES_DESCRIPTION_sexAlwaysAllowSpouse")
 		Return
 	Endif
 	If option == sexAlwaysAllowSummonsOID
-		SetInfoText("Your summons will ignore requirements above.")
+		SetInfoText("$DCURSES_DESCRIPTION_sexAlwaysAllowSummons")
 		Return
 	Endif
 	If option == sexChanceFollowerOID
-		SetInfoText("How likely a follower will have sex with the player.\nSet to -1 to use global chance.")
+		SetInfoText("$DCURSES_DESCRIPTION_sexChanceFollower")
 		Return
 	Endif
 	If option == sexChanceSpouseOID
-		SetInfoText("How likely a player's spouse will have sex with them.\nSet to -1 to use global chance.")
+		SetInfoText("$DCURSES_DESCRIPTION_sexChanceSpouse")
 		Return
 	Endif
 	If option == sexChanceSummonOID
-		SetInfoText("How likely a player's summon will have sex with them.\nSet to -1 to use global creature chance.")
+		SetInfoText("$DCURSES_DESCRIPTION_sexChanceSummon")
 		Return
 	Endif
 EndEvent
@@ -1703,6 +1796,16 @@ Event OnOptionSelect(int option)
 		SetToggleOptionValue(oppSCollarDrainsMagickaOID, oppSCollarDrainsMagicka)
 		Return
 	Endif
+	If option == oppDwarvenHeavyRestraintOID
+		oppDwarvenHeavyRestraint = !oppDwarvenHeavyRestraint
+		SetToggleOptionValue(oppDwarvenHeavyRestraintOID, oppDwarvenHeavyRestraint)
+		Return
+	Endif
+	If option == oppDwarvenRequireLocOID
+		oppDwarvenRequireLoc = !oppDwarvenRequireLoc
+		SetToggleOptionValue(oppDwarvenRequireLocOID, oppDwarvenRequireLoc)
+		Return
+	Endif
 	If option == oppLivingLatexHeavyOID
 		oppLivingLatexHeavy = !oppLivingLatexHeavy
 		SetToggleOptionValue(oppLivingLatexHeavyOID, oppLivingLatexHeavy)
@@ -1731,6 +1834,11 @@ Event OnOptionSelect(int option)
 	If option == enableQISaarthalOID
 		enableQISaarthal = !enableQISaarthal
 		SetToggleOptionValue(enableQISaarthalOID, enableQISaarthal)
+		Return
+	Endif
+	If option == enableQIDwemerMuseumOID
+		enableQIDwemerMuseum = !enableQIDwemerMuseum
+		SetToggleOptionValue(enableQIDwemerMuseumOID, enableQIDwemerMuseum)
 		Return
 	Endif
 	If option == enableQIMalkoranOID
@@ -1788,6 +1896,11 @@ Event OnOptionSelect(int option)
 		SetToggleOptionValue(consAllowFollowersOID, consAllowFollowers)
 		Return
 	Endif
+	If option == consAllowCreaturesOID
+		consAllowCreatures = !consAllowCreatures
+		SetToggleOptionValue(consAllowCreaturesOID, consAllowCreatures)
+		Return
+	Endif
 	If option == consUseRelationshipsOID
 		consUseRelationships = !consUseRelationships
 		SetToggleOptionValue(consUseRelationshipsOID, consUseRelationships)
@@ -1798,15 +1911,30 @@ Event OnOptionSelect(int option)
 		SetToggleOptionValue(consRelationBondageOID, consRelationBondage)
 		Return
 	Endif
+	If option == consFallthroughOID
+		consFallthrough = !consFallthrough
+		SetToggleOptionValue(consFallthroughOID, consFallthrough)
+		Return
+	Endif
 	If option == consRandomHeavyBondageOID
 		consRandomHeavyBondage = !consRandomHeavyBondage
 		SetToggleOptionValue(consRandomHeavyBondageOID, consRandomHeavyBondage)
+		Return
+	Endif
+	If option == consBondageIgnoreMaxOID
+		consBondageIgnoreMax = !consBondageIgnoreMax
+		SetToggleOptionValue(consBondageIgnoreMaxOID, consBondageIgnoreMax)
 		Return
 	Endif
 	If option == sexEnabledOID
 		sexEnabled = !sexEnabled
 		SetToggleOptionValue(sexEnabledOID, sexEnabled)
 		ForcePageReset()
+		Return
+	Endif
+	If option == sexAggressiveAnimsOID
+		sexAggressiveAnims = !sexAggressiveAnims
+		SetToggleOptionValue(sexAggressiveAnimsOID, sexAggressiveAnims)
 		Return
 	Endif
 	If option == sexRandomEnabledOID
@@ -1833,6 +1961,11 @@ Event OnOptionSelect(int option)
 	If option == sexAllowCreatureOID
 		sexAllowCreature = !sexAllowCreature
 		SetToggleOptionValue(sexAllowCreatureOID, sexAllowCreature)
+		Return
+	Endif
+	If option == sexAllowFarmAnimalsOID
+		sexAllowFarmAnimals = !sexAllowFarmAnimals
+		SetToggleOptionValue(sexAllowFarmAnimalsOID, sexAllowFarmAnimals)
 		Return
 	Endif
 	If option == sexRequireAllOID
@@ -2179,6 +2312,20 @@ Event OnOptionSliderOpen(int option)
 		SetSliderDialogInterval(1)
 		Return
 	Endif
+	If option == minKeysLootedOID
+		SetSliderDialogStartValue(minKeysLooted)
+		SetSliderDialogDefaultValue(1)
+		SetSliderDialogRange(1, 10)
+		SetSliderDialogInterval(1)
+		Return
+	Endif
+	If option == maxKeysLootedOID
+		SetSliderDialogStartValue(maxKeysLooted)
+		SetSliderDialogDefaultValue(1)
+		SetSliderDialogRange(1, 10)
+		SetSliderDialogInterval(1)
+		Return
+	Endif
 	If option == maxHeldKeysOID
 		SetSliderDialogStartValue(maxHeldKeys)
 		SetSliderDialogDefaultValue(3)
@@ -2393,6 +2540,27 @@ Event OnOptionSliderOpen(int option)
 		SetSliderDialogStartValue(oppSMinSummonArousal)
 		SetSliderDialogDefaultValue(90)
 		SetSliderDialogRange(0, 100)
+		SetSliderDialogInterval(1)
+		Return
+	Endif
+	If option == oppDwarvenCuirassWeightOID
+		SetSliderDialogStartValue(oppDwarvenCuirassWeight)
+		SetSliderDialogDefaultValue(15)
+		SetSliderDialogRange(1, 500)
+		SetSliderDialogInterval(1)
+		Return
+	Endif
+	If option == oppDwarvenValueNeededOID
+		SetSliderDialogStartValue(oppDwarvenValueNeeded)
+		SetSliderDialogDefaultValue(200)
+		SetSliderDialogRange(30, 2000)
+		SetSliderDialogInterval(10)
+		Return
+	Endif
+	If option == oppDwarvenArousalOID
+		SetSliderDialogStartValue(oppDwarvenArousal)
+		SetSliderDialogDefaultValue(25)
+		SetSliderDialogRange(10, 100)
 		SetSliderDialogInterval(1)
 		Return
 	Endif
@@ -2699,7 +2867,7 @@ Event OnOptionSliderOpen(int option)
 	Endif
 	If option == eventContraptionTimeOID
 		SetSliderDialogStartValue(eventContraptionTime)
-		SetSliderDialogDefaultValue(0.0)
+		SetSliderDialogDefaultValue(4.0)
 		SetSliderDialogRange(0, 24)
 		SetSliderDialogInterval(0.1)
 		Return
@@ -3148,6 +3316,18 @@ Event OnOptionSliderAccept(int option, float value)
 		
 		Return
 	Endif
+	If option == minKeysLootedOID
+		minKeysLooted = value as int
+		SetSliderOptionValue(option, value, "{0}")
+		
+		Return
+	Endif
+	If option == maxKeysLootedOID
+		maxKeysLooted = value as int
+		SetSliderOptionValue(option, value, "{0}")
+		
+		Return
+	Endif
 	If option == maxHeldKeysOID
 		maxHeldKeys = value as int
 		SetSliderOptionValue(option, value, "{0}")
@@ -3331,6 +3511,24 @@ Event OnOptionSliderAccept(int option, float value)
 	Endif
 	If option == oppSMinSummonArousalOID
 		oppSMinSummonArousal = value as int
+		SetSliderOptionValue(option, value, "{0}")
+		
+		Return
+	Endif
+	If option == oppDwarvenCuirassWeightOID
+		oppDwarvenCuirassWeight = value as int
+		SetSliderOptionValue(option, value, "{0}")
+		
+		Return
+	Endif
+	If option == oppDwarvenValueNeededOID
+		oppDwarvenValueNeeded = value as int
+		SetSliderOptionValue(option, value, "{0}")
+		
+		Return
+	Endif
+	If option == oppDwarvenArousalOID
+		oppDwarvenArousal = value as int
 		SetSliderOptionValue(option, value, "{0}")
 		
 		Return

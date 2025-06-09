@@ -4,6 +4,7 @@
 #include <string>
 #include <ranges>
 #include <cctype>
+#include <numeric>
 
 using namespace SKSE;
 
@@ -13,8 +14,8 @@ namespace DCURSES {
 			if (min >= max) {
 				return min;
 			}
-			auto seed1 = (unsigned int)std::chrono::system_clock::now().time_since_epoch().count();
-			std::mt19937 e2(seed1);
+			std::random_device rd;
+			std::mt19937 e2(rd());
 			std::uniform_real_distribution<> dist(min, max);
 			double x = dist(e2);
 			//log::trace("random: {}", x);
@@ -31,8 +32,8 @@ namespace DCURSES {
 			if (min >= max) {
 				return min;
 			}
-			auto seed1 = (unsigned int)std::chrono::system_clock::now().time_since_epoch().count();
-			std::mt19937 e2(seed1);
+			std::random_device rd;
+			std::mt19937 e2(rd());
 			std::uniform_real_distribution<float> dist(min, max);
 			float x = dist(e2);
 			//log::trace("random: {}", x);
@@ -43,8 +44,8 @@ namespace DCURSES {
 			if (min >= max) {
 				return min;
 			}
-			auto seed1 = (unsigned int)std::chrono::system_clock::now().time_since_epoch().count();
-			std::mt19937 e2(seed1);
+			std::random_device rd;
+			std::mt19937 e2(rd());
 			std::uniform_int_distribution<> dist(min, max);
 			int x = dist(e2);
 			//log::trace("random: {}", x);
@@ -62,6 +63,21 @@ namespace DCURSES {
 			auto seed1 = (unsigned int)std::chrono::system_clock::now().time_since_epoch().count();
 			std::mt19937 e2(seed1);
 			std::shuffle(vector.begin(), vector.end(), e2);
+		}
+
+		template<class T>
+		std::pair<T, double> VectorSelectWeighted(std::vector<std::pair<T, double>> vector) {
+			std::vector<double> weights;
+			weights.reserve(vector.size());
+
+			for (auto [a, b] : vector) {
+				weights.push_back(b);
+			}
+
+			std::random_device rd;
+			std::mt19937 e2(rd());
+			std::discrete_distribution<size_t> d(weights.begin(), weights.end());
+			return vector[d(e2)];
 		}
 
 		int ColorScale(int color, double mult) {
@@ -126,6 +142,12 @@ namespace DCURSES {
 		std::string tolower(std::string string) {
 			std::transform(string.begin(), string.end(), string.begin(),
 				[](unsigned char c) { return (char)std::tolower(c); });
+			return string;
+		}
+
+		std::string toupper(std::string string) {
+			std::transform(string.begin(), string.end(), string.begin(),
+				[](unsigned char c) { return (char)std::toupper(c); });
 			return string;
 		}
 

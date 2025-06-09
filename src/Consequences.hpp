@@ -5,20 +5,7 @@
 
 namespace DCURSES {
 
-	std::string GetPronoun(RE::Actor* actor, std::string format) {
-		if (!actor) return "ERROR BAD ACTOR";
-
-		auto sex = static_cast<int32_t>(actor->GetActorBase()->GetSex());
-
-		if (format == "herself") {
-			return sex == 0 ? "himself" : "herself";
-		}
-		else if (format == "she") {
-			return sex == 0 ? "he" : "she";
-		}
-		log::error("Could not match pronoun for actor {} with format {}", actor->GetName(), format);
-		return "ERROR ON PRONOUN";
-	}
+	bool ActorIsCreature(RE::Actor* actor);
 
 	RE::Actor* GetClosestActor(RE::Actor* target) {
 		if (!target) return nullptr;
@@ -57,7 +44,10 @@ namespace DCURSES {
 		if (!actor) return false;
 
 		auto player = RE::PlayerCharacter::GetSingleton();
-		if (GetWornDeviceCount(player) > settings.restraintCap) {
+		auto deviceCount = GetWornDeviceCount(player);
+
+		log::trace("Attempting Device Consequence.");
+		if (deviceCount > settings.restraintCap && !settings.consBondageIgnoreMax) {
 			return false;
 		}
 		std::vector<std::string> skip = GetKeywordsCantEquip(player);
@@ -69,10 +59,12 @@ namespace DCURSES {
 			auto equip = item.value();
 			LockDevice(player, equip.inv);
 			if (source == consequenceSource::kSex) {
-				PlayerMessage(fmt::format("Now that {} is done with you, {} forces a {} on you before you can react!", actor->GetName(), GetPronoun(actor, "she"), equip.inv->GetName()));
+				//PlayerMessage(fmt::format("Now that {} is done with you, they force a {} on you before you can react!", actor->GetName(), equip.inv->GetName()));
+				PlayerMessage(Translator(Translation::ConsequenceRandomDeviceSex, actor->GetName(), equip.inv->GetName()));
 			}
 			else {
-				PlayerMessage(fmt::format("Before you can talk to {} {} forces a {} on you before you can react!", actor->GetName(), GetPronoun(actor, "she"), equip.inv->GetName()));
+				//PlayerMessage(fmt::format("Before you can talk to {} they force a {} on you before you can react!", actor->GetName(), equip.inv->GetName()));
+				PlayerMessage(Translator(Translation::ConsequenceRandomDeviceTalk, actor->GetName(), equip.inv->GetName()));
 			}
 			return true;
 		}
@@ -83,16 +75,24 @@ namespace DCURSES {
 	int GetDeviceMask(RE::Actor* actor);
 
 	bool ConsSex(RE::Actor* actor, consequenceSource source) {
-		if (!actor) return false;
+		auto mask = GetDeviceMask(RE::PlayerCharacter::GetSingleton());
 
-		if ((GetDeviceMask(RE::PlayerCharacter::GetSingleton()) & 0b0111) != 0 && SexActorFilter(actor)) {
+		log::trace("Attempting Sex Consequence. Mask: {:04b}", mask);
+
+		if (!actor || !settings.sexEnabled) return false;
+
+		if ((mask & 0b0111) != 0 && SexActorFilter(actor)) {
 			if (source == consequenceSource::kSex) {
-				StartSex(actor);
-				PlayerMessage(fmt::format("{} wasn't satisfied with your performance and goes in for another round!", actor->GetName()));
+				StartSex(actor, settings.sexAggressiveAnims);
+				AIEventStartSex(actor);
+				//PlayerMessage(fmt::format("{} wasn't satisfied with your performance and goes in for another round!", actor->GetName()));
+				PlayerMessage(Translator(Translation::ConsequenceSexContinue, actor->GetName()));
 			}
 			else {
-				StartSex(actor);
-				PlayerMessage(fmt::format("Before you can talk to {} {} grabs you and takes of your clothes!", actor->GetName(), GetPronoun(actor, "she")));
+				StartSex(actor, settings.sexAggressiveAnims);
+				AIEventStartSex(actor);
+				//PlayerMessage(fmt::format("Before you can talk to {} they grab you and takes of your clothes!", actor->GetName()));
+				PlayerMessage(Translator(Translation::ConsequenceSexTalk, actor->GetName()));
 			}
 			return true;
 		}
@@ -102,66 +102,79 @@ namespace DCURSES {
 	bool ConsFine(RE::Actor* actor, consequenceSource source) {
 		if (!actor) return false;
 
-		auto targetPosition = actor->GetPosition();
+		auto targetLocation = actor->GetCurrentLocation();
 
-		RE::Actor* guard = nullptr;
-		if (const auto processLists = RE::ProcessLists::GetSingleton(); processLists) {
+		bool isGuardNearby = false;
+		if (targetLocation && (targetLocation->HasKeywordString("LocTypeCity") || targetLocation->HasKeywordString("LocTypeCastle") || targetLocation->HasKeywordString("LocTypeTemple") || targetLocation->HasKeywordString("LocTypeInn") || targetLocation->HasKeywordString("LocTypeHouse") || targetLocation->HasKeywordString("LocTypeTown") || targetLocation->HasKeywordString("LocTypeHabitation") || targetLocation->HasKeywordString("LocTypeDwelling"))) {
+			isGuardNearby = true;
+		}
+
+		RE::TESFaction* crimeFaction = nullptr;
+		while (crimeFaction == nullptr && targetLocation != nullptr) {
+			crimeFaction = targetLocation->unreportedCrimeFaction;
+			targetLocation = targetLocation->parentLoc;
+		}
+
+		if (const auto processLists = RE::ProcessLists::GetSingleton(); processLists && !isGuardNearby) {
 			RE::BSSimpleList<RE::ActorHandle>* arr = &(processLists->aliveActorList);
 			if (arr) {
 				for (auto& actorHandle : *arr) {
 					auto actorPtr = actorHandle.get();
 					auto actor_g = actorPtr.get();
-					if (actor_g) {
-					}
 					if (actor_g && actor_g != RE::PlayerCharacter::GetSingleton() && actor_g->Is3DLoaded() && !actor_g->IsDead() && std::string(actor_g->GetName()).find("Guard") != std::string::npos && actor_g->GetCrimeFaction()) {
-						guard = actor_g;
+						crimeFaction = actor_g->GetCrimeFaction();
+						isGuardNearby = true;
 						break;
 					}
 				}
 			}
 		}
-		if (!guard) {
-			log::trace("No guard nearby");
-			return false;
-		}
-		auto faction = guard->GetCrimeFaction();
 
-		if (faction) {
-			RE::PlayerCharacter::GetSingleton()->ModCrimeGoldValue(faction, false, settings.consFineAmount);
+		log::trace("Attempting Fine Consequence: {}, {}", isGuardNearby, crimeFaction ? Util::GetFormEditorId(crimeFaction) : "No Crime Faction");
+
+		if (crimeFaction && isGuardNearby) {
+			RE::PlayerCharacter::GetSingleton()->ModCrimeGoldValue(crimeFaction, false, settings.consFineAmount);
 			if (source == consequenceSource::kSex) {
-				PlayerMessage(fmt::format("Someone saw you having sex with {} and reported you to the guard!", actor->GetName()));
+				//PlayerMessage(fmt::format("Someone saw you having sex with {} and reported you to the guard!", actor->GetName()));
+				PlayerMessage(Translator(Translation::ConsequenceFineSex, actor->GetName()));
 			}
 			else {
-				PlayerMessage(fmt::format("Before you can talk to {} {} calls a guard and reports you!", actor->GetName(), GetPronoun(actor, "she")));
+				//PlayerMessage(fmt::format("Before you can talk to {} they call a guard and report you!", actor->GetName()));
+				PlayerMessage(Translator(Translation::ConsequenceFineTalk, actor->GetName()));
 			}
+			return true;
 		}
-		return true;
+		return false;
 	}
 
 	bool ConsMercy(RE::Actor* actor, consequenceSource source) {
 		if (!actor) return false;
 
+		log::trace("Attempting Mercy Consequence.");
+
 		auto player = RE::PlayerCharacter::GetSingleton();
 
 		auto heavy = GetWornInventoryDeviceByKeyword(player, "zad_DeviousHeavyBondage");
-		if (heavy && !(source == consequenceSource::kSex)) {
+		if (heavy && DeviceInventoryIsGeneric(heavy) && !(source == consequenceSource::kSex)) {
 			UnlockDevice(player, heavy);
-			PlayerMessage(fmt::format("{} feels bad for you and unlocks your restraints.", actor->GetName()));
+			//PlayerMessage(fmt::format("{} feels bad for you and unlocks your restraints.", actor->GetName()));
+			PlayerMessage(Translator(Translation::ConsequenceMercyUnlock, actor->GetName()));
 			return true;
 		}
 
-		auto key = GenerateKeys(player, true);
-		if (key) {
-			PlayerMessage(fmt::format("{} feels bad for you and gives you a {}.", actor->GetName(), key->GetName()));
+		auto deviceCount = numDevicesVisible(player);
+		auto keys = GenerateKeys(player, true, true);
+		if (keys.size() > 0 && deviceCount > 0) {
+			//PlayerMessage(fmt::format("{} feels bad for you and gives you a {}.", actor->GetName(), keys[0]->GetName()));
+			PlayerMessage(Translator(Translation::ConsequenceMercyKey, actor->GetName()));
 			return true;
 		}
 
-		if (numDevicesVisible(player) == 0) {
-			auto dev = GetRandomDevice(&devices.anything, GetKeywordsCantEquip(player));
-			if (dev) {
-				player->AddObjectToContainer((RE::TESBoundObject*)dev.value().inv, nullptr, 1, nullptr);
-			}
-			PlayerMessage(fmt::format("{} thinks you look bored and gives you a {}.", actor->GetName(), dev.value().inv->GetName()));
+		auto dev = GetRandomDevice(&devices.anything);
+		if (dev) {
+			player->AddObjectToContainer((RE::TESBoundObject*)dev.value().inv, nullptr, 1, nullptr);
+			//PlayerMessage(fmt::format("{} thinks you look bored and gives you a {}.", actor->GetName(), dev.value().inv->GetName()));
+			PlayerMessage(Translator(Translation::ConsequenceMercyDevice, actor->GetName()));
 		}
 		return true;
 	}
@@ -170,6 +183,10 @@ namespace DCURSES {
 		if (!actor) return false;
 
 		if (actor->IsPlayerTeammate() && !settings.consAllowFollowers) {
+			return false;
+		}
+
+		if (ActorIsCreature(actor) && !settings.consAllowCreatures) {
 			return false;
 		}
 
@@ -198,8 +215,6 @@ namespace DCURSES {
 
 		double weightTotal = consFineWeight + consRandomBondageWeight + consSexWeight + consMercyWeight;
 		if (weightTotal <= 0.0) return false;
-		
-		double r = Util::randomDouble(weightTotal);
 
 		std::vector<std::pair<bool (*)(RE::Actor* actor, consequenceSource source), double>> consequences;
 		consequences.push_back(std::make_pair(ConsFine, consFineWeight));
@@ -209,19 +224,15 @@ namespace DCURSES {
 
 		Util::ShuffleVector(consequences);
 
-		for (size_t i = 0; i < consequences.size(); i++) {
-			auto pair = consequences[i];
-			if (r < pair.second) {
-				if (pair.first(actor, source)) {
-					return true;
-				}
-				else {
-					return false;
-				}
+		while (!consequences.empty()) {
+			auto pair = Util::VectorSelectWeighted(consequences);
+			if (pair.first(actor, source)) {
+				return true;
 			}
-			else {
-				r -= pair.second;
+			else if (!settings.consFallthrough) {
+				return false;
 			}
+			consequences.erase(std::remove(consequences.begin(), consequences.end(), pair), consequences.end());
 		}
 		return false;
 	}
@@ -238,7 +249,7 @@ namespace DCURSES {
 		DecrementCounterForMark(MARK::TAT_NUDITY);
 		auto body = player->GetWornArmor((RE::BIPED_MODEL::BipedObjectSlot::kBody));
 		if (body == nullptr || body->HasKeywordString("zad_Lockable")) {
-			if (Util::randomDouble() < settings.consTriggerNude) {
+			if (Util::randomDouble() <= settings.consTriggerNude) {
 				log::trace("Nude Trigger");
 				if (DoConsequence(actor, consequenceSource::kNude)) {
 					//actor->EndDialogue();

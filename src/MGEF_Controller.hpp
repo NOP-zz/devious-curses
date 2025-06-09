@@ -78,13 +78,13 @@ namespace DCURSES {
 		}
 	}
 
-	void SetEffectDescription(uint32_t effect_formid, std::string desc) {
+	void SetEffectDescription(uint32_t effect_formid, Translator trans) {
+		auto desc = trans.GetTranslation();
 		auto effect = StaticDataHolder::GetSingleton()->LookupForm<RE::EffectSetting>(effect_formid, "Devious Curses.esp");
 		if (!effect) {
 			log::warn("No EffectSetting for id {:x}", effect_formid);
 			return;
 		}
-
 		effect->magicItemDescription = desc;
 	}
 
