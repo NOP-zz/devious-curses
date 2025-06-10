@@ -87,7 +87,7 @@ namespace DCURSES {
 	bool OppDwarvenCuirassEvent(std::string containerName) {
 		auto player = RE::PlayerCharacter::GetSingleton();
 
-		if (settings.oppDwarvenRequireLoc && !player->GetCurrentLocation()->HasKeywordString("LocTypeDwarvenAutomatons")) {
+		if (settings.oppDwarvenRequireLoc && player->GetCurrentLocation() && !player->GetCurrentLocation()->HasKeywordString("LocTypeDwarvenAutomatons")) {
 			return false;
 		}
 
