@@ -277,7 +277,7 @@ namespace DCURSES {
 						}
 					}
 					tokenPrint += (char)0;
-					log::warn("{} MCM translation missing key {} ({})", languageString, tokenPrint);
+					log::warn("{} MCM translation missing key {}", languageString, tokenPrint);
 					out << value << '\n';
 				}
 			}

@@ -188,20 +188,60 @@ namespace DCURSES {
 		return false;
 	}
 
+	uint32_t GetOppDeviceMask() {
+		uint32_t isWearingSummonerCollar = 0;
+		uint32_t isWearingLatex = 0;
+		uint32_t isWearingDwarven = 0;
+
+		RE::TESObjectARMO* summoner_collar = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(SUMMONER_COLLAR, "Devious Curses.esp");
+		RE::TESObjectARMO* summoner_collar_r = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(SUMMONER_COLLAR, "Devious Curses.esp");
+		RE::TESObjectARMO* latex = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(LIVING_LATEX, "Devious Curses.esp");
+		RE::TESObjectARMO* latex_r = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(LIVING_LATEX, "Devious Curses.esp");
+		RE::TESObjectARMO* latex_open = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(LIVING_LATEX_OPEN, "Devious Curses.esp");
+		RE::TESObjectARMO* latex_open_r = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(LIVING_LATEX_OPEN, "Devious Curses.esp");
+		RE::TESObjectARMO* dwarven_cuirass = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(DWARVEN_CURIAS, "Devious Curses.esp");
+		RE::TESObjectARMO* dwarven_cuirass_r = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(DWARVEN_CURIAS, "Devious Curses.esp");
+		RE::TESObjectARMO* dwarven_heavy = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(DWARVEN_CURIAS_HEAVY, "Devious Curses.esp");
+		RE::TESObjectARMO* dwarven_heavy_r = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(DWARVEN_CURIAS_HEAVY, "Devious Curses.esp");
+
+		auto playerInventory = RE::PlayerCharacter::GetSingleton()->GetInventory();
+		for (auto const& [k, v] : playerInventory) {
+			RE::TESObjectARMO* armor = k->As<RE::TESObjectARMO>();
+			if (armor && v.second->IsWorn()) {
+				if (armor == summoner_collar || armor == summoner_collar_r) {
+					isWearingSummonerCollar = 1;
+				}
+				if (armor == latex || armor == latex_r || armor == latex_open || armor == latex_open_r) {
+					isWearingLatex = 1;
+				}
+				if (armor == dwarven_cuirass || armor == dwarven_cuirass_r || armor == dwarven_heavy || armor == dwarven_heavy_r) {
+					isWearingDwarven = 1;
+				}
+			}
+		}
+
+		return isWearingSummonerCollar | isWearingLatex << 1 | isWearingDwarven << 2;
+	}
+
+	bool IsWearingOppLatex(uint32_t device_mask = UINT32_MAX) {
+		if (device_mask == UINT32_MAX) {
+			device_mask = GetOppDeviceMask();
+		}
+		return device_mask & 0b0010;
+	}
+
 	void OppDeviceOnMagicHitEvent(const RE::TESMagicEffectApplyEvent* magicEvent) {
 		auto player = RE::PlayerCharacter::GetSingleton();
 
 		//Living Latex
 		auto effect = RE::TESForm::LookupByID(magicEvent->magicEffect)->As<RE::EffectSetting>();
 		if (effect &&
+			magicEvent->target.get() && magicEvent->target.get()->formID == player->formID &&
 			(effect->HasArchetype(RE::EffectSetting::Archetype::kValueModifier) || effect->HasArchetype(RE::EffectSetting::Archetype::kDualValueModifier)) &&
 			effect->IsDetrimental() &&
 			(effect->data.primaryAV == RE::ActorValue::kHealth || effect->data.secondaryAV == RE::ActorValue::kHealth)) {
 			if (effect->data.resistVariable == RE::ActorValue::kResistShock || Util::FormEditorIdContains(effect, "traprunelightning")) {
-				RE::TESObjectARMO* latex = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(LIVING_LATEX, "Devious Curses.esp");
-				RE::TESObjectARMO* latex_open = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(LIVING_LATEX_OPEN, "Devious Curses.esp");
-				bool isWearingLatex = ActorIsWearingDevice(player, latex) || ActorIsWearingDevice(player, latex_open);
-				if (isWearingLatex && oppdCounters.livingLatexCounter == 2) {
+				if (IsWearingOppLatex() && oppdCounters.livingLatexCounter == 2) {
 					std::vector<std::string> skips;
 					if (!settings.oppLivingLatexHeavy) {
 						skips.push_back("zad_DeviousHeavyBondage");
@@ -221,37 +261,17 @@ namespace DCURSES {
 		if (counters.clock_GlobalTicker % ODEVICE_TICK == 0) {
 			auto player = RE::PlayerCharacter::GetSingleton();
 
-			RE::TESObjectARMO* summoner_collar = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(SUMMONER_COLLAR, "Devious Curses.esp");
-			RE::TESObjectARMO* summoner_collar_r = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(SUMMONER_COLLAR, "Devious Curses.esp");
 			RE::TESKey* summoner_collar_key = StaticDataHolder::GetSingleton()->LookupForm<RE::TESKey>(SUMMONER_COLLAR_KEY, "Devious Curses.esp");
 			RE::TESObjectARMO* latex = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(LIVING_LATEX, "Devious Curses.esp");
-			RE::TESObjectARMO* latex_r = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(LIVING_LATEX, "Devious Curses.esp");
 			RE::TESObjectARMO* latex_open = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(LIVING_LATEX_OPEN, "Devious Curses.esp");
-			RE::TESObjectARMO* latex_open_r = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(LIVING_LATEX_OPEN, "Devious Curses.esp");
 			RE::TESObjectARMO* dwarven_cuirass = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(DWARVEN_CURIAS, "Devious Curses.esp");
-			RE::TESObjectARMO* dwarven_cuirass_r = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(DWARVEN_CURIAS, "Devious Curses.esp");
 			RE::TESObjectARMO* dwarven_heavy = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(DWARVEN_CURIAS_HEAVY, "Devious Curses.esp");
-			RE::TESObjectARMO* dwarven_heavy_r = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(DWARVEN_CURIAS_HEAVY, "Devious Curses.esp");
 
-			bool isWearingSummonerCollar = false;
-			bool isWearingLatex = false;
-			bool isWearingDwarven = false;
+			auto oppDeviceMask = GetOppDeviceMask();
 
-			auto playerInventory = player->GetInventory();
-			for (auto const& [k, v] : playerInventory) {
-				RE::TESObjectARMO* armor = k->As<RE::TESObjectARMO>();
-				if (armor) {
-					if (armor == summoner_collar || armor == summoner_collar_r) {
-						isWearingSummonerCollar = true;
-					}
-					if (armor == latex || armor == latex_r || armor == latex_open || armor == latex_open_r) {
-						isWearingLatex = true;
-					}
-					if (armor == dwarven_cuirass || armor == dwarven_cuirass_r || armor == dwarven_heavy || armor == dwarven_heavy_r) {
-						isWearingDwarven = true;
-					}
-				}
-			}
+			bool isWearingSummonerCollar = oppDeviceMask & 0b0001;
+			bool isWearingLatex = oppDeviceMask & 0b0010;
+			bool isWearingDwarven = oppDeviceMask & 0b0100;
 
 			if (isWearingSummonerCollar && oppdCounters.summonCollarCounter == INT64_MIN) {
 				log::trace("Reseting summoner collar counter.");
@@ -376,6 +396,7 @@ namespace DCURSES {
 				RE::TESObjectARMO* plugA = nullptr;
 				RE::TESObjectARMO* plugV = nullptr;
 				RE::TESObjectARMO* collar = nullptr;
+				auto playerInventory = player->GetInventory();
 				for (auto const& [k, v] : playerInventory) {
 					if (v.second.get()->IsWorn()) {
 						RE::TESObjectARMO* wornArmor = k->As<RE::TESObjectARMO>();
