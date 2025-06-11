@@ -414,6 +414,178 @@ namespace DCURSES {
 		if (counters.clock_GlobalTicker % 90 == 0) {
 			TatsUpdateContext(mark);
 		}
+
+		auto player = RE::PlayerCharacter::GetSingleton();
+		if (mark != MARK::TAT_NONE) {
+			//int base_color = mark == 11 ? settings.LMHeatColor : (mark == 13 ? settings.LMAllureColor : (mark == 71 ? settings.LMBondageColor : (mark == 79 ? settings.LMNudityColor : 0)));
+			if (counters.clock_GlobalTicker % 15 == 0) {
+				log::trace("events marks update");
+				switch (mark) {
+				case MARK::TAT_HEAT: {
+					ModifyArousal(player, settings.LMHeatMod / 4);
+					if (GetEffectMagnitude(HEAT_EFFECT) <= 0) {
+						RemoveLewdMark();
+						AIContextRemoveLewdMark();
+						//PlayerMessage("You feel a sense of calm as the heat mark fades from your body.");
+						PlayerMessage(Translator(Translation::MarkHeatRemove));
+					}
+					break;
+				}
+				case MARK::TAT_ALLURE: {
+					auto playerPosition = RE::PlayerCharacter::GetSingleton()->GetPosition();
+
+					if (const auto processLists = RE::ProcessLists::GetSingleton(); processLists) {
+						RE::BSSimpleList<RE::ActorHandle>* arr = &(processLists->aliveActorList);
+						if (arr) {
+							for (auto const& actorHandle : *arr) {
+								auto actorPtr = actorHandle.get();
+								if (auto actor = actorPtr.get(); actor && actor->Is3DLoaded() && !actor->IsDead() && actor->GetPosition().GetDistance(playerPosition) <= settings.sexSearchRadius) {
+									ModifyArousal(actor, settings.LMAllureMod / 4);
+								}
+							}
+						}
+					}
+					if (GetEffectMagnitude(ALLURE_EFFECT) <= 0) {
+						RemoveLewdMark();
+						AIContextRemoveLewdMark();
+						//PlayerMessage("You sense that people are no longer staring at you as the allure mark fades from your body.");
+						PlayerMessage(Translator(Translation::MarkAllureRemove));
+					}
+					break;
+				}
+				case MARK::TAT_BONDAGE: {
+					if (Util::randomDouble() < settings.LMBondageChance) {
+						log::trace("Attempting bondage event");
+						std::vector<RE::TESObjectARMO*> equipable;
+
+						auto inventory = player->GetInventory();
+						auto keywords = GetKeywordsCantEquip(player);
+						for (auto const& [k, v] : inventory) {
+							RE::TESObjectARMO* armor = k->As<RE::TESObjectARMO>();
+							if (armor && armor->HasKeywordString("zad_InventoryDevice") && DeviceHasGenericKey(armor) && v.second.get() && !v.second.get()->IsWorn()) {
+								auto render = DeviousDevicesAPI::g_API->GetDeviceRender(armor);
+								if (render) {
+									bool canEquip = true;
+									for (auto const& key : render->GetKeywords()) {
+										if (vectorContains(keywords, Util::GetFormEditorId(key))) {
+											canEquip = false;
+										}
+									}
+									if (canEquip) {
+										equipable.push_back(armor);
+									}
+								}
+							}
+						}
+						log::trace("Total devices found for event: {}", equipable.size());
+						if (equipable.size() == 0) {
+							log::trace("Bondage mark found no items in inventory");
+							break;
+						}
+						auto device = equipable[Util::randomInt(static_cast<int>(equipable.size()))];
+						log::trace("Equipping device: {}", device->GetName());
+						DecrementCounterForMark(MARK::TAT_BONDAGE);
+						LockDevice(player, device);
+						//PlayerMessage(fmt::format("Your mark pulses with light as your {} appears on your body!", device->GetName()));
+						PlayerMessage(Translator(Translation::MarkBondageDevice, device->GetName()));
+					}
+					if (GetEffectMagnitude(BONDAGE_EFFECT) <= 0) {
+						RemoveLewdMark();
+						AIContextRemoveLewdMark();
+						//PlayerMessage("You feel much less oppressed as the bondage mark fades from your body.");
+						PlayerMessage(Translator(Translation::MarkBondageRemove));
+					}
+					break;
+				}
+				case MARK::TAT_NUDITY: {
+					if (GetEffectMagnitude(NUDITY_EFFECT) <= 0) {
+						RemoveLewdMark();
+						AIContextRemoveLewdMark();
+						//PlayerMessage("You feel less helpless as the nudity mark fades from your body.");
+						PlayerMessage(Translator(Translation::MarkNudityRemove));
+					}
+					break;
+				}
+				case MARK::TAT_BRANDING: {
+					int tattoo_count = GetTattooCount(player);
+					float mag = GetEffectMagnitude(BRANDING_EFFECT);
+					if (settings.LMBrandingPunish && mag > tattoo_count) {
+						RE::TESForm* gold = RE::TESForm::LookupByID(std::stoi("0f", 0, 16));
+						int goldCount = GetItemCount(player, gold);
+						int toRemove = static_cast<int>(goldCount * Util::randomDouble(0.2, 0.4));
+						player->RemoveItem((RE::TESBoundObject*)gold, toRemove, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+						//PlayerMessage(fmt::format("You loose {} gold as punishment for loosing tattoos!", toRemove));
+						PlayerMessage(Translator(Translation::MarkBrandingPunish, toRemove));
+					}
+
+					if (Util::randomDouble() < settings.LMBrandingChance && CheckRapeTattoos()) {
+						RTDoTattooEvent(player, 1);
+						//PlayerMessage("You feel a sharp pain as the mark brands you!");
+						PlayerMessage(Translator(Translation::MarkBrandingTattoo));
+					}
+					if (tattoo_count >= settings.LMBrndingTotal) {
+						RemoveLewdMark();
+						AIContextRemoveLewdMark();
+						//PlayerMessage("You feel the branding mark fade from your body.");
+						PlayerMessage(Translator(Translation::MarkBrandingRemove));
+					}
+					else {
+						Util::ExecuteWithDelay(750ms, [player] {SetEffectMagnitude(BRANDING_EFFECT, static_cast<float>(GetTattooCount(player))); });
+					}
+					break;
+				}
+				}
+			}
+			if (mark == MARK::TAT_NUDITY) {
+				typedef RE::BIPED_MODEL::BipedObjectSlot BOS;
+
+				if (settings.LMNudityChestOnly) {
+					std::vector<RE::TESForm*> removes;
+
+					RE::TESObjectARMO* equipped = player->GetWornArmor(BOS::kBody);
+					if (equipped != nullptr && !equipped->HasKeywordString("SexLabNoStrip")) {
+						//UnequipItem(player, equipped);
+						removes.push_back(equipped);
+					}
+					if (!settings.LMNudityAditionalForms.empty()) {
+						auto forms = Util::split(settings.LMNudityAditionalForms, ",");
+						for (auto s : forms) {
+							int form = -1;
+							try {
+								form = stoi(s);
+							}
+							catch (...) {
+								log::warn("Bad string in LMNudityAditionalForms: {}", s);
+								continue;
+							}
+
+							if (form < 30 || form > 61) {
+								log::warn("Bad string in LMNudityAditionalForms, Form must be in range 30 - 61: {}", form);
+								continue;
+							}
+
+							equipped = player->GetWornArmor(static_cast<BOS>(1 << (form - 30)));
+							if (equipped != nullptr && !equipped->HasKeywordString("SexLabNoStrip")) {
+								//UnequipItem(player, equipped);
+								removes.push_back(equipped);
+							}
+
+						}
+					}
+					if (removes.size() > 0) {
+						log::trace("Lewd Mark removed {} items", removes.size());
+						SKSE::GetTaskInterface()->AddTask([player, removes] {
+							for (auto equipped : removes) {
+								UnequipItem(player, equipped);
+							}
+							});
+					}
+				}
+				else {
+					UndressActor(player, false);
+				}
+			}
+		}
 	}
 
 	bool P_CheckSTNG(RE::StaticFunctionTag*) {

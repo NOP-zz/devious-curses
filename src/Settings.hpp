@@ -220,12 +220,16 @@ namespace DCURSES {
 		//Page Quest Interactions
 		//Flag flag_enable_qi					//VAR:enableQuestInteractions
 		bool enableQuestInteractions = true;	//Quest Interactions//Certain quests may have some additional events tied to them.\n The mod page has more information about each quest.
-		//Column
-		//Header Quest Toggles
-		bool enableQISaarthal = true;			//Saarthal//The Saarthal event.
-		bool enableQIDwemerMuseum = true;		//Dwemer Museam//The Dwemer Museum event.
+		//Empty
 		bool enableQIMalkoran = true;			//Malkoran//The Malkoran event.
 		bool enableQISanguine = true;			//Sanguine//The Sanguine events.
+		bool enableQOBlackStar = true;			//Black Star//The Black Star events.
+		//Column
+		//Header Quest Toggles
+		bool enableQIProvingHonor = true;		//Proving Honor//The Proving Honor event.
+		bool enableQISaarthal = true;			//Saarthal//The Saarthal event.
+		bool enableQIDwemerMuseum = true;		//Dwemer Museam//The Dwemer Museum event.
+		bool enableQIThalmorEmbassy = true;		//Thalmor Embassy//The Thalmor Embassy event.
 		//Page Misc
 		//Flag flag_events_disabled				//VAR:ModSuspended
 		bool noMessageBoxes = false;			//Remove Message Boxes//No message boxes will be shown.
@@ -689,14 +693,20 @@ namespace DCURSES {
 		SetMCMBool("useLocationModifiers",settings.useLocationModifiers);
 		settings.enableQuestInteractions = true;
 		SetMCMBool("enableQuestInteractions",settings.enableQuestInteractions);
-		settings.enableQISaarthal = true;
-		SetMCMBool("enableQISaarthal",settings.enableQISaarthal);
-		settings.enableQIDwemerMuseum = true;
-		SetMCMBool("enableQIDwemerMuseum",settings.enableQIDwemerMuseum);
 		settings.enableQIMalkoran = true;
 		SetMCMBool("enableQIMalkoran",settings.enableQIMalkoran);
 		settings.enableQISanguine = true;
 		SetMCMBool("enableQISanguine",settings.enableQISanguine);
+		settings.enableQOBlackStar = true;
+		SetMCMBool("enableQOBlackStar",settings.enableQOBlackStar);
+		settings.enableQIProvingHonor = true;
+		SetMCMBool("enableQIProvingHonor",settings.enableQIProvingHonor);
+		settings.enableQISaarthal = true;
+		SetMCMBool("enableQISaarthal",settings.enableQISaarthal);
+		settings.enableQIDwemerMuseum = true;
+		SetMCMBool("enableQIDwemerMuseum",settings.enableQIDwemerMuseum);
+		settings.enableQIThalmorEmbassy = true;
+		SetMCMBool("enableQIThalmorEmbassy",settings.enableQIThalmorEmbassy);
 		settings.noMessageBoxes = false;
 		SetMCMBool("noMessageBoxes",settings.noMessageBoxes);
 		settings.bossChestUseModelPath = true;
@@ -947,10 +957,13 @@ namespace DCURSES {
 			{"oppLivingLatexOpen", settings.oppLivingLatexOpen},
 			{"useLocationModifiers", settings.useLocationModifiers},
 			{"enableQuestInteractions", settings.enableQuestInteractions},
-			{"enableQISaarthal", settings.enableQISaarthal},
-			{"enableQIDwemerMuseum", settings.enableQIDwemerMuseum},
 			{"enableQIMalkoran", settings.enableQIMalkoran},
 			{"enableQISanguine", settings.enableQISanguine},
+			{"enableQOBlackStar", settings.enableQOBlackStar},
+			{"enableQIProvingHonor", settings.enableQIProvingHonor},
+			{"enableQISaarthal", settings.enableQISaarthal},
+			{"enableQIDwemerMuseum", settings.enableQIDwemerMuseum},
+			{"enableQIThalmorEmbassy", settings.enableQIThalmorEmbassy},
 			{"noMessageBoxes", settings.noMessageBoxes},
 			{"bossChestUseModelPath", settings.bossChestUseModelPath},
 			{"dragonHoard", settings.dragonHoard},
@@ -1377,14 +1390,20 @@ namespace DCURSES {
 		SetMCMBool("useLocationModifiers",settings.useLocationModifiers);
 		settings.enableQuestInteractions = static_cast<bool>(j.value("enableQuestInteractions", true));
 		SetMCMBool("enableQuestInteractions",settings.enableQuestInteractions);
-		settings.enableQISaarthal = static_cast<bool>(j.value("enableQISaarthal", true));
-		SetMCMBool("enableQISaarthal",settings.enableQISaarthal);
-		settings.enableQIDwemerMuseum = static_cast<bool>(j.value("enableQIDwemerMuseum", true));
-		SetMCMBool("enableQIDwemerMuseum",settings.enableQIDwemerMuseum);
 		settings.enableQIMalkoran = static_cast<bool>(j.value("enableQIMalkoran", true));
 		SetMCMBool("enableQIMalkoran",settings.enableQIMalkoran);
 		settings.enableQISanguine = static_cast<bool>(j.value("enableQISanguine", true));
 		SetMCMBool("enableQISanguine",settings.enableQISanguine);
+		settings.enableQOBlackStar = static_cast<bool>(j.value("enableQOBlackStar", true));
+		SetMCMBool("enableQOBlackStar",settings.enableQOBlackStar);
+		settings.enableQIProvingHonor = static_cast<bool>(j.value("enableQIProvingHonor", true));
+		SetMCMBool("enableQIProvingHonor",settings.enableQIProvingHonor);
+		settings.enableQISaarthal = static_cast<bool>(j.value("enableQISaarthal", true));
+		SetMCMBool("enableQISaarthal",settings.enableQISaarthal);
+		settings.enableQIDwemerMuseum = static_cast<bool>(j.value("enableQIDwemerMuseum", true));
+		SetMCMBool("enableQIDwemerMuseum",settings.enableQIDwemerMuseum);
+		settings.enableQIThalmorEmbassy = static_cast<bool>(j.value("enableQIThalmorEmbassy", true));
+		SetMCMBool("enableQIThalmorEmbassy",settings.enableQIThalmorEmbassy);
 		settings.noMessageBoxes = static_cast<bool>(j.value("noMessageBoxes", false));
 		SetMCMBool("noMessageBoxes",settings.noMessageBoxes);
 		settings.bossChestUseModelPath = static_cast<bool>(j.value("bossChestUseModelPath", true));
@@ -1640,10 +1659,13 @@ namespace DCURSES {
 			settings.oppLivingLatexOpen = GetMCMSetting("oppLivingLatexOpen")->GetBool();
 			settings.useLocationModifiers = GetMCMSetting("useLocationModifiers")->GetBool();
 			settings.enableQuestInteractions = GetMCMSetting("enableQuestInteractions")->GetBool();
-			settings.enableQISaarthal = GetMCMSetting("enableQISaarthal")->GetBool();
-			settings.enableQIDwemerMuseum = GetMCMSetting("enableQIDwemerMuseum")->GetBool();
 			settings.enableQIMalkoran = GetMCMSetting("enableQIMalkoran")->GetBool();
 			settings.enableQISanguine = GetMCMSetting("enableQISanguine")->GetBool();
+			settings.enableQOBlackStar = GetMCMSetting("enableQOBlackStar")->GetBool();
+			settings.enableQIProvingHonor = GetMCMSetting("enableQIProvingHonor")->GetBool();
+			settings.enableQISaarthal = GetMCMSetting("enableQISaarthal")->GetBool();
+			settings.enableQIDwemerMuseum = GetMCMSetting("enableQIDwemerMuseum")->GetBool();
+			settings.enableQIThalmorEmbassy = GetMCMSetting("enableQIThalmorEmbassy")->GetBool();
 			settings.noMessageBoxes = GetMCMSetting("noMessageBoxes")->GetBool();
 			settings.bossChestUseModelPath = GetMCMSetting("bossChestUseModelPath")->GetBool();
 			settings.dragonHoard = GetMCMSetting("dragonHoard")->GetBool();

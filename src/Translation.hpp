@@ -63,6 +63,9 @@ namespace DCURSES {
 		QISaarthal,//Strange magic interacts with the amulet transforming it into a collar!
 		QIDwemerMuseum,//As you touch the stone tablet you feel a sharp pain in your crotch!
 		QIDwemerMuseumCurias,//As you touch the stone tablet you feel a sharp pain in your crotch! While you're distracted, a strange dwemer creature runs up behind you and jumps on you!
+		QIProvingHonor,//As you pull the lever silver objects shoot out from around you and lock on to your body!
+		QIBlackStarEquip,//As you touch the black star you feel yourself being filled with soul gems summoned from oblivion!
+		QIDiplomaticImmunity,//While on the cart to the Thalmor Embassy your party clothes suddenly transformed into something else!
 
 		ItemMagicKey,//All of the devices you were wearing have magically dissapeared!
 		ItemTattooCharm,//All of your tattoos have faded from your body!
@@ -151,6 +154,9 @@ namespace DCURSES {
 				case (Translation::QISaarthal): return "QISaarthal";
 				case (Translation::QIDwemerMuseum): return "QIDwemerMuseum";
 				case (Translation::QIDwemerMuseumCurias): return "QIDwemerMuseumCurias";
+				case (Translation::QIProvingHonor): return "QIProvingHonor";
+				case (Translation::QIBlackStarEquip): return "QIBlackStarEquip";
+				case (Translation::QIDiplomaticImmunity): return "QIDiplomaticImmunity";
 				case (Translation::ItemMagicKey): return "ItemMagicKey";
 				case (Translation::ItemTattooCharm): return "ItemTattooCharm";
 				case (Translation::EffectLivingLatexWait): return "EffectLivingLatexWait";
@@ -159,7 +165,7 @@ namespace DCURSES {
 				case (Translation::EffectLivingLatexCling): return "EffectLivingLatexCling";
 				//CODEGEN_END_KEYNAME
 			}
-			log::error("Unable to find translation key name");
+			log::error("Unable to find translation key name for id {}", static_cast<uint32_t>(key));
 			return "ERROR";
 		}
 
@@ -174,6 +180,7 @@ namespace DCURSES {
 		}
 
 		std::string translatedString;
+		Translator() {}
 	public:
 		Translator(Translation key) {
 			translatedString = _GetTranslation(key);
@@ -277,7 +284,7 @@ namespace DCURSES {
 						}
 					}
 					tokenPrint += (char)0;
-					log::warn("{} MCM translation missing key {} ({})", languageString, tokenPrint);
+					log::warn("{} MCM translation missing key {}", languageString, tokenPrint);
 					out << value << '\n';
 				}
 			}

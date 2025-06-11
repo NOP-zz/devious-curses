@@ -70,23 +70,20 @@ namespace DCURSES {
         bool isAnimating = player->IsInFaction(SexlabAnimatingFaction) || player->IsInFaction(ZadAnimatingFaction);
 
         auto c1 = std::chrono::high_resolution_clock::now();
-        if (!isAnimating) { EventsUpdate(); }
-        auto c2 = std::chrono::high_resolution_clock::now();
         SexUpdate();
-        auto c3 = std::chrono::high_resolution_clock::now();
+        auto c2 = std::chrono::high_resolution_clock::now();
         if (!isAnimating) { TatsUpdate(); }
-        auto c4 = std::chrono::high_resolution_clock::now();
+        auto c3 = std::chrono::high_resolution_clock::now();
         if (!isAnimating) { OppDeviceUpdate(); }
-        auto c5 = std::chrono::high_resolution_clock::now();
+        auto c4 = std::chrono::high_resolution_clock::now();
         
         auto d1 = (c2 - c1).count() / 1000000.0;
         auto d2 = (c3 - c2).count() / 1000000.0;
         auto d3 = (c4 - c3).count() / 1000000.0;
-        auto d4 = (c5 - c4).count() / 1000000.0;
-        auto dt = (c5 - c1).count() / 1000000.0;
+        auto dt = (c4 - c1).count() / 1000000.0;
 
         if (dt >= 1) {
-            log::warn("Long Update Time: E: {:.4f}, S: {:.4f}, M: {:.4f}, O: {:.4f} total: {:.4f}ms", d1, d2, d3, d4, dt);
+            log::warn("Long Update Time: Sex: {:.4f}, Marks: {:.4f}, ODevices: {:.4f} total: {:.4f}ms", d1, d2, d3, dt);
         }
 
         //Always do last!

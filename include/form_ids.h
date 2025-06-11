@@ -48,6 +48,7 @@ constexpr auto DDX_RUSTY_PEAR_VAGINAL = 0x1FC4F;
 constexpr auto DDX_STEEL_YOKE = 0x3D2E1;
 constexpr auto DDX_RED_ARMBINDER = 0x110F2;
 constexpr auto DDX_RED_CATSUIT = 0x3D8fC;
+constexpr auto DDX_PUPPY_COLLAR = 0x4F916;
 
 	class StaticDataHolder {
 	private: 

@@ -194,6 +194,7 @@ namespace DCURSES {
 		//Living Latex
 		auto effect = RE::TESForm::LookupByID(magicEvent->magicEffect)->As<RE::EffectSetting>();
 		if (effect &&
+			magicEvent->target.get() == player &&
 			(effect->HasArchetype(RE::EffectSetting::Archetype::kValueModifier) || effect->HasArchetype(RE::EffectSetting::Archetype::kDualValueModifier)) &&
 			effect->IsDetrimental() &&
 			(effect->data.primaryAV == RE::ActorValue::kHealth || effect->data.secondaryAV == RE::ActorValue::kHealth)) {

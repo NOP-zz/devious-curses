@@ -1092,6 +1092,84 @@ namespace DCURSES {
 		});
 	}
 
+	bool UndressActor(RE::Actor* akActor, bool removeCombatStuff) {
+		if (!akActor) return false;
+
+		std::vector<RE::TESForm*> removes = std::vector<RE::TESForm*>();
+
+		if (settings.enableSlowStrip) {
+			SlowStrip(akActor);
+			return false;
+		}
+
+		for (uint32_t i = 1; i < (1 << 31); i = i << 1) {
+			typedef RE::BGSBipedObjectForm::BipedObjectSlot BOS;
+			RE::TESObjectARMO* equipped = akActor->GetWornArmor((BOS)i);
+			if (equipped == nullptr) { continue; }
+
+			BOS slotMask = equipped->GetSlotMask();
+
+			if ((equipped->GetArmorRating() <= 0.1 && (slotMask == BOS::kAmulet || slotMask == BOS::kRing || slotMask == BOS::kCirclet))) {
+				continue;
+			}
+			if ((i == (uint32_t)BOS::kShield) && !removeCombatStuff) {
+				continue;
+			}
+			if (equipped->HasKeywordString("SexLabNoStrip")) {
+				continue;
+			}
+			//*didAnything = true;
+			//UnequipItem(akActor, equipped);
+			removes.push_back(equipped);
+		}
+
+		if (removeCombatStuff) {
+			auto inventory = akActor->GetInventory();
+			for (auto const& [k, v] : inventory) {
+				if (v.second.get()->IsWorn()) {
+					RE::TESAmmo* ammo = k->As<RE::TESAmmo>();
+					if (!ammo) {
+						continue;
+					}
+					//UnequipItem(akActor, ammo);
+					removes.push_back(ammo);
+				}
+			}
+		}
+
+		if (removes.size() > 0) {
+			log::trace("Undress removed {} items", removes.size());
+			SKSE::GetTaskInterface()->AddTask([removes, akActor] {
+				for (auto equipped : removes) {
+					UnequipItem(akActor, equipped);
+				}
+				});
+			return true;
+		}
+
+		return false;
+	}
+
+	void UnequipItems(RE::Actor* akActor) {
+		if (!akActor) return;
+
+		SKSE::GetTaskInterface()->AddTask([akActor] {
+			auto rightHand = akActor->GetEquippedObject(false);
+			//UnequipSpell(akActor, rightHand, 1);
+			UnequipItem(akActor, rightHand);
+			auto leftHand = akActor->GetEquippedObject(true);
+			//UnequipSpell(akActor, leftHand, 0);
+			UnequipItem(akActor, leftHand);
+			akActor->DrawWeaponMagicHands(false);
+			});
+	}
+
+	bool UndressAndUnequipActor(RE::Actor* akActor) {
+		UnequipItems(akActor);
+
+		return UndressActor(akActor, true);
+	}
+
 	bool ActorIsWearingDevice(RE::Actor* actor, RE::TESObjectARMO* device) {
 		if (!actor) return false;
 		auto inventory = actor->GetInventory();

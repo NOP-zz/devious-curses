@@ -8,6 +8,9 @@ using namespace SKSE;
 namespace DCURSES {
 	constexpr auto QUEST_DA14 = 0x1BB9B;
 
+	constexpr auto QUEST_C01 = 0x6E803;
+	constexpr auto QUEST_C03 = 0x1CEF4;
+
 	constexpr auto QUEST_MG04 = 0x1F254;
 
 	constexpr auto QUEST_TG06 = 0x21552;
@@ -86,7 +89,29 @@ namespace DCURSES {
 		}
 	}
 
+	void QIBlackStarTouch() {
+		if (!settings.enableQOBlackStar) { return; }
+
+		if (DoStandardEvent(false, "", "(plug & (chaos | black | filled | grand)) | (belt & (iron | rust)) | (piercing & gem)", 20, {})) {
+			PlayerMessage(Translator(Translation::QIBlackStarEquip));
+		}
+	}
+
 	//void QIPotemaInteraction(); // Add a curse during the potema questline. Sugestion was to have a curse that periodically summons devices. Gets stronger when fighting potema??
+
+	void QIMainDiplomaticImmunity() {
+		if (!settings.enableQIThalmorEmbassy) { return; }
+
+		RE::TESObjectARMO* clothes = RE::TESForm::LookupByID(0xE40DF)->As<RE::TESObjectARMO>();
+		RE::TESObjectARMO* boots = RE::TESForm::LookupByID(0xE40DE)->As<RE::TESObjectARMO>();
+		auto player = RE::PlayerCharacter::GetSingleton();
+
+		if (DoStandardEvent(false, "", "leather & red & (dress | cuffs | boots | gloves | collar)) & !pony", 20, {"zad_DeviousHeavyBondage", "zad_DeviousBondageMittens", "zad_DeviousGag", "zad_DeviousBlindfold"})) {
+			player->RemoveItem(clothes, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr, nullptr, nullptr);
+			player->RemoveItem(boots, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr, nullptr, nullptr);
+			PlayerMessage(Translator(Translation::QIDiplomaticImmunity));
+		}
+	}
 
 	void QIMGInteraction1() {
 		if (!settings.enableQISaarthal) { return; }
@@ -117,6 +142,24 @@ namespace DCURSES {
 		}
 	}
 
+	void QICompanionsProvingHonor() {
+		if (!settings.enableQIProvingHonor) { return; }
+
+		if (DoStandardEvent(false, "", "silver", 20, {"zad_DeviousHeavyBondage"})) {
+			PlayerMessage(Translator(Translation::QIProvingHonor));
+		}
+	}
+
+	void QICompanionsCollarJoke() {
+		auto player = RE::PlayerCharacter::GetSingleton();
+
+		auto collar = GetWornInventoryDeviceByKeyword(player, "zad_DeviousCollar");
+		if (!collar) {
+			auto puppy = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(DDX_PUPPY_COLLAR, "Devious Devices - Expansion.esm");
+			LockDevice(player, puppy, true);
+		}
+	}
+
 	void QICheckQuestStage(RE::FormID quest_id, uint16_t stage) {
 		if (!settings.enableQuestInteractions) { return; }
 
@@ -132,6 +175,9 @@ namespace DCURSES {
 		if (quest == RE::TESForm::LookupByID(QUEST_TG06)->As<RE::TESQuest>()) {
 			if (stage == 50) QIDwemerMuseum();
 		}
+		if (quest == RE::TESForm::LookupByID(QUEST_C03)->As<RE::TESQuest>()) {
+			if (stage == 25) QICompanionsCollarJoke();
+		}
 	}
 
 	void QICheckObjectActivation(RE::TESObjectREFR* object) {
@@ -140,6 +186,11 @@ namespace DCURSES {
 		RE::TESObjectARMO* amulet = RE::TESForm::LookupByID(0x233D0)->As<RE::TESObjectARMO>();
 		if (object->formID == 0xbc8b8 && object->GetBaseObject()->formID == 0x21513 && ActorIsWearingDevice(RE::PlayerCharacter::GetSingleton(), amulet)) {
 			QIMGInteraction1();
+		}
+
+		if (object->formID == 0x236f5 && object->GetBaseObject()->formID == 0x21513 && !IsObjectRefKnown(object->formID) && !RE::TESForm::LookupByID(QUEST_C01)->As<RE::TESQuest>()->IsCompleted()) {
+			QICompanionsProvingHonor();
+			SetObjectRefKnown(object->formID);
 		}
 	}
 }
