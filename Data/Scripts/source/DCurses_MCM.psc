@@ -417,6 +417,8 @@ Bool Property enableSlowStrip = false Auto
 Int enableSlowStripOID
 Bool Property resumeEvents = false Auto
 Int resumeEventsOID
+Bool Property saveDependentSettings = false Auto
+Int saveDependentSettingsOID
 Bool Property setAllDefaultSettings = false Auto
 Int setAllDefaultSettingsOID
 Bool Property consAllowFollowers = false Auto
@@ -761,6 +763,7 @@ Event OnPageReset(string page)
 		enableSlowStripOID = AddToggleOption("$DCURSES_enableSlowStrip", enableSlowStrip, 0)
 		tatSolventChanceOID = AddSliderOption("$DCURSES_tatSolventChance", tatSolventChance, "{1}", 0)
 		resumeEventsOID = AddToggleOption("$DCURSES_resumeEvents", resumeEvents, flag_events_disabled)
+		saveDependentSettingsOID = AddToggleOption("$DCURSES_saveDependentSettings", saveDependentSettings, 0)
 		setAllDefaultSettingsOID = AddToggleOption("$DCURSES_setAllDefaultSettings", setAllDefaultSettings, 0)
 	Elseif page == "$DCURSES_PAGE_Consequences"
 		AddHeaderOption("$DCURSES_HEADER_Triggers")
@@ -1483,6 +1486,10 @@ Event OnOptionHighlight(int option)
 		SetInfoText("$DCURSES_DESCRIPTION_resumeEvents")
 		Return
 	Endif
+	If option == saveDependentSettingsOID
+		SetInfoText("$DCURSES_DESCRIPTION_saveDependentSettings")
+		Return
+	Endif
 	If option == setAllDefaultSettingsOID
 		SetInfoText("$DCURSES_DESCRIPTION_setAllDefaultSettings")
 		Return
@@ -1884,6 +1891,11 @@ Event OnOptionSelect(int option)
 	If option == resumeEventsOID
 		resumeEvents = !resumeEvents
 		SetToggleOptionValue(resumeEventsOID, resumeEvents)
+		Return
+	Endif
+	If option == saveDependentSettingsOID
+		saveDependentSettings = !saveDependentSettings
+		SetToggleOptionValue(saveDependentSettingsOID, saveDependentSettings)
 		Return
 	Endif
 	If option == setAllDefaultSettingsOID

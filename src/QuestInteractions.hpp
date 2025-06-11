@@ -109,7 +109,7 @@ namespace DCURSES {
 		}
 		AddLewdMark(MARK::TAT_HEAT);
 
-		if (OppDwarvenCuirassEvent("")) {
+		if (OppDwarvenCuirassEvent("", true)) {
 			PlayerMessage(Translator(Translation::QIDwemerMuseumCurias));
 		}
 		else {

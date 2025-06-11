@@ -84,10 +84,10 @@ namespace DCURSES {
 		return true;
 	}
 
-	bool OppDwarvenCuirassEvent(std::string containerName) {
+	bool OppDwarvenCuirassEvent(std::string containerName, bool skipLocation = false) {
 		auto player = RE::PlayerCharacter::GetSingleton();
 
-		if (settings.oppDwarvenRequireLoc && player->GetCurrentLocation() && !player->GetCurrentLocation()->HasKeywordString("LocTypeDwarvenAutomatons")) {
+		if (settings.oppDwarvenRequireLoc && !skipLocation && !(player->GetCurrentLocation() && player->GetCurrentLocation()->HasKeywordString("LocTypeDwarvenAutomatons"))) {
 			return false;
 		}
 
@@ -150,6 +150,7 @@ namespace DCURSES {
 		}
 
 		AIEventDwarvenCuirassAdd();
+		RemoveDwarvenStuff();
 
 		Util::ExecuteWithDelay(1500ms, [player, dwarven] {
 			LockDevice(player, dwarven, true);
@@ -166,7 +167,8 @@ namespace DCURSES {
 		std::vector<std::pair<bool (*)(std::string), double>> events;
 		events.push_back(std::make_pair(OppSummonerCollarEvent, settings.oppSummonerCollarWeight));
 		events.push_back(std::make_pair(OppLivingLatexEvent, settings.oppLivingLatexWeight));
-		events.push_back(std::make_pair(OppDwarvenCuirassEvent, settings.oppDwarvenCuirassWeight));
+		auto _OppDwarvenCuirassEvent = [](std::string s) {return OppDwarvenCuirassEvent(s); };
+		events.push_back(std::make_pair(_OppDwarvenCuirassEvent, settings.oppDwarvenCuirassWeight));
 
 		double sum = std::accumulate(events.begin(), events.end(), 0.0, [](double acc, std::pair<bool (*)(std::string), double> x) {return acc + x.second; });
 		if (sum == 0) {
@@ -220,10 +222,63 @@ namespace DCURSES {
 			auto player = RE::PlayerCharacter::GetSingleton();
 
 			RE::TESObjectARMO* summoner_collar = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(SUMMONER_COLLAR, "Devious Curses.esp");
+			RE::TESObjectARMO* summoner_collar_r = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(SUMMONER_COLLAR, "Devious Curses.esp");
 			RE::TESKey* summoner_collar_key = StaticDataHolder::GetSingleton()->LookupForm<RE::TESKey>(SUMMONER_COLLAR_KEY, "Devious Curses.esp");
+			RE::TESObjectARMO* latex = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(LIVING_LATEX, "Devious Curses.esp");
+			RE::TESObjectARMO* latex_r = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(LIVING_LATEX, "Devious Curses.esp");
+			RE::TESObjectARMO* latex_open = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(LIVING_LATEX_OPEN, "Devious Curses.esp");
+			RE::TESObjectARMO* latex_open_r = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(LIVING_LATEX_OPEN, "Devious Curses.esp");
+			RE::TESObjectARMO* dwarven_cuirass = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(DWARVEN_CURIAS, "Devious Curses.esp");
+			RE::TESObjectARMO* dwarven_cuirass_r = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(DWARVEN_CURIAS, "Devious Curses.esp");
+			RE::TESObjectARMO* dwarven_heavy = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(DWARVEN_CURIAS_HEAVY, "Devious Curses.esp");
+			RE::TESObjectARMO* dwarven_heavy_r = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(DWARVEN_CURIAS_HEAVY, "Devious Curses.esp");
+
+			bool isWearingSummonerCollar = false;
+			bool isWearingLatex = false;
+			bool isWearingDwarven = false;
+
+			auto playerInventory = player->GetInventory();
+			for (auto const& [k, v] : playerInventory) {
+				RE::TESObjectARMO* armor = k->As<RE::TESObjectARMO>();
+				if (armor) {
+					if (armor == summoner_collar || armor == summoner_collar_r) {
+						isWearingSummonerCollar = true;
+					}
+					if (armor == latex || armor == latex_r || armor == latex_open || armor == latex_open_r) {
+						isWearingLatex = true;
+					}
+					if (armor == dwarven_cuirass || armor == dwarven_cuirass_r || armor == dwarven_heavy || armor == dwarven_heavy_r) {
+						isWearingDwarven = true;
+					}
+				}
+			}
+
+			if (isWearingSummonerCollar && oppdCounters.summonCollarCounter == INT64_MIN) {
+				log::trace("Reseting summoner collar counter.");
+				oppdCounters.summonCollarCounter = settings.oppSummonerSexCount;
+			}
+			else if (!isWearingSummonerCollar) {
+				oppdCounters.summonCollarCounter = INT64_MIN;
+			}
+
+			if (isWearingLatex && oppdCounters.livingLatexCounter == INT64_MIN) {
+				log::trace("Reseting living latex counter.");
+				oppdCounters.livingLatexCounter = static_cast<int>(settings.oppLivingLatexStartTime * 60 * Util::randomFloat(0.9f, 1.2f));
+			}
+			else if (!isWearingLatex) {
+				oppdCounters.livingLatexCounter = INT64_MIN;
+			}
+
+			if (isWearingDwarven && oppdCounters.dwarvenCuirassCounter == INT64_MIN) {
+				log::trace("Reseting dwarven cuirass counter.");
+				oppdCounters.dwarvenCuirassCounter = settings.oppDwarvenValueNeeded;
+				RemoveDwarvenStuff();
+			}
+			else if (!isWearingDwarven) {
+				oppdCounters.dwarvenCuirassCounter = INT64_MIN;
+			}
 
 			//Summoner Collar
-			bool isWearingSummonerCollar = ActorIsWearingDevice(player, summoner_collar);
 			if (isWearingSummonerCollar) {
 				auto summons_list = getPlayerCommandedActors();
 				if (summons_list.empty()) {
@@ -257,10 +312,7 @@ namespace DCURSES {
 			}
 
 			//Living Latex
-			RE::TESObjectARMO* latex = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(LIVING_LATEX, "Devious Curses.esp");
-			RE::TESObjectARMO* latex_open = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(LIVING_LATEX_OPEN, "Devious Curses.esp");
 			
-			bool isWearingLatex = ActorIsWearingDevice(player, latex) || ActorIsWearingDevice(player, latex_open);
 			if (isWearingLatex) {
 				if (oppdCounters.livingLatexCounter >= 3) {
 					//SetEffectDescription(LIVING_LATEX_EFFECT, "The latex suit seems to be dormant.");
@@ -315,9 +367,7 @@ namespace DCURSES {
 			}
 
 			//Dwarven Cuirass
-			RE::TESObjectARMO* dwarven_cuirass = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(DWARVEN_CURIAS, "Devious Curses.esp");
-			RE::TESObjectARMO* dwarven_heavy = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(DWARVEN_CURIAS_HEAVY, "Devious Curses.esp");
-			bool isWearingDwarven = ActorIsWearingDevice(player, dwarven_cuirass) || ActorIsWearingDevice(player, dwarven_heavy);
+			
 			if (isWearingDwarven) {
 				float playerArousal = GetActorArousal(player);
 				RE::TESObjectARMO* belt = nullptr;
@@ -326,8 +376,7 @@ namespace DCURSES {
 				RE::TESObjectARMO* plugA = nullptr;
 				RE::TESObjectARMO* plugV = nullptr;
 				RE::TESObjectARMO* collar = nullptr;
-				auto inventory = player->GetInventory();
-				for (auto const& [k, v] : inventory) {
+				for (auto const& [k, v] : playerInventory) {
 					if (v.second.get()->IsWorn()) {
 						RE::TESObjectARMO* wornArmor = k->As<RE::TESObjectARMO>();
 						if (!wornArmor) {
@@ -388,7 +437,7 @@ namespace DCURSES {
 					if (device.has_value()) {
 						LockDevice(player, device->inv);
 
-						oppdCounters.dwarvenCuirassCounter += Util::randomInt(15,55);
+						oppdCounters.dwarvenCuirassCounter += Util::randomInt(4,20);
 						PlayerMessage(Translator(Translation::ODeviceDwarvenCuirassCraft, device->inv->GetName()));
 					}
 				}
@@ -397,37 +446,20 @@ namespace DCURSES {
 						int value = RemoveDwarvenStuff();
 						if (value > 0) {
 							oppdCounters.dwarvenCuirassCounter -= value;
-							PlayerMessage(Translator(Translation::ODeviceDwarvenCuirassEat));
+							DBGNotification(Translator(Translation::ODeviceDwarvenCuirassEat));
 						}
 					}
 					else if (oppdCounters.dwarvenCuirassCounter <= 0) {
 						RE::TESNPC* thing = nullptr;
 						auto level = player->GetLevel();
-						if (level <= 6) {
-							thing = StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x10ec86, "Skyrim.esm"); //Spider Worker
-						}
-						else if (level <= 12) {
+						if (level >= 50) {
 							std::vector<std::pair<RE::TESNPC*, double>> list;
-							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x10ec86, "Skyrim.esm"), 10.0 }); //Spider Worker
-							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x23a98, "Skyrim.esm"), 20.0 }); //Spider
+							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x10ec8e, "Skyrim.esm"), 10.0 }); //Sphere Master
+							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x10e753, "Skyrim.esm"), 20.0 }); //Centurion Guardian
+							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x23a96, "Skyrim.esm"), 30.0 }); //Centurion Guardian
 							thing = Util::VectorSelectWeighted(list).first;
 						}
-						else if (level <= 16) {
-							std::vector<std::pair<RE::TESNPC*, double>> list;
-							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x23a98, "Skyrim.esm"), 10.0 }); //Spider
-							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x10ec89, "Skyrim.esm"), 30.0 }); //Sphere
-							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x10ec87, "Skyrim.esm"), 30.0 }); //Spider Guardian
-							thing = Util::VectorSelectWeighted(list).first;
-						}
-						else if (level <= 24) {
-							std::vector<std::pair<RE::TESNPC*, double>> list;
-							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x10ec89, "Skyrim.esm"), 10.0 }); //Sphere
-							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x10ec87, "Skyrim.esm"), 10.0 }); //Spider Guardian
-							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x23a97, "Skyrim.esm"), 30.0 }); //Sphere Guardian
-							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x10f9b9, "Skyrim.esm"), 30.0 }); //Centurion
-							thing = Util::VectorSelectWeighted(list).first;
-						}
-						else if (level <= 30) {
+						else if (level >= 38) {
 							std::vector<std::pair<RE::TESNPC*, double>> list;
 							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x23a97, "Skyrim.esm"), 10.0 }); //Sphere Guardian
 							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x10f9b9, "Skyrim.esm"), 10.0 }); //Centurion
@@ -435,12 +467,29 @@ namespace DCURSES {
 							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x10e753, "Skyrim.esm"), 30.0 }); //Centurion Guardian
 							thing = Util::VectorSelectWeighted(list).first;
 						}
-						else {
+						else if (level >= 30) {
 							std::vector<std::pair<RE::TESNPC*, double>> list;
-							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x10ec8e, "Skyrim.esm"), 10.0 }); //Sphere Master
-							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x10e753, "Skyrim.esm"), 20.0 }); //Centurion Guardian
-							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x23a96, "Skyrim.esm"), 30.0 }); //Centurion Guardian
+							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x10ec89, "Skyrim.esm"), 10.0 }); //Sphere
+							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x10ec87, "Skyrim.esm"), 10.0 }); //Spider Guardian
+							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x23a97, "Skyrim.esm"), 30.0 }); //Sphere Guardian
+							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x10f9b9, "Skyrim.esm"), 30.0 }); //Centurion
 							thing = Util::VectorSelectWeighted(list).first;
+						}
+						else if (level >= 24) {
+							std::vector<std::pair<RE::TESNPC*, double>> list;
+							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x23a98, "Skyrim.esm"), 10.0 }); //Spider
+							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x10ec89, "Skyrim.esm"), 30.0 }); //Sphere
+							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x10ec87, "Skyrim.esm"), 30.0 }); //Spider Guardian
+							thing = Util::VectorSelectWeighted(list).first;
+						}
+						else if (level >= 16) {
+							std::vector<std::pair<RE::TESNPC*, double>> list;
+							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x10ec86, "Skyrim.esm"), 10.0 }); //Spider Worker
+							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x23a98, "Skyrim.esm"), 20.0 }); //Spider
+							thing = Util::VectorSelectWeighted(list).first;
+						}
+						else {
+							thing = StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x10ec86, "Skyrim.esm"); //Spider Worker
 						}
 
 						Util::ExecuteWithDelay(1000ms, [player, thing] {

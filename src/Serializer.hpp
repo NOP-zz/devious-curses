@@ -37,18 +37,18 @@ namespace DCURSES {
 
     class OppDeviceCounters {
     public:
-        int64_t summonCollarCounter = 0;
-        int64_t livingLatexCounter = 0;
-        int64_t dwarvenCuirassCounter = 0;
-        int64_t dummyDoNotUse01 = 0;
-        int64_t dummyDoNotUse02 = 0;
-        int64_t dummyDoNotUse03 = 0;
-        int64_t dummyDoNotUse04 = 0;
-        int64_t dummyDoNotUse05 = 0;
-        int64_t dummyDoNotUse06 = 0;
-        int64_t dummyDoNotUse07 = 0;
-        int64_t dummyDoNotUse08 = 0;
-        int64_t dummyDoNotUse09 = 0;
+        int64_t summonCollarCounter = INT64_MIN;
+        int64_t livingLatexCounter = INT64_MIN;
+        int64_t dwarvenCuirassCounter = INT64_MIN;
+        int64_t dummyDoNotUse01 = INT64_MIN;
+        int64_t dummyDoNotUse02 = INT64_MIN;
+        int64_t dummyDoNotUse03 = INT64_MIN;
+        int64_t dummyDoNotUse04 = INT64_MIN;
+        int64_t dummyDoNotUse05 = INT64_MIN;
+        int64_t dummyDoNotUse06 = INT64_MIN;
+        int64_t dummyDoNotUse07 = INT64_MIN;
+        int64_t dummyDoNotUse08 = INT64_MIN;
+        int64_t dummyDoNotUse09 = INT64_MIN;
     } oppdCounters;
 
     static_assert(sizeof(OppDeviceCounters) == 0x8 * 12); //Set version 0.5.1

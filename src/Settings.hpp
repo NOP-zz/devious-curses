@@ -239,6 +239,7 @@ namespace DCURSES {
 		bool enableSlowStrip = false;			//Use Sexlab Strip//Replace the built in stripping algorithm with the one from sexlab.\nCan fix rare cases of crashing on stripping and also give more control over what gets stripped.
 		float tatSolventChance = 0.5;			//Universal Solvent Chance//Chance to find universal solvent when looting dead bodies. Universal solvent will remove all lewd marks and tattoos.\nHaving more tattoos will slightly increase the chance of finding one.\nSet to 0 to disable.//{1}//(0,50,0.1)
 		bool resumeEvents = false;				//Resume Events//Events have been disabled by another mod. Enable this and exit the MCM to re-enable events.				?:? flag_events_disabled
+		bool saveDependentSettings = false;		//Save Dependent Settings//If enabled your settings for this save will not be synced with all of your other saves.
 		bool setAllDefaultSettings = false;		//Return to Default [WARNING]//If you exit the menu with this enabled all settings in the MCM will be reset to default.
 		//Page Consequences
 		//Header Triggers
@@ -710,6 +711,8 @@ namespace DCURSES {
 		SetMCMBool("enableSlowStrip",settings.enableSlowStrip);
 		settings.resumeEvents = false;
 		SetMCMBool("resumeEvents",settings.resumeEvents);
+		settings.saveDependentSettings = false;
+		SetMCMBool("saveDependentSettings",settings.saveDependentSettings);
 		settings.setAllDefaultSettings = false;
 		SetMCMBool("setAllDefaultSettings",settings.setAllDefaultSettings);
 		settings.consAllowFollowers = false;
@@ -764,6 +767,10 @@ namespace DCURSES {
 	}
 
 	void SaveMCMSettings() {
+		if (settings.saveDependentSettings) {
+			return;
+		}
+
 		std::ofstream o(SETTINGS_FILE);
 		nlohmann::json j = nlohmann::json{
 			//CODEGEN_START_TOJSON
@@ -951,6 +958,7 @@ namespace DCURSES {
 			{"useThemes", settings.useThemes},
 			{"enableSlowStrip", settings.enableSlowStrip},
 			{"resumeEvents", settings.resumeEvents},
+			{"saveDependentSettings", settings.saveDependentSettings},
 			{"setAllDefaultSettings", settings.setAllDefaultSettings},
 			{"consAllowFollowers", settings.consAllowFollowers},
 			{"consAllowCreatures", settings.consAllowCreatures},
@@ -989,6 +997,12 @@ namespace DCURSES {
 	void P_UpdateSKSE(RE::StaticFunctionTag*);
 
 	void LoadMCMSettings() {
+		if (settings.saveDependentSettings) {
+			P_UpdateSKSE(nullptr);
+			return;
+		}
+
+
 		std::ifstream i(SETTINGS_FILE);
 		nlohmann::json j = nlohmann::json::parse("{}");
 		if (!std::filesystem::exists(SETTINGS_FILE)) {
@@ -1385,6 +1399,8 @@ namespace DCURSES {
 		SetMCMBool("enableSlowStrip",settings.enableSlowStrip);
 		settings.resumeEvents = static_cast<bool>(j.value("resumeEvents", false));
 		SetMCMBool("resumeEvents",settings.resumeEvents);
+		settings.saveDependentSettings = static_cast<bool>(j.value("saveDependentSettings", false));
+		SetMCMBool("saveDependentSettings",settings.saveDependentSettings);
 		settings.setAllDefaultSettings = static_cast<bool>(j.value("setAllDefaultSettings", false));
 		SetMCMBool("setAllDefaultSettings",settings.setAllDefaultSettings);
 		settings.consAllowFollowers = static_cast<bool>(j.value("consAllowFollowers", false));
@@ -1635,6 +1651,7 @@ namespace DCURSES {
 			settings.useThemes = GetMCMSetting("useThemes")->GetBool();
 			settings.enableSlowStrip = GetMCMSetting("enableSlowStrip")->GetBool();
 			settings.resumeEvents = GetMCMSetting("resumeEvents")->GetBool();
+			settings.saveDependentSettings = GetMCMSetting("saveDependentSettings")->GetBool();
 			settings.setAllDefaultSettings = GetMCMSetting("setAllDefaultSettings")->GetBool();
 			settings.consAllowFollowers = GetMCMSetting("consAllowFollowers")->GetBool();
 			settings.consAllowCreatures = GetMCMSetting("consAllowCreatures")->GetBool();

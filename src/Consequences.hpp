@@ -166,7 +166,7 @@ namespace DCURSES {
 		auto keys = GenerateKeys(player, true, true);
 		if (keys.size() > 0 && deviceCount > 0) {
 			//PlayerMessage(fmt::format("{} feels bad for you and gives you a {}.", actor->GetName(), keys[0]->GetName()));
-			PlayerMessage(Translator(Translation::ConsequenceMercyKey, actor->GetName()));
+			PlayerMessage(Translator(Translation::ConsequenceMercyKey, actor->GetName(), keys[0]->GetName()));
 			return true;
 		}
 
@@ -174,7 +174,7 @@ namespace DCURSES {
 		if (dev) {
 			player->AddObjectToContainer((RE::TESBoundObject*)dev.value().inv, nullptr, 1, nullptr);
 			//PlayerMessage(fmt::format("{} thinks you look bored and gives you a {}.", actor->GetName(), dev.value().inv->GetName()));
-			PlayerMessage(Translator(Translation::ConsequenceMercyDevice, actor->GetName()));
+			PlayerMessage(Translator(Translation::ConsequenceMercyDevice, actor->GetName(), dev.value().inv->GetName()));
 		}
 		return true;
 	}

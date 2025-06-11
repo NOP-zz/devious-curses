@@ -103,11 +103,6 @@ namespace DCURSES {
             if (equipActor == player && equipmentForm) {
                 RE::TESKey* magicKey = StaticDataHolder::GetSingleton()->LookupForm<RE::TESKey>(MAGIC_KEY, "Devious Curses.esp");
                 RE::TESObjectMISC* tattooCharm = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectMISC>(TATTOO_CHARM, "Devious Curses.esp");
-                RE::TESObjectARMO* latex = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(LIVING_LATEX_R, "Devious Curses.esp");
-                RE::TESObjectARMO* latex_open = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(LIVING_LATEX_OPEN_R, "Devious Curses.esp");
-                RE::TESObjectARMO* summoner_collar = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(SUMMONER_COLLAR_R, "Devious Curses.esp");
-                RE::TESObjectARMO* dwarven_cuirass = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(DWARVEN_CURIAS_R, "Devious Curses.esp");
-                RE::TESObjectARMO* dwarven_heavy = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(DWARVEN_CURIAS_HEAVY_R, "Devious Curses.esp");
                 //RE::TESObjectARMO* collar = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectARMO>(SAARTHAL_COLLAR, "Devious Curses.esp");
 
                 if (equipmentForm == magicKey) {
@@ -125,17 +120,6 @@ namespace DCURSES {
                     AIEventTattooCharm();
                     //PlayerMessage("All of your tattoos have faded from your body!");
                     PlayerMessage(Translator(Translation::ItemTattooCharm));
-                }
-                else if ((equipmentForm == latex || equipmentForm == latex_open) && equipEvent->equipped) {
-                    oppdCounters.livingLatexCounter = static_cast<int>(settings.oppLivingLatexStartTime * 60 * Util::randomFloat(0.9f, 1.2f));
-                }
-                else if (equipmentForm == summoner_collar && equipEvent->equipped) {
-                    oppdCounters.summonCollarCounter = settings.oppSummonerSexCount;
-                }
-                else if ((equipmentForm == dwarven_cuirass || equipmentForm == dwarven_heavy) && equipEvent->equipped) {
-                    log::trace("Dwarven Equipped");
-                    oppdCounters.dwarvenCuirassCounter = settings.oppDwarvenValueNeeded;
-                    RemoveDwarvenStuff();
                 }
             }
             return RE::BSEventNotifyControl::kContinue;
