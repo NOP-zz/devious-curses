@@ -271,15 +271,13 @@ namespace DCURSES {
 				}
 				else {
 					std::string tokenPrint;
-					std::string tokenHex;
 					for (size_t i = 0; i < token.size(); i++) {
-						tokenHex += fmt::format("{:02X}", token[i]);
 						if (token[i]) {
 							tokenPrint.push_back(token[i]);
 						}
 					}
 					tokenPrint += (char)0;
-					log::warn("{} MCM translation missing key {} ({})", languageString, tokenPrint, tokenHex);
+					log::warn("{} MCM translation missing key {} ({})", languageString, tokenPrint);
 					out << value << '\n';
 				}
 			}

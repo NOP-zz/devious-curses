@@ -185,7 +185,7 @@ namespace DCURSES {
 		//Header Dwarven Cuirass
 		int oppDwarvenCuirassWeight = 15;		//Weight//How likely that you will be equipped with a devious dwarven cuirass that will control your actions.//{0}//(1,500,1)
 		int oppDwarvenValueNeeded = 200;		//Dwarven Parts Value//How much value of dwarven parts like gears and gyros the dwarven cuirass needs to take before it is removed.\nDoes not count ingots, centurion dynamos, or pots, pans, cups, etc.//{0}//(30,2000,10)
-		bool oppDwarvenHeavyRestraint = false;	//Heavy Restraint//The cuirass will count as a heavy restraint.
+		bool oppDwarvenHeavyRestraint = false;	//Heavy Restraint//The cuirass will count as a heavy bondage like a straitjacket. This will make removing the device much harder.\nWill only affect the cuirass before it is equipped.
 		bool oppDwarvenRequireLoc = true;		//Require Location//The cuirass can only be found in dwarven locations.
 		int oppDwarvenArousal = 25;				//Masturbation Arousal//If your arousal is above this there is a chance that the dwarven cuirass will force you to masturbate!\nSet to 100 to disable//{0}//(10,100,1)
 		//Column
