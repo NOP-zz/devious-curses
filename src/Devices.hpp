@@ -421,18 +421,21 @@ namespace DCURSES {
 		if (key) {
 			return IsGenericKey(key);
 		}
-		return false;
+		return true;
 	}
 
 	bool DeviceInventoryIsGeneric(RE::TESObjectARMO* inv) {
 		if (!inv) { return false; }
 		auto rend = DeviousDevicesAPI::g_API->GetDeviceRender(inv);
 		if (!rend) { return false; }
+		if (!DeviceHasGenericKey(inv)) { return false; }
 		if (
 			rend->HasKeywordString("zad_BlockGeneric") ||
 			rend->HasKeywordString("zad_QuestItem") ||
+			Util::FormEditorIdContains(rend, "FrayEQ") ||
 			inv->HasKeywordString("zad_BlockGeneric") ||
-			inv->HasKeywordString("zad_QuestItem")
+			inv->HasKeywordString("zad_QuestItem") || 
+			Util::FormEditorIdContains(inv, "FrayEQ")
 			) {
 			return false;
 		}
@@ -440,18 +443,8 @@ namespace DCURSES {
 	}
 
 	bool DeviceRenderedIsGeneric(RE::TESObjectARMO* rend) {
-		if (!rend) { return false; }
 		auto inv = DeviousDevicesAPI::g_API->GetDeviceInventory(rend);
-		if (!inv) { return false; }
-		if (
-			rend->HasKeywordString("zad_BlockGeneric") ||
-			rend->HasKeywordString("zad_QuestItem") ||
-			inv->HasKeywordString("zad_BlockGeneric") ||
-			inv->HasKeywordString("zad_QuestItem")
-			) {
-			return false;
-		}
-		return true;
+		return DeviceInventoryIsGeneric(inv);
 	}
 
 	void createDevices() {
@@ -463,7 +456,8 @@ namespace DCURSES {
 
 		int counter = 0;
 
-		if (!CheckUD()) {
+		bool hasUD = CheckUD();
+		if (!hasUD) {
 			settings.onlyUseUnforgivingDevices = false;
 			SetMCMBool("onlyUseUnforgivingDevices", false);
 		}
@@ -500,6 +494,19 @@ namespace DCURSES {
 				continue;
 			}
 
+			if (hasUD) {
+				if (Util::FormEditorIdContains(deviceRendered, "UD_Abadon")) {
+					if (!settings.udUseAbadon) {
+						continue;
+					}
+				}
+				else if (Util::FormEditorIdContains(deviceRendered, "UD_")) {
+					if (!settings.udUseMisc) {
+						continue;
+					}
+				}
+			}
+
 			//else {
 			//	float baseEscapeChance = Util::GetDevicePropertyFloat(deviceInventory, "BaseEscapeChance");
 			//	if (baseEscapeChance == 0) {
@@ -511,7 +518,9 @@ namespace DCURSES {
 				deviceRendered->HasKeywordString("zad_BlockGeneric") ||
 				deviceRendered->HasKeywordString("zad_QuestItem") ||
 				deviceInventory->HasKeywordString("zad_BlockGeneric") ||
-				deviceInventory->HasKeywordString("zad_QuestItem")
+				deviceInventory->HasKeywordString("zad_QuestItem") || 
+				Util::FormEditorIdContains(deviceRendered, "FrayEQ") ||
+				Util::FormEditorIdContains(deviceInventory, "FrayEQ")
 				) {
 				continue;
 			}
@@ -892,7 +901,7 @@ namespace DCURSES {
 		return dev;
 	}
 
-	int GetWornDeviceCount(RE::Actor* actor) {
+	int GetWornDeviceCount(RE::Actor* actor, std::string theme = "") {
 		if (!actor) return 0;
 
 		int count = 0;
@@ -903,13 +912,12 @@ namespace DCURSES {
 				if (!wornArmor) {
 					continue;
 				}
-				for (uint32_t i = 0; i < wornArmor->numKeywords; i++) {
-					auto keywd = wornArmor->keywords[i];
-					auto kwname = Util::GetFormEditorId(keywd);
-					if (kwname == "zad_Lockable") {
-						count++;
-						break;
-					}
+				if (!Util::testFormComp(theme, wornArmor) && !theme.empty()) {
+					continue;
+				}
+				RE::TESObjectARMO* inv = DeviousDevicesAPI::g_API->GetDeviceInventory(wornArmor);
+				if (inv && inv->HasKeywordString("zad_InventoryDevice")) {
+					count++;
 				}
 			}
 		}
@@ -1039,33 +1047,39 @@ namespace DCURSES {
 		return keys;
 	}
 
+	bool IsWearingOppLatex(uint32_t device_mask);
+
 	void RemoveKeys(RE::TESObjectREFR* activatedObject) {
 		RE::TESKey* restraintsKey = StaticDataHolder::GetSingleton()->LookupForm<RE::TESKey>(std::stoi("1775f", 0, 16), "Devious Devices - Integration.esm");
 		RE::TESKey* chastityKey = StaticDataHolder::GetSingleton()->LookupForm<RE::TESKey>(std::stoi("8a4f", 0, 16), "Devious Devices - Integration.esm");
 		RE::TESKey* piercingKey = StaticDataHolder::GetSingleton()->LookupForm<RE::TESKey>(std::stoi("409a4", 0, 16), "Devious Devices - Integration.esm");
 
-		//RE::TESKey* chaosFragment = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESKey>(std::stoi("01F367", 0, 16), "Devious Curses.esp");
+		RE::TESObjectMISC* volatileGem = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectMISC>(VOLATILE_GEM, "Devious Curses.esp");
+
 
 		if (!(activatedObject && activatedObject->HasContainer())) {
 			return;
 		}
 
-		//SKSE::GetTaskInterface()->AddTask([activatedObject, restraintsKey, chastityKey, piercingKey] {
-			auto inventory = activatedObject->GetInventory();
-			for (auto const& [k, v] : inventory) {
+		auto isWearingLatex = IsWearingOppLatex(UINT32_MAX);
 
-				if (k == restraintsKey) {
-					activatedObject->RemoveItem((RE::TESBoundObject*)restraintsKey, v.first, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
-				}
-				if (k == chastityKey) {
-					activatedObject->RemoveItem((RE::TESBoundObject*)chastityKey, v.first, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
-				}
-				if (k == piercingKey) {
-					activatedObject->RemoveItem((RE::TESBoundObject*)piercingKey, v.first, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
-				}
+		auto inventory = activatedObject->GetInventory();
+		for (auto const& [k, v] : inventory) {
+
+			if (k == restraintsKey) {
+				activatedObject->RemoveItem((RE::TESBoundObject*)restraintsKey, v.first, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
 			}
-		//});
+			if (k == chastityKey) {
+				activatedObject->RemoveItem((RE::TESBoundObject*)chastityKey, v.first, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+			}
+			if (k == piercingKey) {
+				activatedObject->RemoveItem((RE::TESBoundObject*)piercingKey, v.first, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+			}
 
+			if (!(isWearingLatex && oppdCounters.livingLatexCounter == 2) && k == volatileGem) {
+				activatedObject->RemoveItem((RE::TESBoundObject*)volatileGem, v.first, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+			}
+		}
 
 	}
 
@@ -1085,11 +1099,10 @@ namespace DCURSES {
 			}
 		}
 
-		SKSE::GetTaskInterface()->AddTask([removes, actor, destroyAll] {
-			for (auto& [dev, rend] : removes) {
-				UnlockDevice(actor, dev, rend, nullptr, destroyAll, true);
-			}
-		});
+		auto scriptManager = ScriptingManager();
+		for (auto& [dev, rend] : removes) {
+			scriptManager.UnlockDevice(actor, dev, rend, nullptr, destroyAll, true);
+		}
 	}
 
 	bool UndressActor(RE::Actor* akActor, bool removeCombatStuff) {
@@ -1098,7 +1111,7 @@ namespace DCURSES {
 		std::vector<RE::TESForm*> removes = std::vector<RE::TESForm*>();
 
 		if (settings.enableSlowStrip) {
-			SlowStrip(akActor);
+			ScriptingManager().SlowStrip(akActor);
 			return false;
 		}
 
@@ -1106,6 +1119,10 @@ namespace DCURSES {
 			typedef RE::BGSBipedObjectForm::BipedObjectSlot BOS;
 			RE::TESObjectARMO* equipped = akActor->GetWornArmor((BOS)i);
 			if (equipped == nullptr) { continue; }
+
+			if (settings.stripOnlyKeywords && (!equipped->HasKeywordString("ArmorHeavy") && !equipped->HasKeywordString("ArmorLight") && !equipped->HasKeywordString("ArmorClothing"))) {
+				continue;
+			}
 
 			BOS slotMask = equipped->GetSlotMask();
 
@@ -1139,11 +1156,10 @@ namespace DCURSES {
 
 		if (removes.size() > 0) {
 			log::trace("Undress removed {} items", removes.size());
-			SKSE::GetTaskInterface()->AddTask([removes, akActor] {
-				for (auto equipped : removes) {
-					UnequipItem(akActor, equipped);
-				}
-				});
+			auto scriptManager = ScriptingManager();
+			for (auto equipped : removes) {
+				scriptManager.UnequipItem(akActor, equipped);
+			}
 			return true;
 		}
 
@@ -1153,15 +1169,15 @@ namespace DCURSES {
 	void UnequipItems(RE::Actor* akActor) {
 		if (!akActor) return;
 
-		SKSE::GetTaskInterface()->AddTask([akActor] {
-			auto rightHand = akActor->GetEquippedObject(false);
-			//UnequipSpell(akActor, rightHand, 1);
-			UnequipItem(akActor, rightHand);
-			auto leftHand = akActor->GetEquippedObject(true);
-			//UnequipSpell(akActor, leftHand, 0);
-			UnequipItem(akActor, leftHand);
-			akActor->DrawWeaponMagicHands(false);
-			});
+		auto scriptManager = ScriptingManager();
+		auto rightHand = akActor->GetEquippedObject(false);
+		//UnequipSpell(akActor, rightHand, 1);
+		scriptManager.UnequipItem(akActor, rightHand);
+		auto leftHand = akActor->GetEquippedObject(true);
+		//UnequipSpell(akActor, leftHand, 0);
+		scriptManager.UnequipItem(akActor, leftHand);
+		akActor->DrawWeaponMagicHands(false);
+
 	}
 
 	bool UndressAndUnequipActor(RE::Actor* akActor) {

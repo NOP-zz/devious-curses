@@ -21,13 +21,14 @@ namespace DCURSES {
 
 		//MCM_START
 		//Flag flag_SlaveTats					//CheckSTNG()
-		//Flag flag_LewdMarks					//CheckLM(), CheckSTNG()
-		//Flag flag_RapeTats					//ESP:RapeTattoos.esp, CheckSTNG()
-		//Flag flag_RT_LM						//ESP:RapeTattoos.esp, CheckSTNG(), CheckLM()
+		//Flag flag_LewdMarks					//CheckLM() && CheckSTNG()
+		//Flag flag_RapeTats					//ESP:RapeTattoos.esp && CheckSTNG()
+		//Flag flag_RT_LM						//ESP:RapeTattoos.esp && CheckSTNG() && CheckLM()
 		//Flag flag_SimpleSlavery				//ESP:SimpleSlavery.esp
 		//Flag flag_UnforgivingDevices			//ESP:UnforgivingDevices.esp
-		//Flag flag_SSEnabled					//VAR:eventSimpleSlaveryWeight > 0, ESP:SimpleSlavery.esp
+		//Flag flag_SSEnabled					//eventSimpleSlaveryWeight > 0 && ESP:SimpleSlavery.esp
 		//Flag flag_SGO							//ESP:Sgo4IF.esp
+		//Flag flag_LockOppDevice_Menu			//!oppDeviceAntiCheat || !WearingOppressiveDevice() 
 		//Page Main								
 		//Header Chances
 		float baseChance = 6.5;					//Base Event Chance//How likely are you to trigger a trap before modifiers.//{1}%//(0,100,0.1)
@@ -50,6 +51,7 @@ namespace DCURSES {
 		bool bossOnlyHeavy = true;				//Boss Heavy Restraints//Heavy restraints can only be applied from boss chests.
 		int restraintCap = 7;					//Restraints Cap//Events won't happen if you have more than this many restraints.//{0}//(1,15,1)
 		bool stripPlayerOnEvent = true;			//Strip Player//Toggle to choose if the player should be stripped on any event.\nIf a heavy bondage device is equipped the player will be stripped anyway.
+		bool stripOnlyKeywords = true;			//Strip Armor Keywords//This will only remove items that are tagged as armor or clothing through keywords.\nThis may cause some modded items to not be unequipped.
 		//Header Arousal
 		float arousalModifier = 1.4f;			//Arousal Modifier//If this is greater than 1, curses will me more likely the more aroused the player is.\nIf set to 10 with full arousal will multiply the chance by 10 while half arousal would multiply the chance by 5.//{1}//(1,10,0.1)
 		int minArousal = 10;					//Minimum Arousal//Curses won't trigger if the player is below this arousal level.//{0}//(0,100,1)
@@ -81,8 +83,6 @@ namespace DCURSES {
 		int straitjacketLegbinderWeight = 15;	//Hobbling Straitjacket Weight//Chance to be equipped with a straitjacket that has a legbinder.//{0}//(0,100,1)
 		int petSuitWeight = 10;					//Pet Suit Weight//Chance to be equipped with a pet suit.//{0}//(0,100,1)
 		//Column
-		//Header Unforgiving Devices
-		bool onlyUseUnforgivingDevices = false;	//Only Unforgiving Devices//Only register devices to the mod that are converted to work with UD.		?:? flag_UnforgivingDevices  **RECALC
 		//Header Collars & Cuffs	
 		int collarWeight = 60;					//Collar Weight//Chance to be equipped with a collar.//{0}//(0,100,1)
 		int armCuffsWeight = 60;				//Arm Cuffs Weight//Chance to be equipped with arm cuffs.//{0}//(0,100,1)
@@ -105,23 +105,6 @@ namespace DCURSES {
 		int bootsWeight = 30;					//Boots Weight//Chance to be equipped with restrictive boots.//{0}//(0,100,1)
 		int glovesWeight = 30;					//Gloves Weight//Chance to be equipped with restrictive gloves.//{0}//(0,100,1)
 		int mittensWeight = 0;					//Mittens Weight//Chance to be equipped with bondage mittens.//{0}//(0,100,1)
-		//Page Keys
-		float keyLossChance = 80;				//Key Loss Chance//How likely you are to lose your keys during an event.//{1}%//(0,100,0.1)
-		float keyChance = 7;					//Key Find Chance//How likely you are to find a key in a container.//{1}%//(0,100,0.1)
-		int minKeysLooted = 1;					//Min Keys//The minimum number of keys that can be found at a time.//{0}//(1,10,1)
-		int maxKeysLooted = 1;					//Max Keys//The maximum number of keys that can be found at a time.//{0}//(1,10,1)
-		float keyBonus = 1.0f;					//Bonus Chance Per Device//A bonus chance to get a key per locking device worn.//{1}%//(0,10,0.1)
-		bool keyForgiveness = true;				//Key Forgiveness//Make keys more likely if it has been a while since you got any.
-		float keyPickpocketBonus = 2.0;			//Pickpocket Bonus//Multiplier to key chance when pickpocketing someone.\nSet to 0 to disable keys when pickpocketing.//{1}x//(0,10,0.1)
-		int maxHeldKeys = 3;					//Max Held Keys//Sets the maximum allowed amount of keys that you can carry while still finding more.\nWith this enabled no devices will be equipped that require more keys than you can find.\nFor example if you have two restraint keys and one chastity key and this is set to three you will no longer find keys.\nSet to 0 to disable.//{0}//(0,100,1) **RECALC
-		//Column
-		int restraintsKeyWeight = 80;			//Restraints Key Weight//Chance to find a restraints key.//{0}//(0,100,1)
-		int chastityKeyWeight = 50;				//Chastity Key Weight//Chance to find a chastity key.//{0}//(0,100,1)
-		int piercingToolWeight = 20;			//Piercing Tool Weight//Chance to find a piercing removal tool.//{0}//(0,100,1)
-		//Empty
-		float magicKeyChance = 10.0;			//Magic Key Chance//Chance that magic keys will be found in boss chests. They will destroy all restraints you are wearing.\nYou can only have a max of one at a time and they can never be lost.\nSet to 0 to disable//{1}//(0,50,0.1)
-		bool preferRelevantKeys = true;			//Prefer Relevant Keys//You will only find keys that would unlock items you are wearing.
-		bool vanishingKeys = true;				//Vanishing Keys//Keys will be removed from containers after you close the menu.
 		//Page Events
 		//Header Bondage Curse
 		int eventStandardWeight = 100;			//Bondage Curse Weight//Chance to receive a bondage device event.//{0}//(0,500,1)
@@ -135,6 +118,7 @@ namespace DCURSES {
 		bool eventContAllDevices = false;		//Use All Devices//Will allow any device other than heavy bondage to be equipped when triggering a contraption event.\nWill follow all other rules set for devices.									
 		int eventContDeviceOverride = 0;		//Device Count Override//When equipping devices for contraption events this number will be used instead of the min / max on the main page.\nSet to 0 to use the default number of devices.//{0}//(0,10,1)
 		//Column
+		bool allowFollowerEvents = false;		//Follower Events//Allow followers to be affected by curses. Currently only applies to the Bondage Curse and Tattoo Curse.
 		//Header Tattoo Curse
 		int eventTattooWeight = 15;				//Tattoo Curse Weight//Chance to receive random tattoos.\nRequires Rape Tattoos.//{0}//(0,500,1)							?:? flag_RapeTats
 		int eventTattooMin = 1;					//Tattoo Curse Min//Minimum number of tattoos that can be put on.//{0}//(1,10,1)											?:? flag_RapeTats
@@ -145,6 +129,12 @@ namespace DCURSES {
 		//Header Slavery Curse
 		int eventSimpleSlaveryWeight = 0;		//Simple Slavery Weight//Chance to trigger a Simple Slavery auction.//{0}//(0,500,1) ?:? flag_SimpleSlavery					**RELOAD
 		int eventSSMinRestraints = 6;			//Minimum Restraints//Minimum restraints that need to be equipped for a Simple Slavery auction to start.//{0}//(0,10,1)		?:? flag_SSEnabled
+		//Header Abadon Curse
+		int eventAbadonWeight = 5;				//Abadon Curse Weight//Chance to be equipped with the Abadon Plug.//{0}//(0,500,1)											?:? flag_UnforgivingDevices
+		//Page Unforgiving Devices
+		bool onlyUseUnforgivingDevices = true;	//Only Unforgiving Devices//Only register devices to the mod that are converted to work with UD.\n(Will cause lag on menu close)													?:? flag_UnforgivingDevices  **RECALC
+		bool udUseAbadon = false;				//Allow Abadon Devices//Allow Abadon devices to be enabled in the normal random device search. Will not equip the Abadon Plug even if enabled.\n(Will cause lag on menu close)														?:? flag_UnforgivingDevices  **RECALC
+		bool udUseMisc = true;					//Allow Misc Unforgiving Devices//Allow devices like chargable plugs, punisher items, etc. to be enabled in the normal random device search\n(Will cause lag on menu close)			?:? flag_UnforgivingDevices  **RECALC
 		//Page Lewd Marks
 		//Header Allure
 		int LMAllureWeight = 10;				//Allure Mark Weight//This mark will make everyone around you horny all the time.//{0}//(0,500,1)							?:? flag_LewdMarks
@@ -159,7 +149,7 @@ namespace DCURSES {
 		//Header Branding
 		int LMBrandingWeight = 10;				//Branding Mark//This mark will force you to have a certain number of tattoos!//{0}//(0,500,1)								?:? flag_LewdMarks
 		float LMBrandingChance = 1.5;			//Chance//How likely you are to receive a random tattoo per 15 seconds.\nRequires Rape Tattoos//{1}%//(0,100,0.1)			?:? flag_RT_LM
-		int LMBrndingTotal = 12;				//Total Tattoos//How many tattoos you need before the mark releases. The mark itself counts as 2.//{0}//(1,20,1)			?:? flag_LewdMarks
+		int LMBrandingTotal = 12;				//Total Tattoos//How many tattoos you need before the mark releases. The mark itself counts as 2.//{0}//(1,20,1)			?:? flag_LewdMarks
 		bool LMBrandingPunish = true;			//Punishment//You will be punished by loosing gold if your total tattoo count decreases.									?:? flag_LewdMarks
 		color LMBrandingColor = 0x220022;		//Color//Color for mark.																									?:? flag_LewdMarks
 		//Column
@@ -169,17 +159,22 @@ namespace DCURSES {
 		int LMBondageDeviceCount = 8;			//Device Count//How many devices need to be equipped before the mark will fade.//{0}//(1,50,1)								?:? flag_LewdMarks
 		color LMBondageColor = 0x7908cf;		//Color//Color for mark.																									?:? flag_LewdMarks
 		//Header Nudity
-		//Flag flag_LMStripBody					//VAR:LMNudityChestOnly, flag_LewdMarks == 0
+		//Flag flag_LMStripBody					//LMNudityChestOnly && flag_LewdMarks == 0
 		int LMNudityWeight = 15;				//Nudity Mark//With this mark you will be unable to wear any clothes.//{0}//(0,500,1)										?:? flag_LewdMarks
 		bool LMNudityChestOnly = false;			//Chest Only//With this enabled only chest armor will be checked and removed. Otherwise all armor will be unequipped.		?:? flag_LewdMarks **RELOAD
 		text LMNudityAditionalForms = "";		//Strip Slots//A comma separated list of additional slots to strip. Will not strip devices.\nFor example: 46,47,49,52.		?:? flag_LMStripBody
 		int LMNudityTalkTimes = 35;				//Dialogue Times//How many times you have to talk to different characters before the mark will fade.//{0}//(3,100,1)		?:? flag_LewdMarks
 		color LMNudityColor = 0xd676cb;			//Color//Color for mark.																									?:? flag_LewdMarks
+		//Header Healslut
+		int LMHealslutWeight = 5;				//Healslut Mark//With this mark you won't be able to deal damage and must heal your allies instead.//{0}//(0,500,1)			?:? flag_LewdMarks
+		int LMHealslutHealing = 2000;			//Healing Amount//How much you have to heal your followers to remove the mark. This works if your followers are at full health.//{0}//(1000,100000,1000)		?:? flag_LewdMarks
+		color LMHealslutColor = 0xffbb45;		//Color//Color for mark.																									?:? flag_LewdMarks
 		//Page Oppressive Devices
 		//Header Summoner Collar
 		int oppSummonerCollarWeight = 20;		//Weight//How likely that you will be equipped with a collar that makes you have sex with your summons.\nRequires creatures to be enabled for sex.//{0}//(1,500,1)
 		int oppSummonerSexCount = 15;			//Sex Count//How may time you need to have sex with your summons before the collar will unlock.//{0}//(1,100,1)
 		bool oppSCollarDrainsMagicka = true;	//Magicka Drain//The collar will drain all of your magicka when summoning.
+		bool oppSCollarAutoRemove = true;		//Auto Remove//Remove the collar as soon as the requirements are met instead of just giving the key for it.
 		int oppSMinSummonArousal = 90;			//Summon Arousal//Will change the arousal of all of your summons to be at least this value.//{0}//(0,100,1)
 		float oppSummonChance = 1.5;			//Summon Chance//The chance per second that the collar summons an atronach to have sex with you.\nThis won't happen if you already have a different summon.//{1}%//(0,100,0.1)
 		//Header Dwarven Cuirass
@@ -192,10 +187,16 @@ namespace DCURSES {
 		//Header Living Latex
 		int oppLivingLatexWeight = 20;			//Weight//How likely that you will be encased in latex that will bind you with ebonite.//{0}//(1,500,1)
 		int oppLivingLatexStartTime = 15;		//Start Time//How long in minutes do you have to wear the latex before it isn't dormant.\n//{0}//(1,60,1)
+		float oppLivingLatexGem = 4.0f;			//Volatile Gem Chance//The chance to find a gem on dead mages and warlocks that will shock the latex when hit with a weapon.//{1}//(0,100,0.1)
 		bool oppLivingLatexHeavy = false;		//Heavy Bondage//The latex will bind you with heavy bondage devices.\nWarning: this will happen in combat.
 		float oppLivingLatexMore = 0.0f;		//Periodic Devices//How frequently in minutes the latex will bind you when active. Set to 0 to disable.\nWarning: this will happen in combat.//{1}//(0,10,0.1)
 		bool oppLivingLatexRequireRem = true;	//Clinging//The latex will cling to your other devices, requiring you to remove all of them before it will dissapear.
 		bool oppLivingLatexOpen = false;		//Use Open Catsuit//Will replace the default catsuit with the open variant. Will only work if you don't have the device yet.
+		//Header Madness Plug
+		int oppMadnessPlugWeight = 25;			//Weight//How likely you will be equipped with a plug that will try to drive you mad.//{0}//(1,500,1)
+		int oppMadnessPlugIterations = 5;		//Number of Events//How many events the plug will do before it is removed.//{0}//(1,20,1)
+		int oppMadnessplugOrgasms = 6;			//Orgasms Per Event//How many times the plug must make you orgasm per event.\nThis only counts orgasms caused by devious devices.//{0}//(1,100,1)
+		bool oppMadnessChaos = false;			//True Madness//Will remove the restrictions on what events can happen. These events may result in PERMANENT changes to your character.
 		//Page Locations
 		bool useLocationModifiers = true;		//Use Location Modifiers//Weather or not to apply the location modifiers listed below to event chances.
 		//Empty
@@ -217,13 +218,31 @@ namespace DCURSES {
 		float dragonLairModifier = 2.0f;		//Dragon Lair Modifier//Modifier for events to happen in dragon lairs.//{1}x//(0,10,0.1)
 		float apocryphaModifier = 2.0f;			//Apocrypha Modifier//Modifier for events to happen in apocrypha.//{1}x//(0,10,0.1)
 		float wildernessModifier = 0.9f;		//Wilderness Modifier//Modifier for events to happen in the wilderness.//{1}x//(0,10,0.1)
+		//Page Keys
+		float keyLossChance = 80;				//Key Loss Chance//How likely you are to lose your keys during an event.//{1}%//(0,100,0.1)
+		float keyChance = 7;					//Key Find Chance//How likely you are to find a key in a container.//{1}%//(0,100,0.1)
+		int minKeysLooted = 1;					//Min Keys//The minimum number of keys that can be found at a time.//{0}//(1,10,1)
+		int maxKeysLooted = 1;					//Max Keys//The maximum number of keys that can be found at a time.//{0}//(1,10,1)
+		float keyBonus = 1.0f;					//Bonus Chance Per Device//A bonus chance to get a key per locking device worn.//{1}%//(0,10,0.1)
+		bool keyForgiveness = true;				//Key Forgiveness//Make keys more likely if it has been a while since you got any.
+		float keyPickpocketBonus = 2.0;			//Pickpocket Bonus//Multiplier to key chance when pickpocketing someone.\nSet to 0 to disable keys when pickpocketing.//{1}x//(0,10,0.1)
+		int maxHeldKeys = 3;					//Max Held Keys//Sets the maximum allowed amount of keys that you can carry while still finding more.\nWith this enabled no devices will be equipped that require more keys than you can find.\nFor example if you have two restraint keys and one chastity key and this is set to three you will no longer find keys.\nSet to 0 to disable.//{0}//(0,100,1) **RECALC
+		//Column
+		int restraintsKeyWeight = 80;			//Restraints Key Weight//Chance to find a restraints key.//{0}//(0,100,1)
+		int chastityKeyWeight = 50;				//Chastity Key Weight//Chance to find a chastity key.//{0}//(0,100,1)
+		int piercingToolWeight = 20;			//Piercing Tool Weight//Chance to find a piercing removal tool.//{0}//(0,100,1)
+		//Empty
+		float magicKeyChance = 10.0;			//Magic Key Chance//Chance that magic keys will be found in boss chests. They will destroy all restraints you are wearing.\nYou can only have a max of one at a time and they can never be lost.\nSet to 0 to disable//{1}//(0,50,0.1)
+		bool preferRelevantKeys = true;			//Prefer Relevant Keys//You will only find keys that would unlock items you are wearing.
+		bool vanishingKeys = true;				//Vanishing Keys//Keys will be removed from containers after you close the menu.
 		//Page Quest Interactions
-		//Flag flag_enable_qi					//VAR:enableQuestInteractions
+		//Flag flag_enable_qi					//enableQuestInteractions
 		bool enableQuestInteractions = true;	//Quest Interactions//Certain quests may have some additional events tied to them.\n The mod page has more information about each quest.
 		//Empty
 		bool enableQIMalkoran = true;			//Malkoran//The Malkoran event.
 		bool enableQISanguine = true;			//Sanguine//The Sanguine events.
-		bool enableQOBlackStar = true;			//Black Star//The Black Star events.
+		bool enableQIBlackStar = true;			//Black Star//The Black Star event.
+		bool enableQIMindOfMadness = true;		//Sheogorath//The Sheogorath event.
 		//Column
 		//Header Quest Toggles
 		bool enableQIProvingHonor = true;		//Proving Honor//The Proving Honor event.
@@ -231,7 +250,10 @@ namespace DCURSES {
 		bool enableQIDwemerMuseum = true;		//Dwemer Museam//The Dwemer Museum event.
 		bool enableQIThalmorEmbassy = true;		//Thalmor Embassy//The Thalmor Embassy event.
 		//Page Misc
-		//Flag flag_events_disabled				//VAR:ModSuspended
+		//Flag flag_events_disabled				//ModSuspended
+		//Flag flag_wearingOppDevice			//!WearingOppressiveDevice()
+		bool oppDeviceAntiCheat = true;			//Lock Oppressive Devices Menu//Lock the Oppressive Devices menu when wearing an oppressive device.		?:? flag_wearingOppDevice
+		bool generalDeviceAntiCheat = false;	//Lock Menus While Restrained//All menus will be disabled while you are wearing any devices.
 		bool noMessageBoxes = false;			//Remove Message Boxes//No message boxes will be shown.
 		bool bossChestUseModelPath = true;		//Boss Chest Models//Use the model of chests to determine if they are a boss chest.\nThere will be a higher chance for non-vanilla chests being marked correctly, but also for some non-boss chests to be treated like one.\nThis includes the models for standard, dwarven, falmer, apocrypha, soul cairn, and snow elf boss chests.
 		float rDeviceBaseChance = 1.5;			//Device Base Chance//Chance to loot a random bondage item from a container or a dead body.//{1}%//(0,100,0.1)
@@ -239,7 +261,7 @@ namespace DCURSES {
 		bool bossExtraGold = true;				//Boss Chest Extra Gold//Boss chests will have extra gold.
 		bool useThemes = false;					//Use Device Themes//Events that equip the player with devices will try to keep all devices equipped to a consistent theme.\nWARNING: this will increase the time taken to run each event and may cause lag spikes.
 		//Column
-		//SKIP bool enableQuestInteractions = false;	//Quest Interactions//Enable interactions with vanilla quests. This might include sex with NPCs, equipped devices, added tattoos, and more.
+		bool disableForce3rdPerson = true;		//Disable 3rd Person//This mod will not force the player into 3rd person.
 		bool enableSlowStrip = false;			//Use Sexlab Strip//Replace the built in stripping algorithm with the one from sexlab.\nCan fix rare cases of crashing on stripping and also give more control over what gets stripped.
 		float tatSolventChance = 0.5;			//Universal Solvent Chance//Chance to find universal solvent when looting dead bodies. Universal solvent will remove all lewd marks and tattoos.\nHaving more tattoos will slightly increase the chance of finding one.\nSet to 0 to disable.//{1}//(0,50,0.1)
 		bool resumeEvents = false;				//Resume Events//Events have been disabled by another mod. Enable this and exit the MCM to re-enable events.				?:? flag_events_disabled
@@ -249,7 +271,7 @@ namespace DCURSES {
 		//Header Triggers
 		float consTriggerNude = 15.0;			//Nudity//Chance for a consequence when talking to someone while nude.//{1}%//(0,100,0.1)
 		float consTriggerRestrained = 50.0;		//Restrained//Chance for a consequence when talking to someone while in heavy restraints.//{1}%//(0,100,0.1)
-		float consTriggerSex = 10.0;			//Sex//Chance for a consequence after having sex with an actor.\nOnly applied to scenes started by this mod.//{1}%//(0,100,0.1)
+		float consTriggerSex = 10.0;			//Sex//Chance for a consequence after having sex with an actor.\nWill be triggered by any scene, not just those started by this mod.//{1}%//(0,100,0.1)
 		//Empty
 		bool consAllowFollowers = false;		//Allow Followers//Talking to or having sex with followers can trigger consequences.
 		bool consAllowCreatures = false;		//Allow Creatures//Talking to or having sex with creatures can trigger consequences.
@@ -271,9 +293,9 @@ namespace DCURSES {
 		//Empty
 		int consMercyWeight = 5;				//Mercy Weight//Chance that a character will feel bad for you and unlock a device, give you a key, or give you something mildly useful.//{0}//(0,100,1)
 		//Page Sex
-		//Flag flag_enable_sex					//VAR:sexEnabled
-		//Flag flag_enable_random_sex			//VAR:sexRandomEnabled
-		//Flag flag_sex_slave_tats				//VAR:sexRandomEnabled, CheckSTNG()
+		//Flag flag_enable_sex					//sexEnabled
+		//Flag flag_enable_random_sex			//sexRandomEnabled
+		//Flag flag_sex_slave_tats				//sexRandomEnabled && CheckSTNG()
 		//Header General
 		bool sexEnabled = false;				//Enabled//Toggles sex on or off.\nSex will only occur from friendly characters.																						**RELOAD
 		bool sexAggressiveAnims = false;		//Prefer Aggressive Animations//Prefer using aggressive animations for all sex started by this mod.																		?:? flag_enable_sex
@@ -321,15 +343,19 @@ namespace DCURSES {
 		int sexChanceFollower = -1;				//Follower Chance//How likely a follower will have sex with the player.\nSet to -1 to use global chance.//{0}%//(-1,100,1)												?:? flag_enable_random_sex
 		int sexChanceSpouse = -1;				//Spouse Chance//How likely a player's spouse will have sex with them.\nSet to -1 to use global chance.//{0}%//(-1,100,1)												?:? flag_enable_random_sex
 		int sexChanceSummon = -1;				//Summon Chance//How likely a player's summon will have sex with them.\nSet to -1 to use global creature chance.//{0}%//(-1,100,1)										?:? flag_enable_random_sex
+		//Page LOCKED
+		//Header MCM is Locked!
+		//Header Remove all of your restraints to unlock.
 		//MCM_END
 	} settings;
 
 	void PlayerMessage(Translator trans) {
+		auto scriptManager = ScriptingManager();
 		if (settings.noMessageBoxes) {
-			DBGNotification(trans);
+			scriptManager.DBGNotification(trans);
 		}
 		else {
-			DBGMessageBox(trans);
+			scriptManager.DBGMessageBox(trans);
 		}
 	}
 
@@ -423,18 +449,6 @@ namespace DCURSES {
 		SetMCMInt("glovesWeight",settings.glovesWeight);
 		settings.mittensWeight = 0;
 		SetMCMInt("mittensWeight",settings.mittensWeight);
-		settings.minKeysLooted = 1;
-		SetMCMInt("minKeysLooted",settings.minKeysLooted);
-		settings.maxKeysLooted = 1;
-		SetMCMInt("maxKeysLooted",settings.maxKeysLooted);
-		settings.maxHeldKeys = 3;
-		SetMCMInt("maxHeldKeys",settings.maxHeldKeys);
-		settings.restraintsKeyWeight = 80;
-		SetMCMInt("restraintsKeyWeight",settings.restraintsKeyWeight);
-		settings.chastityKeyWeight = 50;
-		SetMCMInt("chastityKeyWeight",settings.chastityKeyWeight);
-		settings.piercingToolWeight = 20;
-		SetMCMInt("piercingToolWeight",settings.piercingToolWeight);
 		settings.eventStandardWeight = 100;
 		SetMCMInt("eventStandardWeight",settings.eventStandardWeight);
 		settings.eventStandardBossReduction = 20;
@@ -459,6 +473,8 @@ namespace DCURSES {
 		SetMCMInt("eventSimpleSlaveryWeight",settings.eventSimpleSlaveryWeight);
 		settings.eventSSMinRestraints = 6;
 		SetMCMInt("eventSSMinRestraints",settings.eventSSMinRestraints);
+		settings.eventAbadonWeight = 5;
+		SetMCMInt("eventAbadonWeight",settings.eventAbadonWeight);
 		settings.LMAllureWeight = 10;
 		SetMCMInt("LMAllureWeight",settings.LMAllureWeight);
 		settings.LMAllureMod = 5;
@@ -473,8 +489,8 @@ namespace DCURSES {
 		SetMCMInt("LMHeatContainerCount",settings.LMHeatContainerCount);
 		settings.LMBrandingWeight = 10;
 		SetMCMInt("LMBrandingWeight",settings.LMBrandingWeight);
-		settings.LMBrndingTotal = 12;
-		SetMCMInt("LMBrndingTotal",settings.LMBrndingTotal);
+		settings.LMBrandingTotal = 12;
+		SetMCMInt("LMBrandingTotal",settings.LMBrandingTotal);
 		settings.LMBondageWeight = 5;
 		SetMCMInt("LMBondageWeight",settings.LMBondageWeight);
 		settings.LMBondageDeviceCount = 8;
@@ -483,6 +499,10 @@ namespace DCURSES {
 		SetMCMInt("LMNudityWeight",settings.LMNudityWeight);
 		settings.LMNudityTalkTimes = 35;
 		SetMCMInt("LMNudityTalkTimes",settings.LMNudityTalkTimes);
+		settings.LMHealslutWeight = 5;
+		SetMCMInt("LMHealslutWeight",settings.LMHealslutWeight);
+		settings.LMHealslutHealing = 2000;
+		SetMCMInt("LMHealslutHealing",settings.LMHealslutHealing);
 		settings.oppSummonerCollarWeight = 20;
 		SetMCMInt("oppSummonerCollarWeight",settings.oppSummonerCollarWeight);
 		settings.oppSummonerSexCount = 15;
@@ -499,6 +519,24 @@ namespace DCURSES {
 		SetMCMInt("oppLivingLatexWeight",settings.oppLivingLatexWeight);
 		settings.oppLivingLatexStartTime = 15;
 		SetMCMInt("oppLivingLatexStartTime",settings.oppLivingLatexStartTime);
+		settings.oppMadnessPlugWeight = 25;
+		SetMCMInt("oppMadnessPlugWeight",settings.oppMadnessPlugWeight);
+		settings.oppMadnessPlugIterations = 5;
+		SetMCMInt("oppMadnessPlugIterations",settings.oppMadnessPlugIterations);
+		settings.oppMadnessplugOrgasms = 6;
+		SetMCMInt("oppMadnessplugOrgasms",settings.oppMadnessplugOrgasms);
+		settings.minKeysLooted = 1;
+		SetMCMInt("minKeysLooted",settings.minKeysLooted);
+		settings.maxKeysLooted = 1;
+		SetMCMInt("maxKeysLooted",settings.maxKeysLooted);
+		settings.maxHeldKeys = 3;
+		SetMCMInt("maxHeldKeys",settings.maxHeldKeys);
+		settings.restraintsKeyWeight = 80;
+		SetMCMInt("restraintsKeyWeight",settings.restraintsKeyWeight);
+		settings.chastityKeyWeight = 50;
+		SetMCMInt("chastityKeyWeight",settings.chastityKeyWeight);
+		settings.piercingToolWeight = 20;
+		SetMCMInt("piercingToolWeight",settings.piercingToolWeight);
 		settings.consSexWeight = 15;
 		SetMCMInt("consSexWeight",settings.consSexWeight);
 		settings.consFineWeight = 10;
@@ -563,6 +601,8 @@ namespace DCURSES {
 		SetMCMInt("LMBondageColor",settings.LMBondageColor);
 		settings.LMNudityColor = 0xd676cb;
 		SetMCMInt("LMNudityColor",settings.LMNudityColor);
+		settings.LMHealslutColor = 0xffbb45;
+		SetMCMInt("LMHealslutColor",settings.LMHealslutColor);
 		settings.baseChance = 6.5f;
 		SetMCMFloat("baseChance",settings.baseChance);
 		settings.containerModifier = 1.0f;
@@ -581,16 +621,6 @@ namespace DCURSES {
 		SetMCMFloat("lockDifficultyModifier",settings.lockDifficultyModifier);
 		settings.arousalModifier = 1.4f;
 		SetMCMFloat("arousalModifier",settings.arousalModifier);
-		settings.keyLossChance = 80.0f;
-		SetMCMFloat("keyLossChance",settings.keyLossChance);
-		settings.keyChance = 7.0f;
-		SetMCMFloat("keyChance",settings.keyChance);
-		settings.keyBonus = 1.0f;
-		SetMCMFloat("keyBonus",settings.keyBonus);
-		settings.keyPickpocketBonus = 2.0f;
-		SetMCMFloat("keyPickpocketBonus",settings.keyPickpocketBonus);
-		settings.magicKeyChance = 10.0f;
-		SetMCMFloat("magicKeyChance",settings.magicKeyChance);
 		settings.eventContraptionTime = 4.0f;
 		SetMCMFloat("eventContraptionTime",settings.eventContraptionTime);
 		settings.LMBrandingChance = 1.5f;
@@ -599,6 +629,8 @@ namespace DCURSES {
 		SetMCMFloat("LMBondageChance",settings.LMBondageChance);
 		settings.oppSummonChance = 1.5f;
 		SetMCMFloat("oppSummonChance",settings.oppSummonChance);
+		settings.oppLivingLatexGem = 4.0f;
+		SetMCMFloat("oppLivingLatexGem",settings.oppLivingLatexGem);
 		settings.oppLivingLatexMore = 0.0f;
 		SetMCMFloat("oppLivingLatexMore",settings.oppLivingLatexMore);
 		settings.playerHomeModifier = 0.0f;
@@ -631,6 +663,16 @@ namespace DCURSES {
 		SetMCMFloat("apocryphaModifier",settings.apocryphaModifier);
 		settings.wildernessModifier = 0.9f;
 		SetMCMFloat("wildernessModifier",settings.wildernessModifier);
+		settings.keyLossChance = 80.0f;
+		SetMCMFloat("keyLossChance",settings.keyLossChance);
+		settings.keyChance = 7.0f;
+		SetMCMFloat("keyChance",settings.keyChance);
+		settings.keyBonus = 1.0f;
+		SetMCMFloat("keyBonus",settings.keyBonus);
+		settings.keyPickpocketBonus = 2.0f;
+		SetMCMFloat("keyPickpocketBonus",settings.keyPickpocketBonus);
+		settings.magicKeyChance = 10.0f;
+		SetMCMFloat("magicKeyChance",settings.magicKeyChance);
 		settings.rDeviceBaseChance = 1.5f;
 		SetMCMFloat("rDeviceBaseChance",settings.rDeviceBaseChance);
 		settings.tatSolventChance = 0.5f;
@@ -653,32 +695,36 @@ namespace DCURSES {
 		SetMCMBool("bossOnlyHeavy",settings.bossOnlyHeavy);
 		settings.stripPlayerOnEvent = true;
 		SetMCMBool("stripPlayerOnEvent",settings.stripPlayerOnEvent);
+		settings.stripOnlyKeywords = true;
+		SetMCMBool("stripOnlyKeywords",settings.stripOnlyKeywords);
 		settings.beltPlugs = true;
 		SetMCMBool("beltPlugs",settings.beltPlugs);
 		settings.noBeltPiercing = false;
 		SetMCMBool("noBeltPiercing",settings.noBeltPiercing);
 		settings.plugsDontCount = true;
 		SetMCMBool("plugsDontCount",settings.plugsDontCount);
-		settings.onlyUseUnforgivingDevices = false;
-		SetMCMBool("onlyUseUnforgivingDevices",settings.onlyUseUnforgivingDevices);
 		settings.allowLegShackles = false;
 		SetMCMBool("allowLegShackles",settings.allowLegShackles);
-		settings.keyForgiveness = true;
-		SetMCMBool("keyForgiveness",settings.keyForgiveness);
-		settings.preferRelevantKeys = true;
-		SetMCMBool("preferRelevantKeys",settings.preferRelevantKeys);
-		settings.vanishingKeys = true;
-		SetMCMBool("vanishingKeys",settings.vanishingKeys);
 		settings.eventContDevices = true;
 		SetMCMBool("eventContDevices",settings.eventContDevices);
 		settings.eventContAllDevices = false;
 		SetMCMBool("eventContAllDevices",settings.eventContAllDevices);
+		settings.allowFollowerEvents = false;
+		SetMCMBool("allowFollowerEvents",settings.allowFollowerEvents);
+		settings.onlyUseUnforgivingDevices = true;
+		SetMCMBool("onlyUseUnforgivingDevices",settings.onlyUseUnforgivingDevices);
+		settings.udUseAbadon = false;
+		SetMCMBool("udUseAbadon",settings.udUseAbadon);
+		settings.udUseMisc = true;
+		SetMCMBool("udUseMisc",settings.udUseMisc);
 		settings.LMBrandingPunish = true;
 		SetMCMBool("LMBrandingPunish",settings.LMBrandingPunish);
 		settings.LMNudityChestOnly = false;
 		SetMCMBool("LMNudityChestOnly",settings.LMNudityChestOnly);
 		settings.oppSCollarDrainsMagicka = true;
 		SetMCMBool("oppSCollarDrainsMagicka",settings.oppSCollarDrainsMagicka);
+		settings.oppSCollarAutoRemove = true;
+		SetMCMBool("oppSCollarAutoRemove",settings.oppSCollarAutoRemove);
 		settings.oppDwarvenHeavyRestraint = false;
 		SetMCMBool("oppDwarvenHeavyRestraint",settings.oppDwarvenHeavyRestraint);
 		settings.oppDwarvenRequireLoc = true;
@@ -689,16 +735,26 @@ namespace DCURSES {
 		SetMCMBool("oppLivingLatexRequireRem",settings.oppLivingLatexRequireRem);
 		settings.oppLivingLatexOpen = false;
 		SetMCMBool("oppLivingLatexOpen",settings.oppLivingLatexOpen);
+		settings.oppMadnessChaos = false;
+		SetMCMBool("oppMadnessChaos",settings.oppMadnessChaos);
 		settings.useLocationModifiers = true;
 		SetMCMBool("useLocationModifiers",settings.useLocationModifiers);
+		settings.keyForgiveness = true;
+		SetMCMBool("keyForgiveness",settings.keyForgiveness);
+		settings.preferRelevantKeys = true;
+		SetMCMBool("preferRelevantKeys",settings.preferRelevantKeys);
+		settings.vanishingKeys = true;
+		SetMCMBool("vanishingKeys",settings.vanishingKeys);
 		settings.enableQuestInteractions = true;
 		SetMCMBool("enableQuestInteractions",settings.enableQuestInteractions);
 		settings.enableQIMalkoran = true;
 		SetMCMBool("enableQIMalkoran",settings.enableQIMalkoran);
 		settings.enableQISanguine = true;
 		SetMCMBool("enableQISanguine",settings.enableQISanguine);
-		settings.enableQOBlackStar = true;
-		SetMCMBool("enableQOBlackStar",settings.enableQOBlackStar);
+		settings.enableQIBlackStar = true;
+		SetMCMBool("enableQIBlackStar",settings.enableQIBlackStar);
+		settings.enableQIMindOfMadness = true;
+		SetMCMBool("enableQIMindOfMadness",settings.enableQIMindOfMadness);
 		settings.enableQIProvingHonor = true;
 		SetMCMBool("enableQIProvingHonor",settings.enableQIProvingHonor);
 		settings.enableQISaarthal = true;
@@ -707,6 +763,10 @@ namespace DCURSES {
 		SetMCMBool("enableQIDwemerMuseum",settings.enableQIDwemerMuseum);
 		settings.enableQIThalmorEmbassy = true;
 		SetMCMBool("enableQIThalmorEmbassy",settings.enableQIThalmorEmbassy);
+		settings.oppDeviceAntiCheat = true;
+		SetMCMBool("oppDeviceAntiCheat",settings.oppDeviceAntiCheat);
+		settings.generalDeviceAntiCheat = false;
+		SetMCMBool("generalDeviceAntiCheat",settings.generalDeviceAntiCheat);
 		settings.noMessageBoxes = false;
 		SetMCMBool("noMessageBoxes",settings.noMessageBoxes);
 		settings.bossChestUseModelPath = true;
@@ -717,6 +777,8 @@ namespace DCURSES {
 		SetMCMBool("bossExtraGold",settings.bossExtraGold);
 		settings.useThemes = false;
 		SetMCMBool("useThemes",settings.useThemes);
+		settings.disableForce3rdPerson = true;
+		SetMCMBool("disableForce3rdPerson",settings.disableForce3rdPerson);
 		settings.enableSlowStrip = false;
 		SetMCMBool("enableSlowStrip",settings.enableSlowStrip);
 		settings.resumeEvents = false;
@@ -827,12 +889,6 @@ namespace DCURSES {
 			{"bootsWeight", settings.bootsWeight},
 			{"glovesWeight", settings.glovesWeight},
 			{"mittensWeight", settings.mittensWeight},
-			{"minKeysLooted", settings.minKeysLooted},
-			{"maxKeysLooted", settings.maxKeysLooted},
-			{"maxHeldKeys", settings.maxHeldKeys},
-			{"restraintsKeyWeight", settings.restraintsKeyWeight},
-			{"chastityKeyWeight", settings.chastityKeyWeight},
-			{"piercingToolWeight", settings.piercingToolWeight},
 			{"eventStandardWeight", settings.eventStandardWeight},
 			{"eventStandardBossReduction", settings.eventStandardBossReduction},
 			{"eventOppressiveWeight", settings.eventOppressiveWeight},
@@ -845,6 +901,7 @@ namespace DCURSES {
 			{"eventLewdMarkWeight", settings.eventLewdMarkWeight},
 			{"eventSimpleSlaveryWeight", settings.eventSimpleSlaveryWeight},
 			{"eventSSMinRestraints", settings.eventSSMinRestraints},
+			{"eventAbadonWeight", settings.eventAbadonWeight},
 			{"LMAllureWeight", settings.LMAllureWeight},
 			{"LMAllureMod", settings.LMAllureMod},
 			{"LMAllureSex", settings.LMAllureSex},
@@ -852,11 +909,13 @@ namespace DCURSES {
 			{"LMHeatMod", settings.LMHeatMod},
 			{"LMHeatContainerCount", settings.LMHeatContainerCount},
 			{"LMBrandingWeight", settings.LMBrandingWeight},
-			{"LMBrndingTotal", settings.LMBrndingTotal},
+			{"LMBrandingTotal", settings.LMBrandingTotal},
 			{"LMBondageWeight", settings.LMBondageWeight},
 			{"LMBondageDeviceCount", settings.LMBondageDeviceCount},
 			{"LMNudityWeight", settings.LMNudityWeight},
 			{"LMNudityTalkTimes", settings.LMNudityTalkTimes},
+			{"LMHealslutWeight", settings.LMHealslutWeight},
+			{"LMHealslutHealing", settings.LMHealslutHealing},
 			{"oppSummonerCollarWeight", settings.oppSummonerCollarWeight},
 			{"oppSummonerSexCount", settings.oppSummonerSexCount},
 			{"oppSMinSummonArousal", settings.oppSMinSummonArousal},
@@ -865,6 +924,15 @@ namespace DCURSES {
 			{"oppDwarvenArousal", settings.oppDwarvenArousal},
 			{"oppLivingLatexWeight", settings.oppLivingLatexWeight},
 			{"oppLivingLatexStartTime", settings.oppLivingLatexStartTime},
+			{"oppMadnessPlugWeight", settings.oppMadnessPlugWeight},
+			{"oppMadnessPlugIterations", settings.oppMadnessPlugIterations},
+			{"oppMadnessplugOrgasms", settings.oppMadnessplugOrgasms},
+			{"minKeysLooted", settings.minKeysLooted},
+			{"maxKeysLooted", settings.maxKeysLooted},
+			{"maxHeldKeys", settings.maxHeldKeys},
+			{"restraintsKeyWeight", settings.restraintsKeyWeight},
+			{"chastityKeyWeight", settings.chastityKeyWeight},
+			{"piercingToolWeight", settings.piercingToolWeight},
 			{"consSexWeight", settings.consSexWeight},
 			{"consFineWeight", settings.consFineWeight},
 			{"consFineAmount", settings.consFineAmount},
@@ -901,15 +969,11 @@ namespace DCURSES {
 			{"lockedModifier", settings.lockedModifier},
 			{"lockDifficultyModifier", settings.lockDifficultyModifier},
 			{"arousalModifier", settings.arousalModifier},
-			{"keyLossChance", settings.keyLossChance},
-			{"keyChance", settings.keyChance},
-			{"keyBonus", settings.keyBonus},
-			{"keyPickpocketBonus", settings.keyPickpocketBonus},
-			{"magicKeyChance", settings.magicKeyChance},
 			{"eventContraptionTime", settings.eventContraptionTime},
 			{"LMBrandingChance", settings.LMBrandingChance},
 			{"LMBondageChance", settings.LMBondageChance},
 			{"oppSummonChance", settings.oppSummonChance},
+			{"oppLivingLatexGem", settings.oppLivingLatexGem},
 			{"oppLivingLatexMore", settings.oppLivingLatexMore},
 			{"playerHomeModifier", settings.playerHomeModifier},
 			{"cityModifier", settings.cityModifier},
@@ -926,6 +990,11 @@ namespace DCURSES {
 			{"dragonLairModifier", settings.dragonLairModifier},
 			{"apocryphaModifier", settings.apocryphaModifier},
 			{"wildernessModifier", settings.wildernessModifier},
+			{"keyLossChance", settings.keyLossChance},
+			{"keyChance", settings.keyChance},
+			{"keyBonus", settings.keyBonus},
+			{"keyPickpocketBonus", settings.keyPickpocketBonus},
+			{"magicKeyChance", settings.magicKeyChance},
 			{"rDeviceBaseChance", settings.rDeviceBaseChance},
 			{"tatSolventChance", settings.tatSolventChance},
 			{"consTriggerNude", settings.consTriggerNude},
@@ -937,38 +1006,48 @@ namespace DCURSES {
 			{"eventScaling", settings.eventScaling},
 			{"bossOnlyHeavy", settings.bossOnlyHeavy},
 			{"stripPlayerOnEvent", settings.stripPlayerOnEvent},
+			{"stripOnlyKeywords", settings.stripOnlyKeywords},
 			{"beltPlugs", settings.beltPlugs},
 			{"noBeltPiercing", settings.noBeltPiercing},
 			{"plugsDontCount", settings.plugsDontCount},
-			{"onlyUseUnforgivingDevices", settings.onlyUseUnforgivingDevices},
 			{"allowLegShackles", settings.allowLegShackles},
-			{"keyForgiveness", settings.keyForgiveness},
-			{"preferRelevantKeys", settings.preferRelevantKeys},
-			{"vanishingKeys", settings.vanishingKeys},
 			{"eventContDevices", settings.eventContDevices},
 			{"eventContAllDevices", settings.eventContAllDevices},
+			{"allowFollowerEvents", settings.allowFollowerEvents},
+			{"onlyUseUnforgivingDevices", settings.onlyUseUnforgivingDevices},
+			{"udUseAbadon", settings.udUseAbadon},
+			{"udUseMisc", settings.udUseMisc},
 			{"LMBrandingPunish", settings.LMBrandingPunish},
 			{"LMNudityChestOnly", settings.LMNudityChestOnly},
 			{"oppSCollarDrainsMagicka", settings.oppSCollarDrainsMagicka},
+			{"oppSCollarAutoRemove", settings.oppSCollarAutoRemove},
 			{"oppDwarvenHeavyRestraint", settings.oppDwarvenHeavyRestraint},
 			{"oppDwarvenRequireLoc", settings.oppDwarvenRequireLoc},
 			{"oppLivingLatexHeavy", settings.oppLivingLatexHeavy},
 			{"oppLivingLatexRequireRem", settings.oppLivingLatexRequireRem},
 			{"oppLivingLatexOpen", settings.oppLivingLatexOpen},
+			{"oppMadnessChaos", settings.oppMadnessChaos},
 			{"useLocationModifiers", settings.useLocationModifiers},
+			{"keyForgiveness", settings.keyForgiveness},
+			{"preferRelevantKeys", settings.preferRelevantKeys},
+			{"vanishingKeys", settings.vanishingKeys},
 			{"enableQuestInteractions", settings.enableQuestInteractions},
 			{"enableQIMalkoran", settings.enableQIMalkoran},
 			{"enableQISanguine", settings.enableQISanguine},
-			{"enableQOBlackStar", settings.enableQOBlackStar},
+			{"enableQIBlackStar", settings.enableQIBlackStar},
+			{"enableQIMindOfMadness", settings.enableQIMindOfMadness},
 			{"enableQIProvingHonor", settings.enableQIProvingHonor},
 			{"enableQISaarthal", settings.enableQISaarthal},
 			{"enableQIDwemerMuseum", settings.enableQIDwemerMuseum},
 			{"enableQIThalmorEmbassy", settings.enableQIThalmorEmbassy},
+			{"oppDeviceAntiCheat", settings.oppDeviceAntiCheat},
+			{"generalDeviceAntiCheat", settings.generalDeviceAntiCheat},
 			{"noMessageBoxes", settings.noMessageBoxes},
 			{"bossChestUseModelPath", settings.bossChestUseModelPath},
 			{"dragonHoard", settings.dragonHoard},
 			{"bossExtraGold", settings.bossExtraGold},
 			{"useThemes", settings.useThemes},
+			{"disableForce3rdPerson", settings.disableForce3rdPerson},
 			{"enableSlowStrip", settings.enableSlowStrip},
 			{"resumeEvents", settings.resumeEvents},
 			{"saveDependentSettings", settings.saveDependentSettings},
@@ -1001,6 +1080,7 @@ namespace DCURSES {
 			{"LMBrandingColor", settings.LMBrandingColor},
 			{"LMBondageColor", settings.LMBondageColor},
 			{"LMNudityColor", settings.LMNudityColor},
+			{"LMHealslutColor", settings.LMHealslutColor},
 			{"LMNudityAditionalForms", settings.LMNudityAditionalForms},
 			//CODEGEN_END_TOJSON
 		};
@@ -1120,18 +1200,6 @@ namespace DCURSES {
 		SetMCMInt("glovesWeight",settings.glovesWeight);
 		settings.mittensWeight = static_cast<int>(j.value("mittensWeight", 0));
 		SetMCMInt("mittensWeight",settings.mittensWeight);
-		settings.minKeysLooted = static_cast<int>(j.value("minKeysLooted", 1));
-		SetMCMInt("minKeysLooted",settings.minKeysLooted);
-		settings.maxKeysLooted = static_cast<int>(j.value("maxKeysLooted", 1));
-		SetMCMInt("maxKeysLooted",settings.maxKeysLooted);
-		settings.maxHeldKeys = static_cast<int>(j.value("maxHeldKeys", 3));
-		SetMCMInt("maxHeldKeys",settings.maxHeldKeys);
-		settings.restraintsKeyWeight = static_cast<int>(j.value("restraintsKeyWeight", 80));
-		SetMCMInt("restraintsKeyWeight",settings.restraintsKeyWeight);
-		settings.chastityKeyWeight = static_cast<int>(j.value("chastityKeyWeight", 50));
-		SetMCMInt("chastityKeyWeight",settings.chastityKeyWeight);
-		settings.piercingToolWeight = static_cast<int>(j.value("piercingToolWeight", 20));
-		SetMCMInt("piercingToolWeight",settings.piercingToolWeight);
 		settings.eventStandardWeight = static_cast<int>(j.value("eventStandardWeight", 100));
 		SetMCMInt("eventStandardWeight",settings.eventStandardWeight);
 		settings.eventStandardBossReduction = static_cast<int>(j.value("eventStandardBossReduction", 20));
@@ -1156,6 +1224,8 @@ namespace DCURSES {
 		SetMCMInt("eventSimpleSlaveryWeight",settings.eventSimpleSlaveryWeight);
 		settings.eventSSMinRestraints = static_cast<int>(j.value("eventSSMinRestraints", 6));
 		SetMCMInt("eventSSMinRestraints",settings.eventSSMinRestraints);
+		settings.eventAbadonWeight = static_cast<int>(j.value("eventAbadonWeight", 5));
+		SetMCMInt("eventAbadonWeight",settings.eventAbadonWeight);
 		settings.LMAllureWeight = static_cast<int>(j.value("LMAllureWeight", 10));
 		SetMCMInt("LMAllureWeight",settings.LMAllureWeight);
 		settings.LMAllureMod = static_cast<int>(j.value("LMAllureMod", 5));
@@ -1170,8 +1240,8 @@ namespace DCURSES {
 		SetMCMInt("LMHeatContainerCount",settings.LMHeatContainerCount);
 		settings.LMBrandingWeight = static_cast<int>(j.value("LMBrandingWeight", 10));
 		SetMCMInt("LMBrandingWeight",settings.LMBrandingWeight);
-		settings.LMBrndingTotal = static_cast<int>(j.value("LMBrndingTotal", 12));
-		SetMCMInt("LMBrndingTotal",settings.LMBrndingTotal);
+		settings.LMBrandingTotal = static_cast<int>(j.value("LMBrandingTotal", 12));
+		SetMCMInt("LMBrandingTotal",settings.LMBrandingTotal);
 		settings.LMBondageWeight = static_cast<int>(j.value("LMBondageWeight", 5));
 		SetMCMInt("LMBondageWeight",settings.LMBondageWeight);
 		settings.LMBondageDeviceCount = static_cast<int>(j.value("LMBondageDeviceCount", 8));
@@ -1180,6 +1250,10 @@ namespace DCURSES {
 		SetMCMInt("LMNudityWeight",settings.LMNudityWeight);
 		settings.LMNudityTalkTimes = static_cast<int>(j.value("LMNudityTalkTimes", 35));
 		SetMCMInt("LMNudityTalkTimes",settings.LMNudityTalkTimes);
+		settings.LMHealslutWeight = static_cast<int>(j.value("LMHealslutWeight", 5));
+		SetMCMInt("LMHealslutWeight",settings.LMHealslutWeight);
+		settings.LMHealslutHealing = static_cast<int>(j.value("LMHealslutHealing", 2000));
+		SetMCMInt("LMHealslutHealing",settings.LMHealslutHealing);
 		settings.oppSummonerCollarWeight = static_cast<int>(j.value("oppSummonerCollarWeight", 20));
 		SetMCMInt("oppSummonerCollarWeight",settings.oppSummonerCollarWeight);
 		settings.oppSummonerSexCount = static_cast<int>(j.value("oppSummonerSexCount", 15));
@@ -1196,6 +1270,24 @@ namespace DCURSES {
 		SetMCMInt("oppLivingLatexWeight",settings.oppLivingLatexWeight);
 		settings.oppLivingLatexStartTime = static_cast<int>(j.value("oppLivingLatexStartTime", 15));
 		SetMCMInt("oppLivingLatexStartTime",settings.oppLivingLatexStartTime);
+		settings.oppMadnessPlugWeight = static_cast<int>(j.value("oppMadnessPlugWeight", 25));
+		SetMCMInt("oppMadnessPlugWeight",settings.oppMadnessPlugWeight);
+		settings.oppMadnessPlugIterations = static_cast<int>(j.value("oppMadnessPlugIterations", 5));
+		SetMCMInt("oppMadnessPlugIterations",settings.oppMadnessPlugIterations);
+		settings.oppMadnessplugOrgasms = static_cast<int>(j.value("oppMadnessplugOrgasms", 6));
+		SetMCMInt("oppMadnessplugOrgasms",settings.oppMadnessplugOrgasms);
+		settings.minKeysLooted = static_cast<int>(j.value("minKeysLooted", 1));
+		SetMCMInt("minKeysLooted",settings.minKeysLooted);
+		settings.maxKeysLooted = static_cast<int>(j.value("maxKeysLooted", 1));
+		SetMCMInt("maxKeysLooted",settings.maxKeysLooted);
+		settings.maxHeldKeys = static_cast<int>(j.value("maxHeldKeys", 3));
+		SetMCMInt("maxHeldKeys",settings.maxHeldKeys);
+		settings.restraintsKeyWeight = static_cast<int>(j.value("restraintsKeyWeight", 80));
+		SetMCMInt("restraintsKeyWeight",settings.restraintsKeyWeight);
+		settings.chastityKeyWeight = static_cast<int>(j.value("chastityKeyWeight", 50));
+		SetMCMInt("chastityKeyWeight",settings.chastityKeyWeight);
+		settings.piercingToolWeight = static_cast<int>(j.value("piercingToolWeight", 20));
+		SetMCMInt("piercingToolWeight",settings.piercingToolWeight);
 		settings.consSexWeight = static_cast<int>(j.value("consSexWeight", 15));
 		SetMCMInt("consSexWeight",settings.consSexWeight);
 		settings.consFineWeight = static_cast<int>(j.value("consFineWeight", 10));
@@ -1260,6 +1352,8 @@ namespace DCURSES {
 		SetMCMInt("LMBondageColor",settings.LMBondageColor);
 		settings.LMNudityColor = static_cast<int>(j.value("LMNudityColor", 0xd676cb));
 		SetMCMInt("LMNudityColor",settings.LMNudityColor);
+		settings.LMHealslutColor = static_cast<int>(j.value("LMHealslutColor", 0xffbb45));
+		SetMCMInt("LMHealslutColor",settings.LMHealslutColor);
 		settings.baseChance = static_cast<float>(j.value("baseChance", 6.5));
 		SetMCMFloat("baseChance",settings.baseChance);
 		settings.containerModifier = static_cast<float>(j.value("containerModifier", 1.0));
@@ -1278,16 +1372,6 @@ namespace DCURSES {
 		SetMCMFloat("lockDifficultyModifier",settings.lockDifficultyModifier);
 		settings.arousalModifier = static_cast<float>(j.value("arousalModifier", 1.4));
 		SetMCMFloat("arousalModifier",settings.arousalModifier);
-		settings.keyLossChance = static_cast<float>(j.value("keyLossChance", 80.0));
-		SetMCMFloat("keyLossChance",settings.keyLossChance);
-		settings.keyChance = static_cast<float>(j.value("keyChance", 7.0));
-		SetMCMFloat("keyChance",settings.keyChance);
-		settings.keyBonus = static_cast<float>(j.value("keyBonus", 1.0));
-		SetMCMFloat("keyBonus",settings.keyBonus);
-		settings.keyPickpocketBonus = static_cast<float>(j.value("keyPickpocketBonus", 2.0));
-		SetMCMFloat("keyPickpocketBonus",settings.keyPickpocketBonus);
-		settings.magicKeyChance = static_cast<float>(j.value("magicKeyChance", 10.0));
-		SetMCMFloat("magicKeyChance",settings.magicKeyChance);
 		settings.eventContraptionTime = static_cast<float>(j.value("eventContraptionTime", 4.0));
 		SetMCMFloat("eventContraptionTime",settings.eventContraptionTime);
 		settings.LMBrandingChance = static_cast<float>(j.value("LMBrandingChance", 1.5));
@@ -1296,6 +1380,8 @@ namespace DCURSES {
 		SetMCMFloat("LMBondageChance",settings.LMBondageChance);
 		settings.oppSummonChance = static_cast<float>(j.value("oppSummonChance", 1.5));
 		SetMCMFloat("oppSummonChance",settings.oppSummonChance);
+		settings.oppLivingLatexGem = static_cast<float>(j.value("oppLivingLatexGem", 4.0));
+		SetMCMFloat("oppLivingLatexGem",settings.oppLivingLatexGem);
 		settings.oppLivingLatexMore = static_cast<float>(j.value("oppLivingLatexMore", 0.0));
 		SetMCMFloat("oppLivingLatexMore",settings.oppLivingLatexMore);
 		settings.playerHomeModifier = static_cast<float>(j.value("playerHomeModifier", 0.0));
@@ -1328,6 +1414,16 @@ namespace DCURSES {
 		SetMCMFloat("apocryphaModifier",settings.apocryphaModifier);
 		settings.wildernessModifier = static_cast<float>(j.value("wildernessModifier", 0.9));
 		SetMCMFloat("wildernessModifier",settings.wildernessModifier);
+		settings.keyLossChance = static_cast<float>(j.value("keyLossChance", 80.0));
+		SetMCMFloat("keyLossChance",settings.keyLossChance);
+		settings.keyChance = static_cast<float>(j.value("keyChance", 7.0));
+		SetMCMFloat("keyChance",settings.keyChance);
+		settings.keyBonus = static_cast<float>(j.value("keyBonus", 1.0));
+		SetMCMFloat("keyBonus",settings.keyBonus);
+		settings.keyPickpocketBonus = static_cast<float>(j.value("keyPickpocketBonus", 2.0));
+		SetMCMFloat("keyPickpocketBonus",settings.keyPickpocketBonus);
+		settings.magicKeyChance = static_cast<float>(j.value("magicKeyChance", 10.0));
+		SetMCMFloat("magicKeyChance",settings.magicKeyChance);
 		settings.rDeviceBaseChance = static_cast<float>(j.value("rDeviceBaseChance", 1.5));
 		SetMCMFloat("rDeviceBaseChance",settings.rDeviceBaseChance);
 		settings.tatSolventChance = static_cast<float>(j.value("tatSolventChance", 0.5));
@@ -1350,32 +1446,36 @@ namespace DCURSES {
 		SetMCMBool("bossOnlyHeavy",settings.bossOnlyHeavy);
 		settings.stripPlayerOnEvent = static_cast<bool>(j.value("stripPlayerOnEvent", true));
 		SetMCMBool("stripPlayerOnEvent",settings.stripPlayerOnEvent);
+		settings.stripOnlyKeywords = static_cast<bool>(j.value("stripOnlyKeywords", true));
+		SetMCMBool("stripOnlyKeywords",settings.stripOnlyKeywords);
 		settings.beltPlugs = static_cast<bool>(j.value("beltPlugs", true));
 		SetMCMBool("beltPlugs",settings.beltPlugs);
 		settings.noBeltPiercing = static_cast<bool>(j.value("noBeltPiercing", false));
 		SetMCMBool("noBeltPiercing",settings.noBeltPiercing);
 		settings.plugsDontCount = static_cast<bool>(j.value("plugsDontCount", true));
 		SetMCMBool("plugsDontCount",settings.plugsDontCount);
-		settings.onlyUseUnforgivingDevices = static_cast<bool>(j.value("onlyUseUnforgivingDevices", false));
-		SetMCMBool("onlyUseUnforgivingDevices",settings.onlyUseUnforgivingDevices);
 		settings.allowLegShackles = static_cast<bool>(j.value("allowLegShackles", false));
 		SetMCMBool("allowLegShackles",settings.allowLegShackles);
-		settings.keyForgiveness = static_cast<bool>(j.value("keyForgiveness", true));
-		SetMCMBool("keyForgiveness",settings.keyForgiveness);
-		settings.preferRelevantKeys = static_cast<bool>(j.value("preferRelevantKeys", true));
-		SetMCMBool("preferRelevantKeys",settings.preferRelevantKeys);
-		settings.vanishingKeys = static_cast<bool>(j.value("vanishingKeys", true));
-		SetMCMBool("vanishingKeys",settings.vanishingKeys);
 		settings.eventContDevices = static_cast<bool>(j.value("eventContDevices", true));
 		SetMCMBool("eventContDevices",settings.eventContDevices);
 		settings.eventContAllDevices = static_cast<bool>(j.value("eventContAllDevices", false));
 		SetMCMBool("eventContAllDevices",settings.eventContAllDevices);
+		settings.allowFollowerEvents = static_cast<bool>(j.value("allowFollowerEvents", false));
+		SetMCMBool("allowFollowerEvents",settings.allowFollowerEvents);
+		settings.onlyUseUnforgivingDevices = static_cast<bool>(j.value("onlyUseUnforgivingDevices", true));
+		SetMCMBool("onlyUseUnforgivingDevices",settings.onlyUseUnforgivingDevices);
+		settings.udUseAbadon = static_cast<bool>(j.value("udUseAbadon", false));
+		SetMCMBool("udUseAbadon",settings.udUseAbadon);
+		settings.udUseMisc = static_cast<bool>(j.value("udUseMisc", true));
+		SetMCMBool("udUseMisc",settings.udUseMisc);
 		settings.LMBrandingPunish = static_cast<bool>(j.value("LMBrandingPunish", true));
 		SetMCMBool("LMBrandingPunish",settings.LMBrandingPunish);
 		settings.LMNudityChestOnly = static_cast<bool>(j.value("LMNudityChestOnly", false));
 		SetMCMBool("LMNudityChestOnly",settings.LMNudityChestOnly);
 		settings.oppSCollarDrainsMagicka = static_cast<bool>(j.value("oppSCollarDrainsMagicka", true));
 		SetMCMBool("oppSCollarDrainsMagicka",settings.oppSCollarDrainsMagicka);
+		settings.oppSCollarAutoRemove = static_cast<bool>(j.value("oppSCollarAutoRemove", true));
+		SetMCMBool("oppSCollarAutoRemove",settings.oppSCollarAutoRemove);
 		settings.oppDwarvenHeavyRestraint = static_cast<bool>(j.value("oppDwarvenHeavyRestraint", false));
 		SetMCMBool("oppDwarvenHeavyRestraint",settings.oppDwarvenHeavyRestraint);
 		settings.oppDwarvenRequireLoc = static_cast<bool>(j.value("oppDwarvenRequireLoc", true));
@@ -1386,16 +1486,26 @@ namespace DCURSES {
 		SetMCMBool("oppLivingLatexRequireRem",settings.oppLivingLatexRequireRem);
 		settings.oppLivingLatexOpen = static_cast<bool>(j.value("oppLivingLatexOpen", false));
 		SetMCMBool("oppLivingLatexOpen",settings.oppLivingLatexOpen);
+		settings.oppMadnessChaos = static_cast<bool>(j.value("oppMadnessChaos", false));
+		SetMCMBool("oppMadnessChaos",settings.oppMadnessChaos);
 		settings.useLocationModifiers = static_cast<bool>(j.value("useLocationModifiers", true));
 		SetMCMBool("useLocationModifiers",settings.useLocationModifiers);
+		settings.keyForgiveness = static_cast<bool>(j.value("keyForgiveness", true));
+		SetMCMBool("keyForgiveness",settings.keyForgiveness);
+		settings.preferRelevantKeys = static_cast<bool>(j.value("preferRelevantKeys", true));
+		SetMCMBool("preferRelevantKeys",settings.preferRelevantKeys);
+		settings.vanishingKeys = static_cast<bool>(j.value("vanishingKeys", true));
+		SetMCMBool("vanishingKeys",settings.vanishingKeys);
 		settings.enableQuestInteractions = static_cast<bool>(j.value("enableQuestInteractions", true));
 		SetMCMBool("enableQuestInteractions",settings.enableQuestInteractions);
 		settings.enableQIMalkoran = static_cast<bool>(j.value("enableQIMalkoran", true));
 		SetMCMBool("enableQIMalkoran",settings.enableQIMalkoran);
 		settings.enableQISanguine = static_cast<bool>(j.value("enableQISanguine", true));
 		SetMCMBool("enableQISanguine",settings.enableQISanguine);
-		settings.enableQOBlackStar = static_cast<bool>(j.value("enableQOBlackStar", true));
-		SetMCMBool("enableQOBlackStar",settings.enableQOBlackStar);
+		settings.enableQIBlackStar = static_cast<bool>(j.value("enableQIBlackStar", true));
+		SetMCMBool("enableQIBlackStar",settings.enableQIBlackStar);
+		settings.enableQIMindOfMadness = static_cast<bool>(j.value("enableQIMindOfMadness", true));
+		SetMCMBool("enableQIMindOfMadness",settings.enableQIMindOfMadness);
 		settings.enableQIProvingHonor = static_cast<bool>(j.value("enableQIProvingHonor", true));
 		SetMCMBool("enableQIProvingHonor",settings.enableQIProvingHonor);
 		settings.enableQISaarthal = static_cast<bool>(j.value("enableQISaarthal", true));
@@ -1404,6 +1514,10 @@ namespace DCURSES {
 		SetMCMBool("enableQIDwemerMuseum",settings.enableQIDwemerMuseum);
 		settings.enableQIThalmorEmbassy = static_cast<bool>(j.value("enableQIThalmorEmbassy", true));
 		SetMCMBool("enableQIThalmorEmbassy",settings.enableQIThalmorEmbassy);
+		settings.oppDeviceAntiCheat = static_cast<bool>(j.value("oppDeviceAntiCheat", true));
+		SetMCMBool("oppDeviceAntiCheat",settings.oppDeviceAntiCheat);
+		settings.generalDeviceAntiCheat = static_cast<bool>(j.value("generalDeviceAntiCheat", false));
+		SetMCMBool("generalDeviceAntiCheat",settings.generalDeviceAntiCheat);
 		settings.noMessageBoxes = static_cast<bool>(j.value("noMessageBoxes", false));
 		SetMCMBool("noMessageBoxes",settings.noMessageBoxes);
 		settings.bossChestUseModelPath = static_cast<bool>(j.value("bossChestUseModelPath", true));
@@ -1414,6 +1528,8 @@ namespace DCURSES {
 		SetMCMBool("bossExtraGold",settings.bossExtraGold);
 		settings.useThemes = static_cast<bool>(j.value("useThemes", false));
 		SetMCMBool("useThemes",settings.useThemes);
+		settings.disableForce3rdPerson = static_cast<bool>(j.value("disableForce3rdPerson", true));
+		SetMCMBool("disableForce3rdPerson",settings.disableForce3rdPerson);
 		settings.enableSlowStrip = static_cast<bool>(j.value("enableSlowStrip", false));
 		SetMCMBool("enableSlowStrip",settings.enableSlowStrip);
 		settings.resumeEvents = static_cast<bool>(j.value("resumeEvents", false));
@@ -1481,6 +1597,8 @@ namespace DCURSES {
 			bool recalculate = false;
 			if (settings.maxHeldKeys != GetMCMSetting("maxHeldKeys")->GetSInt()) {recalculate = true;}
 			if (settings.onlyUseUnforgivingDevices != GetMCMSetting("onlyUseUnforgivingDevices")->GetBool()) {recalculate = true;}
+			if (settings.udUseAbadon != GetMCMSetting("udUseAbadon")->GetBool()) {recalculate = true;}
+			if (settings.udUseMisc != GetMCMSetting("udUseMisc")->GetBool()) {recalculate = true;}
 			settings.minGoldRequired = GetMCMSetting("minGoldRequired")->GetSInt();
 			settings.eventScalingMod = GetMCMSetting("eventScalingMod")->GetSInt();
 			settings.minRestraints = GetMCMSetting("minRestraints")->GetSInt();
@@ -1524,12 +1642,6 @@ namespace DCURSES {
 			settings.bootsWeight = GetMCMSetting("bootsWeight")->GetSInt();
 			settings.glovesWeight = GetMCMSetting("glovesWeight")->GetSInt();
 			settings.mittensWeight = GetMCMSetting("mittensWeight")->GetSInt();
-			settings.minKeysLooted = GetMCMSetting("minKeysLooted")->GetSInt();
-			settings.maxKeysLooted = GetMCMSetting("maxKeysLooted")->GetSInt();
-			settings.maxHeldKeys = GetMCMSetting("maxHeldKeys")->GetSInt();
-			settings.restraintsKeyWeight = GetMCMSetting("restraintsKeyWeight")->GetSInt();
-			settings.chastityKeyWeight = GetMCMSetting("chastityKeyWeight")->GetSInt();
-			settings.piercingToolWeight = GetMCMSetting("piercingToolWeight")->GetSInt();
 			settings.eventStandardWeight = GetMCMSetting("eventStandardWeight")->GetSInt();
 			settings.eventStandardBossReduction = GetMCMSetting("eventStandardBossReduction")->GetSInt();
 			settings.eventOppressiveWeight = GetMCMSetting("eventOppressiveWeight")->GetSInt();
@@ -1542,6 +1654,7 @@ namespace DCURSES {
 			settings.eventLewdMarkWeight = GetMCMSetting("eventLewdMarkWeight")->GetSInt();
 			settings.eventSimpleSlaveryWeight = GetMCMSetting("eventSimpleSlaveryWeight")->GetSInt();
 			settings.eventSSMinRestraints = GetMCMSetting("eventSSMinRestraints")->GetSInt();
+			settings.eventAbadonWeight = GetMCMSetting("eventAbadonWeight")->GetSInt();
 			settings.LMAllureWeight = GetMCMSetting("LMAllureWeight")->GetSInt();
 			settings.LMAllureMod = GetMCMSetting("LMAllureMod")->GetSInt();
 			settings.LMAllureSex = GetMCMSetting("LMAllureSex")->GetSInt();
@@ -1549,11 +1662,13 @@ namespace DCURSES {
 			settings.LMHeatMod = GetMCMSetting("LMHeatMod")->GetSInt();
 			settings.LMHeatContainerCount = GetMCMSetting("LMHeatContainerCount")->GetSInt();
 			settings.LMBrandingWeight = GetMCMSetting("LMBrandingWeight")->GetSInt();
-			settings.LMBrndingTotal = GetMCMSetting("LMBrndingTotal")->GetSInt();
+			settings.LMBrandingTotal = GetMCMSetting("LMBrandingTotal")->GetSInt();
 			settings.LMBondageWeight = GetMCMSetting("LMBondageWeight")->GetSInt();
 			settings.LMBondageDeviceCount = GetMCMSetting("LMBondageDeviceCount")->GetSInt();
 			settings.LMNudityWeight = GetMCMSetting("LMNudityWeight")->GetSInt();
 			settings.LMNudityTalkTimes = GetMCMSetting("LMNudityTalkTimes")->GetSInt();
+			settings.LMHealslutWeight = GetMCMSetting("LMHealslutWeight")->GetSInt();
+			settings.LMHealslutHealing = GetMCMSetting("LMHealslutHealing")->GetSInt();
 			settings.oppSummonerCollarWeight = GetMCMSetting("oppSummonerCollarWeight")->GetSInt();
 			settings.oppSummonerSexCount = GetMCMSetting("oppSummonerSexCount")->GetSInt();
 			settings.oppSMinSummonArousal = GetMCMSetting("oppSMinSummonArousal")->GetSInt();
@@ -1562,6 +1677,15 @@ namespace DCURSES {
 			settings.oppDwarvenArousal = GetMCMSetting("oppDwarvenArousal")->GetSInt();
 			settings.oppLivingLatexWeight = GetMCMSetting("oppLivingLatexWeight")->GetSInt();
 			settings.oppLivingLatexStartTime = GetMCMSetting("oppLivingLatexStartTime")->GetSInt();
+			settings.oppMadnessPlugWeight = GetMCMSetting("oppMadnessPlugWeight")->GetSInt();
+			settings.oppMadnessPlugIterations = GetMCMSetting("oppMadnessPlugIterations")->GetSInt();
+			settings.oppMadnessplugOrgasms = GetMCMSetting("oppMadnessplugOrgasms")->GetSInt();
+			settings.minKeysLooted = GetMCMSetting("minKeysLooted")->GetSInt();
+			settings.maxKeysLooted = GetMCMSetting("maxKeysLooted")->GetSInt();
+			settings.maxHeldKeys = GetMCMSetting("maxHeldKeys")->GetSInt();
+			settings.restraintsKeyWeight = GetMCMSetting("restraintsKeyWeight")->GetSInt();
+			settings.chastityKeyWeight = GetMCMSetting("chastityKeyWeight")->GetSInt();
+			settings.piercingToolWeight = GetMCMSetting("piercingToolWeight")->GetSInt();
 			settings.consSexWeight = GetMCMSetting("consSexWeight")->GetSInt();
 			settings.consFineWeight = GetMCMSetting("consFineWeight")->GetSInt();
 			settings.consFineAmount = GetMCMSetting("consFineAmount")->GetSInt();
@@ -1594,6 +1718,7 @@ namespace DCURSES {
 			settings.LMBrandingColor = GetMCMSetting("LMBrandingColor")->GetSInt();
 			settings.LMBondageColor = GetMCMSetting("LMBondageColor")->GetSInt();
 			settings.LMNudityColor = GetMCMSetting("LMNudityColor")->GetSInt();
+			settings.LMHealslutColor = GetMCMSetting("LMHealslutColor")->GetSInt();
 			settings.baseChance = GetMCMSetting("baseChance")->GetFloat();
 			settings.containerModifier = GetMCMSetting("containerModifier")->GetFloat();
 			settings.bossContainerModifier = GetMCMSetting("bossContainerModifier")->GetFloat();
@@ -1603,15 +1728,11 @@ namespace DCURSES {
 			settings.lockedModifier = GetMCMSetting("lockedModifier")->GetFloat();
 			settings.lockDifficultyModifier = GetMCMSetting("lockDifficultyModifier")->GetFloat();
 			settings.arousalModifier = GetMCMSetting("arousalModifier")->GetFloat();
-			settings.keyLossChance = GetMCMSetting("keyLossChance")->GetFloat();
-			settings.keyChance = GetMCMSetting("keyChance")->GetFloat();
-			settings.keyBonus = GetMCMSetting("keyBonus")->GetFloat();
-			settings.keyPickpocketBonus = GetMCMSetting("keyPickpocketBonus")->GetFloat();
-			settings.magicKeyChance = GetMCMSetting("magicKeyChance")->GetFloat();
 			settings.eventContraptionTime = GetMCMSetting("eventContraptionTime")->GetFloat();
 			settings.LMBrandingChance = GetMCMSetting("LMBrandingChance")->GetFloat();
 			settings.LMBondageChance = GetMCMSetting("LMBondageChance")->GetFloat();
 			settings.oppSummonChance = GetMCMSetting("oppSummonChance")->GetFloat();
+			settings.oppLivingLatexGem = GetMCMSetting("oppLivingLatexGem")->GetFloat();
 			settings.oppLivingLatexMore = GetMCMSetting("oppLivingLatexMore")->GetFloat();
 			settings.playerHomeModifier = GetMCMSetting("playerHomeModifier")->GetFloat();
 			settings.cityModifier = GetMCMSetting("cityModifier")->GetFloat();
@@ -1628,6 +1749,11 @@ namespace DCURSES {
 			settings.dragonLairModifier = GetMCMSetting("dragonLairModifier")->GetFloat();
 			settings.apocryphaModifier = GetMCMSetting("apocryphaModifier")->GetFloat();
 			settings.wildernessModifier = GetMCMSetting("wildernessModifier")->GetFloat();
+			settings.keyLossChance = GetMCMSetting("keyLossChance")->GetFloat();
+			settings.keyChance = GetMCMSetting("keyChance")->GetFloat();
+			settings.keyBonus = GetMCMSetting("keyBonus")->GetFloat();
+			settings.keyPickpocketBonus = GetMCMSetting("keyPickpocketBonus")->GetFloat();
+			settings.magicKeyChance = GetMCMSetting("magicKeyChance")->GetFloat();
 			settings.rDeviceBaseChance = GetMCMSetting("rDeviceBaseChance")->GetFloat();
 			settings.tatSolventChance = GetMCMSetting("tatSolventChance")->GetFloat();
 			settings.consTriggerNude = GetMCMSetting("consTriggerNude")->GetFloat();
@@ -1639,38 +1765,48 @@ namespace DCURSES {
 			settings.eventScaling = GetMCMSetting("eventScaling")->GetBool();
 			settings.bossOnlyHeavy = GetMCMSetting("bossOnlyHeavy")->GetBool();
 			settings.stripPlayerOnEvent = GetMCMSetting("stripPlayerOnEvent")->GetBool();
+			settings.stripOnlyKeywords = GetMCMSetting("stripOnlyKeywords")->GetBool();
 			settings.beltPlugs = GetMCMSetting("beltPlugs")->GetBool();
 			settings.noBeltPiercing = GetMCMSetting("noBeltPiercing")->GetBool();
 			settings.plugsDontCount = GetMCMSetting("plugsDontCount")->GetBool();
-			settings.onlyUseUnforgivingDevices = GetMCMSetting("onlyUseUnforgivingDevices")->GetBool();
 			settings.allowLegShackles = GetMCMSetting("allowLegShackles")->GetBool();
-			settings.keyForgiveness = GetMCMSetting("keyForgiveness")->GetBool();
-			settings.preferRelevantKeys = GetMCMSetting("preferRelevantKeys")->GetBool();
-			settings.vanishingKeys = GetMCMSetting("vanishingKeys")->GetBool();
 			settings.eventContDevices = GetMCMSetting("eventContDevices")->GetBool();
 			settings.eventContAllDevices = GetMCMSetting("eventContAllDevices")->GetBool();
+			settings.allowFollowerEvents = GetMCMSetting("allowFollowerEvents")->GetBool();
+			settings.onlyUseUnforgivingDevices = GetMCMSetting("onlyUseUnforgivingDevices")->GetBool();
+			settings.udUseAbadon = GetMCMSetting("udUseAbadon")->GetBool();
+			settings.udUseMisc = GetMCMSetting("udUseMisc")->GetBool();
 			settings.LMBrandingPunish = GetMCMSetting("LMBrandingPunish")->GetBool();
 			settings.LMNudityChestOnly = GetMCMSetting("LMNudityChestOnly")->GetBool();
 			settings.oppSCollarDrainsMagicka = GetMCMSetting("oppSCollarDrainsMagicka")->GetBool();
+			settings.oppSCollarAutoRemove = GetMCMSetting("oppSCollarAutoRemove")->GetBool();
 			settings.oppDwarvenHeavyRestraint = GetMCMSetting("oppDwarvenHeavyRestraint")->GetBool();
 			settings.oppDwarvenRequireLoc = GetMCMSetting("oppDwarvenRequireLoc")->GetBool();
 			settings.oppLivingLatexHeavy = GetMCMSetting("oppLivingLatexHeavy")->GetBool();
 			settings.oppLivingLatexRequireRem = GetMCMSetting("oppLivingLatexRequireRem")->GetBool();
 			settings.oppLivingLatexOpen = GetMCMSetting("oppLivingLatexOpen")->GetBool();
+			settings.oppMadnessChaos = GetMCMSetting("oppMadnessChaos")->GetBool();
 			settings.useLocationModifiers = GetMCMSetting("useLocationModifiers")->GetBool();
+			settings.keyForgiveness = GetMCMSetting("keyForgiveness")->GetBool();
+			settings.preferRelevantKeys = GetMCMSetting("preferRelevantKeys")->GetBool();
+			settings.vanishingKeys = GetMCMSetting("vanishingKeys")->GetBool();
 			settings.enableQuestInteractions = GetMCMSetting("enableQuestInteractions")->GetBool();
 			settings.enableQIMalkoran = GetMCMSetting("enableQIMalkoran")->GetBool();
 			settings.enableQISanguine = GetMCMSetting("enableQISanguine")->GetBool();
-			settings.enableQOBlackStar = GetMCMSetting("enableQOBlackStar")->GetBool();
+			settings.enableQIBlackStar = GetMCMSetting("enableQIBlackStar")->GetBool();
+			settings.enableQIMindOfMadness = GetMCMSetting("enableQIMindOfMadness")->GetBool();
 			settings.enableQIProvingHonor = GetMCMSetting("enableQIProvingHonor")->GetBool();
 			settings.enableQISaarthal = GetMCMSetting("enableQISaarthal")->GetBool();
 			settings.enableQIDwemerMuseum = GetMCMSetting("enableQIDwemerMuseum")->GetBool();
 			settings.enableQIThalmorEmbassy = GetMCMSetting("enableQIThalmorEmbassy")->GetBool();
+			settings.oppDeviceAntiCheat = GetMCMSetting("oppDeviceAntiCheat")->GetBool();
+			settings.generalDeviceAntiCheat = GetMCMSetting("generalDeviceAntiCheat")->GetBool();
 			settings.noMessageBoxes = GetMCMSetting("noMessageBoxes")->GetBool();
 			settings.bossChestUseModelPath = GetMCMSetting("bossChestUseModelPath")->GetBool();
 			settings.dragonHoard = GetMCMSetting("dragonHoard")->GetBool();
 			settings.bossExtraGold = GetMCMSetting("bossExtraGold")->GetBool();
 			settings.useThemes = GetMCMSetting("useThemes")->GetBool();
+			settings.disableForce3rdPerson = GetMCMSetting("disableForce3rdPerson")->GetBool();
 			settings.enableSlowStrip = GetMCMSetting("enableSlowStrip")->GetBool();
 			settings.resumeEvents = GetMCMSetting("resumeEvents")->GetBool();
 			settings.saveDependentSettings = GetMCMSetting("saveDependentSettings")->GetBool();

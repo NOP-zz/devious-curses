@@ -61,36 +61,6 @@ namespace DCURSES {
         }
     };
 
-    class LocationEventSink : public RE::BSTEventSink<RE::TESActorLocationChangeEvent> {
-        virtual RE::BSEventNotifyControl ProcessEvent(const RE::TESActorLocationChangeEvent* locationEvent, RE::BSTEventSource<RE::TESActorLocationChangeEvent>*) override {
-            if (!locationEvent) return RE::BSEventNotifyControl::kContinue;
-            auto object = locationEvent->actor.get();
-            if (!object) {
-                return RE::BSEventNotifyControl::kContinue;
-            }
-            auto actor = object->As<RE::Actor>();
-            if (actor && actor == RE::PlayerCharacter::GetSingleton()) {
-                counters.clock_SexTimeout -= 2;
-                Callbacks::GetSingleton()->UpdateAllActorsArousal();
-            }
-            else if (actor && locationEvent->newLoc == RE::PlayerCharacter::GetSingleton()->GetCurrentLocation()) {
-                GetActorArousal(actor);
-            }
-            return RE::BSEventNotifyControl::kContinue;
-        }
-    public:
-        static void RegisterEvent() {
-            static LocationEventSink eventSink;
-            auto ScriptEventSource = RE::ScriptEventSourceHolder::GetSingleton();
-            if (!ScriptEventSource) {
-                return;
-            }
-            ScriptEventSource->AddEventSink(&eventSink);
-
-            log::trace("Attached location event sink.");
-        }
-    };
-
     class EquipEventSink : public RE::BSTEventSink<RE::TESEquipEvent>
     {
         virtual RE::BSEventNotifyControl ProcessEvent(const RE::TESEquipEvent* equipEvent, RE::BSTEventSource<RE::TESEquipEvent>*) override {
@@ -103,7 +73,7 @@ namespace DCURSES {
             if (equipActor == player && equipmentForm) {
                 RE::TESKey* magicKey = StaticDataHolder::GetSingleton()->LookupForm<RE::TESKey>(MAGIC_KEY, "Devious Curses.esp");
                 RE::TESObjectMISC* tattooCharm = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectMISC>(TATTOO_CHARM, "Devious Curses.esp");
-                //RE::TESObjectARMO* collar = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectARMO>(SAARTHAL_COLLAR, "Devious Curses.esp");
+                RE::TESObjectMISC* volatileGem = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectMISC>(VOLATILE_GEM, "Devious Curses.esp");
 
                 if (equipmentForm == magicKey) {
                     RemoveAllRestraints(player, true);
@@ -120,6 +90,20 @@ namespace DCURSES {
                     AIEventTattooCharm();
                     //PlayerMessage("All of your tattoos have faded from your body!");
                     PlayerMessage(Translator(Translation::ItemTattooCharm));
+                }
+                else if (equipmentForm == volatileGem) {
+                    player->RemoveItem((RE::TESBoundObject*)volatileGem, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+                    ScriptingManager().RunOnMenuClose([player] {
+                        Util::ExecuteWithDelay(10ms, [player] {
+                            RE::Explosion* explosion = StaticDataHolder::GetSingleton()->LookupForm<RE::Explosion>(0xD13E8, "Skyrim.esm");
+                            player->PlaceObjectAtMe((RE::TESBoundObject*)explosion, false);
+                            player->SetGraphVariableFloat("StaggerMagnitude", 0.5f);
+                            player->NotifyAnimationGraph("staggerStart");
+                        });
+                        Util::ExecuteWithDelay(500ms, [] {
+                            OppLatexMagicEvent();
+                        });
+                    });
                 }
             }
             return RE::BSEventNotifyControl::kContinue;
@@ -142,6 +126,7 @@ namespace DCURSES {
     {
         virtual RE::BSEventNotifyControl ProcessEvent(const RE::TESMagicEffectApplyEvent* magicEvent, RE::BSTEventSource<RE::TESMagicEffectApplyEvent>*) override {
             OppDeviceOnMagicHitEvent(magicEvent);
+            TatsOnMagicHitEvent(magicEvent);
             return RE::BSEventNotifyControl::kContinue;
         }
 
@@ -158,13 +143,75 @@ namespace DCURSES {
         }
     };
 
+    class SpellEventSink : public RE::BSTEventSink<RE::TESSpellCastEvent>
+    {
+        virtual RE::BSEventNotifyControl ProcessEvent(const RE::TESSpellCastEvent* spellEvent, RE::BSTEventSource<RE::TESSpellCastEvent>*) override {
+            TatsOnSpellCast(spellEvent);
 
+            return RE::BSEventNotifyControl::kContinue;
+        }
+
+    public:
+        static void RegisterEvent() {
+            static SpellEventSink eventSink;
+            auto ScriptEventSource = RE::ScriptEventSourceHolder::GetSingleton();
+            if (!ScriptEventSource) {
+                return;
+            }
+            ScriptEventSource->AddEventSink(&eventSink);
+
+            log::trace("Attached spell event sink.");
+        }
+    };
+
+    class HitEventSink : public RE::BSTEventSink<RE::TESHitEvent>
+    {
+        virtual RE::BSEventNotifyControl ProcessEvent(const RE::TESHitEvent* hitEvent, RE::BSTEventSource<RE::TESHitEvent>*) override {
+            auto cause = hitEvent->cause.get();
+            if (cause && cause == RE::PlayerCharacter::GetSingleton()) {
+                auto target = hitEvent->target.get();
+                //log::trace("player hit {} ({})", target->GetName(), Util::GetFormEditorId(target));
+                /*Util::ExecuteWithDelay(10ms, [target] {
+                    target->Disable();
+                    target->SetDelete(true);
+                });*/
+
+                RE::TESObjectMISC* volatileGem = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectMISC>(VOLATILE_GEM, "Devious Curses.esp");
+                if (target->GetBaseObject() == volatileGem && target->GetPosition().GetDistance(cause->GetPosition()) <= 200) {
+                    Util::ExecuteWithDelay(10ms, [target] {
+                        RE::Explosion* explosion = StaticDataHolder::GetSingleton()->LookupForm<RE::Explosion>(0xD13E8, "Skyrim.esm");
+                        target->PlaceObjectAtMe((RE::TESBoundObject*)explosion, false);
+                        target->Disable();
+                        target->SetDelete(true);
+                    });
+                    Util::ExecuteWithDelay(1s, [] {
+                        OppLatexMagicEvent();
+                    });
+                }
+            }
+
+            return RE::BSEventNotifyControl::kContinue;
+        }
+
+    public:
+        static void RegisterEvent() {
+            static HitEventSink eventSink;
+            auto ScriptEventSource = RE::ScriptEventSourceHolder::GetSingleton();
+            if (!ScriptEventSource) {
+                return;
+            }
+            ScriptEventSource->AddEventSink(&eventSink);
+
+            log::trace("Attached hit event sink.");
+        }
+    };
 
     void RegisterEventSinks() {
         ActivateEventSink::RegisterEvent();
         EquipEventSink::RegisterEvent();
-        LocationEventSink::RegisterEvent();
         QuestStageEventSink::RegisterEvent();
         MGEFEventSink::RegisterEvent();
+        SpellEventSink::RegisterEvent();
+        HitEventSink::RegisterEvent();
     }
 }

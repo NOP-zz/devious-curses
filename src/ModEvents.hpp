@@ -146,7 +146,7 @@ namespace DCURSES {
 			SendFunctor* func = new SendFunctor();
 			toDispatch.push_back(func);
 
-			ModEventInternal::CallbackFunctor* dispatch = toDispatch[0];
+			RE::BSTSmartPointer<CallbackFunctor> dispatch = RE::BSTSmartPointer(toDispatch[0]);
 
 			for (int i = static_cast<int>(toDispatch.size() - 2); i >= 0; i--) {
 				RE::BSTSmartPointer<CallbackFunctor> callback = RE::BSTSmartPointer<CallbackFunctor>(toDispatch[i + 1]);

@@ -5,8 +5,6 @@
 
 namespace DCURSES {
 
-	bool ActorIsCreature(RE::Actor* actor);
-
 	RE::Actor* GetClosestActor(RE::Actor* target) {
 		if (!target) return nullptr;
 
@@ -44,6 +42,7 @@ namespace DCURSES {
 		if (!actor) return false;
 
 		auto player = RE::PlayerCharacter::GetSingleton();
+		auto scriptManager = ScriptingManager();
 		auto deviceCount = GetWornDeviceCount(player);
 
 		log::trace("Attempting Device Consequence.");
@@ -57,7 +56,7 @@ namespace DCURSES {
 		auto item = GetRandomEquipableDevice(player, skip);
 		if (item.has_value()) {
 			auto equip = item.value();
-			LockDevice(player, equip.inv);
+			scriptManager.LockDevice(player, equip.inv);
 			if (source == consequenceSource::kSex) {
 				//PlayerMessage(fmt::format("Now that {} is done with you, they force a {} on you before you can react!", actor->GetName(), equip.inv->GetName()));
 				PlayerMessage(Translator(Translation::ConsequenceRandomDeviceSex, actor->GetName(), equip.inv->GetName()));
@@ -76,6 +75,7 @@ namespace DCURSES {
 
 	bool ConsSex(RE::Actor* actor, consequenceSource source) {
 		auto mask = GetDeviceMask(RE::PlayerCharacter::GetSingleton());
+		auto scriptManager = ScriptingManager();
 
 		log::trace("Attempting Sex Consequence. Mask: {:04b}", mask);
 
@@ -83,13 +83,13 @@ namespace DCURSES {
 
 		if ((mask & 0b0111) != 0 && SexActorFilter(actor)) {
 			if (source == consequenceSource::kSex) {
-				StartSex(actor, settings.sexAggressiveAnims);
+				scriptManager.StartSex(actor, settings.sexAggressiveAnims);
 				AIEventStartSex(actor);
 				//PlayerMessage(fmt::format("{} wasn't satisfied with your performance and goes in for another round!", actor->GetName()));
 				PlayerMessage(Translator(Translation::ConsequenceSexContinue, actor->GetName()));
 			}
 			else {
-				StartSex(actor, settings.sexAggressiveAnims);
+				scriptManager.StartSex(actor, settings.sexAggressiveAnims);
 				AIEventStartSex(actor);
 				//PlayerMessage(fmt::format("Before you can talk to {} they grab you and takes of your clothes!", actor->GetName()));
 				PlayerMessage(Translator(Translation::ConsequenceSexTalk, actor->GetName()));
@@ -153,10 +153,11 @@ namespace DCURSES {
 		log::trace("Attempting Mercy Consequence.");
 
 		auto player = RE::PlayerCharacter::GetSingleton();
+		auto scriptManager = ScriptingManager();
 
 		auto heavy = GetWornInventoryDeviceByKeyword(player, "zad_DeviousHeavyBondage");
 		if (heavy && DeviceInventoryIsGeneric(heavy) && !(source == consequenceSource::kSex)) {
-			UnlockDevice(player, heavy);
+			scriptManager.UnlockDevice(player, heavy);
 			//PlayerMessage(fmt::format("{} feels bad for you and unlocks your restraints.", actor->GetName()));
 			PlayerMessage(Translator(Translation::ConsequenceMercyUnlock, actor->GetName()));
 			return true;
@@ -186,7 +187,7 @@ namespace DCURSES {
 			return false;
 		}
 
-		if (ActorIsCreature(actor) && !settings.consAllowCreatures) {
+		if (Util::ActorIsCreature(actor) && !settings.consAllowCreatures) {
 			return false;
 		}
 
@@ -248,7 +249,7 @@ namespace DCURSES {
 		log::trace("Checking consequence dialogue");
 		DecrementCounterForMark(MARK::TAT_NUDITY);
 		auto body = player->GetWornArmor((RE::BIPED_MODEL::BipedObjectSlot::kBody));
-		if (body == nullptr || body->HasKeywordString("zad_Lockable")) {
+		if (body == nullptr || (body != nullptr && body->HasKeywordString("zad_Lockable"))) {
 			if (Util::randomDouble() <= settings.consTriggerNude) {
 				log::trace("Nude Trigger");
 				if (DoConsequence(actor, consequenceSource::kNude)) {

@@ -102,32 +102,37 @@ namespace DCURSES {
         return numDevicesVisible(akActor);
     }
 
-    /*class TestSink : public RE::BSTEventSink<RE::BSAnimationGraphEvent> {
-        // Inherited via BSTEventSink
-        virtual RE::BSEventNotifyControl ProcessEvent(const RE::BSAnimationGraphEvent* a_event, RE::BSTEventSource<RE::BSAnimationGraphEvent>* a_eventSource) override
-        {
-            log::info("Animation event: {}, tag: {}, holder: {:X} ({:X})", a_event->payload, a_event->tag, a_event->holder->GetFormID(), a_event->holder->GetBaseObject()->GetFormID());
-            return RE::BSEventNotifyControl::kContinue;
-        }
-    };*/
+    int P_numDevicesEquipped(RE::StaticFunctionTag*, RE::Actor* akActor) {
+        return GetWornDeviceCount(akActor);
+    }
+
+    bool P_WearingOppressiveDevice(RE::StaticFunctionTag*) {
+        return GetOppDeviceMask();
+    }
 
     void P_Test(RE::StaticFunctionTag*) {
         log::trace("DCURSES test");
-        //auto player = RE::PlayerCharacter::GetSingleton();
-
-        //AddLewdMark(MARK::TAT_NUDITY);
-        //SetEffectMagnitude(NUDITY_EFFECT, 4.0f);
-
-        OppDwarvenCuirassEvent("test");
-
-        //DoStandardEvent(false, "", "(black & (ebonite | rubber) & !chastity & !strait & !boxb & !butter) | grand | piercing", 20, {"zad_DeviousBlindfold", "zad_DeviousPlugAnal", "zad_DeviousGag"});
+        auto player = RE::PlayerCharacter::GetSingleton();
+        //OppDoMadnessEffect();
+        //AddLewdMark(MARK::TAT_HEALSLUT);
+        //SetEffectMagnitude(HEALSLUT_EFFECT, 100.0f);
+        //OppMadnessPlugEvent("ooga");
+        //if (GetWornDeviceCount(player) > 0) {
+        //    RemoveAllRestraints(player, true);
+        //}
+        //else {
+        //auto scriptManager = ScriptingManager();
+        //DoStandardEvent(player, false, "test", "", 20);
+        //}
     }
 
     bool PapyrusFunctions(RE::BSScript::IVirtualMachine* ivm) {
         ivm->RegisterFunction("Test", "DCursesLib", P_Test);
         ivm->RegisterFunction("GetRandomEquipableDevice", "DCursesLib", P_GetRandomEquipableDevice);
         ivm->RegisterFunction("NumDevicesVisible", "DCursesLib", P_numDevicesVisible);
+        ivm->RegisterFunction("NumDevicesEquipped", "DCursesLib", P_numDevicesEquipped);
         ivm->RegisterFunction("OnUpdate", "DCursesLib", P_OnUpdate);
+        ivm->RegisterFunction("WearingOppressiveDevice", "DCurses_MCM", P_WearingOppressiveDevice);
         PapyrusFunctionsSettigns(ivm);
         PapyrusFunctionsSex(ivm);
         PapyrusFunctionsTats(ivm);
@@ -169,6 +174,14 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
                 log::trace("ESP Loaded.");
             }
 
+            static auto tweaks = GetModuleHandle(L"po3_Tweaks");
+            if (!tweaks) {
+                stl::report_and_fail("Devious Curses requires powerofthree's Tweaks to function correctly. Please refer to the mod page requirements and installation instructions.");
+            }
+            else {
+                log::trace("po3 tweaks installed");
+            }
+
             log::trace("Calling JCWrapper init()");
             DCURSES::jcontainers::JCWrapper::GetSingleton()->Init();
             DCURSES::RegisterEventSinks();
@@ -204,10 +217,8 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
             DCURSES::RecalculateDeviceLists();
             
             DCURSES::Util::ExecuteWithDelay(1000ms, [] {
-                DCURSES::StartMCMTimer();
+                DCURSES::ScriptingManager().StartMCMTimer();
             });
-
-            DCURSES::Callbacks::GetSingleton()->UpdateAllActorsArousal();
 
             break;
         }
@@ -232,6 +243,7 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
         case SKSE::MessagingInterface::kSaveGame: {
             DCURSES::counters.clock_SexTimeout -= 2;
             DCURSES::SaveMCMSettings();
+            break;
         }
         case SKSE::MessagingInterface::kInputLoaded: {
             DCURSES::Translator::CheckMCMTranslations();

@@ -7,6 +7,7 @@ using namespace SKSE;
 namespace DCURSES {
 // DCURSES
 constexpr auto TATTOO_CHARM = 0x809;
+constexpr auto VOLATILE_GEM = 0x839;
 constexpr auto DCURSES_MCM = 0x800;
 
 // DEVICES
@@ -20,6 +21,10 @@ constexpr auto DWARVEN_CURIAS = 0x828;
 constexpr auto DWARVEN_CURIAS_R = 0x81B;
 constexpr auto DWARVEN_CURIAS_HEAVY = 0x82E;
 constexpr auto DWARVEN_CURIAS_HEAVY_R = 0x82D;
+constexpr auto MADNESS_PLUG = 0x82F;
+constexpr auto MADNESS_PLUG_R = 0x82A;
+constexpr auto MADNESS_PIERCINGS = 0x834;
+
 
 // KEYS
 constexpr auto MAGIC_KEY = 0x806;
@@ -28,6 +33,7 @@ constexpr auto SUMMONER_COLLAR_KEY = 0x807;
 // SPELLS
 constexpr auto MGEF_SPELL = 0x817;
 constexpr auto SUMMONER_SUMMON_SPELL = 0x801;
+constexpr auto HEALSLUT_RESTORATION_SPELL = 0x83A;
 
 // EFFECTS
 constexpr auto ALLURE_EFFECT = 0x80B;
@@ -35,12 +41,15 @@ constexpr auto HEAT_EFFECT = 0x805;
 constexpr auto NUDITY_EFFECT = 0x80F;
 constexpr auto BONDAGE_EFFECT = 0x811;
 constexpr auto BRANDING_EFFECT = 0x808;
+constexpr auto HEALSLUT_EFFECT = 0x835;
 constexpr auto SUMMONER_COLLAR_EFFECT = 0x803;
 constexpr auto LIVING_LATEX_EFFECT = 0x816;
 constexpr auto DWARVEN_CUIRASS_EFFECT = 0x82B;
+constexpr auto MADNESS_PLUG_EFFECT = 0x833;
 
 // PERKS
 constexpr auto MGEF_CONTROLLER = 0x818;
+constexpr auto HEALSLUT_PERK = 0x837;
 
 // DDX
 constexpr auto DDX_RUSTY_PEAR_ANAL_SIGN = 0x1FC45;

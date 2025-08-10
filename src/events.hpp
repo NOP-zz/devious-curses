@@ -12,12 +12,6 @@
 #include "../include/DDNG_API.h"
 #include "../include/form_ids.h"
 
-/*
-Event ideas:
-Gag of endless hunger: ring gag, can only be removed after a lot of oral sex.
-Plugs of endless hunger: plugs with allow, can only be removed after a lot of anal / vaginal sex.
-*/
-
 namespace DCURSES {
 
     void GenerateRandomDevices(RE::TESObjectREFR* activatedObject) {
@@ -29,7 +23,6 @@ namespace DCURSES {
         for (int i = 0; i < 2 + (hasBondageMark * 2); i++) {
             if (Util::randomDouble() < chance) {
                 auto dev = GetRandomDevice(&devices.anything);
-                //activatedObject->GetContainer()->AddObjectToContainer((RE::TESBoundObject*)pair->first, 1, GetPlayer());
                 if (dev) {
                     activatedObject->AddObjectToContainer((RE::TESBoundObject*)dev.value().inv, nullptr, 1, nullptr);
                 }
@@ -37,10 +30,9 @@ namespace DCURSES {
         }
     }
 
-    bool DoStandardEvent(bool isBoss, std::string contName, std::string theme = "", int countOverride = -1, std::vector<std::string> skipKeywords = {}) {
-        RE::Actor* player = RE::PlayerCharacter::GetSingleton();
+    bool DoStandardEvent(RE::Actor* actor, bool isBoss, std::string contName, std::string theme = "", int countOverride = -1, std::vector<std::string> skipKeywords = {}) {
         if (Util::randomDouble() < settings.keyLossChance) {
-            RemoveKeys(player);
+            RemoveKeys(actor);
         }
 
         std::list<RE::TESObjectARMO*> to_equip;
@@ -49,7 +41,7 @@ namespace DCURSES {
         std::string device_names = "";
         std::string device_ids = "";
 
-        std::vector<std::string> usedKeys = GetKeywordsCantEquip(player);
+        std::vector<std::string> usedKeys = GetKeywordsCantEquip(actor);
         for (auto kw : skipKeywords) {
             usedKeys.push_back(kw);
         }
@@ -76,7 +68,7 @@ namespace DCURSES {
         for (int i = 0; i < count && bailout > 0; i++) {
             //log::trace("I: {}, C: {}, B: {}", i, count, bailout);
             //log::trace("player exists: {}", player != nullptr);
-            auto dev = GetRandomEquipableDevice(player, usedKeys, theme);
+            auto dev = GetRandomEquipableDevice(actor, usedKeys, theme);
             if (!dev) {
                 bailout--;
                 i--;
@@ -87,7 +79,6 @@ namespace DCURSES {
 
             if (settings.beltPlugs && rend->HasKeywordString("zad_DeviousBelt")) {
                 if (!vectorContains(usedKeys, "zad_DeviousPlugAnal") && !rend->HasKeywordString("zad_PermitAnal")) {
-                //if (std::find(usedKeys.begin(), usedKeys.end(), "zad_DeviousPlugAnal") == usedKeys.end()) {
                     std::optional<DeviceData> plug;
                     plug = GetRandomDevice(&devices.plugsABasic, {}, theme);
                     if (!plug) {
@@ -103,7 +94,6 @@ namespace DCURSES {
                     }
                 }
                 if (!vectorContains(usedKeys, "zad_DeviousPlugVaginal") && !rend->HasKeywordString("zad_PermitVaginal")) {
-                //if (std::find(usedKeys.begin(), usedKeys.end(), "zad_DeviousPlugVaginal") == usedKeys.end()) {
                     std::optional<DeviceData> plug;
                     plug = GetRandomDevice(&devices.plugsVBasic, {}, theme);
                     if (!plug) {
@@ -125,12 +115,8 @@ namespace DCURSES {
             for (auto const& key : GetDeviceKeywords(rend, true)) {
                 usedKeys.push_back(key);
             }
-            if (rend->HasKeywordString("zad_DeviousBondageMittens")) {
-                //removeHandItems = true;
-            }
 
             if (rend->HasKeywordString("zad_DeviousHeavyBondage")) {
-                //to_equip.push_front(inv);
                 heavy = inv;
                 removeHandItems = true;
             }
@@ -160,30 +146,20 @@ namespace DCURSES {
         }
 
         if (removeHandItems) {
-            UndressAndUnequipActor(player);
-            ForceThirdPerson();
+            UndressAndUnequipActor(actor);
         }
         else if (settings.stripPlayerOnEvent) {
-            UndressActor(player, false);
-            ForceThirdPerson();
+            UndressActor(actor, false);
         }
+        auto scriptManager = ScriptingManager();
 
-        SKSE::GetTaskInterface()->AddTask([to_equip, player] {
-            for (auto device : to_equip) {
-                log::trace("Locking device {}", device->GetName());
-                LockDevice(player, device);
-            }
-        });
+        if (!settings.disableForce3rdPerson) scriptManager.ForceThirdPerson();
 
-        /*int i = -1;
         for (auto device : to_equip) {
-            i++;
-            Util::ExecuteWithDelay(75ms * i, [device, player] {
-                log::trace("Locking device {}", device->GetName());
-                LockDevice(player, device);
-            });
-        }*/
-
+            log::trace("Locking device {}", device->GetName());
+            scriptManager.LockDevice(actor, device, false);
+        }
+            
         std::string msg = "";
         for (auto const& i : usedKeys) { msg += (i + ", "); }
         msg.pop_back(); msg.pop_back();
@@ -191,12 +167,12 @@ namespace DCURSES {
 
         if (!contName.empty()) {
             //PlayerMessage(fmt::format("As you touch the {} you see restraints magically appear and wrap themselves around you!", contName));
+            //Util::ExecuteWithDelay(4s, [contName] {
             PlayerMessage(Translator(Translation::EventDevices, contName));
-            SendModEventDevices(player, contName, static_cast<int>(to_equip.size()), device_names, device_ids);
+            //});
             AIEventBondage(contName, device_names);
         }
-        device_names.pop_back();
-        device_ids.pop_back();
+
         return true;
     }
 
@@ -232,7 +208,7 @@ namespace DCURSES {
         }
 
         int num_tattoos = Util::randomInt(settings.eventTattooMin, settings.eventTattooMax);
-        RTDoTattooEvent(player, num_tattoos);
+        ScriptingManager().RTDoTattooEvent(player, num_tattoos);
 
         if (num_tattoos == 1) {
             PlayerMessage(Translator(Translation::EventTattooOne, containerName));
@@ -245,7 +221,6 @@ namespace DCURSES {
         }
 
         AIEventTattoos(num_tattoos);
-        SendModEventTattoo(player, containerName, num_tattoos);
         return true;
     }
 
@@ -253,15 +228,14 @@ namespace DCURSES {
         auto player = RE::PlayerCharacter::GetSingleton();
 
         if (settings.eventContAllDevices) {
-            DoStandardEvent(false, "", "", settings.eventContDeviceOverride, { "zad_DeviousHeavyBondage" });
+            DoStandardEvent(player, false, "", "", settings.eventContDeviceOverride, { "zad_DeviousHeavyBondage" });
         }
         else if (settings.eventContDevices) {
-            DoStandardEvent(false, "", "", settings.eventContDeviceOverride, { "zad_DeviousHeavyBondage", "zad_DeviousBelt", "zad_DeviousBra", "zad_DeviousHarness", "zad_DeviousBlindfold", "zad_DeviousHood", "zad_DeviousBoots", "zad_DeviousGloves", "zad_DeviousSuit", "zad_DeviousCorset"});
+            DoStandardEvent(player, false, "", "", settings.eventContDeviceOverride, { "zad_DeviousHeavyBondage", "zad_DeviousBelt", "zad_DeviousBra", "zad_DeviousHarness", "zad_DeviousBlindfold", "zad_DeviousHood", "zad_DeviousBoots", "zad_DeviousGloves", "zad_DeviousSuit", "zad_DeviousCorset"});
         }
 
         auto contraption = CreateAndLockContraption(player);
         AIEventContraption(contraption->GetName());
-        SendModEventContraption(player, containerName);
 
         //PlayerMessage(fmt::format("As you touch the {} you feel yourself get dizzy as you are strung up into some sort of contraption!", containerName));
         PlayerMessage(Translator(Translation::EventContraption, containerName));
@@ -270,7 +244,6 @@ namespace DCURSES {
     }
 
     bool DoLewdMarkEvent(std::string containerName) {
-        //45 no orgasm / edging
         if (!CheckLewdMarksInstalled()) {
             return false;
         }
@@ -279,156 +252,139 @@ namespace DCURSES {
             return false;
         }
 
-        int weightTotal = settings.LMAllureWeight + settings.LMHeatWeight + settings.LMBondageWeight + settings.LMNudityWeight;
+        std::vector<std::pair<std::function<MARK()>, double>> marks;
 
-        if (GetTattooCount(player) < settings.LMBrndingTotal / 2) {
-            weightTotal += settings.LMBrandingWeight;
-        }
-
-        int r = Util::randomInt(weightTotal);
-
-        if (r < settings.LMBrandingWeight && GetTattooCount(player) < settings.LMBrndingTotal / 2) {
-            AddLewdMark(MARK::TAT_BRANDING);
+        if (GetTattooCount(player) < settings.LMBrandingTotal / 2) marks.push_back({ [player, containerName] {
             int tattoo_count = GetTattooCount(player);
             SetEffectMagnitude(BRANDING_EFFECT, static_cast<float>(tattoo_count));
-            //if (doMessage) PlayerMessage("After a sharp pain, you see that you have a mark of branding.");
             if (!containerName.empty()) { PlayerMessage(Translator(Translation::EventMarkBranding)); }
-            SendModEventMark(player, containerName, "Branding", static_cast<int>(MARK::TAT_BRANDING));
-            TatsUpdateContext(MARK::TAT_BRANDING);
-            AIEventAddLewdMark();
-            return true;
-        }
-        else if (r > settings.LMBrandingWeight) {
-            r -= settings.LMBrandingWeight;
-        }
+            return MARK::TAT_BRANDING;
+        } , settings.LMBrandingTotal });
 
-        if (r < settings.LMAllureWeight) {
-            AddLewdMark(MARK::TAT_ALLURE);
+        marks.push_back({ [player, containerName] {
             SetEffectMagnitude(ALLURE_EFFECT, static_cast<float>(settings.LMAllureSex * Util::randomDouble(0.8, 1.2)));
-            //if (doMessage) PlayerMessage("After a sharp pain, you see that you have a mark of allure.");
             if (!containerName.empty()) { PlayerMessage(Translator(Translation::EventMarkAllure)); }
-            SendModEventMark(player, containerName, "Allure", static_cast<int>(MARK::TAT_ALLURE));
-            TatsUpdateContext(MARK::TAT_ALLURE);
-            AIEventAddLewdMark();
-            return true;
-        }
-        else if (r > settings.LMAllureWeight) {
-            r -= settings.LMAllureWeight;
-        }
+            return MARK::TAT_ALLURE;
+        } , settings.LMAllureWeight });
 
-        if (r < settings.LMHeatWeight) {
-            AddLewdMark(MARK::TAT_HEAT);
+        marks.push_back({ [player, containerName] {
             SetEffectMagnitude(HEAT_EFFECT, static_cast<float>(settings.LMHeatContainerCount * Util::randomDouble(0.8, 1.2)));
-            //if (doMessage) PlayerMessage("After a sharp pain, you see that you have a mark of heat.");
             if (!containerName.empty()) { PlayerMessage(Translator(Translation::EventMarkHeat)); }
-            SendModEventMark(player, containerName, "Heat", static_cast<int>(MARK::TAT_HEAT));
-            TatsUpdateContext(MARK::TAT_HEAT);
-            AIEventAddLewdMark();
-            return true;
-        }
-        else if (r > settings.LMHeatWeight) {
-            r -= settings.LMHeatWeight;
-        }
+            return MARK::TAT_HEAT;
+        } , settings.LMHeatWeight });
 
-        if (r < settings.LMBondageWeight) {
-            AddLewdMark(MARK::TAT_BONDAGE);
+        marks.push_back({ [player, containerName] {
             SetEffectMagnitude(BONDAGE_EFFECT, static_cast<float>(settings.LMBondageDeviceCount * Util::randomDouble(0.8, 1.2)));
-            //if (doMessage) PlayerMessage("After a sharp pain, you see that you have a mark of bondage.");
             if (!containerName.empty()) { PlayerMessage(Translator(Translation::EventMarkBondage)); }
-            SendModEventMark(player, containerName, "Bondage", static_cast<int>(MARK::TAT_BONDAGE));
-            TatsUpdateContext(MARK::TAT_BONDAGE);
-            AIEventAddLewdMark();
-            return true;
-        }
-        else if (r > settings.LMBondageWeight) {
-            r -= settings.LMBondageWeight;
-        }
+            return MARK::TAT_BONDAGE;
+        } , settings.LMBondageWeight });
 
-        if (r < settings.LMNudityWeight) {
-            AddLewdMark(MARK::TAT_NUDITY);
+        marks.push_back({ [player, containerName] {
             SetEffectMagnitude(NUDITY_EFFECT, static_cast<float>(settings.LMNudityTalkTimes * Util::randomDouble(0.8, 1.2)));
-            //if (doMessage) PlayerMessage("After a sharp pain, you see that you have a mark of nudity.");
             if (!containerName.empty()) { PlayerMessage(Translator(Translation::EventMarkNudity)); }
-            SendModEventMark(player, containerName, "Nudity", static_cast<int>(MARK::TAT_NUDITY));
-            TatsUpdateContext(MARK::TAT_NUDITY);
-            AIEventAddLewdMark();
-            return true;
-        }
-        else if (r > settings.LMNudityWeight) {
-            r -= settings.LMNudityWeight;
-        }
+            return MARK::TAT_NUDITY;
+        } , settings.LMNudityWeight });
 
-        return false;
+        marks.push_back({ [player, containerName] {
+           SetEffectMagnitude(HEALSLUT_EFFECT, static_cast<float>(settings.LMHealslutHealing));
+           if (!containerName.empty()) { PlayerMessage(Translator(Translation::EventMarkHealslut)); }
+           return MARK::TAT_HEALSLUT;
+        } , settings.LMHealslutWeight });
+
+        auto pair = Util::VectorSelectWeighted(marks);
+        auto mark = pair.first();
+
+        AddLewdMark(mark);
+        TatsUpdateContext(mark);
+        AIEventAddLewdMark();
+
+        return true;
     }
 
-    void DoEvent(bool isBoss, std::string contName) {
+    bool DoEvent(bool isBoss, std::string contName) {
         auto player = RE::PlayerCharacter::GetSingleton();
-        CloseContinerMenus();
-        //DisableMenus();
-        int weightTotal = settings.eventStandardWeight + settings.eventSimpleSlaveryWeight + settings.eventLewdMarkWeight + settings.eventTattooWeight + settings.eventContraptionWeight + settings.eventOppressiveWeight;
-        if (isBoss) {
-            weightTotal -= settings.eventStandardBossReduction;
-        }
-        int r = Util::randomInt(weightTotal);
 
-        if (r < settings.eventSimpleSlaveryWeight && DoSimpleSlaveryEvent(contName)) {
-            UndressAndUnequipActor(player);
-            return;
-        }
-        else if (r > settings.eventSimpleSlaveryWeight) {
-            r -= settings.eventSimpleSlaveryWeight;
-        }
+        std::vector<std::pair<bool(*)(bool, std::string, RE::Actor*), double>> events;
 
-        
-        if (r < settings.eventContraptionWeight && DoContraptionEvent(contName)) {
-            UnequipItems(player);
-            if (settings.stripPlayerOnEvent) {
-                UndressActor(player, true);
+        events.push_back({ [](bool, std::string contName, RE::Actor* player) {
+            if (DoSimpleSlaveryEvent(contName)) {
+                UndressAndUnequipActor(player);
+                return true;
             }
-            return;
-        }
-        else if (r > settings.eventContraptionWeight) {
-            r -= settings.eventContraptionWeight;
-        }
+            return false;
+        }, settings.eventSimpleSlaveryWeight });
 
-        if (r < settings.eventOppressiveWeight && DoOppDeviceEvent(contName)) {
-            if (settings.stripPlayerOnEvent) {
-                UndressActor(player, false);
+        events.push_back({ [](bool, std::string contName, RE::Actor* player) {
+             if (DoContraptionEvent(contName)) {
+                 UnequipItems(player);
+                 if (settings.stripPlayerOnEvent) {
+                     UndressActor(player, true);
+                 }
+                 return true;
             }
-            return;
-        }
-        else if (r > settings.eventOppressiveWeight) {
-            r -= settings.eventOppressiveWeight;
-        }
+            return false;
+        }, settings.eventContraptionWeight });
 
+        events.push_back({ [](bool, std::string contName, RE::Actor* player) {
+            if (DoOppDeviceEvent(contName)) {
+                if (settings.stripPlayerOnEvent) {
+                    UndressActor(player, false);
+                }
+                return true;
+           }
+           return false;
+        }, settings.eventOppressiveWeight });
 
-        if (r < settings.eventTattooWeight && DoTattooEvent(contName)) {
-            if (settings.stripPlayerOnEvent) {
-                UndressActor(player, false);
+        events.push_back({ [](bool isBoss, std::string contName, RE::Actor* player) {
+            if (DoTattooEvent(contName)) {
+                if (settings.stripPlayerOnEvent) {
+                    UndressActor(player, false);
+                }
+                if (settings.allowFollowerEvents) {
+                    for (auto follower : Util::GetFollowers()) {
+                        DoStandardEvent(follower, isBoss, contName);
+                    }
+                }
+                return true;
+           }
+           return false;
+        }, settings.eventTattooWeight });
+
+        events.push_back({ [](bool, std::string contName, RE::Actor* player) {
+            if (DoLewdMarkEvent(contName)) {
+                if (settings.stripPlayerOnEvent) {
+                    UndressActor(player, false);
+                }
+                return true;
+           }
+           return false;
+        }, settings.eventLewdMarkWeight });
+
+        events.push_back({ [](bool isBoss, std::string contName, RE::Actor* player) {
+            if (DoStandardEvent(player, isBoss, contName)) {
+                if (settings.allowFollowerEvents) {
+                    for (auto follower : Util::GetFollowers()) {
+                        DoStandardEvent(follower, isBoss, contName);
+                    }
+                }
+                return true;
+           }
+           return false;
+        }, settings.eventLewdMarkWeight });
+
+        Util::ShuffleVector(events);
+
+        while (!events.empty()) {
+            auto pair = Util::VectorSelectWeighted(events);
+            if (pair.first(isBoss, contName, player)) {
+                return true;
             }
-            return;
-        }
-        else if (r > settings.eventTattooWeight) {
-            r -= settings.eventTattooWeight;
+            events.erase(std::remove(events.begin(), events.end(), pair), events.end());
         }
 
-        if (r < settings.eventLewdMarkWeight && DoLewdMarkEvent(contName)) {
-            if (settings.stripPlayerOnEvent) {
-                UndressActor(player, false);
-            }
-            return;
-        }
-        else if (r > settings.eventLewdMarkWeight) {
-            r -= settings.eventLewdMarkWeight;
-        }
+        log::error("No valid event triggered!");
 
-        if (settings.eventStandardWeight > 0) {
-            DoStandardEvent(isBoss, contName);
-        }
-        else {
-            log::error("No event triggered.");
-        }
-
+        return false;
 
         //EnableMenus();
     }
@@ -442,6 +398,7 @@ namespace DCURSES {
         bool isDoor = false;
         bool isLocked = false;
         bool isDragon = false;
+        bool isMage = false;
         int lockLevel = 0;
         int goldValue = 0;
     };
@@ -536,6 +493,13 @@ namespace DCURSES {
             data.isDragon = true;
         }
 
+        RE::TESFaction* warlockFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x26724, "Skyrim.esm");
+        RE::TESFaction* necromancerFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x34B74, "Skyrim.esm");
+        if (data.isDeadActor && (actor->IsInFaction(warlockFaction) || actor->IsInFaction(necromancerFaction))) {
+            log::trace("Data: Mage");
+            data.isMage = true;
+        }
+
         return data;
     }
 
@@ -575,6 +539,16 @@ namespace DCURSES {
                 log::trace("Actor is dragon and dragon hoards are on.");
                 RE::TESForm* gold = RE::TESForm::LookupByID(std::stoi("0f", 0, 16));
                 activatedObject->AddObjectToContainer((RE::TESBoundObject*)gold, nullptr, static_cast<int>(player->GetLevel() * 80.0 * Util::randomDouble(0.3, 1) + Util::randomDouble(50, 200)), nullptr);
+            }
+
+            if (data.isMage && IsWearingOppLatex() && oppdCounters.livingLatexCounter == 2) {
+                log::trace("Adding gem");
+                double r = Util::randomDouble();
+                RE::TESObjectMISC* volatileGem = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectMISC>(VOLATILE_GEM, "Devious Curses.esp");
+                if (GetItemCount(player, volatileGem) == 0 && r <= settings.oppLivingLatexGem) {
+                    log::trace("Adding gem 2");
+                    activatedObject->AddObjectToContainer((RE::TESBoundObject*)volatileGem, nullptr, 1, nullptr);
+                }
             }
 
             if (data.isBoss && settings.magicKeyChance > 0) {
@@ -687,7 +661,7 @@ namespace DCURSES {
         }
 
         //RE::TESFaction* arousalFaction = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("03FC36", 0, 16), "SexLabAroused.esm");
-        float playerArousal = GetActorArousal(player);
+        int playerArousal = ScriptingManager().GetArousal(player);
 
         float chance = settings.baseChance;
         std::string logMessage = "modifiers: ";
@@ -870,6 +844,10 @@ namespace DCURSES {
         if (!CheckSimpleSlavery()) {
             settings.eventSimpleSlaveryWeight = 0;
             SetMCMInt("eventSimpleSlaveryWeight", 0);
+        }
+        if (!CheckUD()) {
+            settings.eventAbadonWeight = 0;
+            SetMCMInt("eventAbadonWeight", 0);
         }
         if (!CheckLewdMarksInstalled()) {
             settings.eventLewdMarkWeight = 0;

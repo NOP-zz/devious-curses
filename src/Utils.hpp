@@ -251,6 +251,29 @@ namespace DCURSES {
 			return ref;
 		}
 
+		bool ActorIsCreature(RE::Actor* actor) {
+			auto actorRace = actor->GetRace();
+			return !actorRace->HasKeywordString("ActorTypeNPC") && (actorRace->HasKeywordString("ActorTypeCreature") || actorRace->HasKeywordString("ActorTypeDwarven") || actorRace->HasKeywordString("ActorTypeAnimal"));
+		}
+
+		std::vector<RE::Actor*> GetFollowers() {
+			std::vector<RE::Actor*> result;
+			if (const auto processLists = RE::ProcessLists::GetSingleton(); processLists) {
+				RE::BSSimpleList<RE::ActorHandle>* arr = &(processLists->aliveActorList);
+				if (arr) {
+					for (auto& actorHandle : *arr) {
+						auto actorPtr = actorHandle.get();
+						if (auto actor = actorPtr.get(); actor && actor->Is3DLoaded() && !actor->IsDead()) {
+							if (actor->IsPlayerTeammate() && !actor->IsCommandedActor() && !ActorIsCreature(actor)) {
+								result.push_back(actor);
+							}
+						}
+					}
+				}
+			}
+			return result;
+		}
+
 		void ProfileExecutionTime(std::string name, std::function<void()> func) {
 			auto c1 = std::chrono::high_resolution_clock::now();
 			func();

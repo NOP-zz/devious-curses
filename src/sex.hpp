@@ -17,11 +17,6 @@ namespace DCURSES {
 		return actor->IsCommandedActor() && actor->GetCommandingActor().get() == RE::PlayerCharacter::GetSingleton();
 	}
 
-	bool ActorIsCreature(RE::Actor* actor) {
-		auto actorRace = actor->GetRace();
-		return !actorRace->HasKeywordString("ActorTypeNPC") && (actorRace->HasKeywordString("ActorTypeCreature") || actorRace->HasKeywordString("ActorTypeDwarven") || actorRace->HasKeywordString("ActorTypeAnimal"));
-	}
-
 	bool SexActorFilter(RE::Actor* actor) {
 		if (!settings.sexEnabled || !actor) {
 			return false;
@@ -50,7 +45,7 @@ namespace DCURSES {
 			return false;
 		}
 
-		bool isCreature = ActorIsCreature(actor);
+		bool isCreature = Util::ActorIsCreature(actor);
 
 		bool isFuta = false;
 
@@ -101,7 +96,9 @@ namespace DCURSES {
 
 		RE::TESFaction* zadDisable = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x4653B, "Devious Devices - Integration.esm");
 		
-		float playerArousal = GetActorArousal(player);
+		auto scriptManager = ScriptingManager();
+
+		int playerArousal = scriptManager.GetArousal(player);
 
 		std::vector<std::pair<RE::Actor*, std::string>> result;
 		if (const auto processLists = RE::ProcessLists::GetSingleton(); processLists) {
@@ -115,7 +112,7 @@ namespace DCURSES {
 							log::trace("Ignoring NPC {}.", actor->GetName());
 							continue;
 						}
-						bool actorIsCreature = ActorIsCreature(actor);
+						bool actorIsCreature = Util::ActorIsCreature(actor);
 						//log::info("testing actor {}", actor->GetName());
 						//Check aggressor against normal filters
 						if (SexActorFilter(actor)) {
@@ -155,7 +152,7 @@ namespace DCURSES {
 
 							if (enabled) {
 								//Check aggressor arousal
-								float actorArousal = GetActorArousal(actor);
+								float actorArousal = static_cast<float>(scriptManager.GetArousal(actor));
 
 								//if (actorArousal <= 0) {
 								//UpdateArousal(actor);
@@ -318,60 +315,6 @@ namespace DCURSES {
 		return mask;
 	}
 
-	void SexUpdate() {
-		auto player = RE::PlayerCharacter::GetSingleton();
-		Callbacks::GetSingleton()->GetArousal(player);
-
-		if (!settings.sexEnabled || !settings.sexRandomEnabled) {
-			return;
-		}
-		RE::TESFaction* SexlabAnimatingFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("00E50F", 0, 16), "SexLab.esm");
-		RE::TESFaction* ZadAnimatingFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("029567", 0, 16), "Devious Devices - Integration.esm");
-
-		if (player->IsInFaction(SexlabAnimatingFaction)) {
-			counters.clock_lastSex = 0;
-			return;
-		}
-
-		if (counters.clock_lastSex < settings.sexCooldown) {
-			return;
-		}
-
-		if (counters.clock_SexTimeout <= settings.sexSearchInterval) {
-			return;
-		}
-
-		if (player->IsInCombat() || player->IsInFaction(ZadAnimatingFaction) || player->IsInWater() || player->IsInRagdollState() || RE::UI::GetSingleton()->IsMenuOpen("Dialogue Menu") || RE::UI::GetSingleton()->IsMenuOpen("Crafting Menu")) {
-			return;
-		}
-
-		if ((GetDeviceMask(RE::PlayerCharacter::GetSingleton()) & 0b0111) == 0) {
-			return;
-		}
-
-		//log::info("Attempting random sex event.");
-
-		auto actors = getAllAvailableActors();
-
-		counters.clock_SexTimeout = 0;
-
-		if (actors.size() == 0) {
-			return;
-		}
-
-		//log::info("Got actors for event.");
-
-		int r = Util::randomInt(static_cast<int>(actors.size()));
-		auto const& actorData = (actors)[r];
-
-		log::info("{}", actorData.second);
-
-		AIEventStartSex(actorData.first);
-		StartSex(actorData.first, settings.sexAggressiveAnims);
-
-		counters.clock_lastSex = -10;
-	}
-
 	std::string P_GetAnimationFilterTags(RE::StaticFunctionTag*, RE::Actor* akActor) {
 		int mask = GetDeviceMask(akActor);
 
@@ -425,6 +368,78 @@ namespace DCURSES {
 		return tags;
 	}
 
+	void StartMasturbationImpl() {
+		auto scriptManager = ScriptingManager();
+		RE::TESForm* sexlab = StaticDataHolder::GetSingleton()->LookupForm(0x0D62, "SexLab.esm");
+
+		auto intent = ScriptIntent(sexlab, RE::FormType::Quest, "SexLabFramework", "GetVersion");
+		scriptManager.RunIntentWithResult<int>(intent, [sexlab](std::optional<int> version) {
+			if (version.value() <= 16601) {
+				auto args = RE::MakeFunctionArguments<RE::Actor*, RE::Actor*, RE::Actor*, RE::Actor*, RE::Actor*, RE::Actor*, std::string, std::string>(std::move(RE::PlayerCharacter::GetSingleton()), nullptr, nullptr, nullptr, nullptr, nullptr, "", "");
+				auto intent = ScriptIntent(sexlab, RE::FormType::Quest, "SexLabFramework", "QuickStart", args);
+				return RE::BSTSmartPointer(new ScriptCallbackFunctor(intent));
+			}
+			std::vector<RE::Actor*> vec = { RE::PlayerCharacter::GetSingleton() };
+			auto tags = P_GetAnimationFilterTagsP(nullptr, RE::PlayerCharacter::GetSingleton());
+			auto args = RE::MakeFunctionArguments<std::vector<RE::Actor*>, std::string, RE::Actor*, RE::TESObjectREFR*, int, std::string>(std::move(vec), std::move(tags), nullptr, nullptr, 1, "");
+			auto intent = ScriptIntent(sexlab, RE::FormType::Quest, "SexLabFramework", "StartScene", args);
+			return RE::BSTSmartPointer(new ScriptCallbackFunctor(intent));
+		});
+	}
+
+	void SexUpdate() {
+		auto player = RE::PlayerCharacter::GetSingleton();
+
+		if (!settings.sexEnabled || !settings.sexRandomEnabled) {
+			return;
+		}
+		RE::TESFaction* SexlabAnimatingFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("00E50F", 0, 16), "SexLab.esm");
+		RE::TESFaction* ZadAnimatingFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("029567", 0, 16), "Devious Devices - Integration.esm");
+
+		if (player->IsInFaction(SexlabAnimatingFaction)) {
+			counters.clock_lastSex = 0;
+			return;
+		}
+
+		if (counters.clock_lastSex < settings.sexCooldown) {
+			return;
+		}
+
+		if (counters.clock_SexTimeout <= settings.sexSearchInterval) {
+			return;
+		}
+
+		if (player->IsInCombat() || player->IsInFaction(ZadAnimatingFaction) || player->IsInWater() || player->IsInRagdollState() || RE::UI::GetSingleton()->IsMenuOpen("Dialogue Menu") || RE::UI::GetSingleton()->IsMenuOpen("Crafting Menu")) {
+			return;
+		}
+
+		if ((GetDeviceMask(RE::PlayerCharacter::GetSingleton()) & 0b0111) == 0) {
+			return;
+		}
+
+		//log::info("Attempting random sex event.");
+
+		auto actors = getAllAvailableActors();
+
+		counters.clock_SexTimeout = 0;
+
+		if (actors.size() == 0) {
+			return;
+		}
+
+		//log::info("Got actors for event.");
+
+		int r = Util::randomInt(static_cast<int>(actors.size()));
+		auto const& actorData = (actors)[r];
+
+		log::info("{}", actorData.second);
+
+		AIEventStartSex(actorData.first);
+		ScriptingManager().StartSex(actorData.first, settings.sexAggressiveAnims);
+
+		counters.clock_lastSex = -10;
+	}
+
 	
 	class EffectVisitor2 : public RE::MagicTarget::ForEachActiveEffectVisitor {
 	public:
@@ -472,11 +487,18 @@ namespace DCURSES {
 			if (actor && actor != RE::PlayerCharacter::GetSingleton()) {
 				log::trace("Sex ended with {}", actor->GetName());
 				OppOnSexEnd(actor);
-				DecrementCounterForMark(MARK::TAT_ALLURE);
 				ConsSexEnded(actor);
+				TatsOnSexEnd(actor);
 				break;
 			}
 		}
+	}
+
+	void OppDDPlayerOrgasm();
+
+	void P_DDPlayerOrgasm(RE::StaticFunctionTag*) {
+		log::trace("Player orgasm");
+		OppDDPlayerOrgasm();
 	}
 
 	bool PapyrusFunctionsSex(RE::BSScript::IVirtualMachine* ivm) {
@@ -484,6 +506,7 @@ namespace DCURSES {
 		ivm->RegisterFunction("GetAnimationFilterTagsP", "DCursesLib", P_GetAnimationFilterTagsP);
 		ivm->RegisterFunction("SexStarted", "DCursesLib", P_SexStarted);
 		ivm->RegisterFunction("SexEnded", "DCursesLib", P_SexEnded);
+		ivm->RegisterFunction("DDPlayerOrgasm", "DCursesLib", P_DDPlayerOrgasm);
 		return true;
 	}
 }

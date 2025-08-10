@@ -1,4 +1,4 @@
-import sys, os, time, json
+import sys, os, time, json, re
 
 if len(sys.argv) == 2:
 	os.chdir(sys.argv[1])
@@ -46,17 +46,10 @@ def processLine(line, page_lines):
 			page_lines.append('AddEmptyOption()')
 		if command == "//Flag":
 			flag_name, requires = [x.strip() for x in (" ".join(line.split(" ")[1:]).strip()).split("//")]
-			req = []
-			for r in [x.strip() for x in requires.split(",")]:
-				if r.startswith("ESP:"):
-					req.append(f'Game.GetModByName("{r.split(":")[1]}") != 255')
-				elif r.startswith("VAR:"):
-					req.append(f'{r.split(":")[1]}')
-				else:
-					req.append(r)
-			if req is not None:
+			requires = re.sub(r"ESP:([a-zA-Z0-9.-]*)", r'Game.GetModByName("\1") != 255', requires)
+			if requires is not None:
 				page_lines.append(f'int {flag_name} = 1')
-				page_lines.append(f'If {" && ".join(req)}')
+				page_lines.append(f'If {requires}')
 				page_lines.append(f'\t{flag_name} = 0')
 				page_lines.append(f'EndIf')
 	elif line.startswith("int "):
@@ -180,6 +173,8 @@ function UpdateSKSE() global Native
 bool function CheckSTNG() global Native
 bool function CheckLM() global Native
 
+bool function WearingOppressiveDevice() global Native
+
 Bool Property ModSuspended = False Auto Hidden
 
 Function StartTimer()
@@ -188,6 +183,7 @@ Function StartTimer()
 	RegisterForUpdate(1)
 	RegisterForModEvent("HookAnimationStart", "OnSexStart")
 	RegisterForModEvent("HookAnimationEnd", "OnSexEnd")
+	RegisterForModEvent("DeviceActorOrgasmExp", "OnDDOrgasm")
 	RegisterForModEvent("dhlp-Suspend", "OnDhlpSuspend")
 	RegisterForModEvent("dhlp-Resume", "OnDhlpResume")
 EndFunction
@@ -214,6 +210,13 @@ Event OnSexStart(int tid, bool HasPlayer)
 	EndIf
 EndEvent
 
+Event OnDDOrgasm(Form akSource, Form akFormActor, Int aiSetArousal)
+	Actor akActor = akFormActor as Actor
+	If akActor == Game.GetPlayer()
+		DCursesLib.DDPlayerOrgasm()
+	EndIf
+EndEvent
+
 ;dhlp event handlers
 Event OnDhlpSuspend( string eventName, string strArg, float numArg, Form sender )
     ModSuspended = True
@@ -228,6 +231,7 @@ EndEvent
 Page = ""
 
 Page += '\n\nEvent OnPageReset(string page)'
+Page += '\n\tIf DCursesLib.NumDevicesEquipped(Game.GetPlayer()) > 0 && generalDeviceAntiCheat\n\t\tpage = "$DCURSES_PAGE_LOCKED"\n\tEndIf'
 Page += ''.join([f'\n\t{x}' for x in pages_flags])
 Page += f'\n\tSetCursorFillMode(TOP_TO_BOTTOM)\n\tIf page == "" || page == "{page_data[0][0]}"'
 Page += ''.join([f'\n\t\t{x}' for x in page_data[0][1]])
@@ -237,8 +241,10 @@ for page in page_data[1:]:
 Page += "\n\tEndIf\nEndEvent"
 
 ConfigInit = ""
-ConfigInit += f'\n\nFunction Initialize()\n\tPages = new String[{len(page_data)}]'
+ConfigInit += f'\n\nFunction Initialize()\n\tPages = new String[{len(page_data) - 1}]'
 for i, page in enumerate(page_data):
+	if page[0].strip() == "$DCURSES_PAGE_LOCKED":
+		continue
 	ConfigInit += f'\n\tPages[{i}] = "{page[0]}"'
 ConfigInit += "\nEndFunction"
 

@@ -6,7 +6,10 @@
 using namespace SKSE;
 
 namespace DCURSES {
+	constexpr auto QUEST_DA01 = 0x28AD6;
+	constexpr auto QUEST_DA09 = 0x4E4E1;
 	constexpr auto QUEST_DA14 = 0x1BB9B;
+	constexpr auto QUEST_DA15 = 0x2AC68;
 
 	constexpr auto QUEST_C01 = 0x6E803;
 	constexpr auto QUEST_C03 = 0x1CEF4;
@@ -15,10 +18,11 @@ namespace DCURSES {
 
 	constexpr auto QUEST_TG06 = 0x21552;
 
+	constexpr auto QUEST_MQ201 = 0x35D5F;
+
 	void QIMeridiaInteraction() {
 		if (!settings.enableQIMalkoran) { return; }
 
-		CloseContinerMenus();
 		auto player = RE::PlayerCharacter::GetSingleton();
 		auto mark = GetLewdMark();
 		if (mark == MARK::TAT_BRANDING) {
@@ -33,24 +37,25 @@ namespace DCURSES {
 		SetEffectMagnitude(BRANDING_EFFECT, static_cast<float>(GetTattooCount(player)));
 		//PlayerMessage("As you kill Malkoran he curses you with a mark of branding!");
 		PlayerMessage(Translator(Translation::QIMalkoranCurse));
-		SendModEventMark(player, "Malkoran", "Branding", static_cast<int>(MARK::TAT_BRANDING));
 	}
 
 	void QISanguineInteraction1() {
 		if (!settings.enableQISanguine) { return; }
 		auto player = RE::PlayerCharacter::GetSingleton();
 
+		auto scriptManager = ScriptingManager();
+
 		auto belt = GetWornInventoryDeviceByKeyword(player, "zad_DeviousBelt");
 		if (belt) {
-			UnlockDevice(player, belt);
+			scriptManager.UnlockDevice(player, belt);
 		}
 
 		auto plug = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(DDX_RUSTY_PEAR_ANAL_SIGN, "Devious Devices - Expansion.esm");
-		LockDevice(player, plug, true);
+		scriptManager.LockDevice(player, plug, true);
 		plug = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(DDX_RUSTY_PEAR_VAGINAL, "Devious Devices - Expansion.esm");
-		LockDevice(player, plug, true);
+		scriptManager.LockDevice(player, plug, true);
 
-		DoStandardEvent(false, "", "(rust | (iron & belt))", 20, { "zad_DeviousGag", "zad_DeviousHeavyBondage", "zad_DeviousBondageMittens", "zad_DeviousPlugVaginal", "zad_DeviousPlugAnal" });
+		DoStandardEvent(player, false, "", "(rust | (iron & belt))", 20, { "zad_DeviousGag", "zad_DeviousHeavyBondage", "zad_DeviousBondageMittens", "zad_DeviousPlugVaginal", "zad_DeviousPlugAnal" });
 
 		auto mark = GetLewdMark();
 		if (mark != MARK::TAT_NONE) {
@@ -60,7 +65,6 @@ namespace DCURSES {
 		AIContextAddNudityMark();
 		SetEffectMagnitude(NUDITY_EFFECT, static_cast<float>(settings.LMNudityTalkTimes));
 
-		SendModEventMark(player, "Sanguine", "Nudity", static_cast<int>(MARK::TAT_NUDITY));
 		Util::ExecuteWithDelay(4s, [] {
 			//PlayerMessage("As you awaken you notice that you're covered in chains and have a strange mark on you. Hopefully Sam can fix this..."); 
 			PlayerMessage(Translator(Translation::QISanguineStart));
@@ -90,10 +94,20 @@ namespace DCURSES {
 	}
 
 	void QIBlackStarTouch() {
-		if (!settings.enableQOBlackStar) { return; }
+		if (!settings.enableQIBlackStar) { return; }
 
-		if (DoStandardEvent(false, "", "(plug & (chaos | black | filled | grand)) | (belt & (iron | rust)) | (piercing & gem)", 20, {})) {
+		if (DoStandardEvent(RE::PlayerCharacter::GetSingleton(), false, "", "(plug & (chaos | black | filled | grand)) | (belt & (iron | rust)) | (piercing & gem)", 20, {})) {
 			PlayerMessage(Translator(Translation::QIBlackStarEquip));
+		}
+	}
+
+	void QIMindOfMadness() {
+		if (!settings.enableQIMindOfMadness) { return; }
+
+		if (OppMadnessPlugEvent("")) {
+			Util::ExecuteWithDelay(2s, [] {
+				PlayerMessage(Translator(Translation::QIMindOfMadness));
+			});
 		}
 	}
 
@@ -106,7 +120,10 @@ namespace DCURSES {
 		RE::TESObjectARMO* boots = RE::TESForm::LookupByID(0xE40DE)->As<RE::TESObjectARMO>();
 		auto player = RE::PlayerCharacter::GetSingleton();
 
-		if (DoStandardEvent(false, "", "leather & red & (dress | cuffs | boots | gloves | collar)) & !pony", 20, {"zad_DeviousHeavyBondage", "zad_DeviousBondageMittens", "zad_DeviousGag", "zad_DeviousBlindfold"})) {
+		if (
+			DoStandardEvent(player, false, "", "leather & red & (dress | cuffs | boots | gloves | collar)) & !pony", 20, {"zad_DeviousHeavyBondage", "zad_DeviousBondageMittens", "zad_DeviousGag", "zad_DeviousBlindfold"}) || 
+			DoStandardEvent(player, false, "", "", 20, { "zad_DeviousHeavyBondage", "zad_DeviousBondageMittens", "zad_DeviousGag", "zad_DeviousBlindfold" })
+			) {
 			player->RemoveItem(clothes, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr, nullptr, nullptr);
 			player->RemoveItem(boots, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr, nullptr, nullptr);
 			PlayerMessage(Translator(Translation::QIDiplomaticImmunity));
@@ -145,7 +162,7 @@ namespace DCURSES {
 	void QICompanionsProvingHonor() {
 		if (!settings.enableQIProvingHonor) { return; }
 
-		if (DoStandardEvent(false, "", "silver", 20, {"zad_DeviousHeavyBondage"})) {
+		if (DoStandardEvent(RE::PlayerCharacter::GetSingleton(), false, "", "silver", 20, {"zad_DeviousHeavyBondage"})) {
 			PlayerMessage(Translator(Translation::QIProvingHonor));
 		}
 	}
@@ -156,7 +173,7 @@ namespace DCURSES {
 		auto collar = GetWornInventoryDeviceByKeyword(player, "zad_DeviousCollar");
 		if (!collar) {
 			auto puppy = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(DDX_PUPPY_COLLAR, "Devious Devices - Expansion.esm");
-			LockDevice(player, puppy, true);
+			ScriptingManager().LockDevice(player, puppy, true);
 		}
 	}
 
@@ -165,7 +182,7 @@ namespace DCURSES {
 
 		auto quest = RE::TESForm::LookupByID(quest_id)->As<RE::TESQuest>();
 
-		if (quest == RE::TESForm::LookupByID(0x4E4E1)->As<RE::TESQuest>()) {
+		if (quest == RE::TESForm::LookupByID(QUEST_DA09)->As<RE::TESQuest>()) {
 			if (stage == 410) QIMeridiaInteraction();
 		}
 		if (quest == RE::TESForm::LookupByID(QUEST_DA14)->As<RE::TESQuest>()) {
@@ -177,6 +194,15 @@ namespace DCURSES {
 		}
 		if (quest == RE::TESForm::LookupByID(QUEST_C03)->As<RE::TESQuest>()) {
 			if (stage == 25) QICompanionsCollarJoke();
+		}
+		if (quest == RE::TESForm::LookupByID(QUEST_DA01)->As<RE::TESQuest>()) {
+			if (stage == 50) QIBlackStarTouch();
+		}
+		if (quest == RE::TESForm::LookupByID(QUEST_MQ201)->As<RE::TESQuest>()) {
+			if (stage == 100) QIMainDiplomaticImmunity();
+		}
+		if (quest == RE::TESForm::LookupByID(QUEST_DA15)->As<RE::TESQuest>()) {
+			if (stage == 90) QIMindOfMadness();
 		}
 	}
 

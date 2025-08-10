@@ -51,7 +51,7 @@ namespace DCURSES {
 
 	RE::TESObjectACTI* CreateAndLockContraption(RE::Actor* actor) {
 		auto contraption = GetRandomContraption();
-		ForceThirdPerson();
+		if (!settings.disableForce3rdPerson) { ScriptingManager().ForceThirdPerson(); }
 		SKSE::GetTaskInterface()->AddTask([actor, contraption]() {
 			auto ptr = actor->PlaceObjectAtMe(contraption, false);
 			auto object = ptr.get();
@@ -67,7 +67,9 @@ namespace DCURSES {
 			}
 
 			object->data.angle = RE::NiPoint3(0, actor->GetAngleY(), actor->GetAngleZ());
-			Util::ExecuteWithDelay(1000ms, [actor, object] {ContraptionsLockActor(actor, object); });
+			Util::ExecuteWithDelay(1500ms, [actor, object] {
+				ScriptingManager().ContraptionsLockActor(actor, object);
+			});
 		});
 		return contraption;
 	}
