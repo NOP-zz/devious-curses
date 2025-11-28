@@ -159,6 +159,29 @@ namespace DCURSES {
 		}
 	}
 
+	void SetDefaultEffectMagnitudeForMark(MARK mark) {
+		switch (mark) {
+		case MARK::TAT_ALLURE:
+			SetEffectMagnitude(ALLURE_EFFECT, static_cast<float>(settings.LMAllureSex * Util::randomDouble(0.8, 1.2)));
+			break;
+		case MARK::TAT_HEAT:
+			SetEffectMagnitude(HEAT_EFFECT, static_cast<float>(settings.LMHeatContainerCount * Util::randomDouble(0.8, 1.2)));
+			break;
+		case MARK::TAT_BONDAGE:
+			SetEffectMagnitude(BONDAGE_EFFECT, static_cast<float>(settings.LMBondageDeviceCount * Util::randomDouble(0.8, 1.2)));
+			break;
+		case MARK::TAT_NUDITY:
+			SetEffectMagnitude(NUDITY_EFFECT, static_cast<float>(settings.LMNudityTalkTimes * Util::randomDouble(0.8, 1.2)));
+			break;
+		case MARK::TAT_HEALSLUT:
+			SetEffectMagnitude(HEALSLUT_EFFECT, static_cast<float>(settings.LMHealslutHealing * Util::randomDouble(0.8, 1.2)));
+			break;
+		case MARK::TAT_BRANDING:
+			SetEffectMagnitude(BRANDING_EFFECT, static_cast<float>(GetTattooCount(RE::PlayerCharacter::GetSingleton())));
+			break;
+		}
+	}
+
 	bool _AddLewdMarkGlow(int index, int32_t color, int32_t glow) {
 		auto actor = RE::PlayerCharacter::GetSingleton();
 
@@ -329,7 +352,7 @@ namespace DCURSES {
 
 		counters.ActiveLewdMark = 0;
 
-		slavetats_ng::simple_remove_tattoo(actor, "LewdMarks", fmt::format("{:03}", index), false);
+		slavetats_ng::simple_remove_tattoo(actor, "LewdMarks", fmt::format("{:03}", index), true);
 		slavetats_ng::simple_remove_tattoo(actor, "LewdMarks-glow", fmt::format("{:03}", index), true);
 	}
 
@@ -381,34 +404,36 @@ namespace DCURSES {
 
 		//Healslut
 		auto mark = GetLewdMark();
-		auto effect = RE::TESForm::LookupByID(magicEvent->magicEffect)->As<RE::EffectSetting>();
-		auto caster = magicEvent->caster->As<RE::Actor>();
-		auto target = magicEvent->target->As<RE::Actor>();
+		if (mark == MARK::TAT_HEALSLUT && magicEvent->caster && magicEvent->target) {
+			auto effect = RE::TESForm::LookupByID(magicEvent->magicEffect)->As<RE::EffectSetting>();
+			auto caster = magicEvent->caster->As<RE::Actor>();
+			auto target = magicEvent->target->As<RE::Actor>();
 
-		if (mark == MARK::TAT_HEALSLUT && effect && caster && target && caster == player && target->IsPlayerTeammate() && effect->data.associatedSkill == RE::ActorValue::kRestoration && !effect->IsDetrimental() && (effect->data.primaryAV == RE::ActorValue::kHealth || effect->data.secondaryAV == RE::ActorValue::kHealth)) {
-			Util::ExecuteWithDelay(100ms, [player, effect, target] {
-				auto scriptManager = ScriptingManager();
-				auto spellEvent = healslutSpellBuffer;
-				auto actor = spellEvent.object->As<RE::Actor>();
-				auto spell = RE::TESForm::LookupByID(spellEvent.spell)->As<RE::SpellItem>();
-				if (actor && spell && actor == player) {
-					for (auto spellEffect : spell->effects) {
-						if (spellEffect && spellEffect->baseEffect == effect) {
-							float mag = spellEffect->GetMagnitude() * (effect->data.castingType == RE::MagicSystem::CastingType::kConcentration ? 0.5f : 1.0f);
-							ModifyEffectMagnitude(HEALSLUT_EFFECT, -spellEffect->GetMagnitude());
-							log::trace("Restoration cast on follower: {} healed", mag);
-							auto arousal = scriptManager.GetArousal(target);
-							if (arousal >= 99 && SexActorFilter(target)) {
-								scriptManager.StartSex(target, false);
+			if (effect && caster && target && caster == player && target->IsPlayerTeammate() && effect->data.associatedSkill == RE::ActorValue::kRestoration && !effect->IsDetrimental() && (effect->data.primaryAV == RE::ActorValue::kHealth || effect->data.secondaryAV == RE::ActorValue::kHealth)) {
+				Util::ExecuteWithDelay(100ms, [player, effect, target] {
+					auto scriptManager = ScriptingManager();
+					auto spellEvent = healslutSpellBuffer;
+					auto actor = spellEvent.object->As<RE::Actor>();
+					auto spell = RE::TESForm::LookupByID(spellEvent.spell)->As<RE::SpellItem>();
+					if (actor && spell && actor == player) {
+						for (auto spellEffect : spell->effects) {
+							if (spellEffect && spellEffect->baseEffect == effect) {
+								float mag = spellEffect->GetMagnitude() * (effect->data.castingType == RE::MagicSystem::CastingType::kConcentration ? 0.5f : 1.0f);
+								ModifyEffectMagnitude(HEALSLUT_EFFECT, -spellEffect->GetMagnitude());
+								log::trace("Restoration cast on follower: {} healed", mag);
+								auto arousal = scriptManager.GetArousal(target);
+								if (arousal >= 99 && SexActorFilter(target)) {
+									scriptManager.StartSex(target, false);
+								}
+								else {
+									scriptManager.ModifyArousal(target, static_cast<int>(mag / 10));
+								}
+								break;
 							}
-							else {
-								scriptManager.ModifyArousal(target, static_cast<int>(mag / 10));
-							}
-							break;
 						}
 					}
-				}
-			});
+				});
+			}
 		}
 	}
 

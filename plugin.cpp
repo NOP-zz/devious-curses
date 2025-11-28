@@ -110,20 +110,11 @@ namespace DCURSES {
         return GetOppDeviceMask();
     }
 
+    static int TEST = 0;
+
     void P_Test(RE::StaticFunctionTag*) {
-        log::trace("DCURSES test");
-        auto player = RE::PlayerCharacter::GetSingleton();
-        //OppDoMadnessEffect();
-        //AddLewdMark(MARK::TAT_HEALSLUT);
-        //SetEffectMagnitude(HEALSLUT_EFFECT, 100.0f);
-        //OppMadnessPlugEvent("ooga");
-        //if (GetWornDeviceCount(player) > 0) {
-        //    RemoveAllRestraints(player, true);
-        //}
-        //else {
-        //auto scriptManager = ScriptingManager();
-        //DoStandardEvent(player, false, "test", "", 20);
-        //}
+        log::trace("Sending mod events...");
+        DoWickedEvent("");
     }
 
     bool PapyrusFunctions(RE::BSScript::IVirtualMachine* ivm) {

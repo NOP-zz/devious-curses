@@ -133,6 +133,13 @@ namespace DCURSES {
 	public:
 		std::vector<ModEventInternal::CallbackFunctor*> toDispatch = std::vector<ModEventInternal::CallbackFunctor*>();
 
+		static void SendModEvent(std::string eventName, std::string strArg = "", float numArg = 0) {
+			auto source = SKSE::GetModCallbackEventSource();
+			auto sender = StaticDataHolder::GetSingleton()->LookupForm(DCURSES_MCM, "Devious Curses.esp");
+			SKSE::ModCallbackEvent* event = new SKSE::ModCallbackEvent{ eventName, strArg, numArg, sender };
+			source->SendEvent(event);
+		}
+
 		CustomModEvent(std::string eventName) {
 			using namespace ModEventInternal;
 
@@ -196,11 +203,4 @@ namespace DCURSES {
 			return *this;
 		}
 	};
-
-	void test() {
-		auto event = CustomModEvent("test_event");
-		event.PushBool(true);
-		event.PushInt(12);
-		event.Send();
-	}
 }

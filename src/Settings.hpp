@@ -29,6 +29,8 @@ namespace DCURSES {
 		//Flag flag_SSEnabled					//eventSimpleSlaveryWeight > 0 && ESP:SimpleSlavery.esp
 		//Flag flag_SGO							//ESP:Sgo4IF.esp
 		//Flag flag_LockOppDevice_Menu			//!oppDeviceAntiCheat || !WearingOppressiveDevice() 
+		//Flag flag_WickedDevices				//ESP:Devious Wicked Devices.esp
+		//Flag flag_AND							//ESP:Advanced Nudity Detection.esp
 		//Page Main								
 		//Header Chances
 		float baseChance = 6.5;					//Base Event Chance//How likely are you to trigger a trap before modifiers.//{1}%//(0,100,0.1)
@@ -117,24 +119,32 @@ namespace DCURSES {
 		bool eventContDevices = true;			//Contraption Devices//Will allow certain devices such as collars, gags, cuffs, and plugs to be equipped when triggering a contraption event.\nWill follow all other rules set for devices.			
 		bool eventContAllDevices = false;		//Use All Devices//Will allow any device other than heavy bondage to be equipped when triggering a contraption event.\nWill follow all other rules set for devices.									
 		int eventContDeviceOverride = 0;		//Device Count Override//When equipping devices for contraption events this number will be used instead of the min / max on the main page.\nSet to 0 to use the default number of devices.//{0}//(0,10,1)
+		//Header Wicked Curse
+		int eventWickedWeight = 15;				//Wicked Curse Weight//Chance to be bound in a device from Devious Wicked Devices.//{0}//(0,500,1)							?:? flag_WickedDevices
 		//Column
 		bool allowFollowerEvents = false;		//Follower Events//Allow followers to be affected by curses. Currently only applies to the Bondage Curse and Tattoo Curse.
 		//Header Tattoo Curse
 		int eventTattooWeight = 15;				//Tattoo Curse Weight//Chance to receive random tattoos.\nRequires Rape Tattoos.//{0}//(0,500,1)							?:? flag_RapeTats
 		int eventTattooMin = 1;					//Tattoo Curse Min//Minimum number of tattoos that can be put on.//{0}//(1,10,1)											?:? flag_RapeTats
 		int eventTattooMax = 3;					//Tattoo Curse Max//Maximum number of tattoos that can be put on.//{0}//(1,10,1)											?:? flag_RapeTats
-		int eventTattooCap = 8;					//Tattoo Curse Cap//If you have this many tattoos already you won't get any more.//{0}//(0,10,1)							?:? flag_RapeTats
+		int eventTattooCap = 8;					//Tattoo Curse Cap//If you have this many tattoos already you won't get any more.//{0}//(0,20,1)							?:? flag_RapeTats
 		//Header Mark Curse
 		int eventLewdMarkWeight = 10;			//Lewd Mark Weight//Chance to receive a lewd mark.//{0}//(0,500,1) ?:? flag_LewdMarks
 		//Header Slavery Curse
 		int eventSimpleSlaveryWeight = 0;		//Simple Slavery Weight//Chance to trigger a Simple Slavery auction.//{0}//(0,500,1) ?:? flag_SimpleSlavery					**RELOAD
 		int eventSSMinRestraints = 6;			//Minimum Restraints//Minimum restraints that need to be equipped for a Simple Slavery auction to start.//{0}//(0,10,1)		?:? flag_SSEnabled
-		//Header Abadon Curse
-		int eventAbadonWeight = 5;				//Abadon Curse Weight//Chance to be equipped with the Abadon Plug.//{0}//(0,500,1)											?:? flag_UnforgivingDevices
 		//Page Unforgiving Devices
 		bool onlyUseUnforgivingDevices = true;	//Only Unforgiving Devices//Only register devices to the mod that are converted to work with UD.\n(Will cause lag on menu close)													?:? flag_UnforgivingDevices  **RECALC
-		bool udUseAbadon = false;				//Allow Abadon Devices//Allow Abadon devices to be enabled in the normal random device search. Will not equip the Abadon Plug even if enabled.\n(Will cause lag on menu close)														?:? flag_UnforgivingDevices  **RECALC
+		bool udUseAbadon = false;				//Allow Abadon Devices//Allow Abadon devices to be enabled in the normal random device search. Will not equip the Abadon Plug even if enabled.\n(Will cause lag on menu close)		?:? flag_UnforgivingDevices  **RECALC
 		bool udUseMisc = true;					//Allow Misc Unforgiving Devices//Allow devices like chargable plugs, punisher items, etc. to be enabled in the normal random device search\n(Will cause lag on menu close)			?:? flag_UnforgivingDevices  **RECALC
+		//Page Advanced Nudity Detection
+		//Header Nudity Sex
+		bool ANDSexTopless = true;				//Topless Trigger//Sex nudity modifier will apply when topless.																?:? flag_AND
+		bool ANDSexBottomless = true;			//Bottomless Trigger//Sex nudity modifier will apply when bottomless.														?:? flag_AND
+		//Column
+		//Header Nudity Consequence
+		bool ANDConsTopless = true;				//Topless Trigger//Nudity consequence will trigger when topless.															?:? flag_AND
+		bool ANDConsBottomless = true;			//Bottomless Trigger//Nudity consequence will trigger when bottomless.														?:? flag_AND
 		//Page Lewd Marks
 		//Header Allure
 		int LMAllureWeight = 10;				//Allure Mark Weight//This mark will make everyone around you horny all the time.//{0}//(0,500,1)							?:? flag_LewdMarks
@@ -170,22 +180,23 @@ namespace DCURSES {
 		int LMHealslutHealing = 2000;			//Healing Amount//How much you have to heal your followers to remove the mark. This works if your followers are at full health.//{0}//(1000,100000,1000)		?:? flag_LewdMarks
 		color LMHealslutColor = 0xffbb45;		//Color//Color for mark.																									?:? flag_LewdMarks
 		//Page Oppressive Devices
+		bool oppOneAtATime = true;				//Only One//With this enabled you will not be equipped with an Oppressive Device if you are already wearing one\nThis restriction is ignored for Quest Interactions.
 		//Header Summoner Collar
-		int oppSummonerCollarWeight = 20;		//Weight//How likely that you will be equipped with a collar that makes you have sex with your summons.\nRequires creatures to be enabled for sex.//{0}//(1,500,1)
+		int oppSummonerCollarWeight = 20;		//Weight//How likely that you will be equipped with a collar that makes you have sex with your summons.\nRequires creatures to be enabled for sex.//{0}//(0,500,1)
 		int oppSummonerSexCount = 15;			//Sex Count//How may time you need to have sex with your summons before the collar will unlock.//{0}//(1,100,1)
 		bool oppSCollarDrainsMagicka = true;	//Magicka Drain//The collar will drain all of your magicka when summoning.
 		bool oppSCollarAutoRemove = true;		//Auto Remove//Remove the collar as soon as the requirements are met instead of just giving the key for it.
 		int oppSMinSummonArousal = 90;			//Summon Arousal//Will change the arousal of all of your summons to be at least this value.//{0}//(0,100,1)
 		float oppSummonChance = 1.5;			//Summon Chance//The chance per second that the collar summons an atronach to have sex with you.\nThis won't happen if you already have a different summon.//{1}%//(0,100,0.1)
 		//Header Dwarven Cuirass
-		int oppDwarvenCuirassWeight = 15;		//Weight//How likely that you will be equipped with a devious dwarven cuirass that will control your actions.//{0}//(1,500,1)
+		int oppDwarvenCuirassWeight = 15;		//Weight//How likely that you will be equipped with a devious dwarven cuirass that will control your actions.//{0}//(0,500,1)
 		int oppDwarvenValueNeeded = 200;		//Dwarven Parts Value//How much value of dwarven parts like gears and gyros the dwarven cuirass needs to take before it is removed.\nDoes not count ingots, centurion dynamos, or pots, pans, cups, etc.//{0}//(30,2000,10)
 		bool oppDwarvenHeavyRestraint = false;	//Heavy Restraint//The cuirass will count as a heavy bondage like a straitjacket. This will make removing the device much harder.\nWill only affect the cuirass before it is equipped.
 		bool oppDwarvenRequireLoc = true;		//Require Location//The cuirass can only be found in dwarven locations.
 		int oppDwarvenArousal = 25;				//Masturbation Arousal//If your arousal is above this there is a chance that the dwarven cuirass will force you to masturbate!\nSet to 100 to disable//{0}//(10,100,1)
 		//Column
 		//Header Living Latex
-		int oppLivingLatexWeight = 20;			//Weight//How likely that you will be encased in latex that will bind you with ebonite.//{0}//(1,500,1)
+		int oppLivingLatexWeight = 20;			//Weight//How likely that you will be encased in latex that will bind you with ebonite.//{0}//(0,500,1)
 		int oppLivingLatexStartTime = 15;		//Start Time//How long in minutes do you have to wear the latex before it isn't dormant.\n//{0}//(1,60,1)
 		float oppLivingLatexGem = 4.0f;			//Volatile Gem Chance//The chance to find a gem on dead mages and warlocks that will shock the latex when hit with a weapon.//{1}//(0,100,0.1)
 		bool oppLivingLatexHeavy = false;		//Heavy Bondage//The latex will bind you with heavy bondage devices.\nWarning: this will happen in combat.
@@ -193,10 +204,11 @@ namespace DCURSES {
 		bool oppLivingLatexRequireRem = true;	//Clinging//The latex will cling to your other devices, requiring you to remove all of them before it will dissapear.
 		bool oppLivingLatexOpen = false;		//Use Open Catsuit//Will replace the default catsuit with the open variant. Will only work if you don't have the device yet.
 		//Header Madness Plug
-		int oppMadnessPlugWeight = 25;			//Weight//How likely you will be equipped with a plug that will try to drive you mad.//{0}//(1,500,1)
+		int oppMadnessPlugWeight = 25;			//Weight//How likely you will be equipped with a plug that will try to drive you mad.//{0}//(0,500,1)
 		int oppMadnessPlugIterations = 5;		//Number of Events//How many events the plug will do before it is removed.//{0}//(1,20,1)
 		int oppMadnessplugOrgasms = 6;			//Orgasms Per Event//How many times the plug must make you orgasm per event.\nThis only counts orgasms caused by devious devices.//{0}//(1,100,1)
-		bool oppMadnessChaos = false;			//True Madness//Will remove the restrictions on what events can happen. These events may result in PERMANENT changes to your character.
+		bool oppMadnessAllOrgasms = false;		//Include Sex//This will increase the counter for orgasms after having sex instead of only using device orgasms.
+		bool oppMadnessChaos = false;			//True Madness//Will remove the restrictions on what events can happen. These events may result in PERMANENT changes to your character (Lowering your health, magicka, or stamina).
 		//Page Locations
 		bool useLocationModifiers = true;		//Use Location Modifiers//Weather or not to apply the location modifiers listed below to event chances.
 		//Empty
@@ -300,7 +312,7 @@ namespace DCURSES {
 		bool sexEnabled = false;				//Enabled//Toggles sex on or off.\nSex will only occur from friendly characters.																						**RELOAD
 		bool sexAggressiveAnims = false;		//Prefer Aggressive Animations//Prefer using aggressive animations for all sex started by this mod.																		?:? flag_enable_sex
 		bool sexRandomEnabled = false;			//Random Sex//Characters that you encounter on your journey might have sex with you!																					**RELOAD
-		int sexCooldown = 30;					//Cooldown//How long after a scene ends before another can trigger.//{0}//(5,300,1)																						?:? flag_enable_random_sex
+		int sexCooldown = 30;					//Cooldown//How long in seconds after a scene ends before another can trigger.//{0}//(5,300,1)																			?:? flag_enable_random_sex
 		int sexChance = 50;						//Chance//How likely a potential actor will have sex with the player.//{0}%//(0,100,1)																					?:? flag_enable_random_sex
 		int sexChanceCreature = 30;				//Creature Chance//How likely a potential creature actor will have sex with the player.//{0}%//(0,100,1)																?:? flag_enable_random_sex
 		//Header Arousal
@@ -320,7 +332,7 @@ namespace DCURSES {
 		int sexArousalSummonModifier = 0;		//Summon Modifier//Modifier for arousal if the aggressor is your summon.//-{0}//(0,50,1)																				?:? flag_enable_random_sex
 		//Header Search
 		float sexSearchRadius = 2000;			//Search Radius//How far away can actors be from the player.//{0}//(100,10000,100)																						?:? flag_enable_random_sex
-		int sexSearchInterval = 5;				//Search Interval//How often the actor search happens.//{0}//(5,120,1)																									?:? flag_enable_random_sex
+		int sexSearchInterval = 5;				//Search Interval//How often the actor search happens in seconds.//{0}//(5,120,1)																						?:? flag_enable_random_sex
 		//Column
 		//Header Allowed Actors
 		bool sexAllowMale = true;				//Allow Male Actors//Male actors will be allowed.																														?:? flag_enable_sex
@@ -459,6 +471,8 @@ namespace DCURSES {
 		SetMCMInt("eventContraptionWeight",settings.eventContraptionWeight);
 		settings.eventContDeviceOverride = 0;
 		SetMCMInt("eventContDeviceOverride",settings.eventContDeviceOverride);
+		settings.eventWickedWeight = 15;
+		SetMCMInt("eventWickedWeight",settings.eventWickedWeight);
 		settings.eventTattooWeight = 15;
 		SetMCMInt("eventTattooWeight",settings.eventTattooWeight);
 		settings.eventTattooMin = 1;
@@ -473,8 +487,6 @@ namespace DCURSES {
 		SetMCMInt("eventSimpleSlaveryWeight",settings.eventSimpleSlaveryWeight);
 		settings.eventSSMinRestraints = 6;
 		SetMCMInt("eventSSMinRestraints",settings.eventSSMinRestraints);
-		settings.eventAbadonWeight = 5;
-		SetMCMInt("eventAbadonWeight",settings.eventAbadonWeight);
 		settings.LMAllureWeight = 10;
 		SetMCMInt("LMAllureWeight",settings.LMAllureWeight);
 		settings.LMAllureMod = 5;
@@ -717,10 +729,20 @@ namespace DCURSES {
 		SetMCMBool("udUseAbadon",settings.udUseAbadon);
 		settings.udUseMisc = true;
 		SetMCMBool("udUseMisc",settings.udUseMisc);
+		settings.ANDSexTopless = true;
+		SetMCMBool("ANDSexTopless",settings.ANDSexTopless);
+		settings.ANDSexBottomless = true;
+		SetMCMBool("ANDSexBottomless",settings.ANDSexBottomless);
+		settings.ANDConsTopless = true;
+		SetMCMBool("ANDConsTopless",settings.ANDConsTopless);
+		settings.ANDConsBottomless = true;
+		SetMCMBool("ANDConsBottomless",settings.ANDConsBottomless);
 		settings.LMBrandingPunish = true;
 		SetMCMBool("LMBrandingPunish",settings.LMBrandingPunish);
 		settings.LMNudityChestOnly = false;
 		SetMCMBool("LMNudityChestOnly",settings.LMNudityChestOnly);
+		settings.oppOneAtATime = true;
+		SetMCMBool("oppOneAtATime",settings.oppOneAtATime);
 		settings.oppSCollarDrainsMagicka = true;
 		SetMCMBool("oppSCollarDrainsMagicka",settings.oppSCollarDrainsMagicka);
 		settings.oppSCollarAutoRemove = true;
@@ -735,6 +757,8 @@ namespace DCURSES {
 		SetMCMBool("oppLivingLatexRequireRem",settings.oppLivingLatexRequireRem);
 		settings.oppLivingLatexOpen = false;
 		SetMCMBool("oppLivingLatexOpen",settings.oppLivingLatexOpen);
+		settings.oppMadnessAllOrgasms = false;
+		SetMCMBool("oppMadnessAllOrgasms",settings.oppMadnessAllOrgasms);
 		settings.oppMadnessChaos = false;
 		SetMCMBool("oppMadnessChaos",settings.oppMadnessChaos);
 		settings.useLocationModifiers = true;
@@ -894,6 +918,7 @@ namespace DCURSES {
 			{"eventOppressiveWeight", settings.eventOppressiveWeight},
 			{"eventContraptionWeight", settings.eventContraptionWeight},
 			{"eventContDeviceOverride", settings.eventContDeviceOverride},
+			{"eventWickedWeight", settings.eventWickedWeight},
 			{"eventTattooWeight", settings.eventTattooWeight},
 			{"eventTattooMin", settings.eventTattooMin},
 			{"eventTattooMax", settings.eventTattooMax},
@@ -901,7 +926,6 @@ namespace DCURSES {
 			{"eventLewdMarkWeight", settings.eventLewdMarkWeight},
 			{"eventSimpleSlaveryWeight", settings.eventSimpleSlaveryWeight},
 			{"eventSSMinRestraints", settings.eventSSMinRestraints},
-			{"eventAbadonWeight", settings.eventAbadonWeight},
 			{"LMAllureWeight", settings.LMAllureWeight},
 			{"LMAllureMod", settings.LMAllureMod},
 			{"LMAllureSex", settings.LMAllureSex},
@@ -1017,8 +1041,13 @@ namespace DCURSES {
 			{"onlyUseUnforgivingDevices", settings.onlyUseUnforgivingDevices},
 			{"udUseAbadon", settings.udUseAbadon},
 			{"udUseMisc", settings.udUseMisc},
+			{"ANDSexTopless", settings.ANDSexTopless},
+			{"ANDSexBottomless", settings.ANDSexBottomless},
+			{"ANDConsTopless", settings.ANDConsTopless},
+			{"ANDConsBottomless", settings.ANDConsBottomless},
 			{"LMBrandingPunish", settings.LMBrandingPunish},
 			{"LMNudityChestOnly", settings.LMNudityChestOnly},
+			{"oppOneAtATime", settings.oppOneAtATime},
 			{"oppSCollarDrainsMagicka", settings.oppSCollarDrainsMagicka},
 			{"oppSCollarAutoRemove", settings.oppSCollarAutoRemove},
 			{"oppDwarvenHeavyRestraint", settings.oppDwarvenHeavyRestraint},
@@ -1026,6 +1055,7 @@ namespace DCURSES {
 			{"oppLivingLatexHeavy", settings.oppLivingLatexHeavy},
 			{"oppLivingLatexRequireRem", settings.oppLivingLatexRequireRem},
 			{"oppLivingLatexOpen", settings.oppLivingLatexOpen},
+			{"oppMadnessAllOrgasms", settings.oppMadnessAllOrgasms},
 			{"oppMadnessChaos", settings.oppMadnessChaos},
 			{"useLocationModifiers", settings.useLocationModifiers},
 			{"keyForgiveness", settings.keyForgiveness},
@@ -1210,6 +1240,8 @@ namespace DCURSES {
 		SetMCMInt("eventContraptionWeight",settings.eventContraptionWeight);
 		settings.eventContDeviceOverride = static_cast<int>(j.value("eventContDeviceOverride", 0));
 		SetMCMInt("eventContDeviceOverride",settings.eventContDeviceOverride);
+		settings.eventWickedWeight = static_cast<int>(j.value("eventWickedWeight", 15));
+		SetMCMInt("eventWickedWeight",settings.eventWickedWeight);
 		settings.eventTattooWeight = static_cast<int>(j.value("eventTattooWeight", 15));
 		SetMCMInt("eventTattooWeight",settings.eventTattooWeight);
 		settings.eventTattooMin = static_cast<int>(j.value("eventTattooMin", 1));
@@ -1224,8 +1256,6 @@ namespace DCURSES {
 		SetMCMInt("eventSimpleSlaveryWeight",settings.eventSimpleSlaveryWeight);
 		settings.eventSSMinRestraints = static_cast<int>(j.value("eventSSMinRestraints", 6));
 		SetMCMInt("eventSSMinRestraints",settings.eventSSMinRestraints);
-		settings.eventAbadonWeight = static_cast<int>(j.value("eventAbadonWeight", 5));
-		SetMCMInt("eventAbadonWeight",settings.eventAbadonWeight);
 		settings.LMAllureWeight = static_cast<int>(j.value("LMAllureWeight", 10));
 		SetMCMInt("LMAllureWeight",settings.LMAllureWeight);
 		settings.LMAllureMod = static_cast<int>(j.value("LMAllureMod", 5));
@@ -1468,10 +1498,20 @@ namespace DCURSES {
 		SetMCMBool("udUseAbadon",settings.udUseAbadon);
 		settings.udUseMisc = static_cast<bool>(j.value("udUseMisc", true));
 		SetMCMBool("udUseMisc",settings.udUseMisc);
+		settings.ANDSexTopless = static_cast<bool>(j.value("ANDSexTopless", true));
+		SetMCMBool("ANDSexTopless",settings.ANDSexTopless);
+		settings.ANDSexBottomless = static_cast<bool>(j.value("ANDSexBottomless", true));
+		SetMCMBool("ANDSexBottomless",settings.ANDSexBottomless);
+		settings.ANDConsTopless = static_cast<bool>(j.value("ANDConsTopless", true));
+		SetMCMBool("ANDConsTopless",settings.ANDConsTopless);
+		settings.ANDConsBottomless = static_cast<bool>(j.value("ANDConsBottomless", true));
+		SetMCMBool("ANDConsBottomless",settings.ANDConsBottomless);
 		settings.LMBrandingPunish = static_cast<bool>(j.value("LMBrandingPunish", true));
 		SetMCMBool("LMBrandingPunish",settings.LMBrandingPunish);
 		settings.LMNudityChestOnly = static_cast<bool>(j.value("LMNudityChestOnly", false));
 		SetMCMBool("LMNudityChestOnly",settings.LMNudityChestOnly);
+		settings.oppOneAtATime = static_cast<bool>(j.value("oppOneAtATime", true));
+		SetMCMBool("oppOneAtATime",settings.oppOneAtATime);
 		settings.oppSCollarDrainsMagicka = static_cast<bool>(j.value("oppSCollarDrainsMagicka", true));
 		SetMCMBool("oppSCollarDrainsMagicka",settings.oppSCollarDrainsMagicka);
 		settings.oppSCollarAutoRemove = static_cast<bool>(j.value("oppSCollarAutoRemove", true));
@@ -1486,6 +1526,8 @@ namespace DCURSES {
 		SetMCMBool("oppLivingLatexRequireRem",settings.oppLivingLatexRequireRem);
 		settings.oppLivingLatexOpen = static_cast<bool>(j.value("oppLivingLatexOpen", false));
 		SetMCMBool("oppLivingLatexOpen",settings.oppLivingLatexOpen);
+		settings.oppMadnessAllOrgasms = static_cast<bool>(j.value("oppMadnessAllOrgasms", false));
+		SetMCMBool("oppMadnessAllOrgasms",settings.oppMadnessAllOrgasms);
 		settings.oppMadnessChaos = static_cast<bool>(j.value("oppMadnessChaos", false));
 		SetMCMBool("oppMadnessChaos",settings.oppMadnessChaos);
 		settings.useLocationModifiers = static_cast<bool>(j.value("useLocationModifiers", true));
@@ -1647,6 +1689,7 @@ namespace DCURSES {
 			settings.eventOppressiveWeight = GetMCMSetting("eventOppressiveWeight")->GetSInt();
 			settings.eventContraptionWeight = GetMCMSetting("eventContraptionWeight")->GetSInt();
 			settings.eventContDeviceOverride = GetMCMSetting("eventContDeviceOverride")->GetSInt();
+			settings.eventWickedWeight = GetMCMSetting("eventWickedWeight")->GetSInt();
 			settings.eventTattooWeight = GetMCMSetting("eventTattooWeight")->GetSInt();
 			settings.eventTattooMin = GetMCMSetting("eventTattooMin")->GetSInt();
 			settings.eventTattooMax = GetMCMSetting("eventTattooMax")->GetSInt();
@@ -1654,7 +1697,6 @@ namespace DCURSES {
 			settings.eventLewdMarkWeight = GetMCMSetting("eventLewdMarkWeight")->GetSInt();
 			settings.eventSimpleSlaveryWeight = GetMCMSetting("eventSimpleSlaveryWeight")->GetSInt();
 			settings.eventSSMinRestraints = GetMCMSetting("eventSSMinRestraints")->GetSInt();
-			settings.eventAbadonWeight = GetMCMSetting("eventAbadonWeight")->GetSInt();
 			settings.LMAllureWeight = GetMCMSetting("LMAllureWeight")->GetSInt();
 			settings.LMAllureMod = GetMCMSetting("LMAllureMod")->GetSInt();
 			settings.LMAllureSex = GetMCMSetting("LMAllureSex")->GetSInt();
@@ -1776,8 +1818,13 @@ namespace DCURSES {
 			settings.onlyUseUnforgivingDevices = GetMCMSetting("onlyUseUnforgivingDevices")->GetBool();
 			settings.udUseAbadon = GetMCMSetting("udUseAbadon")->GetBool();
 			settings.udUseMisc = GetMCMSetting("udUseMisc")->GetBool();
+			settings.ANDSexTopless = GetMCMSetting("ANDSexTopless")->GetBool();
+			settings.ANDSexBottomless = GetMCMSetting("ANDSexBottomless")->GetBool();
+			settings.ANDConsTopless = GetMCMSetting("ANDConsTopless")->GetBool();
+			settings.ANDConsBottomless = GetMCMSetting("ANDConsBottomless")->GetBool();
 			settings.LMBrandingPunish = GetMCMSetting("LMBrandingPunish")->GetBool();
 			settings.LMNudityChestOnly = GetMCMSetting("LMNudityChestOnly")->GetBool();
+			settings.oppOneAtATime = GetMCMSetting("oppOneAtATime")->GetBool();
 			settings.oppSCollarDrainsMagicka = GetMCMSetting("oppSCollarDrainsMagicka")->GetBool();
 			settings.oppSCollarAutoRemove = GetMCMSetting("oppSCollarAutoRemove")->GetBool();
 			settings.oppDwarvenHeavyRestraint = GetMCMSetting("oppDwarvenHeavyRestraint")->GetBool();
@@ -1785,6 +1832,7 @@ namespace DCURSES {
 			settings.oppLivingLatexHeavy = GetMCMSetting("oppLivingLatexHeavy")->GetBool();
 			settings.oppLivingLatexRequireRem = GetMCMSetting("oppLivingLatexRequireRem")->GetBool();
 			settings.oppLivingLatexOpen = GetMCMSetting("oppLivingLatexOpen")->GetBool();
+			settings.oppMadnessAllOrgasms = GetMCMSetting("oppMadnessAllOrgasms")->GetBool();
 			settings.oppMadnessChaos = GetMCMSetting("oppMadnessChaos")->GetBool();
 			settings.useLocationModifiers = GetMCMSetting("useLocationModifiers")->GetBool();
 			settings.keyForgiveness = GetMCMSetting("keyForgiveness")->GetBool();

@@ -13,6 +13,7 @@
 #include "../include/form_ids.h"
 
 namespace DCURSES {
+    static bool DCURSES_QLIE_LOADED = false;
 
     void GenerateRandomDevices(RE::TESObjectREFR* activatedObject) {
         if (!(activatedObject && activatedObject->HasContainer())) {
@@ -200,41 +201,46 @@ namespace DCURSES {
 
     }
 
-    bool DoTattooEvent(std::string containerName) {
+    bool DoTattooEvent(std::string containerName, int num_tattoos = -1) {
         auto player = RE::PlayerCharacter::GetSingleton();
 
         if (GetTattooCount(player) > settings.eventTattooCap) {
             return false;
         }
 
-        int num_tattoos = Util::randomInt(settings.eventTattooMin, settings.eventTattooMax);
+        if (num_tattoos < 1) {
+            num_tattoos = Util::randomInt(settings.eventTattooMin, settings.eventTattooMax);
+        }
         ScriptingManager().RTDoTattooEvent(player, num_tattoos);
 
-        if (num_tattoos == 1) {
-            PlayerMessage(Translator(Translation::EventTattooOne, containerName));
-        }
-        else if (num_tattoos <= 3) {
-            PlayerMessage(Translator(Translation::EventTattooTwoThree, containerName));
-        }
-        else {
-            PlayerMessage(Translator(Translation::EventTattooMany, containerName));
+        if (!containerName.empty()) {
+            if (num_tattoos == 1) {
+                PlayerMessage(Translator(Translation::EventTattooOne, containerName));
+            }
+            else if (num_tattoos <= 3) {
+                PlayerMessage(Translator(Translation::EventTattooTwoThree, containerName));
+            }
+            else {
+                PlayerMessage(Translator(Translation::EventTattooMany, containerName));
+            }
         }
 
         AIEventTattoos(num_tattoos);
         return true;
     }
 
-    bool DoContraptionEvent(std::string containerName) {
-        auto player = RE::PlayerCharacter::GetSingleton();
+    bool DoContraptionEvent(std::string containerName, RE::Actor* target = nullptr, std::string theme = "") {
+        //auto player = RE::PlayerCharacter::GetSingleton();
+        target = target == nullptr ? RE::PlayerCharacter::GetSingleton() : target;
 
         if (settings.eventContAllDevices) {
-            DoStandardEvent(player, false, "", "", settings.eventContDeviceOverride, { "zad_DeviousHeavyBondage" });
+            DoStandardEvent(target, false, "", theme, settings.eventContDeviceOverride, { "zad_DeviousHeavyBondage" });
         }
         else if (settings.eventContDevices) {
-            DoStandardEvent(player, false, "", "", settings.eventContDeviceOverride, { "zad_DeviousHeavyBondage", "zad_DeviousBelt", "zad_DeviousBra", "zad_DeviousHarness", "zad_DeviousBlindfold", "zad_DeviousHood", "zad_DeviousBoots", "zad_DeviousGloves", "zad_DeviousSuit", "zad_DeviousCorset"});
+            DoStandardEvent(target, false, "", theme, settings.eventContDeviceOverride, { "zad_DeviousHeavyBondage", "zad_DeviousBelt", "zad_DeviousBra", "zad_DeviousHarness", "zad_DeviousBlindfold", "zad_DeviousHood", "zad_DeviousBoots", "zad_DeviousGloves", "zad_DeviousSuit", "zad_DeviousCorset"});
         }
 
-        auto contraption = CreateAndLockContraption(player);
+        auto contraption = CreateAndLockContraption(target);
         AIEventContraption(contraption->GetName());
 
         //PlayerMessage(fmt::format("As you touch the {} you feel yourself get dizzy as you are strung up into some sort of contraption!", containerName));
@@ -255,38 +261,31 @@ namespace DCURSES {
         std::vector<std::pair<std::function<MARK()>, double>> marks;
 
         if (GetTattooCount(player) < settings.LMBrandingTotal / 2) marks.push_back({ [player, containerName] {
-            int tattoo_count = GetTattooCount(player);
-            SetEffectMagnitude(BRANDING_EFFECT, static_cast<float>(tattoo_count));
             if (!containerName.empty()) { PlayerMessage(Translator(Translation::EventMarkBranding)); }
             return MARK::TAT_BRANDING;
-        } , settings.LMBrandingTotal });
+        } , settings.LMBrandingWeight });
 
         marks.push_back({ [player, containerName] {
-            SetEffectMagnitude(ALLURE_EFFECT, static_cast<float>(settings.LMAllureSex * Util::randomDouble(0.8, 1.2)));
             if (!containerName.empty()) { PlayerMessage(Translator(Translation::EventMarkAllure)); }
             return MARK::TAT_ALLURE;
         } , settings.LMAllureWeight });
 
         marks.push_back({ [player, containerName] {
-            SetEffectMagnitude(HEAT_EFFECT, static_cast<float>(settings.LMHeatContainerCount * Util::randomDouble(0.8, 1.2)));
             if (!containerName.empty()) { PlayerMessage(Translator(Translation::EventMarkHeat)); }
             return MARK::TAT_HEAT;
         } , settings.LMHeatWeight });
 
         marks.push_back({ [player, containerName] {
-            SetEffectMagnitude(BONDAGE_EFFECT, static_cast<float>(settings.LMBondageDeviceCount * Util::randomDouble(0.8, 1.2)));
             if (!containerName.empty()) { PlayerMessage(Translator(Translation::EventMarkBondage)); }
             return MARK::TAT_BONDAGE;
         } , settings.LMBondageWeight });
 
         marks.push_back({ [player, containerName] {
-            SetEffectMagnitude(NUDITY_EFFECT, static_cast<float>(settings.LMNudityTalkTimes * Util::randomDouble(0.8, 1.2)));
             if (!containerName.empty()) { PlayerMessage(Translator(Translation::EventMarkNudity)); }
             return MARK::TAT_NUDITY;
         } , settings.LMNudityWeight });
 
         marks.push_back({ [player, containerName] {
-           SetEffectMagnitude(HEALSLUT_EFFECT, static_cast<float>(settings.LMHealslutHealing));
            if (!containerName.empty()) { PlayerMessage(Translator(Translation::EventMarkHealslut)); }
            return MARK::TAT_HEALSLUT;
         } , settings.LMHealslutWeight });
@@ -295,10 +294,16 @@ namespace DCURSES {
         auto mark = pair.first();
 
         AddLewdMark(mark);
+        SetDefaultEffectMagnitudeForMark(mark);
         TatsUpdateContext(mark);
         AIEventAddLewdMark();
 
         return true;
+    }
+
+    void DoWickedEvent(std::string containerName) {
+        CustomModEvent::SendModEvent("DwdEquipDeviceWithMcmChances", "", 1);
+        PlayerMessage(Translator(Translation::EventWicked, containerName));
     }
 
     bool DoEvent(bool isBoss, std::string contName) {
@@ -315,12 +320,12 @@ namespace DCURSES {
         }, settings.eventSimpleSlaveryWeight });
 
         events.push_back({ [](bool, std::string contName, RE::Actor* player) {
-             if (DoContraptionEvent(contName)) {
-                 UnequipItems(player);
-                 if (settings.stripPlayerOnEvent) {
-                     UndressActor(player, true);
-                 }
-                 return true;
+            if (DoContraptionEvent(contName)) {
+                UnequipItems(player);
+                if (settings.stripPlayerOnEvent) {
+                    UndressActor(player, true);
+                }
+                return true;
             }
             return false;
         }, settings.eventContraptionWeight });
@@ -331,8 +336,8 @@ namespace DCURSES {
                     UndressActor(player, false);
                 }
                 return true;
-           }
-           return false;
+            }
+            return false;
         }, settings.eventOppressiveWeight });
 
         events.push_back({ [](bool isBoss, std::string contName, RE::Actor* player) {
@@ -346,8 +351,8 @@ namespace DCURSES {
                     }
                 }
                 return true;
-           }
-           return false;
+            }
+            return false;
         }, settings.eventTattooWeight });
 
         events.push_back({ [](bool, std::string contName, RE::Actor* player) {
@@ -356,9 +361,17 @@ namespace DCURSES {
                     UndressActor(player, false);
                 }
                 return true;
-           }
-           return false;
+            }
+            return false;
         }, settings.eventLewdMarkWeight });
+
+        events.push_back({ [](bool, std::string contName, RE::Actor* player) {
+            DoWickedEvent(contName);
+            if (settings.stripPlayerOnEvent) {
+                UndressActor(player, false);
+            }
+            return true;
+        }, settings.eventWickedWeight });
 
         events.push_back({ [](bool isBoss, std::string contName, RE::Actor* player) {
             if (DoStandardEvent(player, isBoss, contName)) {
@@ -370,7 +383,7 @@ namespace DCURSES {
                 return true;
            }
            return false;
-        }, settings.eventLewdMarkWeight });
+        }, settings.eventStandardWeight });
 
         Util::ShuffleVector(events);
 
@@ -574,6 +587,28 @@ namespace DCURSES {
                 }
             }
         });
+    }
+
+    void WaitForEventAction(std::string containerName, ContainerData data, bool waitForInventory = false) {
+        log::trace("waiting for event");
+        if (waitForInventory && RE::UI::GetSingleton()->GameIsPaused()) {
+            waitForInventory = false;
+            log::trace("Inventory is open");
+        }
+
+        if (!waitForInventory && !RE::UI::GetSingleton()->GameIsPaused()) {
+            DoEvent(data.isBoss || data.isDragon, containerName);
+            return;
+        }
+
+        if (!waitForInventory) {
+            ScriptingManager().RunOnMenuClose([data, containerName, waitForInventory]() {WaitForEventAction(containerName, data, waitForInventory); });
+        }
+        else {
+            Util::ExecuteWithDelay(100ms, [containerName, data, waitForInventory] {
+                WaitForEventAction(containerName, data, waitForInventory);
+            });
+        }
     }
 
     void CalculateEventChance(RE::TESObjectREFR* activatedObject) {
@@ -832,7 +867,8 @@ namespace DCURSES {
         logMessage = fmt::format("Event: {} total: {:.2f}% ({:.2f})", logMessage, chance, r);
         log::info("{}", logMessage);
         if (r < chance) {
-            DoEvent(data.isBoss || data.isDragon, activatedObject->GetName());
+            auto objectName = activatedObject->GetName();
+            WaitForEventAction(objectName, data, !(data.isDoor || data.isLocked || DCURSES_QLIE_LOADED));
             counters.SinceLastEvent = 0;
         }
         else {
@@ -844,10 +880,6 @@ namespace DCURSES {
         if (!CheckSimpleSlavery()) {
             settings.eventSimpleSlaveryWeight = 0;
             SetMCMInt("eventSimpleSlaveryWeight", 0);
-        }
-        if (!CheckUD()) {
-            settings.eventAbadonWeight = 0;
-            SetMCMInt("eventAbadonWeight", 0);
         }
         if (!CheckLewdMarksInstalled()) {
             settings.eventLewdMarkWeight = 0;

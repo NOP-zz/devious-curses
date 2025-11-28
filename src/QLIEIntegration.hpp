@@ -32,11 +32,13 @@ namespace DCURSES {
 		if (QuickLoot::API::QuickLootAPI::IsReady()) {
 			QuickLoot::API::QuickLootAPI::RegisterTakeItemHandler((QuickLoot::API::TakeItemHandler)QLIETakeItemCallback);
 			QuickLoot::API::QuickLootAPI::RegisterOpeningLootMenuHandler((QuickLoot::API::OpeningLootMenuHandler)QLIEOpenContainerCallback);
+			DCURSES_QLIE_LOADED = true;
 			return true;
 		}
 		else if (QuickLoot::QuickLootAPI::IsReady()) {
 			QuickLoot::QuickLootAPI::RegisterTakeItemHandler((QuickLoot::TakeItemHandler)QLIETakeItemCallback);
 			QuickLoot::QuickLootAPI::RegisterOpeningLootMenuHandler((QuickLoot::OpeningLootMenuHandler)QLIEOpenContainerCallback);
+			DCURSES_QLIE_LOADED = true;
 			return true;
 		}
 

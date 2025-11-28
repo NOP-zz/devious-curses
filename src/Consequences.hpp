@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Devices.hpp"
-#include "Sex.hpp"
 
 namespace DCURSES {
 
@@ -248,8 +247,24 @@ namespace DCURSES {
 		auto player = RE::PlayerCharacter::GetSingleton();
 		log::trace("Checking consequence dialogue");
 		DecrementCounterForMark(MARK::TAT_NUDITY);
-		auto body = player->GetWornArmor((RE::BIPED_MODEL::BipedObjectSlot::kBody));
-		if (body == nullptr || (body != nullptr && body->HasKeywordString("zad_Lockable"))) {
+		bool isNude = false;
+		if (CheckAND()) {
+			RE::TESFaction* AND_ToplessFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x832, "Advanced Nudity Detection.esp");
+			RE::TESFaction* AND_BottomlessFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x833, "Advanced Nudity Detection.esp");
+
+			if (
+				(settings.ANDConsTopless && player->IsInFaction(AND_ToplessFaction)) ||
+				(settings.ANDConsBottomless && player->IsInFaction(AND_BottomlessFaction))
+				) {
+				isNude = true;
+			}
+		}
+		else {
+			auto body = player->GetWornArmor((RE::BIPED_MODEL::BipedObjectSlot::kBody));
+			isNude = body == nullptr || (body != nullptr && body->HasKeywordString("zad_Lockable"));
+		}
+		
+		if (isNude) {
 			if (Util::randomDouble() <= settings.consTriggerNude) {
 				log::trace("Nude Trigger");
 				if (DoConsequence(actor, consequenceSource::kNude)) {

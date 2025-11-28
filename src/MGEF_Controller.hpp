@@ -12,7 +12,7 @@ namespace DCURSES {
 		// Inherited via ForEachActiveEffectVisitor
 		virtual RE::BSContainer::ForEachResult Accept(RE::ActiveEffect* a_effect) override
 		{
-			if (a_effect->GetBaseObject() == match) {
+			if (a_effect && a_effect->GetBaseObject() == match) {
 				activeEffect = a_effect;
 				return RE::BSContainer::ForEachResult::kStop;
 			}

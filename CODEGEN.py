@@ -46,7 +46,7 @@ def processLine(line, page_lines):
 			page_lines.append('AddEmptyOption()')
 		if command == "//Flag":
 			flag_name, requires = [x.strip() for x in (" ".join(line.split(" ")[1:]).strip()).split("//")]
-			requires = re.sub(r"ESP:([a-zA-Z0-9.-]*)", r'Game.GetModByName("\1") != 255', requires)
+			requires = re.sub(r"ESP:([ a-zA-Z0-9.-]*)", r'Game.GetModByName("\1") != 255', requires)
 			if requires is not None:
 				page_lines.append(f'int {flag_name} = 1')
 				page_lines.append(f'If {requires}')
@@ -184,6 +184,7 @@ Function StartTimer()
 	RegisterForModEvent("HookAnimationStart", "OnSexStart")
 	RegisterForModEvent("HookAnimationEnd", "OnSexEnd")
 	RegisterForModEvent("DeviceActorOrgasmExp", "OnDDOrgasm")
+	RegisterForModEvent("DeviceActorOrgasmEx", "OnDDOrgasm")
 	RegisterForModEvent("dhlp-Suspend", "OnDhlpSuspend")
 	RegisterForModEvent("dhlp-Resume", "OnDhlpResume")
 EndFunction

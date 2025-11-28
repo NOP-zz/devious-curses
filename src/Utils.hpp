@@ -1,4 +1,4 @@
-#pragma once
+ #pragma once
 
 #include <random>
 #include <string>
@@ -78,6 +78,11 @@ namespace DCURSES {
 			std::mt19937 e2(rd());
 			std::discrete_distribution<size_t> d(weights.begin(), weights.end());
 			return vector[d(e2)];
+		}
+
+		template<class T>
+		double VectorGetWeightsSum(std::vector<std::pair<T, double>> vector) {
+			return std::accumulate(vector.begin(), vector.end(), 0.0, [](double acc, std::pair<T, double> x) {return acc + x.second; });
 		}
 
 		int ColorScale(int color, double mult) {

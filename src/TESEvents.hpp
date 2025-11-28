@@ -125,8 +125,10 @@ namespace DCURSES {
     class MGEFEventSink : public RE::BSTEventSink<RE::TESMagicEffectApplyEvent>
     {
         virtual RE::BSEventNotifyControl ProcessEvent(const RE::TESMagicEffectApplyEvent* magicEvent, RE::BSTEventSource<RE::TESMagicEffectApplyEvent>*) override {
-            OppDeviceOnMagicHitEvent(magicEvent);
-            TatsOnMagicHitEvent(magicEvent);
+            if (magicEvent) {
+                OppDeviceOnMagicHitEvent(magicEvent);
+                TatsOnMagicHitEvent(magicEvent);
+            }
             return RE::BSEventNotifyControl::kContinue;
         }
 
@@ -206,6 +208,170 @@ namespace DCURSES {
         }
     };
 
+    class ModEventSink : public RE::BSTEventSink<SKSE::ModCallbackEvent>
+    {
+        virtual RE::BSEventNotifyControl ProcessEvent(const SKSE::ModCallbackEvent* modEvent, RE::BSTEventSource<SKSE::ModCallbackEvent>*) override {
+            std::string name = Util::trim(Util::tolower(std::string(modEvent->eventName)));
+            std::string strArg = Util::trim(Util::tolower(std::string(modEvent->strArg)));
+            int numArg = static_cast<int>(modEvent->numArg);
+            auto player = RE::PlayerCharacter::GetSingleton();
+
+            if (name._Starts_with("dcurses_")) {
+                log::trace("Received Mod Event {}: {}, '{}'", name, numArg, strArg);
+                auto event = Util::trim(name.substr(8));
+                if (event == "doevent") {
+                    auto argParts = Util::split(strArg, "~");
+                    if (argParts.size() > 2) {
+                        log::warn("Received bad theme {}. Should only have one ~", strArg);
+                        return RE::BSEventNotifyControl::kContinue;
+                    }
+
+                    auto arg = Util::trim(argParts[0]);
+                    log::trace("arg: {}", arg);
+                    auto theme = argParts.size() >= 2 ? argParts[1] : "";
+                    log::trace("theme: {}", theme);
+
+                    if (arg == "bondage") {
+                        if (DoStandardEvent(player, false, "", theme, numArg)) {
+                            log::info("Running Bondage Event: theme: {}, count: {}", theme, numArg);
+                        }
+                        else {
+                            log::warn("Unable to run Bondage event: too many devices equipped or too restrictive exclusions.");
+                        }
+                    }
+                    else if (arg == "oppressive") {
+                        if (!DoOppDeviceEvent("")) {
+                            log::warn("Unable to run Oppressive Event");
+                        }
+                    }
+                    else if (arg == "contraption") {
+                        if (!DoContraptionEvent("", player, theme)) {
+                            log::warn("Unable to run Contraption Event");
+                        }
+                    }
+                    else if (arg == "tattoo") {
+                        if (!DoTattooEvent("", numArg)) {
+                            log::warn("Unable to run Tattoo event");
+                        }
+                    }
+                    else if (arg == "mark") {
+                        if (!DoLewdMarkEvent("")) {
+                            log::warn("Unable to run Mark event, player already has mark.");
+                        }
+                    }
+                    else if (arg.empty()) {
+                        if (!DoEvent(false, "")) {
+                            log::warn("Unable to run Event. Player has all weights set to 0.");
+                        }
+                    }
+                    else {
+                        log::warn("Bad ModEvent strArg: {}", strArg);
+                        return RE::BSEventNotifyControl::kContinue;
+                    }
+                }
+                else if (event == "setlewdmark") {
+                    MARK mark = MARK::TAT_NONE;
+                    uint32_t effect = 0;
+                    if (strArg == "heat") {
+                        mark = MARK::TAT_HEAT;
+                        effect = HEAT_EFFECT;
+                    }
+                    else if (strArg == "allure") {
+                        mark = MARK::TAT_ALLURE;
+                        effect = ALLURE_EFFECT;
+                    }
+                    else if (strArg == "bondage") {
+                        mark = MARK::TAT_BONDAGE;
+                        effect = BONDAGE_EFFECT;
+                    }
+                    else if (strArg == "branding") {
+                        mark = MARK::TAT_BRANDING;
+                        effect = BRANDING_EFFECT;
+                    }
+                    else if (strArg == "healslut") {
+                        mark = MARK::TAT_HEALSLUT;
+                        effect = HEALSLUT_EFFECT;
+                    }
+                    else if (strArg == "nudity") {
+                        mark = MARK::TAT_NUDITY;
+                        effect = NUDITY_EFFECT;
+                    }
+                    else if (strArg != "none") {
+                        log::warn("Bad ModEvent strArg: {}", strArg);
+                        return RE::BSEventNotifyControl::kContinue;
+                    }
+
+                    auto oldMark = GetLewdMark();
+                    if (oldMark != mark) {
+                        RemoveLewdMark();
+                        if (mark != MARK::TAT_NONE) {
+                            AddLewdMark(mark);
+                            SetDefaultEffectMagnitudeForMark(mark);
+                        }
+                    }
+
+                    if (numArg > 0) {
+                        log::info("Updating lewd mark to {} ({})", strArg, numArg);
+                        SetEffectMagnitude(effect, numArg);
+                    }
+                    else {
+                        log::info("Updating lewd mark to {}", strArg);
+                    }
+                }
+                else if (event == "equipoppressivedevice") {
+                    if (strArg == "summonercollar") {
+                        if (OppSummonerCollarEvent("")) {
+                            log::info("Equipping player with Summoner Collar");
+                        }
+                        else {
+                            log::warn("Unable to equip player with Summoner Collar");
+                        }
+                    }
+                    else if (strArg == "dwarvencuirass") {
+                        if (OppDwarvenCuirassEvent("", true)) {
+                            log::info("Equipping player with Dwarven Cuirass");
+                        }
+                        else {
+                            log::warn("Unable to equip player with Dwarven Cuirass");
+                        }
+                    }
+                    else if (strArg == "livinglatex") {
+                        if (OppLivingLatexEvent("")) {
+                            log::info("Equipping player with Living Latex");
+                        }
+                        else {
+                            log::warn("Unable to equip player with Living Latex");
+                        }
+                    }
+                    else if (strArg == "madnessplug") {
+                        if (OppMadnessPlugEvent("")) {
+                            log::info("Equipping player with Madness Plug");
+                        }
+                        else {
+                            log::warn("Unable to equip player with Madness Plug");
+                        }
+                    }
+                    else {
+                        log::warn("Bad ModEvent strArg: {}", strArg);
+                        return RE::BSEventNotifyControl::kContinue;
+                    }
+                }
+                else {
+                    log::warn("Received bad ModEvent name {}", name);
+                }
+            }
+            return RE::BSEventNotifyControl::kContinue;
+        }
+
+    public:
+        static void RegisterEvent() {
+            static ModEventSink eventSink;
+            SKSE::GetModCallbackEventSource()->AddEventSink(&eventSink);
+
+            log::trace("Attached mod event sink.");
+        }
+    };
+
     void RegisterEventSinks() {
         ActivateEventSink::RegisterEvent();
         EquipEventSink::RegisterEvent();
@@ -213,5 +379,6 @@ namespace DCURSES {
         MGEFEventSink::RegisterEvent();
         SpellEventSink::RegisterEvent();
         HitEventSink::RegisterEvent();
+        ModEventSink::RegisterEvent();
     }
 }

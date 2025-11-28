@@ -52,8 +52,8 @@ namespace DCURSES {
         return true;
     }
 
-    bool __CheckSLOAroused() {
-        RE::TESForm* form = StaticDataHolder::GetSingleton()->LookupForm(0xA5BA8, "SexLabAroused.esm");
+    bool CheckAND() {
+        RE::TESForm* form = StaticDataHolder::GetSingleton()->LookupForm(0x837, "Advanced Nudity Detection.esp");
         if (form == nullptr) {
             return false;
         }
@@ -277,9 +277,12 @@ namespace DCURSES {
         }
 
         void RunOnMenuClose(std::function<void()> onCallback) {
-            RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<float>(0.01f);
-            auto intent = ScriptIntent("Utility", "Wait", args);
-            RunIntentWith<int>(intent, [onCallback](std::optional<int>, ScriptCallback) {
+            RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<float>(0.1f);
+            auto intent = ScriptIntent("Utility", "WaitMenuMode", args);
+            RunIntent(intent);
+            RE::BSScript::IFunctionArguments* args2 = RE::MakeFunctionArguments<float>(0.01f);
+            auto intent2 = ScriptIntent("Utility", "Wait", args2);
+            RunIntentWith<int>(intent2, [onCallback](std::optional<int>, ScriptCallback) {
                 onCallback();
             });
         }

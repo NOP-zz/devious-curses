@@ -82,11 +82,26 @@ namespace DCURSES {
 
 		auto playerNumDevices = numDevicesVisible(player);
 		auto playerWornDeviceKeywords = GetWornDeviceKeywords(player);
-		auto playerIsNude = player->GetWornArmor((RE::BIPED_MODEL::BipedObjectSlot::kBody)) == nullptr;
+		auto playerIsNude = false;
 		auto playerIsWearingCollar = vectorContains(playerWornDeviceKeywords, "zad_DeviousCollar");
 		auto playerIsWearingHeavyBondage = vectorContains(playerWornDeviceKeywords, "zad_DeviousHeavyBondage");
 		auto playerIsWearingBlindfold = vectorContains(playerWornDeviceKeywords, "zad_DeviousBlindfold");
 		auto playerIsWearingBoots = vectorContains(playerWornDeviceKeywords, "zad_DeviousBoots");
+
+		if (CheckAND()) {
+			RE::TESFaction* AND_ToplessFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x832, "Advanced Nudity Detection.esp");
+			RE::TESFaction* AND_BottomlessFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x833, "Advanced Nudity Detection.esp");
+
+			if (
+				(settings.ANDSexTopless && player->IsInFaction(AND_ToplessFaction)) ||
+				(settings.ANDSexBottomless && player->IsInFaction(AND_BottomlessFaction))
+				) {
+				playerIsNude = true;
+			}
+		}
+		else {
+			playerIsNude = player->GetWornArmor((RE::BIPED_MODEL::BipedObjectSlot::kBody)) == nullptr;
+		}
 
 		RE::TESObjectARMO* summoner_collar = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(SUMMONER_COLLAR, "Devious Curses.esp");
 		auto playerHasSummonerCollar = ActorIsWearingDevice(player, summoner_collar);
@@ -477,6 +492,7 @@ namespace DCURSES {
 	}
 
 	void OppOnSexEnd(RE::Actor* actor);
+	void OppDDPlayerOrgasm();
 
 	void P_SexEnded(RE::StaticFunctionTag*, RE::BSTArray<RE::Actor*> actors) {
 		if (IsModDisabled()) {
@@ -492,12 +508,13 @@ namespace DCURSES {
 				break;
 			}
 		}
+		if (settings.oppMadnessAllOrgasms) {
+			OppDDPlayerOrgasm(); 
+		}
 	}
 
-	void OppDDPlayerOrgasm();
-
 	void P_DDPlayerOrgasm(RE::StaticFunctionTag*) {
-		log::trace("Player orgasm");
+		log::trace("Player device orgasm");
 		OppDDPlayerOrgasm();
 	}
 

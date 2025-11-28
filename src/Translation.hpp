@@ -15,7 +15,7 @@ namespace DCURSES {
 		ConsequenceRandomDeviceSex,//Now that {} is done with you, they force a {} on you before you can react!
 		ConsequenceRandomDeviceTalk,//Before you can talk to {} they force a {} on you before you can react!
 		ConsequenceSexContinue,//{} wasn't satisfied with your performance and goes in for another round!
-		ConsequenceSexTalk,//Before you can talk to {} they grab you and takes of your clothes!
+		ConsequenceSexTalk,//Before you can talk to {} they grab you and takes off your clothes!
 		ConsequenceFineSex,//Someone saw you having sex with {} and reported you to the guard!
 		ConsequenceFineTalk,//Before you can talk to {} they call a guard and report you!
 		ConsequenceMercyUnlock,//{} feels bad for you and unlocks your restraints.
@@ -64,6 +64,7 @@ namespace DCURSES {
 		EventMarkBondage,//After a sharp pain, you see that you have a mark of bondage.
 		EventMarkNudity,//After a sharp pain, you see that you have a mark of nudity.
 		EventMarkHealslut,//After a sharp pain, you see that you have a mark of the healslut.
+		EventWicked,//As you touch the {} you feel an overwhelming sense of wickedness!
 
 		MarkHeatRemove,//You feel a sense of calm as the heat mark fades from your body.
 		MarkAllureRemove,//You sense that people are no longer staring at you as the allure mark fades from your body.
@@ -177,6 +178,7 @@ namespace DCURSES {
 				case (Translation::EventMarkBondage): return "EventMarkBondage";
 				case (Translation::EventMarkNudity): return "EventMarkNudity";
 				case (Translation::EventMarkHealslut): return "EventMarkHealslut";
+				case (Translation::EventWicked): return "EventWicked";
 				case (Translation::MarkHeatRemove): return "MarkHeatRemove";
 				case (Translation::MarkAllureRemove): return "MarkAllureRemove";
 				case (Translation::MarkBondageDevice): return "MarkBondageDevice";

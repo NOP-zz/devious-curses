@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../include/ODBitmask.h"
 #include "Settings.hpp"
 #include "Utils.hpp"
 #include "Scripting.hpp"
@@ -1047,7 +1048,7 @@ namespace DCURSES {
 		return keys;
 	}
 
-	bool IsWearingOppLatex(uint32_t device_mask);
+	bool IsWearingOppLatex(ODBitmask mask);
 
 	void RemoveKeys(RE::TESObjectREFR* activatedObject) {
 		RE::TESKey* restraintsKey = StaticDataHolder::GetSingleton()->LookupForm<RE::TESKey>(std::stoi("1775f", 0, 16), "Devious Devices - Integration.esm");
