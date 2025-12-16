@@ -46,7 +46,7 @@ def processLine(line, page_lines):
 			page_lines.append('AddEmptyOption()')
 		if command == "//Flag":
 			flag_name, requires = [x.strip() for x in (" ".join(line.split(" ")[1:]).strip()).split("//")]
-			requires = re.sub(r"ESP:([ a-zA-Z0-9.-]*)", r'Game.GetModByName("\1") != 255', requires)
+			requires = re.sub(r"ESP:([ a-zA-Z0-9.-]*\.es[pml])", r'Game.GetModByName("\1") != 255', requires)
 			if requires is not None:
 				page_lines.append(f'int {flag_name} = 1')
 				page_lines.append(f'If {requires}')
@@ -177,10 +177,7 @@ bool function WearingOppressiveDevice() global Native
 
 Bool Property ModSuspended = False Auto Hidden
 
-Function StartTimer()
-	Debug.trace("DCurses Timer Started")
-	UnregisterForUpdate()
-	RegisterForUpdate(1)
+Function RegisterModEvents()
 	RegisterForModEvent("HookAnimationStart", "OnSexStart")
 	RegisterForModEvent("HookAnimationEnd", "OnSexEnd")
 	RegisterForModEvent("DeviceActorOrgasmExp", "OnDDOrgasm")
@@ -252,12 +249,12 @@ ConfigInit += "\nEndFunction"
 ConfigInit += """
 
 Event OnConfigInit()
-	StartTimer()
+	RegisterModEvents()
 	Initialize()
 EndEvent
 
 Event OnConfigOpen()
-	StartTimer()
+	RegisterModEvents()
 	Initialize()
 EndEvent
 """
@@ -341,7 +338,6 @@ with open("DCurses_MCM.psc", "w") as f:
 	f.write(Defs)
 	f.write(ConfigInit)
 	f.write(ConfigClose)
-	#f.write(UpdateSKSE)
 	f.write(Page)
 	f.write(Highlights)
 	f.write(Options)

@@ -269,7 +269,7 @@ namespace DCURSES {
 					for (auto& actorHandle : *arr) {
 						auto actorPtr = actorHandle.get();
 						if (auto actor = actorPtr.get(); actor && actor->Is3DLoaded() && !actor->IsDead()) {
-							if (actor->IsPlayerTeammate() && !actor->IsCommandedActor() && !ActorIsCreature(actor)) {
+							if (actor->IsPlayerTeammate() && !actor->IsCommandedActor() && !ActorIsCreature(actor) && !actor->IsChild()) {
 								result.push_back(actor);
 							}
 						}

@@ -156,6 +156,13 @@ namespace DCURSES {
 
         if (!settings.disableForce3rdPerson) scriptManager.ForceThirdPerson();
 
+        if (!contName.empty()) {
+            //PlayerMessage(fmt::format("As you touch the {} you see restraints magically appear and wrap themselves around you!", contName));
+            //Util::ExecuteWithDelay(4s, [contName] {
+            PlayerMessage(Translator(Translation::EventDevices, contName));
+            //});
+        }
+
         for (auto device : to_equip) {
             log::trace("Locking device {}", device->GetName());
             scriptManager.LockDevice(actor, device, false);
@@ -165,14 +172,6 @@ namespace DCURSES {
         for (auto const& i : usedKeys) { msg += (i + ", "); }
         msg.pop_back(); msg.pop_back();
         log::trace("usedKeys: {}", msg);
-
-        if (!contName.empty()) {
-            //PlayerMessage(fmt::format("As you touch the {} you see restraints magically appear and wrap themselves around you!", contName));
-            //Util::ExecuteWithDelay(4s, [contName] {
-            PlayerMessage(Translator(Translation::EventDevices, contName));
-            //});
-            AIEventBondage(contName, device_names);
-        }
 
         return true;
     }
@@ -347,7 +346,9 @@ namespace DCURSES {
                 }
                 if (settings.allowFollowerEvents) {
                     for (auto follower : Util::GetFollowers()) {
-                        DoStandardEvent(follower, isBoss, contName);
+                        if (!settings.onlyFemaleFollowers || follower->GetActorBase()->GetSex() == RE::SEX::kFemale) {
+                            DoStandardEvent(follower, isBoss, contName);
+                        }
                     }
                 }
                 return true;
@@ -377,7 +378,9 @@ namespace DCURSES {
             if (DoStandardEvent(player, isBoss, contName)) {
                 if (settings.allowFollowerEvents) {
                     for (auto follower : Util::GetFollowers()) {
-                        DoStandardEvent(follower, isBoss, contName);
+                        if (!settings.onlyFemaleFollowers || follower->GetActorBase()->GetSex() == RE::SEX::kFemale) {
+                            DoStandardEvent(follower, isBoss, contName);
+                        }
                     }
                 }
                 return true;
@@ -555,11 +558,10 @@ namespace DCURSES {
             }
 
             if (data.isMage && IsWearingOppLatex() && oppdCounters.livingLatexCounter == 2) {
-                log::trace("Adding gem");
                 double r = Util::randomDouble();
                 RE::TESObjectMISC* volatileGem = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectMISC>(VOLATILE_GEM, "Devious Curses.esp");
                 if (GetItemCount(player, volatileGem) == 0 && r <= settings.oppLivingLatexGem) {
-                    log::trace("Adding gem 2");
+                    log::trace("Adding volatile gem to Mage.");
                     activatedObject->AddObjectToContainer((RE::TESBoundObject*)volatileGem, nullptr, 1, nullptr);
                 }
             }
@@ -586,29 +588,18 @@ namespace DCURSES {
                     }
                 }
             }
+            else if (data.isLeveled && settings.arousalPotionChance > 0) {
+                RE::AlchemyItem* arouaslPotion = StaticDataHolder::GetSingleton()->LookupForm<RE::AlchemyItem>(AROUSAL_POTION, "Devious Curses.esp");
+                double c2 = settings.arousalPotionChance * pow(1.5, (ScriptingManager().GetArousal(player) - 50.0) / 50.0);
+                double r2 = Util::randomDouble();
+                if (GetItemCount(player, arouaslPotion) <= 2) {
+                    log::trace("Arousal Potion: {:.2f} ({:.2f})", c2, r2);
+                    if (r2 < c2) {
+                        activatedObject->AddObjectToContainer((RE::TESBoundObject*)arouaslPotion, nullptr, 1, nullptr);
+                    }
+                }
+            }
         });
-    }
-
-    void WaitForEventAction(std::string containerName, ContainerData data, bool waitForInventory = false) {
-        log::trace("waiting for event");
-        if (waitForInventory && RE::UI::GetSingleton()->GameIsPaused()) {
-            waitForInventory = false;
-            log::trace("Inventory is open");
-        }
-
-        if (!waitForInventory && !RE::UI::GetSingleton()->GameIsPaused()) {
-            DoEvent(data.isBoss || data.isDragon, containerName);
-            return;
-        }
-
-        if (!waitForInventory) {
-            ScriptingManager().RunOnMenuClose([data, containerName, waitForInventory]() {WaitForEventAction(containerName, data, waitForInventory); });
-        }
-        else {
-            Util::ExecuteWithDelay(100ms, [containerName, data, waitForInventory] {
-                WaitForEventAction(containerName, data, waitForInventory);
-            });
-        }
     }
 
     void CalculateEventChance(RE::TESObjectREFR* activatedObject) {
@@ -868,7 +859,15 @@ namespace DCURSES {
         log::info("{}", logMessage);
         if (r < chance) {
             auto objectName = activatedObject->GetName();
-            WaitForEventAction(objectName, data, !(data.isDoor || data.isLocked || DCURSES_QLIE_LOADED));
+            //WaitForEventAction(objectName, data, !(data.isDoor || data.isLocked || DCURSES_QLIE_LOADED));
+            //activatedObject
+            
+            for (int i = 0; i < 6; i++) {
+                Util::ExecuteWithDelay(250ms * i, [] {
+                    ScriptingManager().CloseContainerMenus();
+                });
+            }
+            DoEvent(data.isBoss || data.isDragon, objectName);
             counters.SinceLastEvent = 0;
         }
         else {

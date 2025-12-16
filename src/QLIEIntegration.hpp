@@ -3,6 +3,8 @@
 #include "../include/quicklootAPI.h"
 #include "../include/quicklootAPI_OLD.h"
 
+#include "Settings.hpp"
+
 namespace DCURSES {
 	void QLIEAttemptInit() {
 		if (GetModuleHandle(L"QuickLootIE") == nullptr) {
@@ -15,9 +17,7 @@ namespace DCURSES {
 	}
 
 	void QLIETakeItemCallback(QuickLoot::API::TakingItemEvent* e) {
-		Util::ProfileExecutionTime("Calculate Event Chance", [e] {
-			CalculateEventChance(e->container);
-		});
+		CalculateEventChance(e->container);
 	}
 
 	void QLIEOpenContainerCallback(QuickLoot::API::OpeningLootMenuEvent* e) {

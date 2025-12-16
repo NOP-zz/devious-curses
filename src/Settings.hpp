@@ -123,6 +123,7 @@ namespace DCURSES {
 		int eventWickedWeight = 15;				//Wicked Curse Weight//Chance to be bound in a device from Devious Wicked Devices.//{0}//(0,500,1)							?:? flag_WickedDevices
 		//Column
 		bool allowFollowerEvents = false;		//Follower Events//Allow followers to be affected by curses. Currently only applies to the Bondage Curse and Tattoo Curse.
+		bool onlyFemaleFollowers = true;		//Only Female Followers//Follower events will only trigger if the follower uses a female body (female & futa).
 		//Header Tattoo Curse
 		int eventTattooWeight = 15;				//Tattoo Curse Weight//Chance to receive random tattoos.\nRequires Rape Tattoos.//{0}//(0,500,1)							?:? flag_RapeTats
 		int eventTattooMin = 1;					//Tattoo Curse Min//Minimum number of tattoos that can be put on.//{0}//(1,10,1)											?:? flag_RapeTats
@@ -198,7 +199,7 @@ namespace DCURSES {
 		//Header Living Latex
 		int oppLivingLatexWeight = 20;			//Weight//How likely that you will be encased in latex that will bind you with ebonite.//{0}//(0,500,1)
 		int oppLivingLatexStartTime = 15;		//Start Time//How long in minutes do you have to wear the latex before it isn't dormant.\n//{0}//(1,60,1)
-		float oppLivingLatexGem = 4.0f;			//Volatile Gem Chance//The chance to find a gem on dead mages and warlocks that will shock the latex when hit with a weapon.//{1}//(0,100,0.1)
+		float oppLivingLatexGem = 6.0f;			//Volatile Gem Chance//The chance to find a gem on dead mages and warlocks that will shock the latex when hit with a weapon.//{1}//(0,100,0.1)
 		bool oppLivingLatexHeavy = false;		//Heavy Bondage//The latex will bind you with heavy bondage devices.\nWarning: this will happen in combat.
 		float oppLivingLatexMore = 0.0f;		//Periodic Devices//How frequently in minutes the latex will bind you when active. Set to 0 to disable.\nWarning: this will happen in combat.//{1}//(0,10,0.1)
 		bool oppLivingLatexRequireRem = true;	//Clinging//The latex will cling to your other devices, requiring you to remove all of them before it will dissapear.
@@ -249,18 +250,18 @@ namespace DCURSES {
 		bool vanishingKeys = true;				//Vanishing Keys//Keys will be removed from containers after you close the menu.
 		//Page Quest Interactions
 		//Flag flag_enable_qi					//enableQuestInteractions
-		bool enableQuestInteractions = true;	//Quest Interactions//Certain quests may have some additional events tied to them.\n The mod page has more information about each quest.
+		bool enableQuestInteractions = true;	//Quest Interactions//Certain quests may have some additional events tied to them.\n The mod page has more information about each quest.		**RELOAD
 		//Empty
-		bool enableQIMalkoran = true;			//Malkoran//The Malkoran event.
-		bool enableQISanguine = true;			//Sanguine//The Sanguine events.
-		bool enableQIBlackStar = true;			//Black Star//The Black Star event.
-		bool enableQIMindOfMadness = true;		//Sheogorath//The Sheogorath event.
+		bool enableQIMalkoran = true;			//Malkoran//The Malkoran event.									?:? flag_enable_qi
+		bool enableQISanguine = true;			//Sanguine//The Sanguine events.								?:? flag_enable_qi
+		bool enableQIBlackStar = true;			//Black Star//The Black Star event.								?:? flag_enable_qi
+		bool enableQIMindOfMadness = true;		//Sheogorath//The Sheogorath event.								?:? flag_enable_qi
 		//Column
 		//Header Quest Toggles
-		bool enableQIProvingHonor = true;		//Proving Honor//The Proving Honor event.
-		bool enableQISaarthal = true;			//Saarthal//The Saarthal event.
-		bool enableQIDwemerMuseum = true;		//Dwemer Museam//The Dwemer Museum event.
-		bool enableQIThalmorEmbassy = true;		//Thalmor Embassy//The Thalmor Embassy event.
+		bool enableQIProvingHonor = true;		//Proving Honor//The Proving Honor event.						?:? flag_enable_qi
+		bool enableQISaarthal = true;			//Saarthal//The Saarthal event.									?:? flag_enable_qi
+		bool enableQIDwemerMuseum = true;		//Dwemer Museam//The Dwemer Museum event.						?:? flag_enable_qi
+		bool enableQIThalmorEmbassy = true;		//Thalmor Embassy//The Thalmor Embassy event.					?:? flag_enable_qi
 		//Page Misc
 		//Flag flag_events_disabled				//ModSuspended
 		//Flag flag_wearingOppDevice			//!WearingOppressiveDevice()
@@ -276,6 +277,7 @@ namespace DCURSES {
 		bool disableForce3rdPerson = true;		//Disable 3rd Person//This mod will not force the player into 3rd person.
 		bool enableSlowStrip = false;			//Use Sexlab Strip//Replace the built in stripping algorithm with the one from sexlab.\nCan fix rare cases of crashing on stripping and also give more control over what gets stripped.
 		float tatSolventChance = 0.5;			//Universal Solvent Chance//Chance to find universal solvent when looting dead bodies. Universal solvent will remove all lewd marks and tattoos.\nHaving more tattoos will slightly increase the chance of finding one.\nSet to 0 to disable.//{1}//(0,50,0.1)
+		float arousalPotionChance = 1.0;		//Frigid Wash Chance//Chance to find a potion that will reduce your arousal. The chance increases slightly with high arousal.\nYou can only cary a max of 3 at a time.//{1}//(0,100,0.1)
 		bool resumeEvents = false;				//Resume Events//Events have been disabled by another mod. Enable this and exit the MCM to re-enable events.				?:? flag_events_disabled
 		bool saveDependentSettings = false;		//Save Dependent Settings//If enabled your settings for this save will not be synced with all of your other saves.
 		bool setAllDefaultSettings = false;		//Return to Default [WARNING]//If you exit the menu with this enabled all settings in the MCM will be reset to default.
@@ -311,6 +313,7 @@ namespace DCURSES {
 		//Header General
 		bool sexEnabled = false;				//Enabled//Toggles sex on or off.\nSex will only occur from friendly characters.																						**RELOAD
 		bool sexAggressiveAnims = false;		//Prefer Aggressive Animations//Prefer using aggressive animations for all sex started by this mod.																		?:? flag_enable_sex
+		bool sexFilterFuta = true;				//Filter Futa Animations//This will prevent FF tagged animations for female & futa and prevent MF for female & female.\nOnly works for sexlab SE and not Sexlab P+		?:? flag_enable_sex
 		bool sexRandomEnabled = false;			//Random Sex//Characters that you encounter on your journey might have sex with you!																					**RELOAD
 		int sexCooldown = 30;					//Cooldown//How long in seconds after a scene ends before another can trigger.//{0}//(5,300,1)																			?:? flag_enable_random_sex
 		int sexChance = 50;						//Chance//How likely a potential actor will have sex with the player.//{0}%//(0,100,1)																					?:? flag_enable_random_sex
@@ -369,6 +372,10 @@ namespace DCURSES {
 		else {
 			scriptManager.DBGMessageBox(trans);
 		}
+	}
+
+	bool GetFilterFuta() {
+		return settings.sexFilterFuta;
 	}
 
 	void RecalculateDeviceLists();
@@ -641,7 +648,7 @@ namespace DCURSES {
 		SetMCMFloat("LMBondageChance",settings.LMBondageChance);
 		settings.oppSummonChance = 1.5f;
 		SetMCMFloat("oppSummonChance",settings.oppSummonChance);
-		settings.oppLivingLatexGem = 4.0f;
+		settings.oppLivingLatexGem = 6.0f;
 		SetMCMFloat("oppLivingLatexGem",settings.oppLivingLatexGem);
 		settings.oppLivingLatexMore = 0.0f;
 		SetMCMFloat("oppLivingLatexMore",settings.oppLivingLatexMore);
@@ -689,6 +696,8 @@ namespace DCURSES {
 		SetMCMFloat("rDeviceBaseChance",settings.rDeviceBaseChance);
 		settings.tatSolventChance = 0.5f;
 		SetMCMFloat("tatSolventChance",settings.tatSolventChance);
+		settings.arousalPotionChance = 1.0f;
+		SetMCMFloat("arousalPotionChance",settings.arousalPotionChance);
 		settings.consTriggerNude = 15.0f;
 		SetMCMFloat("consTriggerNude",settings.consTriggerNude);
 		settings.consTriggerRestrained = 50.0f;
@@ -723,6 +732,8 @@ namespace DCURSES {
 		SetMCMBool("eventContAllDevices",settings.eventContAllDevices);
 		settings.allowFollowerEvents = false;
 		SetMCMBool("allowFollowerEvents",settings.allowFollowerEvents);
+		settings.onlyFemaleFollowers = true;
+		SetMCMBool("onlyFemaleFollowers",settings.onlyFemaleFollowers);
 		settings.onlyUseUnforgivingDevices = true;
 		SetMCMBool("onlyUseUnforgivingDevices",settings.onlyUseUnforgivingDevices);
 		settings.udUseAbadon = false;
@@ -829,6 +840,8 @@ namespace DCURSES {
 		SetMCMBool("sexEnabled",settings.sexEnabled);
 		settings.sexAggressiveAnims = false;
 		SetMCMBool("sexAggressiveAnims",settings.sexAggressiveAnims);
+		settings.sexFilterFuta = true;
+		SetMCMBool("sexFilterFuta",settings.sexFilterFuta);
 		settings.sexRandomEnabled = false;
 		SetMCMBool("sexRandomEnabled",settings.sexRandomEnabled);
 		settings.sexAllowMale = true;
@@ -1021,6 +1034,7 @@ namespace DCURSES {
 			{"magicKeyChance", settings.magicKeyChance},
 			{"rDeviceBaseChance", settings.rDeviceBaseChance},
 			{"tatSolventChance", settings.tatSolventChance},
+			{"arousalPotionChance", settings.arousalPotionChance},
 			{"consTriggerNude", settings.consTriggerNude},
 			{"consTriggerRestrained", settings.consTriggerRestrained},
 			{"consTriggerSex", settings.consTriggerSex},
@@ -1038,6 +1052,7 @@ namespace DCURSES {
 			{"eventContDevices", settings.eventContDevices},
 			{"eventContAllDevices", settings.eventContAllDevices},
 			{"allowFollowerEvents", settings.allowFollowerEvents},
+			{"onlyFemaleFollowers", settings.onlyFemaleFollowers},
 			{"onlyUseUnforgivingDevices", settings.onlyUseUnforgivingDevices},
 			{"udUseAbadon", settings.udUseAbadon},
 			{"udUseMisc", settings.udUseMisc},
@@ -1091,6 +1106,7 @@ namespace DCURSES {
 			{"consBondageIgnoreMax", settings.consBondageIgnoreMax},
 			{"sexEnabled", settings.sexEnabled},
 			{"sexAggressiveAnims", settings.sexAggressiveAnims},
+			{"sexFilterFuta", settings.sexFilterFuta},
 			{"sexRandomEnabled", settings.sexRandomEnabled},
 			{"sexAllowMale", settings.sexAllowMale},
 			{"sexAllowFemale", settings.sexAllowFemale},
@@ -1410,7 +1426,7 @@ namespace DCURSES {
 		SetMCMFloat("LMBondageChance",settings.LMBondageChance);
 		settings.oppSummonChance = static_cast<float>(j.value("oppSummonChance", 1.5));
 		SetMCMFloat("oppSummonChance",settings.oppSummonChance);
-		settings.oppLivingLatexGem = static_cast<float>(j.value("oppLivingLatexGem", 4.0));
+		settings.oppLivingLatexGem = static_cast<float>(j.value("oppLivingLatexGem", 6.0));
 		SetMCMFloat("oppLivingLatexGem",settings.oppLivingLatexGem);
 		settings.oppLivingLatexMore = static_cast<float>(j.value("oppLivingLatexMore", 0.0));
 		SetMCMFloat("oppLivingLatexMore",settings.oppLivingLatexMore);
@@ -1458,6 +1474,8 @@ namespace DCURSES {
 		SetMCMFloat("rDeviceBaseChance",settings.rDeviceBaseChance);
 		settings.tatSolventChance = static_cast<float>(j.value("tatSolventChance", 0.5));
 		SetMCMFloat("tatSolventChance",settings.tatSolventChance);
+		settings.arousalPotionChance = static_cast<float>(j.value("arousalPotionChance", 1.0));
+		SetMCMFloat("arousalPotionChance",settings.arousalPotionChance);
 		settings.consTriggerNude = static_cast<float>(j.value("consTriggerNude", 15.0));
 		SetMCMFloat("consTriggerNude",settings.consTriggerNude);
 		settings.consTriggerRestrained = static_cast<float>(j.value("consTriggerRestrained", 50.0));
@@ -1492,6 +1510,8 @@ namespace DCURSES {
 		SetMCMBool("eventContAllDevices",settings.eventContAllDevices);
 		settings.allowFollowerEvents = static_cast<bool>(j.value("allowFollowerEvents", false));
 		SetMCMBool("allowFollowerEvents",settings.allowFollowerEvents);
+		settings.onlyFemaleFollowers = static_cast<bool>(j.value("onlyFemaleFollowers", true));
+		SetMCMBool("onlyFemaleFollowers",settings.onlyFemaleFollowers);
 		settings.onlyUseUnforgivingDevices = static_cast<bool>(j.value("onlyUseUnforgivingDevices", true));
 		SetMCMBool("onlyUseUnforgivingDevices",settings.onlyUseUnforgivingDevices);
 		settings.udUseAbadon = static_cast<bool>(j.value("udUseAbadon", false));
@@ -1598,6 +1618,8 @@ namespace DCURSES {
 		SetMCMBool("sexEnabled",settings.sexEnabled);
 		settings.sexAggressiveAnims = static_cast<bool>(j.value("sexAggressiveAnims", false));
 		SetMCMBool("sexAggressiveAnims",settings.sexAggressiveAnims);
+		settings.sexFilterFuta = static_cast<bool>(j.value("sexFilterFuta", true));
+		SetMCMBool("sexFilterFuta",settings.sexFilterFuta);
 		settings.sexRandomEnabled = static_cast<bool>(j.value("sexRandomEnabled", false));
 		SetMCMBool("sexRandomEnabled",settings.sexRandomEnabled);
 		settings.sexAllowMale = static_cast<bool>(j.value("sexAllowMale", true));
@@ -1798,6 +1820,7 @@ namespace DCURSES {
 			settings.magicKeyChance = GetMCMSetting("magicKeyChance")->GetFloat();
 			settings.rDeviceBaseChance = GetMCMSetting("rDeviceBaseChance")->GetFloat();
 			settings.tatSolventChance = GetMCMSetting("tatSolventChance")->GetFloat();
+			settings.arousalPotionChance = GetMCMSetting("arousalPotionChance")->GetFloat();
 			settings.consTriggerNude = GetMCMSetting("consTriggerNude")->GetFloat();
 			settings.consTriggerRestrained = GetMCMSetting("consTriggerRestrained")->GetFloat();
 			settings.consTriggerSex = GetMCMSetting("consTriggerSex")->GetFloat();
@@ -1815,6 +1838,7 @@ namespace DCURSES {
 			settings.eventContDevices = GetMCMSetting("eventContDevices")->GetBool();
 			settings.eventContAllDevices = GetMCMSetting("eventContAllDevices")->GetBool();
 			settings.allowFollowerEvents = GetMCMSetting("allowFollowerEvents")->GetBool();
+			settings.onlyFemaleFollowers = GetMCMSetting("onlyFemaleFollowers")->GetBool();
 			settings.onlyUseUnforgivingDevices = GetMCMSetting("onlyUseUnforgivingDevices")->GetBool();
 			settings.udUseAbadon = GetMCMSetting("udUseAbadon")->GetBool();
 			settings.udUseMisc = GetMCMSetting("udUseMisc")->GetBool();
@@ -1868,6 +1892,7 @@ namespace DCURSES {
 			settings.consBondageIgnoreMax = GetMCMSetting("consBondageIgnoreMax")->GetBool();
 			settings.sexEnabled = GetMCMSetting("sexEnabled")->GetBool();
 			settings.sexAggressiveAnims = GetMCMSetting("sexAggressiveAnims")->GetBool();
+			settings.sexFilterFuta = GetMCMSetting("sexFilterFuta")->GetBool();
 			settings.sexRandomEnabled = GetMCMSetting("sexRandomEnabled")->GetBool();
 			settings.sexAllowMale = GetMCMSetting("sexAllowMale")->GetBool();
 			settings.sexAllowFemale = GetMCMSetting("sexAllowFemale")->GetBool();

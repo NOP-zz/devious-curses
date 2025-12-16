@@ -51,7 +51,7 @@ namespace SexLab {
 			}
 		}
 
-		static const auto sosfaction = DCURSES::StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x00AFF8, "Schlongs of Skyrim.esp");
+		static const auto sosfaction = DCURSES::StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x805, "Schlongs of Skyrim.esp");
 		if (sosfaction) {
 			bool ret = false;
 			a_actor->VisitFactions([&ret](RE::TESFaction* a_faction, int8_t a_rank) -> bool {
@@ -84,9 +84,9 @@ namespace SexLab {
 	// DOES NOT HANDLE CREATURES
 	int GetSex(RE::Actor* a_actor, bool a_skipfactions = false)
 	{
-		int ret = -1;
+		//int ret = -1;
 		if (!a_skipfactions) {
-			a_actor->VisitFactions([&](auto a_faction, auto a_rank) {
+			/*a_actor->VisitFactions([&](auto a_faction, auto a_rank) {
 				RE::TESFaction* SexlabGenderFaction = DCURSES::StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("043A43", 0, 16), "SexLab.esm");
 				if (a_faction == SexlabGenderFaction) {
 					switch (a_rank) {
@@ -108,6 +108,11 @@ namespace SexLab {
 				});
 			if (ret != -1) {
 				return ret;
+			}*/
+			RE::TESFaction* SexlabGenderFaction = DCURSES::StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("043A43", 0, 16), "SexLab.esm");
+			auto rank = a_actor->GetFactionRank(SexlabGenderFaction, false);
+			if (rank >= 0 && rank <= 2) {
+				return rank;
 			}
 		}
 

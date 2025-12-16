@@ -11,6 +11,8 @@ using namespace SKSE;
 
 namespace DCURSES {
 
+    bool GetFilterFuta();
+
     RE::BSScript::IVirtualMachine* GetVM() {
         return RE::BSScript::Internal::VirtualMachine::GetSingleton();
     }
@@ -294,7 +296,8 @@ namespace DCURSES {
         }
 
         void StartSex(RE::Actor* aggressor, bool preferAggressive) {
-            RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::Actor*, bool>(std::move(aggressor), std::move(preferAggressive));
+            std::string additionalTags = GetFilterFuta() ? (SexLab::IsFuta(aggressor) ? ",FF,Lesbian" : "MF,FM") : "";
+            RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::Actor*, bool>(std::move(aggressor), std::move(preferAggressive), std::move(additionalTags));
             auto intent = ScriptIntent("DCursesLib", "StartSex", args);
             RunIntent(intent);
         }
@@ -305,16 +308,17 @@ namespace DCURSES {
             RunIntent(intent);
         }
 
-        int GetArousal(RE::Actor* actor) {
-            RE::TESFaction* sla_arousal = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x3FC36, "SexLabAroused.esm");
-            return actor->GetFactionRank(sla_arousal, actor == RE::PlayerCharacter::GetSingleton());
-        }
-
         void ModifyArousal(RE::Actor* actor, int arousal) {
             RE::TESForm* aroused = StaticDataHolder::GetSingleton()->LookupForm(0x4290f, "SexLabAroused.esm");
             RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::Actor*, int, std::string>(std::move(actor), std::move(arousal), "");
             auto intent = ScriptIntent(aroused, RE::FormType::Quest, "slaFrameworkScr", "UpdateActorExposure", args);
             RunIntent(intent);
+        }
+
+        int GetArousal(RE::Actor* actor) {
+            RE::TESFaction* sla_arousal = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x3FC36, "SexLabAroused.esm");
+            auto arousal = actor->GetFactionRank(sla_arousal, actor == RE::PlayerCharacter::GetSingleton());
+            return arousal;
         }
 
         void LockDevice(RE::Actor* akActor, RE::TESObjectARMO* deviceInventory, bool force = false) {
@@ -419,6 +423,18 @@ namespace DCURSES {
             RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<bool, bool, bool, bool, bool, bool, bool, bool, int>(std::move(false), std::move(false), std::move(false), std::move(false), std::move(false), std::move(true), std::move(true), std::move(false), std::move(0));
             auto intent = ScriptIntent("Game", "EnablePlayerControls", args);
             RunIntent(intent);
+        }
+
+        void CloseContainerMenus() {
+            RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<std::string, std::string, std::string>("HUD Menu", "_global.skse.CloseMenu", "ContainerMenu");
+            //UI.InvokeString("HUD Menu", "_global.skse.CloseMenu", "InventoryMenu")
+            auto intent = ScriptIntent("UI", "InvokeString", args);
+            RunIntent(intent);
+
+            //RE::BSScript::IFunctionArguments* args2 = RE::MakeFunctionArguments<std::string, std::string, std::string>("HUD Menu", "_global.skse.CloseMenu", "InventoryMenu");
+            //UI.InvokeString("HUD Menu", "_global.skse.CloseMenu", "InventoryMenu")
+            //auto intent2 = ScriptIntent("UI", "InvokeString", args2);
+            //RunIntent(intent2);
         }
 
         void RequestSaveGame() {

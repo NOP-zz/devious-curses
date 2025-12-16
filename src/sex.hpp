@@ -58,6 +58,7 @@ namespace DCURSES {
 			isFemale = sex == 1;
 			isFuta = sex == 2;
 		}
+		//log::info("Actor {} is {}", actor->GetName(), isMale ? "Male" : (isFemale ? "Female" : (isFuta ? "Futa" : isCreature ? "Creature" : "Unknown Gender")));
 		//else {
 		//	isMale = actorSex == 0;
 		//	isFemale = actorSex == 1;
@@ -93,8 +94,8 @@ namespace DCURSES {
 			RE::TESFaction* AND_BottomlessFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x833, "Advanced Nudity Detection.esp");
 
 			if (
-				(settings.ANDSexTopless && player->IsInFaction(AND_ToplessFaction)) ||
-				(settings.ANDSexBottomless && player->IsInFaction(AND_BottomlessFaction))
+				(settings.ANDSexTopless && player->GetFactionRank(AND_ToplessFaction, true) > 0) ||
+				(settings.ANDSexBottomless && player->GetFactionRank(AND_BottomlessFaction, true) > 0)
 				) {
 				playerIsNude = true;
 			}
@@ -114,6 +115,25 @@ namespace DCURSES {
 		auto scriptManager = ScriptingManager();
 
 		int playerArousal = scriptManager.GetArousal(player);
+		bool playerEnabled = false;
+
+		if (settings.sexRequireAll) {
+			playerEnabled = (!settings.sexRequireBindings || playerNumDevices > 0) &&
+				(!settings.sexRequireCollar || playerIsWearingCollar) &&
+				(!settings.sexRequireHeavy || playerIsWearingHeavyBondage) &&
+				(!settings.sexRequireNude || playerIsNude) &&
+				(!(settings.sexRequiredPlayerTattoos > 0) || playerTattooCount >= settings.sexRequiredPlayerTattoos) &&
+				(!(settings.sexRequiredPlayerArousal > 0) || playerArousal >= settings.sexRequiredPlayerArousal);
+		}
+		else {
+			playerEnabled = (!settings.sexRequireBindings && !settings.sexRequireCollar && !settings.sexRequireHeavy && !settings.sexRequireNude && !(settings.sexRequiredPlayerArousal > 0) && !(settings.sexRequiredPlayerTattoos > 0)) || (
+				(settings.sexRequireBindings && playerNumDevices > 0) ||
+				(settings.sexRequireCollar && playerIsWearingCollar) ||
+				(settings.sexRequireHeavy && playerIsWearingHeavyBondage) ||
+				(settings.sexRequireNude && playerIsNude) ||
+				((settings.sexRequiredPlayerTattoos > 0) && playerTattooCount >= settings.sexRequiredPlayerTattoos) ||
+				((settings.sexRequiredPlayerArousal > 0) && playerArousal >= settings.sexRequiredPlayerArousal));
+		}
 
 		std::vector<std::pair<RE::Actor*, std::string>> result;
 		if (const auto processLists = RE::ProcessLists::GetSingleton(); processLists) {
@@ -122,17 +142,40 @@ namespace DCURSES {
 				for (auto& actorHandle : *arr) {
 					auto actorPtr = actorHandle.get();
 					auto actor = actorPtr.get();
-					if (actor && actor->Is3DLoaded() && !actor->IsDead() && actor->GetPosition().GetDistance(playerPosition) <= settings.sexSearchRadius) {
-						if (actor && actor->IsInFaction(zadDisable)) {
+					if (actor && actor->Is3DLoaded() && !actor->IsDead() && actor->GetPosition().GetSquaredDistance(playerPosition) <= settings.sexSearchRadius * settings.sexSearchRadius) {
+						if (actor->IsInFaction(zadDisable)) {
 							log::trace("Ignoring NPC {}.", actor->GetName());
 							continue;
 						}
 						bool actorIsCreature = Util::ActorIsCreature(actor);
+						auto isPlayerCommandedActor = getIsPlayerCommandedActor(actor);
+
+						int r = Util::randomInt();
+						int chance = settings.sexChance;
+						if (actorIsCreature) chance = settings.sexChanceCreature;
+
+						if (actor->IsPlayerTeammate() && !isPlayerCommandedActor) {
+							if (settings.sexChanceFollower >= 0) {
+								chance = settings.sexChanceFollower;
+							}
+						}
+						if (actor->IsInFaction(PlayerMarriedFaction)) {
+							if (settings.sexChanceSpouse >= 0) {
+								chance = settings.sexChanceSpouse;
+							}
+						}
+						if (isPlayerCommandedActor) {
+							if (settings.sexChanceSummon >= 0) {
+								chance = settings.sexChanceSummon;
+							}
+						}
+
 						//log::info("testing actor {}", actor->GetName());
 						//Check aggressor against normal filters
-						if (SexActorFilter(actor)) {
+						if (r < chance && SexActorFilter(actor)) {
 							//Check aggressor enabled
-							bool enabled = false;
+							bool enabled = playerEnabled;
+
 							if (actor->IsPlayerTeammate() && !getIsPlayerCommandedActor(actor) && settings.sexAlwaysAllowFollowers) {
 								enabled = true;
 							}
@@ -145,25 +188,7 @@ namespace DCURSES {
 							else if (getIsPlayerCommandedActor(actor) && (settings.sexAlwaysAllowSummons || playerHasSummonerCollar)) {
 								enabled = true;
 							}
-							else if (settings.sexRequireAll) {
-								enabled = (!settings.sexRequireBindings || playerNumDevices > 0) &&
-									(!settings.sexRequireCollar || playerIsWearingCollar) &&
-									(!settings.sexRequireHeavy || playerIsWearingHeavyBondage) &&
-									(!settings.sexRequireNude || playerIsNude) &&
-									(!(settings.sexRequiredPlayerTattoos > 0) || playerTattooCount >= settings.sexRequiredPlayerTattoos) &&
-									(!(settings.sexRequiredPlayerArousal > 0) || playerArousal >= settings.sexRequiredPlayerArousal);
-							}
-							else {
-								enabled = (!settings.sexRequireBindings && !settings.sexRequireCollar && !settings.sexRequireHeavy && !settings.sexRequireNude && !(settings.sexRequiredPlayerArousal > 0) && !(settings.sexRequiredPlayerTattoos > 0)) || (
-									(settings.sexRequireBindings && playerNumDevices > 0) ||
-									(settings.sexRequireCollar && playerIsWearingCollar) ||
-									(settings.sexRequireHeavy && playerIsWearingHeavyBondage) ||
-									(settings.sexRequireNude && playerIsNude) ||
-									((settings.sexRequiredPlayerTattoos > 0) && playerTattooCount >= settings.sexRequiredPlayerTattoos) ||
-									((settings.sexRequiredPlayerArousal > 0) && playerArousal >= settings.sexRequiredPlayerArousal));
-							}
-
-							log::trace("Actor enabled: {}", enabled);
+							
 
 							if (enabled) {
 								//Check aggressor arousal
@@ -174,82 +199,71 @@ namespace DCURSES {
 								//}
 
 								float arousal = static_cast<float>(settings.sexBaseArousal);
-								int chance = settings.sexChance;
-								if (actorIsCreature) chance = settings.sexChanceCreature;
 
 								std::string logMessage = "";
 
-								if (GameHour->value < 5.0 || GameHour->value > 22.0) {
+								if (settings.sexArousalNightModifier > 0 && (GameHour->value < 5.0 || GameHour->value > 22.0)) {
 									arousal -= settings.sexArousalNightModifier;
-									if (settings.sexArousalNightModifier > 0) logMessage += fmt::format("(night {}) ", settings.sexArousalNightModifier);
+									logMessage += fmt::format("(night {}) ", settings.sexArousalNightModifier);
 								}
-								if (playerIsNude) {
+								if (settings.sexArousalNudeModifier > 0 && playerIsNude) {
 									arousal -= settings.sexArousalNudeModifier;
-									if (settings.sexArousalNudeModifier > 0) logMessage += fmt::format("(nude {}) ", settings.sexArousalNudeModifier);
+									logMessage += fmt::format("(nude {}) ", settings.sexArousalNudeModifier);
 								}
-								if (playerIsWearingCollar) {
+								if (settings.sexArousalCollarModifier > 0 && playerIsWearingCollar) {
 									arousal -= settings.sexArousalCollarModifier;
-									if (settings.sexArousalCollarModifier > 0) logMessage += fmt::format("(collar {}) ", settings.sexArousalCollarModifier);
+									logMessage += fmt::format("(collar {}) ", settings.sexArousalCollarModifier);
 								}
-								if (playerIsWearingHeavyBondage) {
+								if (settings.sexArousalHeavyModifier > 0 && playerIsWearingHeavyBondage) {
 									arousal -= settings.sexArousalHeavyModifier;
-									if (settings.sexArousalHeavyModifier > 0) logMessage += fmt::format("(heavy {}) ", settings.sexArousalHeavyModifier);
+									logMessage += fmt::format("(heavy {}) ", settings.sexArousalHeavyModifier);
 								}
-								if (playerIsWearingBlindfold) {
+								if (settings.sexArousalBlindModifier > 0 && playerIsWearingBlindfold) {
 									arousal -= settings.sexArousalBlindModifier;
-									if (settings.sexArousalBlindModifier > 0) logMessage += fmt::format("(blind {}) ", settings.sexArousalBlindModifier);
+									logMessage += fmt::format("(blind {}) ", settings.sexArousalBlindModifier);
 								}
-								if (playerIsWearingBoots) {
+								if (settings.sexArousalBootsModifier > 0 && playerIsWearingBoots) {
 									arousal -= settings.sexArousalBootsModifier;
-									if (settings.sexArousalBootsModifier > 0) logMessage += fmt::format("(boots {}) ", settings.sexArousalBootsModifier);
+									logMessage += fmt::format("(boots {}) ", settings.sexArousalBootsModifier);
 								}
-								if (player->IsOverEncumbered()) {
+								if (settings.sexArousalHobbleModifier > 0 && player->IsOverEncumbered()) {
 									arousal -= settings.sexArousalHobbleModifier;
-									if (settings.sexArousalHobbleModifier > 0) logMessage += fmt::format("(hobble {}) ", settings.sexArousalHobbleModifier);
+									logMessage += fmt::format("(hobble {}) ", settings.sexArousalHobbleModifier);
 								}
-								if (playerNumDevices > 0) {
+								if (settings.sexArousalVisibleModifier > 0 && playerNumDevices > 0) {
 									arousal -= settings.sexArousalVisibleModifier;
-									if (settings.sexArousalVisibleModifier > 0) logMessage += fmt::format("(device {}) ", settings.sexArousalVisibleModifier);
+									logMessage += fmt::format("(device {}) ", settings.sexArousalVisibleModifier);
 								}
 								if (playerTattooCount > 0) {
 									auto mod = settings.sexArousalTattooModifier * playerTattooCount;
 									arousal -= mod;
 									if (mod > 0) logMessage += fmt::format("(tattoo {:.2f}) ", mod);
 								}
-								if (actorIsCreature) {
+								if (settings.sexArousalCreatureModifier > 0 && actorIsCreature) {
 									arousal -= settings.sexArousalCreatureModifier;
-									if (settings.sexArousalCreatureModifier > 0) logMessage += fmt::format("(creature {}) ", settings.sexArousalCreatureModifier);
+									logMessage += fmt::format("(creature {}) ", settings.sexArousalCreatureModifier);
 								}
-								if (actor->IsPlayerTeammate() && !getIsPlayerCommandedActor(actor)) {
+								if (settings.sexArousalFollowerModifier > 0 && actor->IsPlayerTeammate() && !isPlayerCommandedActor) {
 									arousal -= settings.sexArousalFollowerModifier;
-									if (settings.sexArousalFollowerModifier > 0) logMessage += fmt::format("(team {}) ", settings.sexArousalFollowerModifier);
-									if (settings.sexChanceFollower >= 0) {
-										chance = settings.sexChanceFollower;
-									}
+									logMessage += fmt::format("(team {}) ", settings.sexArousalFollowerModifier);
 								}
-								if (actor->IsInFaction(PlayerMarriedFaction)) {
+								if (settings.sexArousalSpouseModifier > 0 && actor->IsInFaction(PlayerMarriedFaction)) {
 									arousal -= settings.sexArousalSpouseModifier;
-									if (settings.sexArousalSpouseModifier > 0) logMessage += fmt::format("(spouse {}) ", settings.sexArousalSpouseModifier);
-									if (settings.sexChanceSpouse >= 0) {
-										chance = settings.sexChanceSpouse;
-									}
+									logMessage += fmt::format("(spouse {}) ", settings.sexArousalSpouseModifier);
 								}
-								if (getIsPlayerCommandedActor(actor)) {
+								if (settings.sexArousalSummonModifier > 0 && isPlayerCommandedActor) {
 									arousal -= settings.sexArousalSummonModifier;
-									if (settings.sexArousalSummonModifier > 0) logMessage += fmt::format("(summon {}) ", settings.sexArousalSummonModifier);
-									if (settings.sexChanceSummon >= 0) {
-										chance = settings.sexChanceSummon;
-									}
+									logMessage += fmt::format("(summon {}) ", settings.sexArousalSummonModifier);
 								}
 
 								if (!logMessage.empty()) logMessage.pop_back();
 
-								int r = Util::randomInt();
+								
 
 
 								log::trace("Actor Info {}: {} > {}({}) [{}]", actor->GetName(), actorArousal, arousal, settings.sexBaseArousal, logMessage);
 
-								if (actorArousal >= arousal && r < chance) {
+								if (actorArousal >= arousal) {
 									auto msg = fmt::format("[sex] {}: {} > {}({}) [{}] ({}%, {})", actor->GetName(), actorArousal, arousal, settings.sexBaseArousal, logMessage, chance, r);
 									result.push_back(std::make_pair(actor, msg));
 								}
@@ -347,6 +361,7 @@ namespace DCURSES {
 		if (!(mask & 0b1000)) {
 			tagsToRemove = "Boobjob," + tagsToRemove;
 		}
+		tagsToRemove.pop_back();
 		return tagsToRemove;
 	}
 

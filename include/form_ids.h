@@ -8,6 +8,7 @@ namespace DCURSES {
 // DCURSES
 constexpr auto TATTOO_CHARM = 0x809;
 constexpr auto VOLATILE_GEM = 0x839;
+constexpr auto AROUSAL_POTION = 0x83B;
 constexpr auto DCURSES_MCM = 0x800;
 
 // DEVICES
@@ -46,6 +47,7 @@ constexpr auto SUMMONER_COLLAR_EFFECT = 0x803;
 constexpr auto LIVING_LATEX_EFFECT = 0x816;
 constexpr auto DWARVEN_CUIRASS_EFFECT = 0x82B;
 constexpr auto MADNESS_PLUG_EFFECT = 0x833;
+constexpr auto AROUSAL_POTION_EFFECT = 0x83C;
 
 // PERKS
 constexpr auto MGEF_CONTROLLER = 0x818;

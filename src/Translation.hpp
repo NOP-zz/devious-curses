@@ -90,6 +90,7 @@ namespace DCURSES {
 
 		ItemMagicKey,//All of the devices you were wearing have magically disappeared!
 		ItemTattooCharm,//All of your tattoos have faded from your body!
+		ItemArousalPotion,//You feel your arousal fade from your body!
 
 		EffectLivingLatexWait,//The latex suit seems to be dormant. You will probably have to wait for a while.
 		EffectLivingLatexDormant,//The latex suit seems to be dormant. Maybe it would do something if it was attacked.
@@ -201,6 +202,7 @@ namespace DCURSES {
 				case (Translation::QIMindOfMadness): return "QIMindOfMadness";
 				case (Translation::ItemMagicKey): return "ItemMagicKey";
 				case (Translation::ItemTattooCharm): return "ItemTattooCharm";
+				case (Translation::ItemArousalPotion): return "ItemArousalPotion";
 				case (Translation::EffectLivingLatexWait): return "EffectLivingLatexWait";
 				case (Translation::EffectLivingLatexDormant): return "EffectLivingLatexDormant";
 				case (Translation::EffectLivingLatexAwoken): return "EffectLivingLatexAwoken";

@@ -44,6 +44,7 @@ namespace DCURSES {
                 }
                 Util::ProfileExecutionTime("Calculate Event Chance", [activatedObject] {
                     CalculateEventChance(activatedObject);
+                    return RE::BSEventNotifyControl::kStop;
                 });
             }
             return RE::BSEventNotifyControl::kContinue;
@@ -55,7 +56,7 @@ namespace DCURSES {
             if (!ScriptEventSource) {
                 return;
             }
-            ScriptEventSource->AddEventSink(&eventSink);
+            ScriptEventSource->PrependEventSink(&eventSink);
 
             log::trace("Attached activate event sink.");
         }
@@ -74,6 +75,7 @@ namespace DCURSES {
                 RE::TESKey* magicKey = StaticDataHolder::GetSingleton()->LookupForm<RE::TESKey>(MAGIC_KEY, "Devious Curses.esp");
                 RE::TESObjectMISC* tattooCharm = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectMISC>(TATTOO_CHARM, "Devious Curses.esp");
                 RE::TESObjectMISC* volatileGem = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectMISC>(VOLATILE_GEM, "Devious Curses.esp");
+                RE::AlchemyItem* arouaslPotion = StaticDataHolder::GetSingleton()->LookupForm<RE::AlchemyItem>(AROUSAL_POTION, "Devious Curses.esp");
 
                 if (equipmentForm == magicKey) {
                     RemoveAllRestraints(player, true);
@@ -90,6 +92,11 @@ namespace DCURSES {
                     AIEventTattooCharm();
                     //PlayerMessage("All of your tattoos have faded from your body!");
                     PlayerMessage(Translator(Translation::ItemTattooCharm));
+                }
+                else if (equipmentForm == arouaslPotion) {
+                    ScriptingManager().ModifyArousal(player, -100000);
+
+                    PlayerMessage(Translator(Translation::ItemArousalPotion));
                 }
                 else if (equipmentForm == volatileGem) {
                     player->RemoveItem((RE::TESBoundObject*)volatileGem, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
@@ -312,7 +319,7 @@ namespace DCURSES {
 
                     if (numArg > 0) {
                         log::info("Updating lewd mark to {} ({})", strArg, numArg);
-                        SetEffectMagnitude(effect, numArg);
+                        SetEffectMagnitude(effect, static_cast<float>(numArg));
                     }
                     else {
                         log::info("Updating lewd mark to {}", strArg);

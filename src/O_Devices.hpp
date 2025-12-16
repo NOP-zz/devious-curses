@@ -622,7 +622,7 @@ namespace DCURSES {
 			RE::TESObjectARMO* piercings = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(MADNESS_PIERCINGS, "Devious Curses.esp");
 			scriptManager.SwapDevices(player, piercings);
 			return true;
-		} , 500 });
+		} , 5000 });
 
 		results.push_back({ [](RE::Actor*, ScriptingManager&) {// Increase Orgasms
 			int r = static_cast<int>(std::max(Util::randomDouble(0.25, 2.0) * settings.oppMadnessplugOrgasms, 1.0));

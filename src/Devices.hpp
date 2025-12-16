@@ -496,7 +496,7 @@ namespace DCURSES {
 			}
 
 			if (hasUD) {
-				if (Util::FormEditorIdContains(deviceRendered, "UD_Abadon")) {
+				if (Util::testFormComp("UD_&(ArmorSet|Abadon)", deviceRendered)) {
 					if (!settings.udUseAbadon) {
 						continue;
 					}

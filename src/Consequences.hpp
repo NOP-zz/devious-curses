@@ -253,8 +253,8 @@ namespace DCURSES {
 			RE::TESFaction* AND_BottomlessFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x833, "Advanced Nudity Detection.esp");
 
 			if (
-				(settings.ANDConsTopless && player->IsInFaction(AND_ToplessFaction)) ||
-				(settings.ANDConsBottomless && player->IsInFaction(AND_BottomlessFaction))
+				(settings.ANDSexTopless && player->GetFactionRank(AND_ToplessFaction, true) > 0) ||
+				(settings.ANDSexBottomless && player->GetFactionRank(AND_BottomlessFaction, true) > 0)
 				) {
 				isNude = true;
 			}

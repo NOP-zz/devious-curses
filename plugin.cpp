@@ -58,36 +58,59 @@ namespace DCURSES {
         spdlog::flush_on(spdlog::level::trace);
     }
 
-    void P_OnUpdate(RE::StaticFunctionTag*) {
-        if (IsModDisabled()) {
-            log::trace("Event timer skipped, mod is disabled.");
+    static bool UPDATE_LOOP_RUNNING = false;
+
+    void StartUpdateLoop() {
+        if (UPDATE_LOOP_RUNNING) {
             return;
         }
 
-        auto player = RE::PlayerCharacter::GetSingleton();
-        RE::TESFaction* SexlabAnimatingFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("00E50F", 0, 16), "SexLab.esm");
-        RE::TESFaction* ZadAnimatingFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("029567", 0, 16), "Devious Devices - Integration.esm");
-        bool isAnimating = player->IsInFaction(SexlabAnimatingFaction) || player->IsInFaction(ZadAnimatingFaction);
+        UPDATE_LOOP_RUNNING = true;
 
-        auto c1 = std::chrono::high_resolution_clock::now();
-        SexUpdate();
-        auto c2 = std::chrono::high_resolution_clock::now();
-        if (!isAnimating) { TatsUpdate(); }
-        auto c3 = std::chrono::high_resolution_clock::now();
-        if (!isAnimating) { OppDeviceUpdate(); }
-        auto c4 = std::chrono::high_resolution_clock::now();
-        
-        auto d1 = (c2 - c1).count() / 1000000.0;
-        auto d2 = (c3 - c2).count() / 1000000.0;
-        auto d3 = (c4 - c3).count() / 1000000.0;
-        auto dt = (c4 - c1).count() / 1000000.0;
+        std::thread{ [] {
 
-        if (dt >= 1) {
-            log::warn("Long Update Time: Sex: {:.4f}, Marks: {:.4f}, ODevices: {:.4f} total: {:.4f}ms", d1, d2, d3, dt);
-        }
+            while (true) {
+                std::this_thread::sleep_for(1000ms);
 
-        //Always do last!
-        counters.tick();
+                if (IsModDisabled()) {
+                    //log::trace("Event timer skipped, mod is disabled.");
+                    continue;
+                }
+
+                if (RE::UI::GetSingleton()->GameIsPaused()) {
+                    //log::trace("Event timer skipped, game is paused.");
+                    continue;
+                }
+
+                auto player = RE::PlayerCharacter::GetSingleton();
+                RE::TESFaction* SexlabAnimatingFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("00E50F", 0, 16), "SexLab.esm");
+                RE::TESFaction* ZadAnimatingFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("029567", 0, 16), "Devious Devices - Integration.esm");
+                bool isAnimating = player->IsInFaction(SexlabAnimatingFaction) || player->IsInFaction(ZadAnimatingFaction);
+
+                auto c1 = std::chrono::high_resolution_clock::now();
+                SexUpdate();
+                auto c2 = std::chrono::high_resolution_clock::now();
+                if (!isAnimating) { TatsUpdate(); }
+                auto c3 = std::chrono::high_resolution_clock::now();
+                if (!isAnimating) { OppDeviceUpdate(); }
+                auto c4 = std::chrono::high_resolution_clock::now();
+
+                auto d1 = (c2 - c1).count() / 1000000.0;
+                auto d2 = (c3 - c2).count() / 1000000.0;
+                auto d3 = (c4 - c3).count() / 1000000.0;
+                auto dt = (c4 - c1).count() / 1000000.0;
+
+                if (dt >= 10) {
+                    log::warn("Long Update Time: Sex: {:.4f}, Marks: {:.4f}, ODevices: {:.4f} total: {:.4f}ms", d1, d2, d3, dt);
+                }
+                else if (dt >= 1) {
+                    log::trace("Notable Update Time: Sex: {:.4f}, Marks: {:.4f}, ODevices: {:.4f} total: {:.4f}ms", d1, d2, d3, dt);
+                }
+
+                //Always do last!
+                counters.tick();
+            }
+        } }.detach();
     }
     
     RE::TESObjectARMO* P_GetRandomEquipableDevice(RE::StaticFunctionTag*) {
@@ -113,8 +136,9 @@ namespace DCURSES {
     static int TEST = 0;
 
     void P_Test(RE::StaticFunctionTag*) {
-        log::trace("Sending mod events...");
-        DoWickedEvent("");
+        //log::trace("Sending mod events...");
+        OppMadnessPlugEvent("");
+        CustomModEvent::SendModEvent("DCurses_SetLewdMark", "Allure");
     }
 
     bool PapyrusFunctions(RE::BSScript::IVirtualMachine* ivm) {
@@ -122,7 +146,7 @@ namespace DCURSES {
         ivm->RegisterFunction("GetRandomEquipableDevice", "DCursesLib", P_GetRandomEquipableDevice);
         ivm->RegisterFunction("NumDevicesVisible", "DCursesLib", P_numDevicesVisible);
         ivm->RegisterFunction("NumDevicesEquipped", "DCursesLib", P_numDevicesEquipped);
-        ivm->RegisterFunction("OnUpdate", "DCursesLib", P_OnUpdate);
+        //ivm->RegisterFunction("OnUpdate", "DCursesLib", P_OnUpdate);
         ivm->RegisterFunction("WearingOppressiveDevice", "DCurses_MCM", P_WearingOppressiveDevice);
         PapyrusFunctionsSettigns(ivm);
         PapyrusFunctionsSex(ivm);
@@ -207,8 +231,12 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
             DCURSES::LoadMCMSettings();
             DCURSES::RecalculateDeviceLists();
             
-            DCURSES::Util::ExecuteWithDelay(1000ms, [] {
-                DCURSES::ScriptingManager().StartMCMTimer();
+            //DCURSES::Util::ExecuteWithDelay(1000ms, [] {
+            //    DCURSES::ScriptingManager().StartMCMTimer();
+            //});
+
+            DCURSES::Util::ExecuteWithDelay(2s, [] {
+                DCURSES::StartUpdateLoop();
             });
 
             break;

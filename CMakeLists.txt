@@ -38,6 +38,7 @@ add_dependencies(${PROJECT_NAME} Codegen)
 set(SKYRIM_FOLDER "S:/SteamLibrary/steamapps/common/Skyrim Special Edition") # Change this to your skyrim instalation location
 set(SCRIPTS_SOURCE "${CMAKE_SOURCE_DIR}/SourceScripts/")
 
+
 add_custom_command(
     TARGET "${PROJECT_NAME}"
     POST_BUILD
