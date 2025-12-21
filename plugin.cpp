@@ -83,6 +83,11 @@ namespace DCURSES {
                 }
 
                 auto player = RE::PlayerCharacter::GetSingleton();
+
+                if (player->IsDead() || player->IsDeleted() || player->IsDisabled()) {
+                    continue;
+                }
+
                 RE::TESFaction* SexlabAnimatingFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("00E50F", 0, 16), "SexLab.esm");
                 RE::TESFaction* ZadAnimatingFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("029567", 0, 16), "Devious Devices - Integration.esm");
                 bool isAnimating = player->IsInFaction(SexlabAnimatingFaction) || player->IsInFaction(ZadAnimatingFaction);
@@ -101,9 +106,6 @@ namespace DCURSES {
                 auto dt = (c4 - c1).count() / 1000000.0;
 
                 if (dt >= 10) {
-                    log::warn("Long Update Time: Sex: {:.4f}, Marks: {:.4f}, ODevices: {:.4f} total: {:.4f}ms", d1, d2, d3, dt);
-                }
-                else if (dt >= 1) {
                     log::trace("Notable Update Time: Sex: {:.4f}, Marks: {:.4f}, ODevices: {:.4f} total: {:.4f}ms", d1, d2, d3, dt);
                 }
 
@@ -137,8 +139,22 @@ namespace DCURSES {
 
     void P_Test(RE::StaticFunctionTag*) {
         //log::trace("Sending mod events...");
-        OppMadnessPlugEvent("");
-        CustomModEvent::SendModEvent("DCurses_SetLewdMark", "Allure");
+        //DoContraptionEvent("");
+        //auto x = ScriptingManager();
+        //DoStandardEvent(RE::PlayerCharacter::GetSingleton(), false, "", "_ironpear & !bell & !chain", 3, { "zad_DeviousHeavyBondage", "zad_DeviousBlindfold", "zad_DeviousGag" });
+        //DoStandardEvent(RE::PlayerCharacter::GetSingleton(), false, "", "(red & (ebonite | rubber)) | piercing", 20, {"zad_DeviousHeavyBondage", "zad_DeviousSuit", "zad_DeviousGag"});
+        //DoEvent(false, "");
+        for (int i = 0; i < 3; i++) {
+            auto ref = RE::CrosshairPickData::GetSingleton()->target[i];
+            if (ref && ref.get()) {
+                auto actor = ref.get()->As<RE::Actor>();
+                if (actor) {
+                    ScriptingManager().StartSex(actor, false);
+                    return;
+                }
+            }
+        }
+        
     }
 
     bool PapyrusFunctions(RE::BSScript::IVirtualMachine* ivm) {
@@ -230,10 +246,10 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
 
             DCURSES::LoadMCMSettings();
             DCURSES::RecalculateDeviceLists();
-            
-            //DCURSES::Util::ExecuteWithDelay(1000ms, [] {
-            //    DCURSES::ScriptingManager().StartMCMTimer();
-            //});
+            DCURSES::ScriptingManager().MCMRegisterModEvents();
+
+            DCURSES::counters.clock_SexTimeout -= 2;
+           
 
             DCURSES::Util::ExecuteWithDelay(2s, [] {
                 DCURSES::StartUpdateLoop();
@@ -243,6 +259,7 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
         }
         case SKSE::MessagingInterface::kPostLoad: {
             DCURSES::CreateExclusionsFileIfNeeded();
+            DCURSES::CreateModExclusionsFileIfNeeded();
             DCURSES::CreateThemesFileIfNeeded();
 
             std::string pluginName = getJContainersPluginName();

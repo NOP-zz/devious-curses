@@ -289,14 +289,14 @@ namespace DCURSES {
             });
         }
 
-        void StartMCMTimer() {
+        void MCMRegisterModEvents() {
             RE::TESForm* form = StaticDataHolder::GetSingleton()->LookupForm(DCURSES_MCM, "Devious Curses.esp");
-            auto intent = ScriptIntent(form, RE::FormType::Quest, "DCurses_MCM", "StartTimer");
+            auto intent = ScriptIntent(form, RE::FormType::Quest, "DCurses_MCM", "RegisterModEvents");
             RunIntent(intent);
         }
 
         void StartSex(RE::Actor* aggressor, bool preferAggressive) {
-            std::string additionalTags = GetFilterFuta() ? (SexLab::IsFuta(aggressor) ? ",FF,Lesbian" : "MF,FM") : "";
+            std::string additionalTags = GetFilterFuta() ? (SexLab::IsFuta(aggressor) ? "FF,Lesbian" : "MF,FM") : "";
             RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::Actor*, bool>(std::move(aggressor), std::move(preferAggressive), std::move(additionalTags));
             auto intent = ScriptIntent("DCursesLib", "StartSex", args);
             RunIntent(intent);
@@ -468,9 +468,11 @@ namespace DCURSES {
     RE::BSScript::Variable* GetMCMSetting(std::string name) {
         
         RE::TESForm* form = StaticDataHolder::GetSingleton()->LookupForm(DCURSES_MCM, "Devious Curses.esp");
+        if (!form) return nullptr;
         auto handle = GetHP()->GetHandleForObject(RE::FormType::Quest, form);
         RE::BSTSmartPointer<RE::BSScript::Object> mcmObject;
         GetVM()->FindBoundObject(handle, "DCurses_MCM", mcmObject);
+        if (!mcmObject) return nullptr;
 
         RE::BSScript::Variable* variable = mcmObject->GetProperty(name);
         if (!variable) {

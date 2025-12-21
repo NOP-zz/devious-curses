@@ -61,6 +61,10 @@ constexpr auto DDX_RED_ARMBINDER = 0x110F2;
 constexpr auto DDX_RED_CATSUIT = 0x3D8fC;
 constexpr auto DDX_PUPPY_COLLAR = 0x4F916;
 
+// UD
+constexpr auto UD_ABADONPLUG_INVENTORY = 0x135DDE;
+constexpr auto UD_ABADONPLUGANAL_INVENTORY = 0x13B43C;
+
 	class StaticDataHolder {
 	private: 
 		std::mutex mutex = std::mutex();

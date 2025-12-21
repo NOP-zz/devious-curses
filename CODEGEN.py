@@ -13,6 +13,7 @@ fsliders = [] # List of pairs [[name, default, format, ranemin, rangemax, step, 
 options = [] # List of pairs [[name, default, rel]...]
 colors = [] # List of pairs [[name, default, rel]...]
 texts = [] # List of pairs [[name, default, rel]...]
+keycodes = [] # List of pairs [[name, default, rel]...]
 page_data = [] # List of pairs [[pagename, [lines]]]
 descriptions = [] # List of pairs [[name, description]...]
 recalcs = [] # List of lists
@@ -141,7 +142,23 @@ def processLine(line, page_lines):
 		texts.append([var_name, var_def, rel])
 		descriptions.append([var_name, desc_key])
 		page_lines.append(f'{var_name}OID = AddInputOption("{title_key}", {var_name}, {flag})')
+	elif line.startswith("keycode "):
+		if len(line.split("//")) != 3:
+			print(f'Error on line: {line}')
+		var, title, desc = line.split("//")
+		var_name = var.strip().split(" ")[1]
 
+		title_key = f'$DCURSES_{var_name}'
+		mcm_strings[title_key] = title
+		desc_key = f'$DCURSES_DESCRIPTION_{var_name}'
+		mcm_strings[desc_key] = desc
+
+		var_def = var.strip().split(" ")[3][:-1]
+		keycodes.append([var_name, var_def, rel])
+		descriptions.append([var_name, desc_key])
+		page_lines.append(f'{var_name}OID = AddKeyMapOption("{title_key}", {var_name}, {flag})')
+		if (recalc):
+			recalcs.append(var_name)
 	return page_lines
 
 pages = settings.split("//Page")[1:]
@@ -177,6 +194,9 @@ bool function WearingOppressiveDevice() global Native
 
 Bool Property ModSuspended = False Auto Hidden
 
+String Property DebugTheme = "" Auto
+Int Property DebugCount = 5 Auto
+
 Function RegisterModEvents()
 	RegisterForModEvent("HookAnimationStart", "OnSexStart")
 	RegisterForModEvent("HookAnimationEnd", "OnSexEnd")
@@ -184,10 +204,16 @@ Function RegisterModEvents()
 	RegisterForModEvent("DeviceActorOrgasmEx", "OnDDOrgasm")
 	RegisterForModEvent("dhlp-Suspend", "OnDhlpSuspend")
 	RegisterForModEvent("dhlp-Resume", "OnDhlpResume")
+
+	UnregisterForAllKeys()
+	RegisterForKey(setDebugKey)
 EndFunction
 
-Event OnUpdate()
-	DCursesLib.OnUpdate()
+Event OnKeyDown(Int keycode)
+	If keycode == setDebugKey
+		DCurses_Debug.OpenDebugMenu(self)
+	EndIf
+
 EndEvent
 
 Event OnSexEnd(int tid, bool HasPlayer)
@@ -249,12 +275,10 @@ ConfigInit += "\nEndFunction"
 ConfigInit += """
 
 Event OnConfigInit()
-	RegisterModEvents()
 	Initialize()
 EndEvent
 
 Event OnConfigOpen()
-	RegisterModEvents()
 	Initialize()
 EndEvent
 """
@@ -273,6 +297,7 @@ Defs += ''.join([f'\nFloat Property {x[0]} = {x[1]} Auto\nInt {x[0]}OID' for x i
 Defs += ''.join([f'\nBool Property {x[0]} = {x[1]} Auto\nInt {x[0]}OID' for x in options])
 Defs += ''.join([f'\nInt Property {x[0]} = {x[1]} Auto\nInt {x[0]}OID' for x in colors])
 Defs += ''.join([f'\nString Property {x[0]} = {x[1]} Auto\nInt {x[0]}OID' for x in texts])
+Defs += ''.join([f'\nInt Property {x[0]} = {x[1]} Auto\nInt {x[0]}OID' for x in keycodes])
 
 Highlights = ""
 
@@ -333,6 +358,12 @@ ColorAccept += "\n\nEvent OnOptionColorAccept(int option, int color)"
 ColorAccept += ''.join([parse(x) for x in colors])
 ColorAccept += "\nEndEvent"
 
+KeycodeAccept = ""
+parse = lambda x: f'\n\tIf option == {x[0]}OID\n\t\tUnregisterForAllKeys()\n\t\tRegisterForKey(keycode)\n\t\t{x[0]} = keycode as int\n\t\tSetKeyMapOptionValue(option, keycode)\n\t\t{"ForcePageReset()\n\t\t" if x[2] else ""}Return\n\tEndif'
+KeycodeAccept += "\n\nEvent OnOptionKeyMapChange(int option, int keycode, string conflictControl, string conflictName)\n\tIf keycode == 1\n\t\tkeycode = -1\n\tEndIf"
+KeycodeAccept += ''.join([parse(x) for x in keycodes])
+KeycodeAccept += "\nEndEvent"
+
 with open("DCurses_MCM.psc", "w") as f:
 	f.write(Head)
 	f.write(Defs)
@@ -347,6 +378,8 @@ with open("DCurses_MCM.psc", "w") as f:
 	f.write(InputAccept)
 	f.write(ColorOpen)
 	f.write(ColorAccept)
+	#f.write(KeycodeOpen)
+	f.write(KeycodeAccept)
 
 
 MCMTranslationData = ""
@@ -399,6 +432,7 @@ mid += ''.join(parse(x) for x in brecalcs)
 parse = lambda x: f'{indent}settings.{x} = GetMCMSetting("{x}")->GetSInt();'
 mid += ''.join(parse(x[0]) for x in sliders)
 mid += ''.join(parse(x[0]) for x in colors)
+mid += ''.join(parse(x[0]) for x in keycodes)
 
 parsef = lambda x: f'{indent}settings.{x} = GetMCMSetting("{x}")->GetFloat();'
 mid += ''.join(parsef(x[0]) for x in fsliders)
@@ -421,6 +455,7 @@ mid = ''.join(parse(x[0]) for x in sliders)
 mid += ''.join(parse(x[0]) for x in fsliders)
 mid += ''.join(parse(x[0]) for x in options)
 mid += ''.join(parse(x[0]) for x in colors)
+mid += ''.join(parse(x[0]) for x in keycodes)
 mid += ''.join(parse(x[0]) for x in texts)
 
 settings_raw = pre + mid + post
@@ -433,6 +468,7 @@ post = f"{indent}//CODEGEN_END_FROMJSON" + settings_raw.split("//CODEGEN_END_FRO
 parse = lambda x, y: f'{indent}settings.{x} = static_cast<int>(j.value("{x}", {y}));{indent}SetMCMInt("{x}",settings.{x});'
 mid = ''.join(parse(x[0], x[1]) for x in sliders)
 mid += ''.join(parse(x[0], x[1]) for x in colors)
+mid += ''.join(parse(x[0], x[1]) for x in keycodes)
 
 parsef = lambda x, y: f'{indent}settings.{x} = static_cast<float>(j.value("{x}", {y}));{indent}SetMCMFloat("{x}",settings.{x});'
 mid += ''.join(parsef(x[0], x[1]) for x in fsliders)
@@ -453,6 +489,7 @@ post = f"{indent}//CODEGEN_END_RESET" + settings_raw.split("//CODEGEN_END_RESET"
 parse = lambda x, y: f'{indent}settings.{x} = {y};{indent}SetMCMInt("{x}",settings.{x});'
 mid = ''.join(parse(x[0], x[1]) for x in sliders)
 mid += ''.join(parse(x[0], x[1]) for x in colors)
+mid += ''.join(parse(x[0], x[1]) for x in keycodes)
 
 parsef = lambda x, y: f'{indent}settings.{x} = {y}f;{indent}SetMCMFloat("{x}",settings.{x});'
 mid += ''.join(parsef(x[0], x[1]) for x in fsliders)

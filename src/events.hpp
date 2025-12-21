@@ -164,7 +164,7 @@ namespace DCURSES {
         }
 
         for (auto device : to_equip) {
-            log::trace("Locking device {}", device->GetName());
+            log::trace("Locking device {} on {}", device->GetName(), actor->GetName());
             scriptManager.LockDevice(actor, device, false);
         }
             
@@ -242,6 +242,8 @@ namespace DCURSES {
         auto contraption = CreateAndLockContraption(target);
         AIEventContraption(contraption->GetName());
 
+        counters.clock_SexTimeout -= 5;
+
         //PlayerMessage(fmt::format("As you touch the {} you feel yourself get dizzy as you are strung up into some sort of contraption!", containerName));
         PlayerMessage(Translator(Translation::EventContraption, containerName));
 
@@ -305,6 +307,80 @@ namespace DCURSES {
         PlayerMessage(Translator(Translation::EventWicked, containerName));
     }
 
+    bool DoAbadonEvent(std::string containerName) {
+        auto player = RE::PlayerCharacter::GetSingleton();
+
+        auto scriptManager = ScriptingManager();
+
+        bool canVaginal = true;
+        bool canAnal = true;
+
+        auto currentPlugA = GetWornInventoryDeviceByKeyword(player, "zad_DeviousPlugAnal");
+        if (currentPlugA && !DeviceInventoryIsGeneric(currentPlugA)) {
+            canAnal = false;
+        }
+        else if (currentPlugA) {
+            scriptManager.UnlockDevice(player, currentPlugA);
+        }
+
+        auto currentPlugV = GetWornInventoryDeviceByKeyword(player, "zad_DeviousPlugVaginal");
+        if (currentPlugV && !DeviceInventoryIsGeneric(currentPlugV)) {
+            canVaginal = false;
+        }
+        else if (currentPlugV) {
+            scriptManager.UnlockDevice(player, currentPlugV);
+        }
+
+        if (!canAnal && !canVaginal) {
+            return false;
+        }
+        RE::TESObjectARMO* plug = nullptr;
+
+        if (!canAnal) {
+            plug = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(UD_ABADONPLUG_INVENTORY, "UnforgivingDevices.esp");
+        }
+        else if (!canVaginal) {
+            plug = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(UD_ABADONPLUGANAL_INVENTORY, "UnforgivingDevices.esp");
+        }
+        else {
+            plug = Util::randomDouble() < 50.0 ?
+                StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(UD_ABADONPLUG_INVENTORY, "UnforgivingDevices.esp") :
+                StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(UD_ABADONPLUGANAL_INVENTORY, "UnforgivingDevices.esp");
+        }
+
+        scriptManager.LockDevice(player, plug, true);
+        if (!containerName.empty()) {
+            PlayerMessage(Translator(Translation::EventAbadon, containerName));
+        }
+        
+        return true;
+    }
+
+    std::vector<RE::Actor*> GetFollowersForEvent() {
+        std::vector<RE::Actor*> result;
+
+        for (auto follower : Util::GetFollowers()) {
+            if (settings.onlyFemaleFollowers && follower->GetActorBase()->GetSex() != RE::SEX::kFemale) {
+                continue;
+            }
+            if (settings.excludedFollowers != "") {
+                bool useFollower = true;
+                auto names = Util::split(settings.excludedFollowers, ",");
+                for (auto name : names) {
+                    if (follower->NameIncludes(Util::trim(name))) {
+                        useFollower = false;
+                        log::trace("Excluding follower {} from string {}", follower->GetName(), name);
+                        break;
+                    }
+                }
+                if (!useFollower) continue;
+            }
+            result.push_back(follower);
+        }
+
+        return result;
+    }
+
     bool DoEvent(bool isBoss, std::string contName) {
         auto player = RE::PlayerCharacter::GetSingleton();
 
@@ -312,6 +388,7 @@ namespace DCURSES {
 
         events.push_back({ [](bool, std::string contName, RE::Actor* player) {
             if (DoSimpleSlaveryEvent(contName)) {
+                log::info("Ran event Simple Slavery");
                 UndressAndUnequipActor(player);
                 return true;
             }
@@ -320,6 +397,7 @@ namespace DCURSES {
 
         events.push_back({ [](bool, std::string contName, RE::Actor* player) {
             if (DoContraptionEvent(contName)) {
+                log::info("Ran event Contraption");
                 UnequipItems(player);
                 if (settings.stripPlayerOnEvent) {
                     UndressActor(player, true);
@@ -331,6 +409,7 @@ namespace DCURSES {
 
         events.push_back({ [](bool, std::string contName, RE::Actor* player) {
             if (DoOppDeviceEvent(contName)) {
+                log::info("Ran event Oppressive Device");
                 if (settings.stripPlayerOnEvent) {
                     UndressActor(player, false);
                 }
@@ -341,14 +420,14 @@ namespace DCURSES {
 
         events.push_back({ [](bool isBoss, std::string contName, RE::Actor* player) {
             if (DoTattooEvent(contName)) {
+                log::info("Ran event Tattoo");
                 if (settings.stripPlayerOnEvent) {
                     UndressActor(player, false);
                 }
                 if (settings.allowFollowerEvents) {
-                    for (auto follower : Util::GetFollowers()) {
-                        if (!settings.onlyFemaleFollowers || follower->GetActorBase()->GetSex() == RE::SEX::kFemale) {
-                            DoStandardEvent(follower, isBoss, contName);
-                        }
+                    log::info("Applying tattoos to followers...");
+                    for (auto follower : GetFollowersForEvent()) {
+                        DoStandardEvent(follower, isBoss, contName);
                     }
                 }
                 return true;
@@ -358,6 +437,7 @@ namespace DCURSES {
 
         events.push_back({ [](bool, std::string contName, RE::Actor* player) {
             if (DoLewdMarkEvent(contName)) {
+                log::info("Ran event Mark");
                 if (settings.stripPlayerOnEvent) {
                     UndressActor(player, false);
                 }
@@ -368,19 +448,31 @@ namespace DCURSES {
 
         events.push_back({ [](bool, std::string contName, RE::Actor* player) {
             DoWickedEvent(contName);
+            log::info("Ran event Wicked");
             if (settings.stripPlayerOnEvent) {
                 UndressActor(player, false);
             }
             return true;
         }, settings.eventWickedWeight });
 
+        events.push_back({ [](bool, std::string contName, RE::Actor* player) {
+            if (DoAbadonEvent(contName)) {
+                log::info("Ran event Abadon");
+                if (settings.stripPlayerOnEvent) {
+                    UndressActor(player, false);
+                }
+                return true;
+            }
+            return false;
+        }, settings.eventAbadonWeight });
+
         events.push_back({ [](bool isBoss, std::string contName, RE::Actor* player) {
             if (DoStandardEvent(player, isBoss, contName)) {
+                log::info("Ran event Standard");
                 if (settings.allowFollowerEvents) {
-                    for (auto follower : Util::GetFollowers()) {
-                        if (!settings.onlyFemaleFollowers || follower->GetActorBase()->GetSex() == RE::SEX::kFemale) {
-                            DoStandardEvent(follower, isBoss, contName);
-                        }
+                    log::info("Adding Devices to followers...");
+                    for (auto follower : GetFollowersForEvent()) {
+                        DoStandardEvent(follower, isBoss, contName);
                     }
                 }
                 return true;
@@ -539,7 +631,7 @@ namespace DCURSES {
         }
 
         std::vector<RE::TESKey*> addedKeys;
-        if (data.isLeveled || data.isDeadActor || (data.isPickpocket && !IsPickpocketTargetKnown(activatedObject->formID))) {
+        if (data.isLeveled || data.isDeadActor || (data.isPickpocket)) {
             addedKeys = GenerateKeys(activatedObject, false);
             GenerateRandomDevices(activatedObject);
         }
@@ -627,6 +719,10 @@ namespace DCURSES {
             return;
         }
 
+        if (data.isPickpocket && IsPickpocketTargetKnown(activatedObject->formID)) {
+            return;
+        }
+
         //log::trace("Worn items: {}", GetWornDeviceCount(GetPlayer()));
         if (IsObjectRefKnown(activatedObject->formID)) {
             if (settings.vanishingKeys && activatedObject != player) {
@@ -652,10 +748,6 @@ namespace DCURSES {
 
         if (data.isTalking) {
             CheckConsequenceDialogue(actor);
-            return;
-        }
-
-        if (data.isPickpocket && IsPickpocketTargetKnown(activatedObject->formID)) {
             return;
         }
 
@@ -879,6 +971,10 @@ namespace DCURSES {
         if (!CheckSimpleSlavery()) {
             settings.eventSimpleSlaveryWeight = 0;
             SetMCMInt("eventSimpleSlaveryWeight", 0);
+        }
+        if (!CheckUD()) {
+            settings.eventAbadonWeight = 0;
+            SetMCMInt("eventAbadonWeight", 0);
         }
         if (!CheckLewdMarksInstalled()) {
             settings.eventLewdMarkWeight = 0;

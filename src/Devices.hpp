@@ -13,18 +13,24 @@
 #include <fstream>
 
 constexpr auto EXCLUSIONS_FILE = "Data/SKSE/Plugins/DeviousCursesExclusions.json";
+constexpr auto MOD_EXCLUSIONS_FILE = "Data/SKSE/Plugins/DeviousCursesModExclusions.json";
 
 using namespace SKSE;
 
 namespace DCURSES {
 
 	static std::optional<std::filesystem::file_time_type> lastExclusionsEditTime = std::nullopt;
+	static std::optional<std::filesystem::file_time_type> lastModExclusionsEditTime = std::nullopt;
 
 	bool NeedUpdateForExclusions() {
-		if (lastExclusionsEditTime.has_value()) {
-			return lastExclusionsEditTime != std::filesystem::last_write_time(EXCLUSIONS_FILE);
+		bool needsUpdate = false;
+		if (lastExclusionsEditTime.has_value() && lastExclusionsEditTime != std::filesystem::last_write_time(EXCLUSIONS_FILE)) {
+			needsUpdate = true;
 		}
-		return true;
+		if (lastModExclusionsEditTime.has_value() && lastModExclusionsEditTime != std::filesystem::last_write_time(MOD_EXCLUSIONS_FILE)) {
+			needsUpdate = true;
+		}
+		return needsUpdate;
 	}
 	
 	struct DeviceData {
@@ -140,6 +146,23 @@ namespace DCURSES {
 		}
 	}
 
+	void CreateModExclusionsFileIfNeeded() {
+		nlohmann::json j = nlohmann::json::array();
+
+		if (!std::filesystem::exists(MOD_EXCLUSIONS_FILE)) {
+			log::warn("Unable to load exclusions file. Creating default file.");
+			std::ofstream o(MOD_EXCLUSIONS_FILE);
+
+			j = nlohmann::json::array({
+				"DeviousFollowers.esp",
+				"TheTrappingsOfFate.esp",
+				"DeviouslyAccessible.esp",
+			});
+
+			o << std::setw(4) << j << std::endl;
+		}
+	}
+
 	std::vector<std::string> GetDeviceExclusions() {
 		CreateExclusionsFileIfNeeded();
 
@@ -159,7 +182,26 @@ namespace DCURSES {
 		return j.get<std::vector<std::string>>();
 	}
 
-	bool ProcessDevice(DeviceData dev, std::vector<std::string> exclusions) {
+	std::vector<std::string> GetModExclusions() {
+		CreateModExclusionsFileIfNeeded();
+
+		nlohmann::json j = nlohmann::json::array();
+
+		std::ifstream i(MOD_EXCLUSIONS_FILE);
+
+		try {
+			i >> j;
+		}
+		catch (...) {
+			log::error("Exclusions file has garbled data.");
+			return std::vector<std::string>();
+		}
+
+
+		return j.get<std::vector<std::string>>();
+	}
+
+	bool ProcessDevice(DeviceData dev, std::vector<std::string> exclusions, std::vector<RE::TESFile*> mod_exclusions) {
 		RE::TESObjectARMO* rend = dev.rend;
 		if (!rend) {
 			log::warn("ProcessDevice called with bad device data");
@@ -200,6 +242,13 @@ namespace DCURSES {
 
 		for (auto excl : exclusions) {
 			if (Util::testFormComp(excl, dev.inv)) {
+				return false;
+			}
+		}
+
+		for (auto mod : mod_exclusions) {
+			if (mod->IsFormInMod(rend->formID) || mod->IsFormInMod(dev.inv->formID)) {
+				//log::trace("Skipping device {} from mod {}", dev.inv->GetName(), mod->GetFilename());
 				return false;
 			}
 		}
@@ -468,8 +517,22 @@ namespace DCURSES {
 		}
 
 		auto exclusions = GetDeviceExclusions();
+		auto mod_exclusions = GetModExclusions();
+		std::vector<RE::TESFile*> mod_excl;
 
 		log::info("Total devices from api: {}", API->GetDatabase().size());
+
+		for (auto mod_name : mod_exclusions) {
+			for (auto file : RE::TESDataHandler::GetSingleton()->files) {
+				if (Util::tolower(std::string(file->GetFilename())) == Util::tolower(Util::trim(mod_name))) {
+					if (file->smallFileCompileIndex | file->compileIndex) {
+						mod_excl.push_back(file);
+						log::trace("Skipping mod {}", file->GetFilename());
+					}
+				}
+			}
+		}
+
 		for (auto const& [device, dev_data] : API->GetDatabase()) {
 			RE::TESObjectARMO* deviceInventory = device;
 
@@ -496,15 +559,14 @@ namespace DCURSES {
 			}
 
 			if (hasUD) {
-				if (Util::testFormComp("UD_&(ArmorSet|Abadon)", deviceRendered)) {
-					if (!settings.udUseAbadon) {
-						continue;
-					}
+				if (Util::FormEditorIdContains(deviceRendered, "UD_AbadonPlug")) {
+					continue;
 				}
-				else if (Util::FormEditorIdContains(deviceRendered, "UD_")) {
-					if (!settings.udUseMisc) {
-						continue;
-					}
+				else if (Util::testFormComp("UD_&(ArmorSet|Abadon)", deviceRendered) && !settings.udUseAbadon) {
+					continue;
+				}
+				else if (Util::FormEditorIdContains(deviceRendered, "UD_") && !settings.udUseMisc) {
+					continue;
 				}
 			}
 
@@ -519,12 +581,17 @@ namespace DCURSES {
 				deviceRendered->HasKeywordString("zad_BlockGeneric") ||
 				deviceRendered->HasKeywordString("zad_QuestItem") ||
 				deviceInventory->HasKeywordString("zad_BlockGeneric") ||
-				deviceInventory->HasKeywordString("zad_QuestItem") || 
-				Util::FormEditorIdContains(deviceRendered, "FrayEQ") ||
-				Util::FormEditorIdContains(deviceInventory, "FrayEQ")
+				deviceInventory->HasKeywordString("zad_QuestItem")
 				) {
 				continue;
 			}
+
+			/*if (Util::FormEditorIdContains(deviceRendered, "_df") || Util::FormEditorIdContains(deviceInventory, "_DF")) {
+				continue;
+			}
+			if (Util::FormEditorIdContains(deviceRendered, "FrayEQ") || Util::FormEditorIdContains(deviceInventory, "FrayEQ")) {
+				continue;
+			}*/
 
 			if (settings.onlyUseUnforgivingDevices && !(deviceRendered->HasKeywordString("UD_UnforgivingDevice") && deviceInventory->HasKeywordString("UD_InventoryDevice"))) {
 				continue;
@@ -548,13 +615,14 @@ namespace DCURSES {
 				keyCount
 			};
 
-			if (ProcessDevice(dat, exclusions)) {
+			if (ProcessDevice(dat, exclusions, mod_excl)) {
 				counter++;
 			}
 		}
 		log::info("Total accepted devices: {}", counter);
 
 		lastExclusionsEditTime = std::filesystem::last_write_time(EXCLUSIONS_FILE);
+		lastModExclusionsEditTime = std::filesystem::last_write_time(MOD_EXCLUSIONS_FILE);
 
 		//CODEGEN_START_DEVICES_NAMES
 		devices.belts.second = "belts";

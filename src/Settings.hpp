@@ -10,6 +10,7 @@
 using namespace SKSE;
 
 typedef int color;
+typedef int keycode;
 typedef std::string text;
 
 constexpr auto SETTINGS_FILE = "Data/SKSE/Plugins/DeviousCurses.json";
@@ -26,7 +27,6 @@ namespace DCURSES {
 		//Flag flag_RT_LM						//ESP:RapeTattoos.esp && CheckSTNG() && CheckLM()
 		//Flag flag_SimpleSlavery				//ESP:SimpleSlavery.esp
 		//Flag flag_UnforgivingDevices			//ESP:UnforgivingDevices.esp
-		//Flag flag_SSEnabled					//eventSimpleSlaveryWeight > 0 && ESP:SimpleSlavery.esp
 		//Flag flag_SGO							//ESP:Sgo4IF.esp
 		//Flag flag_LockOppDevice_Menu			//!oppDeviceAntiCheat || !WearingOppressiveDevice() 
 		//Flag flag_WickedDevices				//ESP:Devious Wicked Devices.esp
@@ -124,6 +124,7 @@ namespace DCURSES {
 		//Column
 		bool allowFollowerEvents = false;		//Follower Events//Allow followers to be affected by curses. Currently only applies to the Bondage Curse and Tattoo Curse.
 		bool onlyFemaleFollowers = true;		//Only Female Followers//Follower events will only trigger if the follower uses a female body (female & futa).
+		text excludedFollowers = "";			//Excluded Followers//List of followers that are excluded from events. Names should be comma-separated.\nThis will check to see if any part of their name matches.\nExample: "Lydia, J'zargo"
 		//Header Tattoo Curse
 		int eventTattooWeight = 15;				//Tattoo Curse Weight//Chance to receive random tattoos.\nRequires Rape Tattoos.//{0}//(0,500,1)							?:? flag_RapeTats
 		int eventTattooMin = 1;					//Tattoo Curse Min//Minimum number of tattoos that can be put on.//{0}//(1,10,1)											?:? flag_RapeTats
@@ -133,7 +134,9 @@ namespace DCURSES {
 		int eventLewdMarkWeight = 10;			//Lewd Mark Weight//Chance to receive a lewd mark.//{0}//(0,500,1) ?:? flag_LewdMarks
 		//Header Slavery Curse
 		int eventSimpleSlaveryWeight = 0;		//Simple Slavery Weight//Chance to trigger a Simple Slavery auction.//{0}//(0,500,1) ?:? flag_SimpleSlavery					**RELOAD
-		int eventSSMinRestraints = 6;			//Minimum Restraints//Minimum restraints that need to be equipped for a Simple Slavery auction to start.//{0}//(0,10,1)		?:? flag_SSEnabled
+		int eventSSMinRestraints = 6;			//Minimum Restraints//Minimum restraints that need to be equipped for a Simple Slavery auction to start.//{0}//(0,10,1)		?:? flag_SimpleSlavery
+		//Header Abadon Curse
+		int eventAbadonWeight = 5;				//Abadon Plug Weight//Chance to be equipped with an Abadon Plug. This will trigger exactly the same as the quest from UD.//{0}//(0,500,1) ?:? flag_UnforgivingDevices
 		//Page Unforgiving Devices
 		bool onlyUseUnforgivingDevices = true;	//Only Unforgiving Devices//Only register devices to the mod that are converted to work with UD.\n(Will cause lag on menu close)													?:? flag_UnforgivingDevices  **RECALC
 		bool udUseAbadon = false;				//Allow Abadon Devices//Allow Abadon devices to be enabled in the normal random device search. Will not equip the Abadon Plug even if enabled.\n(Will cause lag on menu close)		?:? flag_UnforgivingDevices  **RECALC
@@ -274,6 +277,7 @@ namespace DCURSES {
 		bool bossExtraGold = true;				//Boss Chest Extra Gold//Boss chests will have extra gold.
 		bool useThemes = false;					//Use Device Themes//Events that equip the player with devices will try to keep all devices equipped to a consistent theme.\nWARNING: this will increase the time taken to run each event and may cause lag spikes.
 		//Column
+		keycode setDebugKey = -1;				//Debug Menu Key//
 		bool disableForce3rdPerson = true;		//Disable 3rd Person//This mod will not force the player into 3rd person.
 		bool enableSlowStrip = false;			//Use Sexlab Strip//Replace the built in stripping algorithm with the one from sexlab.\nCan fix rare cases of crashing on stripping and also give more control over what gets stripped.
 		float tatSolventChance = 0.5;			//Universal Solvent Chance//Chance to find universal solvent when looting dead bodies. Universal solvent will remove all lewd marks and tattoos.\nHaving more tattoos will slightly increase the chance of finding one.\nSet to 0 to disable.//{1}//(0,50,0.1)
@@ -376,6 +380,10 @@ namespace DCURSES {
 
 	bool GetFilterFuta() {
 		return settings.sexFilterFuta;
+	}
+
+	std::string GetExcludedFollowers() {
+		return settings.excludedFollowers;
 	}
 
 	void RecalculateDeviceLists();
@@ -494,6 +502,8 @@ namespace DCURSES {
 		SetMCMInt("eventSimpleSlaveryWeight",settings.eventSimpleSlaveryWeight);
 		settings.eventSSMinRestraints = 6;
 		SetMCMInt("eventSSMinRestraints",settings.eventSSMinRestraints);
+		settings.eventAbadonWeight = 5;
+		SetMCMInt("eventAbadonWeight",settings.eventAbadonWeight);
 		settings.LMAllureWeight = 10;
 		SetMCMInt("LMAllureWeight",settings.LMAllureWeight);
 		settings.LMAllureMod = 5;
@@ -622,6 +632,8 @@ namespace DCURSES {
 		SetMCMInt("LMNudityColor",settings.LMNudityColor);
 		settings.LMHealslutColor = 0xffbb45;
 		SetMCMInt("LMHealslutColor",settings.LMHealslutColor);
+		settings.setDebugKey = -1;
+		SetMCMInt("setDebugKey",settings.setDebugKey);
 		settings.baseChance = 6.5f;
 		SetMCMFloat("baseChance",settings.baseChance);
 		settings.containerModifier = 1.0f;
@@ -870,6 +882,8 @@ namespace DCURSES {
 		SetMCMBool("sexAlwaysAllowSpouse",settings.sexAlwaysAllowSpouse);
 		settings.sexAlwaysAllowSummons = false;
 		SetMCMBool("sexAlwaysAllowSummons",settings.sexAlwaysAllowSummons);
+		settings.excludedFollowers = "";
+		SetMCMString("excludedFollowers",settings.excludedFollowers);
 		settings.LMNudityAditionalForms = "";
 		SetMCMString("LMNudityAditionalForms",settings.LMNudityAditionalForms);
 		//CODEGEN_END_RESET
@@ -939,6 +953,7 @@ namespace DCURSES {
 			{"eventLewdMarkWeight", settings.eventLewdMarkWeight},
 			{"eventSimpleSlaveryWeight", settings.eventSimpleSlaveryWeight},
 			{"eventSSMinRestraints", settings.eventSSMinRestraints},
+			{"eventAbadonWeight", settings.eventAbadonWeight},
 			{"LMAllureWeight", settings.LMAllureWeight},
 			{"LMAllureMod", settings.LMAllureMod},
 			{"LMAllureSex", settings.LMAllureSex},
@@ -1127,6 +1142,8 @@ namespace DCURSES {
 			{"LMBondageColor", settings.LMBondageColor},
 			{"LMNudityColor", settings.LMNudityColor},
 			{"LMHealslutColor", settings.LMHealslutColor},
+			{"setDebugKey", settings.setDebugKey},
+			{"excludedFollowers", settings.excludedFollowers},
 			{"LMNudityAditionalForms", settings.LMNudityAditionalForms},
 			//CODEGEN_END_TOJSON
 		};
@@ -1272,6 +1289,8 @@ namespace DCURSES {
 		SetMCMInt("eventSimpleSlaveryWeight",settings.eventSimpleSlaveryWeight);
 		settings.eventSSMinRestraints = static_cast<int>(j.value("eventSSMinRestraints", 6));
 		SetMCMInt("eventSSMinRestraints",settings.eventSSMinRestraints);
+		settings.eventAbadonWeight = static_cast<int>(j.value("eventAbadonWeight", 5));
+		SetMCMInt("eventAbadonWeight",settings.eventAbadonWeight);
 		settings.LMAllureWeight = static_cast<int>(j.value("LMAllureWeight", 10));
 		SetMCMInt("LMAllureWeight",settings.LMAllureWeight);
 		settings.LMAllureMod = static_cast<int>(j.value("LMAllureMod", 5));
@@ -1400,6 +1419,8 @@ namespace DCURSES {
 		SetMCMInt("LMNudityColor",settings.LMNudityColor);
 		settings.LMHealslutColor = static_cast<int>(j.value("LMHealslutColor", 0xffbb45));
 		SetMCMInt("LMHealslutColor",settings.LMHealslutColor);
+		settings.setDebugKey = static_cast<int>(j.value("setDebugKey", -1));
+		SetMCMInt("setDebugKey",settings.setDebugKey);
 		settings.baseChance = static_cast<float>(j.value("baseChance", 6.5));
 		SetMCMFloat("baseChance",settings.baseChance);
 		settings.containerModifier = static_cast<float>(j.value("containerModifier", 1.0));
@@ -1648,6 +1669,8 @@ namespace DCURSES {
 		SetMCMBool("sexAlwaysAllowSpouse",settings.sexAlwaysAllowSpouse);
 		settings.sexAlwaysAllowSummons = static_cast<bool>(j.value("sexAlwaysAllowSummons", false));
 		SetMCMBool("sexAlwaysAllowSummons",settings.sexAlwaysAllowSummons);
+		settings.excludedFollowers = j.value("excludedFollowers", "");
+		SetMCMString("excludedFollowers",settings.excludedFollowers);
 		settings.LMNudityAditionalForms = j.value("LMNudityAditionalForms", "");
 		SetMCMString("LMNudityAditionalForms",settings.LMNudityAditionalForms);
 		//CODEGEN_END_FROMJSON
@@ -1656,279 +1679,279 @@ namespace DCURSES {
 	bool NeedUpdateForExclusions();
 
 	void P_UpdateSKSE(RE::StaticFunctionTag*) {
-		Util::ProfileExecutionTime("Update SKSE", [] {
-			//CODEGEN_START_UPDATE
-			bool recalculate = false;
-			if (settings.maxHeldKeys != GetMCMSetting("maxHeldKeys")->GetSInt()) {recalculate = true;}
-			if (settings.onlyUseUnforgivingDevices != GetMCMSetting("onlyUseUnforgivingDevices")->GetBool()) {recalculate = true;}
-			if (settings.udUseAbadon != GetMCMSetting("udUseAbadon")->GetBool()) {recalculate = true;}
-			if (settings.udUseMisc != GetMCMSetting("udUseMisc")->GetBool()) {recalculate = true;}
-			settings.minGoldRequired = GetMCMSetting("minGoldRequired")->GetSInt();
-			settings.eventScalingMod = GetMCMSetting("eventScalingMod")->GetSInt();
-			settings.minRestraints = GetMCMSetting("minRestraints")->GetSInt();
-			settings.maxRestraints = GetMCMSetting("maxRestraints")->GetSInt();
-			settings.bossAditionalRestraints = GetMCMSetting("bossAditionalRestraints")->GetSInt();
-			settings.restraintCap = GetMCMSetting("restraintCap")->GetSInt();
-			settings.minArousal = GetMCMSetting("minArousal")->GetSInt();
-			settings.beltWeight = GetMCMSetting("beltWeight")->GetSInt();
-			settings.braWeight = GetMCMSetting("braWeight")->GetSInt();
-			settings.plugsWeight = GetMCMSetting("plugsWeight")->GetSInt();
-			settings.lockingPlugsWeight = GetMCMSetting("lockingPlugsWeight")->GetSInt();
-			settings.inflatablePlugsWeight = GetMCMSetting("inflatablePlugsWeight")->GetSInt();
-			settings.nipplePiercingsWeight = GetMCMSetting("nipplePiercingsWeight")->GetSInt();
-			settings.vaginalPiercingsWeight = GetMCMSetting("vaginalPiercingsWeight")->GetSInt();
-			settings.corsetWeight = GetMCMSetting("corsetWeight")->GetSInt();
-			settings.beltedCorsetsWeight = GetMCMSetting("beltedCorsetsWeight")->GetSInt();
-			settings.slaveHarnessWeight = GetMCMSetting("slaveHarnessWeight")->GetSInt();
-			settings.chastityHarnessWeight = GetMCMSetting("chastityHarnessWeight")->GetSInt();
-			settings.armbinderWeight = GetMCMSetting("armbinderWeight")->GetSInt();
-			settings.elbowbinderWeight = GetMCMSetting("elbowbinderWeight")->GetSInt();
-			settings.yokeWeight = GetMCMSetting("yokeWeight")->GetSInt();
-			settings.shacklesWeight = GetMCMSetting("shacklesWeight")->GetSInt();
-			settings.straitjacketWeight = GetMCMSetting("straitjacketWeight")->GetSInt();
-			settings.straitjacketLegbinderWeight = GetMCMSetting("straitjacketLegbinderWeight")->GetSInt();
-			settings.petSuitWeight = GetMCMSetting("petSuitWeight")->GetSInt();
-			settings.collarWeight = GetMCMSetting("collarWeight")->GetSInt();
-			settings.armCuffsWeight = GetMCMSetting("armCuffsWeight")->GetSInt();
-			settings.legCuffsWeight = GetMCMSetting("legCuffsWeight")->GetSInt();
-			settings.gagWeight = GetMCMSetting("gagWeight")->GetSInt();
-			settings.ringGagWeight = GetMCMSetting("ringGagWeight")->GetSInt();
-			settings.largeGagWeight = GetMCMSetting("largeGagWeight")->GetSInt();
-			settings.largeRingGagWeight = GetMCMSetting("largeRingGagWeight")->GetSInt();
-			settings.blindfoldWeight = GetMCMSetting("blindfoldWeight")->GetSInt();
-			settings.hoodBothWeight = GetMCMSetting("hoodBothWeight")->GetSInt();
-			settings.hoodGagWeight = GetMCMSetting("hoodGagWeight")->GetSInt();
-			settings.hoodBlindWeight = GetMCMSetting("hoodBlindWeight")->GetSInt();
-			settings.hoodNoneWeight = GetMCMSetting("hoodNoneWeight")->GetSInt();
-			settings.catsuitWeight = GetMCMSetting("catsuitWeight")->GetSInt();
-			settings.hobbleSkirtWeight = GetMCMSetting("hobbleSkirtWeight")->GetSInt();
-			settings.hobbleSkirtDifficulty = GetMCMSetting("hobbleSkirtDifficulty")->GetSInt();
-			settings.bootsWeight = GetMCMSetting("bootsWeight")->GetSInt();
-			settings.glovesWeight = GetMCMSetting("glovesWeight")->GetSInt();
-			settings.mittensWeight = GetMCMSetting("mittensWeight")->GetSInt();
-			settings.eventStandardWeight = GetMCMSetting("eventStandardWeight")->GetSInt();
-			settings.eventStandardBossReduction = GetMCMSetting("eventStandardBossReduction")->GetSInt();
-			settings.eventOppressiveWeight = GetMCMSetting("eventOppressiveWeight")->GetSInt();
-			settings.eventContraptionWeight = GetMCMSetting("eventContraptionWeight")->GetSInt();
-			settings.eventContDeviceOverride = GetMCMSetting("eventContDeviceOverride")->GetSInt();
-			settings.eventWickedWeight = GetMCMSetting("eventWickedWeight")->GetSInt();
-			settings.eventTattooWeight = GetMCMSetting("eventTattooWeight")->GetSInt();
-			settings.eventTattooMin = GetMCMSetting("eventTattooMin")->GetSInt();
-			settings.eventTattooMax = GetMCMSetting("eventTattooMax")->GetSInt();
-			settings.eventTattooCap = GetMCMSetting("eventTattooCap")->GetSInt();
-			settings.eventLewdMarkWeight = GetMCMSetting("eventLewdMarkWeight")->GetSInt();
-			settings.eventSimpleSlaveryWeight = GetMCMSetting("eventSimpleSlaveryWeight")->GetSInt();
-			settings.eventSSMinRestraints = GetMCMSetting("eventSSMinRestraints")->GetSInt();
-			settings.LMAllureWeight = GetMCMSetting("LMAllureWeight")->GetSInt();
-			settings.LMAllureMod = GetMCMSetting("LMAllureMod")->GetSInt();
-			settings.LMAllureSex = GetMCMSetting("LMAllureSex")->GetSInt();
-			settings.LMHeatWeight = GetMCMSetting("LMHeatWeight")->GetSInt();
-			settings.LMHeatMod = GetMCMSetting("LMHeatMod")->GetSInt();
-			settings.LMHeatContainerCount = GetMCMSetting("LMHeatContainerCount")->GetSInt();
-			settings.LMBrandingWeight = GetMCMSetting("LMBrandingWeight")->GetSInt();
-			settings.LMBrandingTotal = GetMCMSetting("LMBrandingTotal")->GetSInt();
-			settings.LMBondageWeight = GetMCMSetting("LMBondageWeight")->GetSInt();
-			settings.LMBondageDeviceCount = GetMCMSetting("LMBondageDeviceCount")->GetSInt();
-			settings.LMNudityWeight = GetMCMSetting("LMNudityWeight")->GetSInt();
-			settings.LMNudityTalkTimes = GetMCMSetting("LMNudityTalkTimes")->GetSInt();
-			settings.LMHealslutWeight = GetMCMSetting("LMHealslutWeight")->GetSInt();
-			settings.LMHealslutHealing = GetMCMSetting("LMHealslutHealing")->GetSInt();
-			settings.oppSummonerCollarWeight = GetMCMSetting("oppSummonerCollarWeight")->GetSInt();
-			settings.oppSummonerSexCount = GetMCMSetting("oppSummonerSexCount")->GetSInt();
-			settings.oppSMinSummonArousal = GetMCMSetting("oppSMinSummonArousal")->GetSInt();
-			settings.oppDwarvenCuirassWeight = GetMCMSetting("oppDwarvenCuirassWeight")->GetSInt();
-			settings.oppDwarvenValueNeeded = GetMCMSetting("oppDwarvenValueNeeded")->GetSInt();
-			settings.oppDwarvenArousal = GetMCMSetting("oppDwarvenArousal")->GetSInt();
-			settings.oppLivingLatexWeight = GetMCMSetting("oppLivingLatexWeight")->GetSInt();
-			settings.oppLivingLatexStartTime = GetMCMSetting("oppLivingLatexStartTime")->GetSInt();
-			settings.oppMadnessPlugWeight = GetMCMSetting("oppMadnessPlugWeight")->GetSInt();
-			settings.oppMadnessPlugIterations = GetMCMSetting("oppMadnessPlugIterations")->GetSInt();
-			settings.oppMadnessplugOrgasms = GetMCMSetting("oppMadnessplugOrgasms")->GetSInt();
-			settings.minKeysLooted = GetMCMSetting("minKeysLooted")->GetSInt();
-			settings.maxKeysLooted = GetMCMSetting("maxKeysLooted")->GetSInt();
-			settings.maxHeldKeys = GetMCMSetting("maxHeldKeys")->GetSInt();
-			settings.restraintsKeyWeight = GetMCMSetting("restraintsKeyWeight")->GetSInt();
-			settings.chastityKeyWeight = GetMCMSetting("chastityKeyWeight")->GetSInt();
-			settings.piercingToolWeight = GetMCMSetting("piercingToolWeight")->GetSInt();
-			settings.consSexWeight = GetMCMSetting("consSexWeight")->GetSInt();
-			settings.consFineWeight = GetMCMSetting("consFineWeight")->GetSInt();
-			settings.consFineAmount = GetMCMSetting("consFineAmount")->GetSInt();
-			settings.consRandomBondageWeight = GetMCMSetting("consRandomBondageWeight")->GetSInt();
-			settings.consMercyWeight = GetMCMSetting("consMercyWeight")->GetSInt();
-			settings.sexCooldown = GetMCMSetting("sexCooldown")->GetSInt();
-			settings.sexChance = GetMCMSetting("sexChance")->GetSInt();
-			settings.sexChanceCreature = GetMCMSetting("sexChanceCreature")->GetSInt();
-			settings.sexBaseArousal = GetMCMSetting("sexBaseArousal")->GetSInt();
-			settings.sexArousalNightModifier = GetMCMSetting("sexArousalNightModifier")->GetSInt();
-			settings.sexArousalNudeModifier = GetMCMSetting("sexArousalNudeModifier")->GetSInt();
-			settings.sexArousalCollarModifier = GetMCMSetting("sexArousalCollarModifier")->GetSInt();
-			settings.sexArousalHeavyModifier = GetMCMSetting("sexArousalHeavyModifier")->GetSInt();
-			settings.sexArousalBlindModifier = GetMCMSetting("sexArousalBlindModifier")->GetSInt();
-			settings.sexArousalBootsModifier = GetMCMSetting("sexArousalBootsModifier")->GetSInt();
-			settings.sexArousalHobbleModifier = GetMCMSetting("sexArousalHobbleModifier")->GetSInt();
-			settings.sexArousalVisibleModifier = GetMCMSetting("sexArousalVisibleModifier")->GetSInt();
-			settings.sexArousalCreatureModifier = GetMCMSetting("sexArousalCreatureModifier")->GetSInt();
-			settings.sexArousalFollowerModifier = GetMCMSetting("sexArousalFollowerModifier")->GetSInt();
-			settings.sexArousalSpouseModifier = GetMCMSetting("sexArousalSpouseModifier")->GetSInt();
-			settings.sexArousalSummonModifier = GetMCMSetting("sexArousalSummonModifier")->GetSInt();
-			settings.sexSearchInterval = GetMCMSetting("sexSearchInterval")->GetSInt();
-			settings.sexRequiredPlayerArousal = GetMCMSetting("sexRequiredPlayerArousal")->GetSInt();
-			settings.sexRequiredPlayerTattoos = GetMCMSetting("sexRequiredPlayerTattoos")->GetSInt();
-			settings.sexChanceFollower = GetMCMSetting("sexChanceFollower")->GetSInt();
-			settings.sexChanceSpouse = GetMCMSetting("sexChanceSpouse")->GetSInt();
-			settings.sexChanceSummon = GetMCMSetting("sexChanceSummon")->GetSInt();
-			settings.LMAllureColor = GetMCMSetting("LMAllureColor")->GetSInt();
-			settings.LMHeatColor = GetMCMSetting("LMHeatColor")->GetSInt();
-			settings.LMBrandingColor = GetMCMSetting("LMBrandingColor")->GetSInt();
-			settings.LMBondageColor = GetMCMSetting("LMBondageColor")->GetSInt();
-			settings.LMNudityColor = GetMCMSetting("LMNudityColor")->GetSInt();
-			settings.LMHealslutColor = GetMCMSetting("LMHealslutColor")->GetSInt();
-			settings.baseChance = GetMCMSetting("baseChance")->GetFloat();
-			settings.containerModifier = GetMCMSetting("containerModifier")->GetFloat();
-			settings.bossContainerModifier = GetMCMSetting("bossContainerModifier")->GetFloat();
-			settings.deadBodyModifier = GetMCMSetting("deadBodyModifier")->GetFloat();
-			settings.pickpocketModifier = GetMCMSetting("pickpocketModifier")->GetFloat();
-			settings.doorModifier = GetMCMSetting("doorModifier")->GetFloat();
-			settings.lockedModifier = GetMCMSetting("lockedModifier")->GetFloat();
-			settings.lockDifficultyModifier = GetMCMSetting("lockDifficultyModifier")->GetFloat();
-			settings.arousalModifier = GetMCMSetting("arousalModifier")->GetFloat();
-			settings.eventContraptionTime = GetMCMSetting("eventContraptionTime")->GetFloat();
-			settings.LMBrandingChance = GetMCMSetting("LMBrandingChance")->GetFloat();
-			settings.LMBondageChance = GetMCMSetting("LMBondageChance")->GetFloat();
-			settings.oppSummonChance = GetMCMSetting("oppSummonChance")->GetFloat();
-			settings.oppLivingLatexGem = GetMCMSetting("oppLivingLatexGem")->GetFloat();
-			settings.oppLivingLatexMore = GetMCMSetting("oppLivingLatexMore")->GetFloat();
-			settings.playerHomeModifier = GetMCMSetting("playerHomeModifier")->GetFloat();
-			settings.cityModifier = GetMCMSetting("cityModifier")->GetFloat();
-			settings.townModifier = GetMCMSetting("townModifier")->GetFloat();
-			settings.banditModifier = GetMCMSetting("banditModifier")->GetFloat();
-			settings.draugrModifier = GetMCMSetting("draugrModifier")->GetFloat();
-			settings.lockedLocationBypass = GetMCMSetting("lockedLocationBypass")->GetFloat();
-			settings.theftLocationBypass = GetMCMSetting("theftLocationBypass")->GetFloat();
-			settings.dwarvenModifier = GetMCMSetting("dwarvenModifier")->GetFloat();
-			settings.falmerModifier = GetMCMSetting("falmerModifier")->GetFloat();
-			settings.forswornModifier = GetMCMSetting("forswornModifier")->GetFloat();
-			settings.vampireModifier = GetMCMSetting("vampireModifier")->GetFloat();
-			settings.warlockModifier = GetMCMSetting("warlockModifier")->GetFloat();
-			settings.dragonLairModifier = GetMCMSetting("dragonLairModifier")->GetFloat();
-			settings.apocryphaModifier = GetMCMSetting("apocryphaModifier")->GetFloat();
-			settings.wildernessModifier = GetMCMSetting("wildernessModifier")->GetFloat();
-			settings.keyLossChance = GetMCMSetting("keyLossChance")->GetFloat();
-			settings.keyChance = GetMCMSetting("keyChance")->GetFloat();
-			settings.keyBonus = GetMCMSetting("keyBonus")->GetFloat();
-			settings.keyPickpocketBonus = GetMCMSetting("keyPickpocketBonus")->GetFloat();
-			settings.magicKeyChance = GetMCMSetting("magicKeyChance")->GetFloat();
-			settings.rDeviceBaseChance = GetMCMSetting("rDeviceBaseChance")->GetFloat();
-			settings.tatSolventChance = GetMCMSetting("tatSolventChance")->GetFloat();
-			settings.arousalPotionChance = GetMCMSetting("arousalPotionChance")->GetFloat();
-			settings.consTriggerNude = GetMCMSetting("consTriggerNude")->GetFloat();
-			settings.consTriggerRestrained = GetMCMSetting("consTriggerRestrained")->GetFloat();
-			settings.consTriggerSex = GetMCMSetting("consTriggerSex")->GetFloat();
-			settings.sexArousalTattooModifier = GetMCMSetting("sexArousalTattooModifier")->GetFloat();
-			settings.sexSearchRadius = GetMCMSetting("sexSearchRadius")->GetFloat();
-			settings.onlyLockedDoors = GetMCMSetting("onlyLockedDoors")->GetBool();
-			settings.eventScaling = GetMCMSetting("eventScaling")->GetBool();
-			settings.bossOnlyHeavy = GetMCMSetting("bossOnlyHeavy")->GetBool();
-			settings.stripPlayerOnEvent = GetMCMSetting("stripPlayerOnEvent")->GetBool();
-			settings.stripOnlyKeywords = GetMCMSetting("stripOnlyKeywords")->GetBool();
-			settings.beltPlugs = GetMCMSetting("beltPlugs")->GetBool();
-			settings.noBeltPiercing = GetMCMSetting("noBeltPiercing")->GetBool();
-			settings.plugsDontCount = GetMCMSetting("plugsDontCount")->GetBool();
-			settings.allowLegShackles = GetMCMSetting("allowLegShackles")->GetBool();
-			settings.eventContDevices = GetMCMSetting("eventContDevices")->GetBool();
-			settings.eventContAllDevices = GetMCMSetting("eventContAllDevices")->GetBool();
-			settings.allowFollowerEvents = GetMCMSetting("allowFollowerEvents")->GetBool();
-			settings.onlyFemaleFollowers = GetMCMSetting("onlyFemaleFollowers")->GetBool();
-			settings.onlyUseUnforgivingDevices = GetMCMSetting("onlyUseUnforgivingDevices")->GetBool();
-			settings.udUseAbadon = GetMCMSetting("udUseAbadon")->GetBool();
-			settings.udUseMisc = GetMCMSetting("udUseMisc")->GetBool();
-			settings.ANDSexTopless = GetMCMSetting("ANDSexTopless")->GetBool();
-			settings.ANDSexBottomless = GetMCMSetting("ANDSexBottomless")->GetBool();
-			settings.ANDConsTopless = GetMCMSetting("ANDConsTopless")->GetBool();
-			settings.ANDConsBottomless = GetMCMSetting("ANDConsBottomless")->GetBool();
-			settings.LMBrandingPunish = GetMCMSetting("LMBrandingPunish")->GetBool();
-			settings.LMNudityChestOnly = GetMCMSetting("LMNudityChestOnly")->GetBool();
-			settings.oppOneAtATime = GetMCMSetting("oppOneAtATime")->GetBool();
-			settings.oppSCollarDrainsMagicka = GetMCMSetting("oppSCollarDrainsMagicka")->GetBool();
-			settings.oppSCollarAutoRemove = GetMCMSetting("oppSCollarAutoRemove")->GetBool();
-			settings.oppDwarvenHeavyRestraint = GetMCMSetting("oppDwarvenHeavyRestraint")->GetBool();
-			settings.oppDwarvenRequireLoc = GetMCMSetting("oppDwarvenRequireLoc")->GetBool();
-			settings.oppLivingLatexHeavy = GetMCMSetting("oppLivingLatexHeavy")->GetBool();
-			settings.oppLivingLatexRequireRem = GetMCMSetting("oppLivingLatexRequireRem")->GetBool();
-			settings.oppLivingLatexOpen = GetMCMSetting("oppLivingLatexOpen")->GetBool();
-			settings.oppMadnessAllOrgasms = GetMCMSetting("oppMadnessAllOrgasms")->GetBool();
-			settings.oppMadnessChaos = GetMCMSetting("oppMadnessChaos")->GetBool();
-			settings.useLocationModifiers = GetMCMSetting("useLocationModifiers")->GetBool();
-			settings.keyForgiveness = GetMCMSetting("keyForgiveness")->GetBool();
-			settings.preferRelevantKeys = GetMCMSetting("preferRelevantKeys")->GetBool();
-			settings.vanishingKeys = GetMCMSetting("vanishingKeys")->GetBool();
-			settings.enableQuestInteractions = GetMCMSetting("enableQuestInteractions")->GetBool();
-			settings.enableQIMalkoran = GetMCMSetting("enableQIMalkoran")->GetBool();
-			settings.enableQISanguine = GetMCMSetting("enableQISanguine")->GetBool();
-			settings.enableQIBlackStar = GetMCMSetting("enableQIBlackStar")->GetBool();
-			settings.enableQIMindOfMadness = GetMCMSetting("enableQIMindOfMadness")->GetBool();
-			settings.enableQIProvingHonor = GetMCMSetting("enableQIProvingHonor")->GetBool();
-			settings.enableQISaarthal = GetMCMSetting("enableQISaarthal")->GetBool();
-			settings.enableQIDwemerMuseum = GetMCMSetting("enableQIDwemerMuseum")->GetBool();
-			settings.enableQIThalmorEmbassy = GetMCMSetting("enableQIThalmorEmbassy")->GetBool();
-			settings.oppDeviceAntiCheat = GetMCMSetting("oppDeviceAntiCheat")->GetBool();
-			settings.generalDeviceAntiCheat = GetMCMSetting("generalDeviceAntiCheat")->GetBool();
-			settings.noMessageBoxes = GetMCMSetting("noMessageBoxes")->GetBool();
-			settings.bossChestUseModelPath = GetMCMSetting("bossChestUseModelPath")->GetBool();
-			settings.dragonHoard = GetMCMSetting("dragonHoard")->GetBool();
-			settings.bossExtraGold = GetMCMSetting("bossExtraGold")->GetBool();
-			settings.useThemes = GetMCMSetting("useThemes")->GetBool();
-			settings.disableForce3rdPerson = GetMCMSetting("disableForce3rdPerson")->GetBool();
-			settings.enableSlowStrip = GetMCMSetting("enableSlowStrip")->GetBool();
-			settings.resumeEvents = GetMCMSetting("resumeEvents")->GetBool();
-			settings.saveDependentSettings = GetMCMSetting("saveDependentSettings")->GetBool();
-			settings.setAllDefaultSettings = GetMCMSetting("setAllDefaultSettings")->GetBool();
-			settings.consAllowFollowers = GetMCMSetting("consAllowFollowers")->GetBool();
-			settings.consAllowCreatures = GetMCMSetting("consAllowCreatures")->GetBool();
-			settings.consUseRelationships = GetMCMSetting("consUseRelationships")->GetBool();
-			settings.consRelationBondage = GetMCMSetting("consRelationBondage")->GetBool();
-			settings.consFallthrough = GetMCMSetting("consFallthrough")->GetBool();
-			settings.consRandomHeavyBondage = GetMCMSetting("consRandomHeavyBondage")->GetBool();
-			settings.consBondageIgnoreMax = GetMCMSetting("consBondageIgnoreMax")->GetBool();
-			settings.sexEnabled = GetMCMSetting("sexEnabled")->GetBool();
-			settings.sexAggressiveAnims = GetMCMSetting("sexAggressiveAnims")->GetBool();
-			settings.sexFilterFuta = GetMCMSetting("sexFilterFuta")->GetBool();
-			settings.sexRandomEnabled = GetMCMSetting("sexRandomEnabled")->GetBool();
-			settings.sexAllowMale = GetMCMSetting("sexAllowMale")->GetBool();
-			settings.sexAllowFemale = GetMCMSetting("sexAllowFemale")->GetBool();
-			settings.sexAllowFuta = GetMCMSetting("sexAllowFuta")->GetBool();
-			settings.sexAllowCreature = GetMCMSetting("sexAllowCreature")->GetBool();
-			settings.sexAllowFarmAnimals = GetMCMSetting("sexAllowFarmAnimals")->GetBool();
-			settings.sexRequireAll = GetMCMSetting("sexRequireAll")->GetBool();
-			settings.sexRequireBindings = GetMCMSetting("sexRequireBindings")->GetBool();
-			settings.sexRequireCollar = GetMCMSetting("sexRequireCollar")->GetBool();
-			settings.sexRequireHeavy = GetMCMSetting("sexRequireHeavy")->GetBool();
-			settings.sexRequireNude = GetMCMSetting("sexRequireNude")->GetBool();
-			settings.sexAlwaysAllowFollowers = GetMCMSetting("sexAlwaysAllowFollowers")->GetBool();
-			settings.sexAlwaysAllowSpouse = GetMCMSetting("sexAlwaysAllowSpouse")->GetBool();
-			settings.sexAlwaysAllowSummons = GetMCMSetting("sexAlwaysAllowSummons")->GetBool();
-			settings.LMNudityAditionalForms = GetMCMSetting("LMNudityAditionalForms")->GetString();
-			//CODEGEN_END_UPDATE
-			if (settings.setAllDefaultSettings) {
-				ResetMCMSettings();
-			}
+		//CODEGEN_START_UPDATE
+		bool recalculate = false;
+		if (settings.maxHeldKeys != GetMCMSetting("maxHeldKeys")->GetSInt()) {recalculate = true;}
+		if (settings.onlyUseUnforgivingDevices != GetMCMSetting("onlyUseUnforgivingDevices")->GetBool()) {recalculate = true;}
+		if (settings.udUseAbadon != GetMCMSetting("udUseAbadon")->GetBool()) {recalculate = true;}
+		if (settings.udUseMisc != GetMCMSetting("udUseMisc")->GetBool()) {recalculate = true;}
+		settings.minGoldRequired = GetMCMSetting("minGoldRequired")->GetSInt();
+		settings.eventScalingMod = GetMCMSetting("eventScalingMod")->GetSInt();
+		settings.minRestraints = GetMCMSetting("minRestraints")->GetSInt();
+		settings.maxRestraints = GetMCMSetting("maxRestraints")->GetSInt();
+		settings.bossAditionalRestraints = GetMCMSetting("bossAditionalRestraints")->GetSInt();
+		settings.restraintCap = GetMCMSetting("restraintCap")->GetSInt();
+		settings.minArousal = GetMCMSetting("minArousal")->GetSInt();
+		settings.beltWeight = GetMCMSetting("beltWeight")->GetSInt();
+		settings.braWeight = GetMCMSetting("braWeight")->GetSInt();
+		settings.plugsWeight = GetMCMSetting("plugsWeight")->GetSInt();
+		settings.lockingPlugsWeight = GetMCMSetting("lockingPlugsWeight")->GetSInt();
+		settings.inflatablePlugsWeight = GetMCMSetting("inflatablePlugsWeight")->GetSInt();
+		settings.nipplePiercingsWeight = GetMCMSetting("nipplePiercingsWeight")->GetSInt();
+		settings.vaginalPiercingsWeight = GetMCMSetting("vaginalPiercingsWeight")->GetSInt();
+		settings.corsetWeight = GetMCMSetting("corsetWeight")->GetSInt();
+		settings.beltedCorsetsWeight = GetMCMSetting("beltedCorsetsWeight")->GetSInt();
+		settings.slaveHarnessWeight = GetMCMSetting("slaveHarnessWeight")->GetSInt();
+		settings.chastityHarnessWeight = GetMCMSetting("chastityHarnessWeight")->GetSInt();
+		settings.armbinderWeight = GetMCMSetting("armbinderWeight")->GetSInt();
+		settings.elbowbinderWeight = GetMCMSetting("elbowbinderWeight")->GetSInt();
+		settings.yokeWeight = GetMCMSetting("yokeWeight")->GetSInt();
+		settings.shacklesWeight = GetMCMSetting("shacklesWeight")->GetSInt();
+		settings.straitjacketWeight = GetMCMSetting("straitjacketWeight")->GetSInt();
+		settings.straitjacketLegbinderWeight = GetMCMSetting("straitjacketLegbinderWeight")->GetSInt();
+		settings.petSuitWeight = GetMCMSetting("petSuitWeight")->GetSInt();
+		settings.collarWeight = GetMCMSetting("collarWeight")->GetSInt();
+		settings.armCuffsWeight = GetMCMSetting("armCuffsWeight")->GetSInt();
+		settings.legCuffsWeight = GetMCMSetting("legCuffsWeight")->GetSInt();
+		settings.gagWeight = GetMCMSetting("gagWeight")->GetSInt();
+		settings.ringGagWeight = GetMCMSetting("ringGagWeight")->GetSInt();
+		settings.largeGagWeight = GetMCMSetting("largeGagWeight")->GetSInt();
+		settings.largeRingGagWeight = GetMCMSetting("largeRingGagWeight")->GetSInt();
+		settings.blindfoldWeight = GetMCMSetting("blindfoldWeight")->GetSInt();
+		settings.hoodBothWeight = GetMCMSetting("hoodBothWeight")->GetSInt();
+		settings.hoodGagWeight = GetMCMSetting("hoodGagWeight")->GetSInt();
+		settings.hoodBlindWeight = GetMCMSetting("hoodBlindWeight")->GetSInt();
+		settings.hoodNoneWeight = GetMCMSetting("hoodNoneWeight")->GetSInt();
+		settings.catsuitWeight = GetMCMSetting("catsuitWeight")->GetSInt();
+		settings.hobbleSkirtWeight = GetMCMSetting("hobbleSkirtWeight")->GetSInt();
+		settings.hobbleSkirtDifficulty = GetMCMSetting("hobbleSkirtDifficulty")->GetSInt();
+		settings.bootsWeight = GetMCMSetting("bootsWeight")->GetSInt();
+		settings.glovesWeight = GetMCMSetting("glovesWeight")->GetSInt();
+		settings.mittensWeight = GetMCMSetting("mittensWeight")->GetSInt();
+		settings.eventStandardWeight = GetMCMSetting("eventStandardWeight")->GetSInt();
+		settings.eventStandardBossReduction = GetMCMSetting("eventStandardBossReduction")->GetSInt();
+		settings.eventOppressiveWeight = GetMCMSetting("eventOppressiveWeight")->GetSInt();
+		settings.eventContraptionWeight = GetMCMSetting("eventContraptionWeight")->GetSInt();
+		settings.eventContDeviceOverride = GetMCMSetting("eventContDeviceOverride")->GetSInt();
+		settings.eventWickedWeight = GetMCMSetting("eventWickedWeight")->GetSInt();
+		settings.eventTattooWeight = GetMCMSetting("eventTattooWeight")->GetSInt();
+		settings.eventTattooMin = GetMCMSetting("eventTattooMin")->GetSInt();
+		settings.eventTattooMax = GetMCMSetting("eventTattooMax")->GetSInt();
+		settings.eventTattooCap = GetMCMSetting("eventTattooCap")->GetSInt();
+		settings.eventLewdMarkWeight = GetMCMSetting("eventLewdMarkWeight")->GetSInt();
+		settings.eventSimpleSlaveryWeight = GetMCMSetting("eventSimpleSlaveryWeight")->GetSInt();
+		settings.eventSSMinRestraints = GetMCMSetting("eventSSMinRestraints")->GetSInt();
+		settings.eventAbadonWeight = GetMCMSetting("eventAbadonWeight")->GetSInt();
+		settings.LMAllureWeight = GetMCMSetting("LMAllureWeight")->GetSInt();
+		settings.LMAllureMod = GetMCMSetting("LMAllureMod")->GetSInt();
+		settings.LMAllureSex = GetMCMSetting("LMAllureSex")->GetSInt();
+		settings.LMHeatWeight = GetMCMSetting("LMHeatWeight")->GetSInt();
+		settings.LMHeatMod = GetMCMSetting("LMHeatMod")->GetSInt();
+		settings.LMHeatContainerCount = GetMCMSetting("LMHeatContainerCount")->GetSInt();
+		settings.LMBrandingWeight = GetMCMSetting("LMBrandingWeight")->GetSInt();
+		settings.LMBrandingTotal = GetMCMSetting("LMBrandingTotal")->GetSInt();
+		settings.LMBondageWeight = GetMCMSetting("LMBondageWeight")->GetSInt();
+		settings.LMBondageDeviceCount = GetMCMSetting("LMBondageDeviceCount")->GetSInt();
+		settings.LMNudityWeight = GetMCMSetting("LMNudityWeight")->GetSInt();
+		settings.LMNudityTalkTimes = GetMCMSetting("LMNudityTalkTimes")->GetSInt();
+		settings.LMHealslutWeight = GetMCMSetting("LMHealslutWeight")->GetSInt();
+		settings.LMHealslutHealing = GetMCMSetting("LMHealslutHealing")->GetSInt();
+		settings.oppSummonerCollarWeight = GetMCMSetting("oppSummonerCollarWeight")->GetSInt();
+		settings.oppSummonerSexCount = GetMCMSetting("oppSummonerSexCount")->GetSInt();
+		settings.oppSMinSummonArousal = GetMCMSetting("oppSMinSummonArousal")->GetSInt();
+		settings.oppDwarvenCuirassWeight = GetMCMSetting("oppDwarvenCuirassWeight")->GetSInt();
+		settings.oppDwarvenValueNeeded = GetMCMSetting("oppDwarvenValueNeeded")->GetSInt();
+		settings.oppDwarvenArousal = GetMCMSetting("oppDwarvenArousal")->GetSInt();
+		settings.oppLivingLatexWeight = GetMCMSetting("oppLivingLatexWeight")->GetSInt();
+		settings.oppLivingLatexStartTime = GetMCMSetting("oppLivingLatexStartTime")->GetSInt();
+		settings.oppMadnessPlugWeight = GetMCMSetting("oppMadnessPlugWeight")->GetSInt();
+		settings.oppMadnessPlugIterations = GetMCMSetting("oppMadnessPlugIterations")->GetSInt();
+		settings.oppMadnessplugOrgasms = GetMCMSetting("oppMadnessplugOrgasms")->GetSInt();
+		settings.minKeysLooted = GetMCMSetting("minKeysLooted")->GetSInt();
+		settings.maxKeysLooted = GetMCMSetting("maxKeysLooted")->GetSInt();
+		settings.maxHeldKeys = GetMCMSetting("maxHeldKeys")->GetSInt();
+		settings.restraintsKeyWeight = GetMCMSetting("restraintsKeyWeight")->GetSInt();
+		settings.chastityKeyWeight = GetMCMSetting("chastityKeyWeight")->GetSInt();
+		settings.piercingToolWeight = GetMCMSetting("piercingToolWeight")->GetSInt();
+		settings.consSexWeight = GetMCMSetting("consSexWeight")->GetSInt();
+		settings.consFineWeight = GetMCMSetting("consFineWeight")->GetSInt();
+		settings.consFineAmount = GetMCMSetting("consFineAmount")->GetSInt();
+		settings.consRandomBondageWeight = GetMCMSetting("consRandomBondageWeight")->GetSInt();
+		settings.consMercyWeight = GetMCMSetting("consMercyWeight")->GetSInt();
+		settings.sexCooldown = GetMCMSetting("sexCooldown")->GetSInt();
+		settings.sexChance = GetMCMSetting("sexChance")->GetSInt();
+		settings.sexChanceCreature = GetMCMSetting("sexChanceCreature")->GetSInt();
+		settings.sexBaseArousal = GetMCMSetting("sexBaseArousal")->GetSInt();
+		settings.sexArousalNightModifier = GetMCMSetting("sexArousalNightModifier")->GetSInt();
+		settings.sexArousalNudeModifier = GetMCMSetting("sexArousalNudeModifier")->GetSInt();
+		settings.sexArousalCollarModifier = GetMCMSetting("sexArousalCollarModifier")->GetSInt();
+		settings.sexArousalHeavyModifier = GetMCMSetting("sexArousalHeavyModifier")->GetSInt();
+		settings.sexArousalBlindModifier = GetMCMSetting("sexArousalBlindModifier")->GetSInt();
+		settings.sexArousalBootsModifier = GetMCMSetting("sexArousalBootsModifier")->GetSInt();
+		settings.sexArousalHobbleModifier = GetMCMSetting("sexArousalHobbleModifier")->GetSInt();
+		settings.sexArousalVisibleModifier = GetMCMSetting("sexArousalVisibleModifier")->GetSInt();
+		settings.sexArousalCreatureModifier = GetMCMSetting("sexArousalCreatureModifier")->GetSInt();
+		settings.sexArousalFollowerModifier = GetMCMSetting("sexArousalFollowerModifier")->GetSInt();
+		settings.sexArousalSpouseModifier = GetMCMSetting("sexArousalSpouseModifier")->GetSInt();
+		settings.sexArousalSummonModifier = GetMCMSetting("sexArousalSummonModifier")->GetSInt();
+		settings.sexSearchInterval = GetMCMSetting("sexSearchInterval")->GetSInt();
+		settings.sexRequiredPlayerArousal = GetMCMSetting("sexRequiredPlayerArousal")->GetSInt();
+		settings.sexRequiredPlayerTattoos = GetMCMSetting("sexRequiredPlayerTattoos")->GetSInt();
+		settings.sexChanceFollower = GetMCMSetting("sexChanceFollower")->GetSInt();
+		settings.sexChanceSpouse = GetMCMSetting("sexChanceSpouse")->GetSInt();
+		settings.sexChanceSummon = GetMCMSetting("sexChanceSummon")->GetSInt();
+		settings.LMAllureColor = GetMCMSetting("LMAllureColor")->GetSInt();
+		settings.LMHeatColor = GetMCMSetting("LMHeatColor")->GetSInt();
+		settings.LMBrandingColor = GetMCMSetting("LMBrandingColor")->GetSInt();
+		settings.LMBondageColor = GetMCMSetting("LMBondageColor")->GetSInt();
+		settings.LMNudityColor = GetMCMSetting("LMNudityColor")->GetSInt();
+		settings.LMHealslutColor = GetMCMSetting("LMHealslutColor")->GetSInt();
+		settings.setDebugKey = GetMCMSetting("setDebugKey")->GetSInt();
+		settings.baseChance = GetMCMSetting("baseChance")->GetFloat();
+		settings.containerModifier = GetMCMSetting("containerModifier")->GetFloat();
+		settings.bossContainerModifier = GetMCMSetting("bossContainerModifier")->GetFloat();
+		settings.deadBodyModifier = GetMCMSetting("deadBodyModifier")->GetFloat();
+		settings.pickpocketModifier = GetMCMSetting("pickpocketModifier")->GetFloat();
+		settings.doorModifier = GetMCMSetting("doorModifier")->GetFloat();
+		settings.lockedModifier = GetMCMSetting("lockedModifier")->GetFloat();
+		settings.lockDifficultyModifier = GetMCMSetting("lockDifficultyModifier")->GetFloat();
+		settings.arousalModifier = GetMCMSetting("arousalModifier")->GetFloat();
+		settings.eventContraptionTime = GetMCMSetting("eventContraptionTime")->GetFloat();
+		settings.LMBrandingChance = GetMCMSetting("LMBrandingChance")->GetFloat();
+		settings.LMBondageChance = GetMCMSetting("LMBondageChance")->GetFloat();
+		settings.oppSummonChance = GetMCMSetting("oppSummonChance")->GetFloat();
+		settings.oppLivingLatexGem = GetMCMSetting("oppLivingLatexGem")->GetFloat();
+		settings.oppLivingLatexMore = GetMCMSetting("oppLivingLatexMore")->GetFloat();
+		settings.playerHomeModifier = GetMCMSetting("playerHomeModifier")->GetFloat();
+		settings.cityModifier = GetMCMSetting("cityModifier")->GetFloat();
+		settings.townModifier = GetMCMSetting("townModifier")->GetFloat();
+		settings.banditModifier = GetMCMSetting("banditModifier")->GetFloat();
+		settings.draugrModifier = GetMCMSetting("draugrModifier")->GetFloat();
+		settings.lockedLocationBypass = GetMCMSetting("lockedLocationBypass")->GetFloat();
+		settings.theftLocationBypass = GetMCMSetting("theftLocationBypass")->GetFloat();
+		settings.dwarvenModifier = GetMCMSetting("dwarvenModifier")->GetFloat();
+		settings.falmerModifier = GetMCMSetting("falmerModifier")->GetFloat();
+		settings.forswornModifier = GetMCMSetting("forswornModifier")->GetFloat();
+		settings.vampireModifier = GetMCMSetting("vampireModifier")->GetFloat();
+		settings.warlockModifier = GetMCMSetting("warlockModifier")->GetFloat();
+		settings.dragonLairModifier = GetMCMSetting("dragonLairModifier")->GetFloat();
+		settings.apocryphaModifier = GetMCMSetting("apocryphaModifier")->GetFloat();
+		settings.wildernessModifier = GetMCMSetting("wildernessModifier")->GetFloat();
+		settings.keyLossChance = GetMCMSetting("keyLossChance")->GetFloat();
+		settings.keyChance = GetMCMSetting("keyChance")->GetFloat();
+		settings.keyBonus = GetMCMSetting("keyBonus")->GetFloat();
+		settings.keyPickpocketBonus = GetMCMSetting("keyPickpocketBonus")->GetFloat();
+		settings.magicKeyChance = GetMCMSetting("magicKeyChance")->GetFloat();
+		settings.rDeviceBaseChance = GetMCMSetting("rDeviceBaseChance")->GetFloat();
+		settings.tatSolventChance = GetMCMSetting("tatSolventChance")->GetFloat();
+		settings.arousalPotionChance = GetMCMSetting("arousalPotionChance")->GetFloat();
+		settings.consTriggerNude = GetMCMSetting("consTriggerNude")->GetFloat();
+		settings.consTriggerRestrained = GetMCMSetting("consTriggerRestrained")->GetFloat();
+		settings.consTriggerSex = GetMCMSetting("consTriggerSex")->GetFloat();
+		settings.sexArousalTattooModifier = GetMCMSetting("sexArousalTattooModifier")->GetFloat();
+		settings.sexSearchRadius = GetMCMSetting("sexSearchRadius")->GetFloat();
+		settings.onlyLockedDoors = GetMCMSetting("onlyLockedDoors")->GetBool();
+		settings.eventScaling = GetMCMSetting("eventScaling")->GetBool();
+		settings.bossOnlyHeavy = GetMCMSetting("bossOnlyHeavy")->GetBool();
+		settings.stripPlayerOnEvent = GetMCMSetting("stripPlayerOnEvent")->GetBool();
+		settings.stripOnlyKeywords = GetMCMSetting("stripOnlyKeywords")->GetBool();
+		settings.beltPlugs = GetMCMSetting("beltPlugs")->GetBool();
+		settings.noBeltPiercing = GetMCMSetting("noBeltPiercing")->GetBool();
+		settings.plugsDontCount = GetMCMSetting("plugsDontCount")->GetBool();
+		settings.allowLegShackles = GetMCMSetting("allowLegShackles")->GetBool();
+		settings.eventContDevices = GetMCMSetting("eventContDevices")->GetBool();
+		settings.eventContAllDevices = GetMCMSetting("eventContAllDevices")->GetBool();
+		settings.allowFollowerEvents = GetMCMSetting("allowFollowerEvents")->GetBool();
+		settings.onlyFemaleFollowers = GetMCMSetting("onlyFemaleFollowers")->GetBool();
+		settings.onlyUseUnforgivingDevices = GetMCMSetting("onlyUseUnforgivingDevices")->GetBool();
+		settings.udUseAbadon = GetMCMSetting("udUseAbadon")->GetBool();
+		settings.udUseMisc = GetMCMSetting("udUseMisc")->GetBool();
+		settings.ANDSexTopless = GetMCMSetting("ANDSexTopless")->GetBool();
+		settings.ANDSexBottomless = GetMCMSetting("ANDSexBottomless")->GetBool();
+		settings.ANDConsTopless = GetMCMSetting("ANDConsTopless")->GetBool();
+		settings.ANDConsBottomless = GetMCMSetting("ANDConsBottomless")->GetBool();
+		settings.LMBrandingPunish = GetMCMSetting("LMBrandingPunish")->GetBool();
+		settings.LMNudityChestOnly = GetMCMSetting("LMNudityChestOnly")->GetBool();
+		settings.oppOneAtATime = GetMCMSetting("oppOneAtATime")->GetBool();
+		settings.oppSCollarDrainsMagicka = GetMCMSetting("oppSCollarDrainsMagicka")->GetBool();
+		settings.oppSCollarAutoRemove = GetMCMSetting("oppSCollarAutoRemove")->GetBool();
+		settings.oppDwarvenHeavyRestraint = GetMCMSetting("oppDwarvenHeavyRestraint")->GetBool();
+		settings.oppDwarvenRequireLoc = GetMCMSetting("oppDwarvenRequireLoc")->GetBool();
+		settings.oppLivingLatexHeavy = GetMCMSetting("oppLivingLatexHeavy")->GetBool();
+		settings.oppLivingLatexRequireRem = GetMCMSetting("oppLivingLatexRequireRem")->GetBool();
+		settings.oppLivingLatexOpen = GetMCMSetting("oppLivingLatexOpen")->GetBool();
+		settings.oppMadnessAllOrgasms = GetMCMSetting("oppMadnessAllOrgasms")->GetBool();
+		settings.oppMadnessChaos = GetMCMSetting("oppMadnessChaos")->GetBool();
+		settings.useLocationModifiers = GetMCMSetting("useLocationModifiers")->GetBool();
+		settings.keyForgiveness = GetMCMSetting("keyForgiveness")->GetBool();
+		settings.preferRelevantKeys = GetMCMSetting("preferRelevantKeys")->GetBool();
+		settings.vanishingKeys = GetMCMSetting("vanishingKeys")->GetBool();
+		settings.enableQuestInteractions = GetMCMSetting("enableQuestInteractions")->GetBool();
+		settings.enableQIMalkoran = GetMCMSetting("enableQIMalkoran")->GetBool();
+		settings.enableQISanguine = GetMCMSetting("enableQISanguine")->GetBool();
+		settings.enableQIBlackStar = GetMCMSetting("enableQIBlackStar")->GetBool();
+		settings.enableQIMindOfMadness = GetMCMSetting("enableQIMindOfMadness")->GetBool();
+		settings.enableQIProvingHonor = GetMCMSetting("enableQIProvingHonor")->GetBool();
+		settings.enableQISaarthal = GetMCMSetting("enableQISaarthal")->GetBool();
+		settings.enableQIDwemerMuseum = GetMCMSetting("enableQIDwemerMuseum")->GetBool();
+		settings.enableQIThalmorEmbassy = GetMCMSetting("enableQIThalmorEmbassy")->GetBool();
+		settings.oppDeviceAntiCheat = GetMCMSetting("oppDeviceAntiCheat")->GetBool();
+		settings.generalDeviceAntiCheat = GetMCMSetting("generalDeviceAntiCheat")->GetBool();
+		settings.noMessageBoxes = GetMCMSetting("noMessageBoxes")->GetBool();
+		settings.bossChestUseModelPath = GetMCMSetting("bossChestUseModelPath")->GetBool();
+		settings.dragonHoard = GetMCMSetting("dragonHoard")->GetBool();
+		settings.bossExtraGold = GetMCMSetting("bossExtraGold")->GetBool();
+		settings.useThemes = GetMCMSetting("useThemes")->GetBool();
+		settings.disableForce3rdPerson = GetMCMSetting("disableForce3rdPerson")->GetBool();
+		settings.enableSlowStrip = GetMCMSetting("enableSlowStrip")->GetBool();
+		settings.resumeEvents = GetMCMSetting("resumeEvents")->GetBool();
+		settings.saveDependentSettings = GetMCMSetting("saveDependentSettings")->GetBool();
+		settings.setAllDefaultSettings = GetMCMSetting("setAllDefaultSettings")->GetBool();
+		settings.consAllowFollowers = GetMCMSetting("consAllowFollowers")->GetBool();
+		settings.consAllowCreatures = GetMCMSetting("consAllowCreatures")->GetBool();
+		settings.consUseRelationships = GetMCMSetting("consUseRelationships")->GetBool();
+		settings.consRelationBondage = GetMCMSetting("consRelationBondage")->GetBool();
+		settings.consFallthrough = GetMCMSetting("consFallthrough")->GetBool();
+		settings.consRandomHeavyBondage = GetMCMSetting("consRandomHeavyBondage")->GetBool();
+		settings.consBondageIgnoreMax = GetMCMSetting("consBondageIgnoreMax")->GetBool();
+		settings.sexEnabled = GetMCMSetting("sexEnabled")->GetBool();
+		settings.sexAggressiveAnims = GetMCMSetting("sexAggressiveAnims")->GetBool();
+		settings.sexFilterFuta = GetMCMSetting("sexFilterFuta")->GetBool();
+		settings.sexRandomEnabled = GetMCMSetting("sexRandomEnabled")->GetBool();
+		settings.sexAllowMale = GetMCMSetting("sexAllowMale")->GetBool();
+		settings.sexAllowFemale = GetMCMSetting("sexAllowFemale")->GetBool();
+		settings.sexAllowFuta = GetMCMSetting("sexAllowFuta")->GetBool();
+		settings.sexAllowCreature = GetMCMSetting("sexAllowCreature")->GetBool();
+		settings.sexAllowFarmAnimals = GetMCMSetting("sexAllowFarmAnimals")->GetBool();
+		settings.sexRequireAll = GetMCMSetting("sexRequireAll")->GetBool();
+		settings.sexRequireBindings = GetMCMSetting("sexRequireBindings")->GetBool();
+		settings.sexRequireCollar = GetMCMSetting("sexRequireCollar")->GetBool();
+		settings.sexRequireHeavy = GetMCMSetting("sexRequireHeavy")->GetBool();
+		settings.sexRequireNude = GetMCMSetting("sexRequireNude")->GetBool();
+		settings.sexAlwaysAllowFollowers = GetMCMSetting("sexAlwaysAllowFollowers")->GetBool();
+		settings.sexAlwaysAllowSpouse = GetMCMSetting("sexAlwaysAllowSpouse")->GetBool();
+		settings.sexAlwaysAllowSummons = GetMCMSetting("sexAlwaysAllowSummons")->GetBool();
+		settings.excludedFollowers = GetMCMSetting("excludedFollowers")->GetString();
+		settings.LMNudityAditionalForms = GetMCMSetting("LMNudityAditionalForms")->GetString();
+		//CODEGEN_END_UPDATE
+		if (settings.setAllDefaultSettings) {
+			ResetMCMSettings();
+		}
 
-			if (settings.resumeEvents) {
-				SetMCMBool("ModSuspended", false);
-			}
+		if (settings.resumeEvents) {
+			SetMCMBool("ModSuspended", false);
+		}
 
-			counters.clock_SexTimeout -= 2;
-			SaveMCMSettings();
+		SaveMCMSettings();
 
-			if (recalculate) {
-				log::info("Recalculating device lists due to settings changes.");
-				RecalculateDeviceLists();
-			}
-			if (NeedUpdateForExclusions()) {
-				log::info("Recalculating device lists due to exclusions changes.");
-				RecalculateDeviceLists();
-			}
-		});
+		if (recalculate) {
+			log::info("Recalculating device lists due to settings changes.");
+			RecalculateDeviceLists();
+		}
+		if (NeedUpdateForExclusions()) {
+			log::info("Recalculating device lists due to exclusions changes.");
+			RecalculateDeviceLists();
+		}
 	}
 
 	bool PapyrusFunctionsSettigns(RE::BSScript::IVirtualMachine* ivm) {

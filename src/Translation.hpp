@@ -65,6 +65,7 @@ namespace DCURSES {
 		EventMarkNudity,//After a sharp pain, you see that you have a mark of nudity.
 		EventMarkHealslut,//After a sharp pain, you see that you have a mark of the healslut.
 		EventWicked,//As you touch the {} you feel an overwhelming sense of wickedness!
+		EventAbadon,//As you touch the {} you feel an evil curse seeping into you!
 
 		MarkHeatRemove,//You feel a sense of calm as the heat mark fades from your body.
 		MarkAllureRemove,//You sense that people are no longer staring at you as the allure mark fades from your body.
@@ -180,6 +181,7 @@ namespace DCURSES {
 				case (Translation::EventMarkNudity): return "EventMarkNudity";
 				case (Translation::EventMarkHealslut): return "EventMarkHealslut";
 				case (Translation::EventWicked): return "EventWicked";
+				case (Translation::EventAbadon): return "EventAbadon";
 				case (Translation::MarkHeatRemove): return "MarkHeatRemove";
 				case (Translation::MarkAllureRemove): return "MarkAllureRemove";
 				case (Translation::MarkBondageDevice): return "MarkBondageDevice";

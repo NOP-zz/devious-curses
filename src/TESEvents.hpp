@@ -42,10 +42,8 @@ namespace DCURSES {
                     log::trace("Activate skipped, mod is disabled.");
                     return RE::BSEventNotifyControl::kContinue;
                 }
-                Util::ProfileExecutionTime("Calculate Event Chance", [activatedObject] {
-                    CalculateEventChance(activatedObject);
-                    return RE::BSEventNotifyControl::kStop;
-                });
+                CalculateEventChance(activatedObject);
+                return RE::BSEventNotifyControl::kContinue;
             }
             return RE::BSEventNotifyControl::kContinue;
         }
@@ -362,6 +360,27 @@ namespace DCURSES {
                         log::warn("Bad ModEvent strArg: {}", strArg);
                         return RE::BSEventNotifyControl::kContinue;
                     }
+                }
+                else if (event == "removeallrestraints") {
+                    RemoveAllRestraints(player);
+                }
+                else if (event == "removealloppressive") {
+                    RE::TESObjectARMO* summoner_collar = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(SUMMONER_COLLAR, "Devious Curses.esp");
+                    RE::TESObjectARMO* latex = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(LIVING_LATEX, "Devious Curses.esp");
+                    RE::TESObjectARMO* latex_open = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(LIVING_LATEX_OPEN, "Devious Curses.esp");
+                    RE::TESObjectARMO* dwarven_cuirass = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(DWARVEN_CURIAS, "Devious Curses.esp");
+                    RE::TESObjectARMO* dwarven_heavy = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(DWARVEN_CURIAS_HEAVY, "Devious Curses.esp");
+                    RE::TESObjectARMO* madness_plug = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(MADNESS_PLUG, "Devious Curses.esp");
+                    RE::TESObjectARMO* madness_piercings = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(MADNESS_PIERCINGS, "Devious Curses.esp");
+                    
+                    auto scriptManager = ScriptingManager();
+                    scriptManager.UnlockDevice(player, summoner_collar, nullptr, nullptr, true, false);
+                    scriptManager.UnlockDevice(player, latex, nullptr, nullptr, true, false);
+                    scriptManager.UnlockDevice(player, latex_open, nullptr, nullptr, true, false);
+                    scriptManager.UnlockDevice(player, dwarven_cuirass, nullptr, nullptr, true, false);
+                    scriptManager.UnlockDevice(player, dwarven_heavy, nullptr, nullptr, true, false);
+                    scriptManager.UnlockDevice(player, madness_plug, nullptr, nullptr, true, false);
+                    scriptManager.UnlockDevice(player, madness_piercings, nullptr, nullptr, true, false);
                 }
                 else {
                     log::warn("Received bad ModEvent name {}", name);

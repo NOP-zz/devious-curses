@@ -39,7 +39,7 @@ namespace DCURSES {
 			auto user_actor = user->Unpack<RE::Actor*>();
 
 			if (actor == user_actor) {
-				log::info("Found furniture {} for actor {}", refr->GetName(), actor->GetName());
+				//log::info("Found furniture {} for actor {}", refr->GetName(), actor->GetName());
 				ref = refr;
 			}
 
