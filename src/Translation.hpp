@@ -51,6 +51,15 @@ namespace DCURSES {
 		ODeviceMadnessPlugCrash,//The plug makes you feel incredibly unstable!
 		ODeviceMadnessPlugRemove,//With a final flourish, the plug vanishes, leaving behind numerous devices!
 		ODeviceMadnessPlugHunger,//You feel the plug pulse with hunger, you will need to do an extra event!
+		ODeviceNocturnalPiercingStart,//As you touch the {} you sense that it was cursed by an agent of nocturnal herself!
+		ODeviceNocturnalPiercingAnger,//Nocturnal seems angry with you being seen orgasming. She locks you in some restraints!
+		ODeviceNocturnalPiercingRemove,//Nocturnal takes her boon from you, leaving you bound and helpless!
+		ODeviceNocturnalPiercingVibrate,//You feel hands slide across your body activating some of your devices!
+		ODeviceNocturnalPiercingHands,//You feel a hand gently slide across your groin!
+		ODeviceNocturnalPiercingHands2,//You shudder as invisible hands trace your body!
+		ODeviceNocturnalPiercingHands3,//You flush with arousal as invisible hands grope your chest and pussy!
+		ODeviceNocturnalPiercingHands4,//You stifle a moan as invisible hands tease their way inside of you!
+		ODeviceNocturnalPiercingHandsRecast,//As you regain your invisibility you feel hands tickling across your body!
 
 		EventDevices,//As you touch the {} you see restraints magically appear and wrap themselves around you!
 		EventSimpleSlavery,//As you touch the {} you see a flash of light and immediately pass out. Through intermittent consciousness you can feel someone carrying you somewhere...
@@ -82,12 +91,17 @@ namespace DCURSES {
 		QISanguineKey,//Now that your wild adventure with Sanguine is over, he gives you a magic key!
 		QISanguineKeyMark,//Now that your wild adventure with Sanguine is over, he gives you a magic key and removes your nudity mark!
 		QISaarthal,//Strange magic interacts with the amulet transforming it into a collar!
+		QIBrelyna,//As Brelyna casts her spell you feel an additional odd sensation on your crotch!
 		QIDwemerMuseum,//As you touch the stone tablet you feel a sharp pain in your crotch!
 		QIDwemerMuseumCurias,//As you touch the stone tablet you feel a sharp pain in your crotch! While you're distracted, a strange dwemer creature runs up behind you and jumps on you!
 		QIProvingHonor,//As you pull the lever silver objects shoot out from around you and lock on to your body!
 		QIBlackStarEquip,//As you touch the black star you feel yourself being filled with soul gems summoned from oblivion!
 		QIDiplomaticImmunity,//While on the cart to the Thalmor Embassy your party clothes suddenly transformed into something else!
 		QIMindOfMadness,//After arriving in a strange dimension, you find yourself oddly full...
+		QILaidToRest,//As you look through the journal you see a strange rune on a page that jumps out at you, literally!
+		QICriedWolf,//With the Ritual Master dead, the binding magic goes haywire!
+		QIRingmaker,//With the necklace, Madesi also gives you two rings. They feel lucky...
+		QITrinityRestored,//After transacting your oath with Nocturnal, she bestows upon you a boon!
 
 		ItemMagicKey,//All of the devices you were wearing have magically disappeared!
 		ItemTattooCharm,//All of your tattoos have faded from your body!
@@ -168,6 +182,15 @@ namespace DCURSES {
 				case (Translation::ODeviceMadnessPlugCrash): return "ODeviceMadnessPlugCrash";
 				case (Translation::ODeviceMadnessPlugRemove): return "ODeviceMadnessPlugRemove";
 				case (Translation::ODeviceMadnessPlugHunger): return "ODeviceMadnessPlugHunger";
+				case (Translation::ODeviceNocturnalPiercingStart): return "ODeviceNocturnalPiercingStart";
+				case (Translation::ODeviceNocturnalPiercingAnger): return "ODeviceNocturnalPiercingAnger";
+				case (Translation::ODeviceNocturnalPiercingRemove): return "ODeviceNocturnalPiercingRemove";
+				case (Translation::ODeviceNocturnalPiercingVibrate): return "ODeviceNocturnalPiercingVibrate";
+				case (Translation::ODeviceNocturnalPiercingHands): return "ODeviceNocturnalPiercingHands";
+				case (Translation::ODeviceNocturnalPiercingHands2): return "ODeviceNocturnalPiercingHands2";
+				case (Translation::ODeviceNocturnalPiercingHands3): return "ODeviceNocturnalPiercingHands3";
+				case (Translation::ODeviceNocturnalPiercingHands4): return "ODeviceNocturnalPiercingHands4";
+				case (Translation::ODeviceNocturnalPiercingHandsRecast): return "ODeviceNocturnalPiercingHandsRecast";
 				case (Translation::EventDevices): return "EventDevices";
 				case (Translation::EventSimpleSlavery): return "EventSimpleSlavery";
 				case (Translation::EventTattooOne): return "EventTattooOne";
@@ -196,12 +219,17 @@ namespace DCURSES {
 				case (Translation::QISanguineKey): return "QISanguineKey";
 				case (Translation::QISanguineKeyMark): return "QISanguineKeyMark";
 				case (Translation::QISaarthal): return "QISaarthal";
+				case (Translation::QIBrelyna): return "QIBrelyna";
 				case (Translation::QIDwemerMuseum): return "QIDwemerMuseum";
 				case (Translation::QIDwemerMuseumCurias): return "QIDwemerMuseumCurias";
 				case (Translation::QIProvingHonor): return "QIProvingHonor";
 				case (Translation::QIBlackStarEquip): return "QIBlackStarEquip";
 				case (Translation::QIDiplomaticImmunity): return "QIDiplomaticImmunity";
 				case (Translation::QIMindOfMadness): return "QIMindOfMadness";
+				case (Translation::QILaidToRest): return "QILaidToRest";
+				case (Translation::QICriedWolf): return "QICriedWolf";
+				case (Translation::QIRingmaker): return "QIRingmaker";
+				case (Translation::QITrinityRestored): return "QITrinityRestored";
 				case (Translation::ItemMagicKey): return "ItemMagicKey";
 				case (Translation::ItemTattooCharm): return "ItemTattooCharm";
 				case (Translation::ItemArousalPotion): return "ItemArousalPotion";

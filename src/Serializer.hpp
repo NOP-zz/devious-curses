@@ -41,7 +41,7 @@ namespace DCURSES {
         int64_t livingLatexCounter = INT64_MIN;
         int64_t dwarvenCuirassCounter = INT64_MIN;
         int64_t madnessPlugCounter = INT64_MIN;
-        int64_t dummyDoNotUse02 = INT64_MIN;
+        int64_t nocturnalPiercingCounter = INT64_MIN;
         int64_t dummyDoNotUse03 = INT64_MIN;
         int64_t dummyDoNotUse04 = INT64_MIN;
         int64_t dummyDoNotUse05 = INT64_MIN;

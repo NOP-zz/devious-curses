@@ -79,7 +79,8 @@ namespace DCURSES {
 	struct Devices {
 		DeviceList anything;
 		DeviceList belts;
-		DeviceList beltsNoPiercings;
+		DeviceList beltsPiercings;
+		DeviceList beltsCages;
 		DeviceList bras;
 		DeviceList plugs;
 		DeviceList plugsV;
@@ -207,6 +208,8 @@ namespace DCURSES {
 			log::warn("ProcessDevice called with bad device data");
 			return false;
 		}
+		
+
 		//RE::TESObjectARMO* inv = dev.inv;
 		// TypeCount
 
@@ -252,6 +255,10 @@ namespace DCURSES {
 				return false;
 			}
 		}
+
+		if (Util::FormEditorIdContains(rend, "DCurses_")) {
+			return false;
+		}
 		
 		if (deviceTypeCount > 4) { // We don't want restraints that block too much.
 			return false;
@@ -264,9 +271,25 @@ namespace DCURSES {
 		// DEVICES
 		if (!rend->HasKeywordString("zad_DeviousHeavyBondage")) { // No standard devices should include heavy bondage
 			if (rend->HasKeywordString("zad_DeviousBelt") && !rend->HasKeywordString("zad_DeviousSuit") && !rend->HasKeywordString("zad_DeviousCorset") && !rend->HasKeywordString("zad_DeviousHarness")) { // Belts
-				devices.belts.first.push_back(dev);
-				if (!rend->HasKeywordString("zad_DeviousPiercingsVaginal")) {
-					devices.beltsNoPiercings.first.push_back(dev);
+				if (rend->HasKeywordString("zad_DeviousPiercingsVaginal")) {
+					devices.beltsPiercings.first.push_back(dev);
+				}
+				else {
+					if (ShouldUseGenderedChastity()) {
+						auto vivis = StaticDataHolder::GetSingleton()->LookupModByName("VivisCockcageSE_TRX_CBBE_devious_patch.esp");
+						if (vivis->IsFormInMod(dev.inv->formID)) {
+							devices.beltsCages.first.push_back(dev);
+							//log::trace("Adding device as cage: {}", dev.inv->GetName());
+						}
+						else {
+							devices.belts.first.push_back(dev);
+							//log::trace("Adding device as belt: {}", dev.inv->GetName());
+						}
+					}
+					else {
+						devices.beltsCages.first.push_back(dev);
+						devices.belts.first.push_back(dev);
+					}
 				}
 			}
 			if (rend->HasKeywordString("zad_DeviousBra") && !rend->HasKeywordString("zad_DeviousSuit") && !rend->HasKeywordString("zad_DeviousHarness")) { // Bras
@@ -612,7 +635,7 @@ namespace DCURSES {
 				deviceInventory,
 				deviceRendered,
 				isLockless,
-				keyCount
+				keyCount,
 			};
 
 			if (ProcessDevice(dat, exclusions, mod_excl)) {
@@ -626,7 +649,8 @@ namespace DCURSES {
 
 		//CODEGEN_START_DEVICES_NAMES
 		devices.belts.second = "belts";
-		devices.beltsNoPiercings.second = "beltsNoPiercings";
+		devices.beltsPiercings.second = "beltsPiercings";
+		devices.beltsCages.second = "beltsCages";
 		devices.bras.second = "bras";
 		devices.plugs.second = "plugs";
 		devices.plugsV.second = "plugsV";
@@ -814,6 +838,8 @@ namespace DCURSES {
 	DeviceList GetRandomWeightedList(RE::Actor* actor, std::vector<std::string> skipList, std::string theme = "") {
 		if (!actor) return DeviceList();
 
+		auto sex = SexLab::GetSex(actor);
+
 		static const std::vector<std::string> allDeviceKeywords = { "zad_DeviousBelt", "zad_DeviousBra", "zad_DeviousPlugVaginal", "zad_DeviousPlugAnal", "zad_DeviousCollar", "zad_DeviousLegCuffs",
 																	"zad_DeviousArmCuffs", "zad_DeviousPiercingsNipple", "zad_DeviousPiercingsVaginal", "zad_DeviousBlindfold", "zad_DeviousHarness",
 																	"zad_DeviousGag", "zad_DeviousBoots", "zad_DeviousGloves", "zad_DeviousHood", "zad_DeviousSuit", "zad_DeviousHeavyBondage" };
@@ -821,10 +847,17 @@ namespace DCURSES {
 		for (auto const& keyword : allDeviceKeywords) {
 			if (std::find(skipList.begin(), skipList.end(), keyword) == skipList.end()) {// Can equip this keyword
 				if (keyword == "zad_DeviousBelt") {
-					if (settings.noBeltPiercing || std::find(skipList.begin(), skipList.end(), "zad_DeviousPiercingsVaginal") != skipList.end()) {
-						lists.push_back(std::pair(&devices.beltsNoPiercings, settings.beltWeight));
+					if (ShouldUseGenderedChastity()) {
+						if (sex == 2) {
+							lists.push_back(std::pair(&devices.beltsCages, settings.beltWeight));
+						}
+						else {
+							lists.push_back(std::pair(&devices.belts, settings.beltWeight));
+							lists.push_back(std::pair(&devices.beltsPiercings, settings.chastityPiercingWeight));
+						}
 					}
 					else {
+						lists.push_back(std::pair(&devices.beltsPiercings, settings.chastityPiercingWeight));
 						lists.push_back(std::pair(&devices.belts, settings.beltWeight));
 					}
 				}
@@ -1003,6 +1036,32 @@ namespace DCURSES {
 		return 0;
 	}
 
+	bool ActorIsWearingDevice(RE::Actor* actor, RE::TESObjectARMO* device) {
+		if (!actor) return false;
+		auto inventory = actor->GetInventory();
+		for (auto const& [k, v] : inventory) {
+			RE::TESObjectARMO* armor = k->As<RE::TESObjectARMO>();
+			if (armor && armor == device && v.second.get()->IsWorn()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	bool PlayerIsLucky() {
+		auto player = RE::PlayerCharacter::GetSingleton();
+		RE::TESObjectARMO* lucky_piercings = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(LUCKY_PIERCINGS, "Devious Curses.esp");
+		RE::TESObjectARMO* lucky_piercings_r = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(LUCKY_PIERCINGS, "Devious Curses.esp");
+		auto inventory = player->GetInventory();
+		for (auto const& [k, v] : inventory) {
+			RE::TESObjectARMO* armor = k->As<RE::TESObjectARMO>();
+			if (armor && (armor == lucky_piercings || armor == lucky_piercings_r) && v.second.get()->IsWorn()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	std::vector<RE::TESKey*> GenerateKeys(RE::TESObjectREFR* activatedObject, bool skipRand = false, bool onlyOne = false) {
 		auto player = RE::PlayerCharacter::GetSingleton();
 
@@ -1027,6 +1086,8 @@ namespace DCURSES {
 		int restraintsTotal = 0;
 		int chastityTotal = 0;
 		int piercingTotal = 0;
+
+		bool isLucky = PlayerIsLucky();
 
 		if (settings.preferRelevantKeys) {
 			auto api = DeviousDevicesAPI::g_API;
@@ -1081,9 +1142,12 @@ namespace DCURSES {
 			//log::trace("Pickpocket: {}", settings.keyPickpocketBonus);
 			chance *= settings.keyPickpocketBonus;
 		}
+		if (isLucky && settings.keyLuckyBonus > 1.0) {
+			chance *= settings.keyLuckyBonus;
+		}
 
 		double r = Util::randomDouble();
-		log::trace("key chance {:.2f}% ({:.2f})", chance, r);
+		log::trace("key chance {:.2f}%{} ({:.2f})", chance, isLucky ? " [Lucky]" : "", r);
 
 		int count = onlyOne ? 1 : Util::randomInt(settings.minKeysLooted, settings.maxKeysLooted);
 
@@ -1253,18 +1317,6 @@ namespace DCURSES {
 		UnequipItems(akActor);
 
 		return UndressActor(akActor, true);
-	}
-
-	bool ActorIsWearingDevice(RE::Actor* actor, RE::TESObjectARMO* device) {
-		if (!actor) return false;
-		auto inventory = actor->GetInventory();
-		for (auto const& [k, v] : inventory) {
-			RE::TESObjectARMO* armor = k->As<RE::TESObjectARMO>();
-			if (armor && armor == device && v.second.get()->IsWorn()) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	bool TestTheme(std::string theme, std::vector<std::string> skipKeywords = {}) {

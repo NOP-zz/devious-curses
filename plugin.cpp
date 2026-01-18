@@ -39,7 +39,7 @@ using namespace SKSE;
 
 namespace DCURSES {
     //GLOBALS
-    
+    constexpr auto VERSION = "0.8.0";
 
     void InitializeLogging() {
         auto path = log_directory();
@@ -144,17 +144,7 @@ namespace DCURSES {
         //DoStandardEvent(RE::PlayerCharacter::GetSingleton(), false, "", "_ironpear & !bell & !chain", 3, { "zad_DeviousHeavyBondage", "zad_DeviousBlindfold", "zad_DeviousGag" });
         //DoStandardEvent(RE::PlayerCharacter::GetSingleton(), false, "", "(red & (ebonite | rubber)) | piercing", 20, {"zad_DeviousHeavyBondage", "zad_DeviousSuit", "zad_DeviousGag"});
         //DoEvent(false, "");
-        for (int i = 0; i < 3; i++) {
-            auto ref = RE::CrosshairPickData::GetSingleton()->target[i];
-            if (ref && ref.get()) {
-                auto actor = ref.get()->As<RE::Actor>();
-                if (actor) {
-                    ScriptingManager().StartSex(actor, false);
-                    return;
-                }
-            }
-        }
-        
+        auto actors = Util::GetWatchingActors(RE::PlayerCharacter::GetSingleton());
     }
 
     bool PapyrusFunctions(RE::BSScript::IVirtualMachine* ivm) {
@@ -191,7 +181,7 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
 
     DCURSES::InitializeLogging();
 
-    log::info("Initializing DeviousCurses");
+    log::info("Initializing DeviousCurses version {}", DCURSES::VERSION);
 
     SKSE::GetMessagingInterface()->RegisterListener([](SKSE::MessagingInterface::Message *message) {
         switch (message->type)

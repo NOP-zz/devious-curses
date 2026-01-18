@@ -20,8 +20,15 @@ namespace DCURSES {
             return;
         }
         bool hasBondageMark = GetLewdMark() == MARK::TAT_BONDAGE;
-        float chance = settings.rDeviceBaseChance + (hasBondageMark * 2.5f);
-        for (int i = 0; i < 2 + (hasBondageMark * 2); i++) {
+        bool isLucky = PlayerIsLucky();
+        float chance = settings.rDeviceBaseChance;
+        if (hasBondageMark) {
+            chance += 2.5f;
+        }
+        if (isLucky) {
+            chance *= settings.rDeviceLuckyBonus;
+        }
+        for (int i = 0; i < 2 + ((hasBondageMark || isLucky) * 2); i++) {
             if (Util::randomDouble() < chance) {
                 auto dev = GetRandomDevice(&devices.anything);
                 if (dev) {
@@ -156,7 +163,7 @@ namespace DCURSES {
 
         if (!settings.disableForce3rdPerson) scriptManager.ForceThirdPerson();
 
-        if (!contName.empty()) {
+        if (!contName.empty() && actor->IsPlayer()) {
             //PlayerMessage(fmt::format("As you touch the {} you see restraints magically appear and wrap themselves around you!", contName));
             //Util::ExecuteWithDelay(4s, [contName] {
             PlayerMessage(Translator(Translation::EventDevices, contName));
@@ -200,19 +207,21 @@ namespace DCURSES {
 
     }
 
-    bool DoTattooEvent(std::string containerName, int num_tattoos = -1) {
-        auto player = RE::PlayerCharacter::GetSingleton();
+    bool DoTattooEvent(RE::Actor* actor, std::string containerName, int num_tattoos = -1, bool skipMax = false) {
+        if (settings.eventTattooWeight == 0) {
+            return false;
+        }
 
-        if (GetTattooCount(player) > settings.eventTattooCap) {
+        if (!skipMax && GetTattooCount(actor) > settings.eventTattooCap) {
             return false;
         }
 
         if (num_tattoos < 1) {
             num_tattoos = Util::randomInt(settings.eventTattooMin, settings.eventTattooMax);
         }
-        ScriptingManager().RTDoTattooEvent(player, num_tattoos);
+        ScriptingManager().RTDoTattooEvent(actor, num_tattoos);
 
-        if (!containerName.empty()) {
+        if (!containerName.empty() && actor->IsPlayer()) {
             if (num_tattoos == 1) {
                 PlayerMessage(Translator(Translation::EventTattooOne, containerName));
             }
@@ -250,7 +259,7 @@ namespace DCURSES {
         return true;
     }
 
-    bool DoLewdMarkEvent(std::string containerName) {
+    bool DoLewdMarkEvent(std::string containerName, double multiplier = 1.0) {
         if (!CheckLewdMarksInstalled()) {
             return false;
         }
@@ -295,7 +304,7 @@ namespace DCURSES {
         auto mark = pair.first();
 
         AddLewdMark(mark);
-        SetDefaultEffectMagnitudeForMark(mark);
+        SetDefaultEffectMagnitudeForMark(mark, multiplier);
         TatsUpdateContext(mark);
         AIEventAddLewdMark();
 
@@ -418,8 +427,8 @@ namespace DCURSES {
             return false;
         }, settings.eventOppressiveWeight });
 
-        events.push_back({ [](bool isBoss, std::string contName, RE::Actor* player) {
-            if (DoTattooEvent(contName)) {
+        events.push_back({ [](bool, std::string contName, RE::Actor* player) {
+            if (DoTattooEvent(player, contName)) {
                 log::info("Ran event Tattoo");
                 if (settings.stripPlayerOnEvent) {
                     UndressActor(player, false);
@@ -427,7 +436,7 @@ namespace DCURSES {
                 if (settings.allowFollowerEvents) {
                     log::info("Applying tattoos to followers...");
                     for (auto follower : GetFollowersForEvent()) {
-                        DoStandardEvent(follower, isBoss, contName);
+                        DoTattooEvent(follower, contName);
                     }
                 }
                 return true;
@@ -985,6 +994,10 @@ namespace DCURSES {
             SetMCMInt("eventTattooWeight", 0);
             settings.LMBrandingChance = 0;
             SetMCMFloat("LMBrandingChance", 0);
+        }
+        if (!CheckWickedDevices()) {
+            settings.eventWickedWeight = 0;
+            SetMCMInt("eventWickedWeight", 0);
         }
     }
 }

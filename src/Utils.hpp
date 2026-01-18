@@ -174,7 +174,7 @@ namespace DCURSES {
 			size_t pos = 0;
 			std::string token;
 			while ((pos = s.find(delimiter, index)) != std::string::npos) {
-				token = s.substr(index, index + pos);
+				token = s.substr(index, pos - index);
 				tokens.push_back(token);
 				index = pos + delimiter.length();
 			}
@@ -197,7 +197,7 @@ namespace DCURSES {
 		}
 
 		bool testFormComp(const std::string& theme, RE::TESForm* form) {
-			//log::trace("{}", comp);
+			//log::trace("{}", theme);
 			const std::string comp = trim(theme);
 			if (comp == "") return true;
 			if (!form) return false;
@@ -261,6 +261,22 @@ namespace DCURSES {
 			return !actorRace->HasKeywordString("ActorTypeNPC") && (actorRace->HasKeywordString("ActorTypeCreature") || actorRace->HasKeywordString("ActorTypeDwarven") || actorRace->HasKeywordString("ActorTypeAnimal"));
 		}
 
+		template<class T>
+		T* GetCrosshairRefAs() {
+			for (int i = 0; i < 3; i++) {
+				auto ref = RE::CrosshairPickData::GetSingleton()->target[i];
+				if (ref && ref.get()) {
+					T* result = ref.get()->As<T>();
+					if (result) {
+						return result;
+					}
+				}
+			}
+			//RE::TESForm* form = LookupForm(formid, modname);
+			//return (form && form->Is(T::FORMTYPE)) ? static_cast<T*>(form) : nullptr;
+			return nullptr;
+		}
+
 		std::vector<RE::Actor*> GetFollowers() {
 			std::vector<RE::Actor*> result;
 			if (const auto processLists = RE::ProcessLists::GetSingleton(); processLists) {
@@ -270,6 +286,28 @@ namespace DCURSES {
 						auto actorPtr = actorHandle.get();
 						if (auto actor = actorPtr.get(); actor && actor->Is3DLoaded() && !actor->IsDead()) {
 							if (actor->IsPlayerTeammate() && !actor->IsCommandedActor() && !ActorIsCreature(actor) && !actor->IsChild()) {
+								result.push_back(actor);
+							}
+						}
+					}
+				}
+			}
+			return result;
+		}
+
+		std::vector<RE::Actor*> GetWatchingActors(RE::Actor* target, bool excludeFollowers = true) {
+			std::vector<RE::Actor*> result;
+			if (const auto processLists = RE::ProcessLists::GetSingleton(); processLists) {
+				RE::BSSimpleList<RE::ActorHandle>* arr = &(processLists->aliveActorList);
+				if (arr) {
+					for (auto& actorHandle : *arr) {
+						auto actorPtr = actorHandle.get();
+						if (auto actor = actorPtr.get(); actor && actor->Is3DLoaded() && !actor->IsDead()) {
+							if ((actor->IsPlayerTeammate() && excludeFollowers) || actor->IsPlayer()) {
+								continue;
+							}
+							int detection = actor->RequestDetectionLevel(target, RE::DETECTION_PRIORITY::kCritical);
+							if (detection > 0) {
 								result.push_back(actor);
 							}
 						}

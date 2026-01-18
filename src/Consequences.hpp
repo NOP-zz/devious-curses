@@ -4,6 +4,55 @@
 
 namespace DCURSES {
 
+	bool getIsNude(RE::Actor* actor, bool isConsequence = false) {
+		bool is_player = actor == RE::PlayerCharacter::GetSingleton();
+		if (CheckAND()) {
+			RE::TESFaction* AND_ToplessFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x832, "Advanced Nudity Detection.esp");
+			RE::TESFaction* AND_BottomlessFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x833, "Advanced Nudity Detection.esp");
+			RE::TESFaction* AND_ShowingAssFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x82E, "Advanced Nudity Detection.esp");
+			RE::TESFaction* AND_ShowingChestFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x82F, "Advanced Nudity Detection.esp");
+			RE::TESFaction* AND_ShowingGenitalFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x830, "Advanced Nudity Detection.esp");
+			RE::TESFaction* AND_ShowingBraFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x834, "Advanced Nudity Detection.esp");
+			RE::TESFaction* AND_ShowingUnderwearFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x835, "Advanced Nudity Detection.esp");
+
+			bool topless = actor->GetFactionRank(AND_ToplessFaction, is_player) > 0;
+			bool bottomless = actor->GetFactionRank(AND_BottomlessFaction, is_player) > 0;
+			bool showing_ass = actor->GetFactionRank(AND_ShowingAssFaction, is_player) > 0;
+			bool showing_chest = actor->GetFactionRank(AND_ShowingChestFaction, is_player) > 0;
+			bool showing_genitals = actor->GetFactionRank(AND_ShowingGenitalFaction, is_player) > 0;
+			bool showing_bra = actor->GetFactionRank(AND_ShowingBraFaction, is_player) > 0;
+			bool showing_underwear = actor->GetFactionRank(AND_ShowingUnderwearFaction, is_player) > 0;
+
+			if (!isConsequence && (
+				(settings.ANDSexTopless && topless) ||
+				(settings.ANDSexBottomless && bottomless) ||
+				(settings.ANDSexShowingAss && showing_ass) ||
+				(settings.ANDSexShowingChest && showing_chest) ||
+				(settings.ANDSexShowingGenitals && showing_genitals) ||
+				(settings.ANDSexShowingBra && showing_bra) ||
+				(settings.ANDSexShowingUnderwear && showing_underwear)
+				)) {
+				return true;
+			}
+			else if (isConsequence && (
+				(settings.ANDConsTopless && topless) ||
+				(settings.ANDConsBottomless && bottomless) ||
+				(settings.ANDConsShowingAss && showing_ass) ||
+				(settings.ANDConsShowingChest && showing_chest) ||
+				(settings.ANDConsShowingGenitals && showing_genitals) ||
+				(settings.ANDConsShowingBra && showing_bra) ||
+				(settings.ANDConsShowingUnderwear && showing_underwear)
+				)) {
+				return true;
+			}
+		}
+		else {
+			auto body = actor->GetWornArmor((RE::BIPED_MODEL::BipedObjectSlot::kBody));
+			return body == nullptr || (body != nullptr && body->HasKeywordString("zad_Lockable"));
+		}
+		return false;
+	}
+
 	RE::Actor* GetClosestActor(RE::Actor* target) {
 		if (!target) return nullptr;
 
@@ -163,11 +212,14 @@ namespace DCURSES {
 		}
 
 		auto deviceCount = numDevicesVisible(player);
-		auto keys = GenerateKeys(player, true, true);
-		if (keys.size() > 0 && deviceCount > 0) {
-			//PlayerMessage(fmt::format("{} feels bad for you and gives you a {}.", actor->GetName(), keys[0]->GetName()));
-			PlayerMessage(Translator(Translation::ConsequenceMercyKey, actor->GetName(), keys[0]->GetName()));
-			return true;
+		
+		if (deviceCount > 0) {
+			auto keys = GenerateKeys(player, true, true);
+			if (keys.size() > 0) {
+				//PlayerMessage(fmt::format("{} feels bad for you and gives you a {}.", actor->GetName(), keys[0]->GetName()));
+				PlayerMessage(Translator(Translation::ConsequenceMercyKey, actor->GetName(), keys[0]->GetName()));
+				return true;
+			}
 		}
 
 		auto dev = GetRandomDevice(&devices.anything);
@@ -247,22 +299,7 @@ namespace DCURSES {
 		auto player = RE::PlayerCharacter::GetSingleton();
 		log::trace("Checking consequence dialogue");
 		DecrementCounterForMark(MARK::TAT_NUDITY);
-		bool isNude = false;
-		if (CheckAND()) {
-			RE::TESFaction* AND_ToplessFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x832, "Advanced Nudity Detection.esp");
-			RE::TESFaction* AND_BottomlessFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x833, "Advanced Nudity Detection.esp");
-
-			if (
-				(settings.ANDSexTopless && player->GetFactionRank(AND_ToplessFaction, true) > 0) ||
-				(settings.ANDSexBottomless && player->GetFactionRank(AND_BottomlessFaction, true) > 0)
-				) {
-				isNude = true;
-			}
-		}
-		else {
-			auto body = player->GetWornArmor((RE::BIPED_MODEL::BipedObjectSlot::kBody));
-			isNude = body == nullptr || (body != nullptr && body->HasKeywordString("zad_Lockable"));
-		}
+		bool isNude = getIsNude(player, true);
 		
 		if (isNude) {
 			if (Util::randomDouble() <= settings.consTriggerNude) {

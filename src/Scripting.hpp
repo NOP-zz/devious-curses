@@ -54,6 +54,14 @@ namespace DCURSES {
         return true;
     }
 
+    bool CheckWickedDevices() {
+        RE::TESForm* form = StaticDataHolder::GetSingleton()->LookupForm(0x816, "Devious Wicked Devices.esp");
+        if (form == nullptr) {
+            return false;
+        }
+        return true;
+    }
+
     bool CheckAND() {
         RE::TESForm* form = StaticDataHolder::GetSingleton()->LookupForm(0x837, "Advanced Nudity Detection.esp");
         if (form == nullptr) {
@@ -493,9 +501,11 @@ namespace DCURSES {
     void SetMCMSetting(std::string name, RE::BSScript::Variable& value) {
 
         RE::TESForm* form = StaticDataHolder::GetSingleton()->LookupForm(DCURSES_MCM, "Devious Curses.esp");
+        if (!form) return;
         auto handle = GetHP()->GetHandleForObject(RE::FormType::Quest, form);
         RE::BSTSmartPointer<RE::BSScript::Object> mcmObject;
         GetVM()->FindBoundObject(handle, "DCurses_MCM", mcmObject);
+        if (!mcmObject) return;
         
         GetVM()->SetPropertyValue(mcmObject, name.c_str(), value);
     }

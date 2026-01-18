@@ -61,13 +61,14 @@ def processLine(line, page_lines):
 
 		title_key = f'$DCURSES_{var_name}'
 		mcm_strings[title_key] = title
-		desc_key = f'$DCURSES_DESCRIPTION_{var_name}'
-		mcm_strings[desc_key] = desc
+		if desc != "":
+			desc_key = f'$DCURSES_DESCRIPTION_{var_name}'
+			mcm_strings[desc_key] = desc
+			descriptions.append([var_name, desc_key])
 
 		var_def = var.strip().split(" ")[3][:-1]
 		range_min, range_max, step = [x.strip() for x in rang[1:-1].split(",")]
 		sliders.append([var_name, var_def, form, range_min, range_max, step, rel])
-		descriptions.append([var_name, desc_key])
 		page_lines.append(f'{var_name}OID = AddSliderOption("{title_key}", {var_name}, "{form}", {flag})')
 		if (recalc):
 			recalcs.append(var_name)
@@ -79,8 +80,10 @@ def processLine(line, page_lines):
 
 		title_key = f'$DCURSES_{var_name}'
 		mcm_strings[title_key] = title
-		desc_key = f'$DCURSES_DESCRIPTION_{var_name}'
-		mcm_strings[desc_key] = desc
+		if desc != "":
+			desc_key = f'$DCURSES_DESCRIPTION_{var_name}'
+			mcm_strings[desc_key] = desc
+			descriptions.append([var_name, desc_key])
 
 		var_def = var.strip().split(" ")[3][:-1]
 		if var_def[-1] == "f":
@@ -89,7 +92,6 @@ def processLine(line, page_lines):
 			var_def = var_def + '.0'
 		range_min, range_max, step = [x.strip() for x in rang[1:-1].split(",")]
 		fsliders.append([var_name, var_def, form, range_min, range_max, step, rel])
-		descriptions.append([var_name, desc_key])
 		page_lines.append(f'{var_name}OID = AddSliderOption("{title_key}", {var_name}, "{form}", {flag})')
 		if (recalc):
 			frecalcs.append(var_name)
@@ -101,12 +103,13 @@ def processLine(line, page_lines):
 
 		title_key = f'$DCURSES_{var_name}'
 		mcm_strings[title_key] = title
-		desc_key = f'$DCURSES_DESCRIPTION_{var_name}'
-		mcm_strings[desc_key] = desc
+		if desc != "":
+			desc_key = f'$DCURSES_DESCRIPTION_{var_name}'
+			mcm_strings[desc_key] = desc
+			descriptions.append([var_name, desc_key])
 
 		var_def = var.strip().split(" ")[3][:-1]
 		options.append([var_name, var_def, rel])
-		descriptions.append([var_name, desc_key])
 		page_lines.append(f'{var_name}OID = AddToggleOption("{title_key}", {var_name}, {flag})')
 		if (recalc):
 			brecalcs.append(var_name)
@@ -118,12 +121,13 @@ def processLine(line, page_lines):
 
 		title_key = f'$DCURSES_{var_name}'
 		mcm_strings[title_key] = title
-		desc_key = f'$DCURSES_DESCRIPTION_{var_name}'
-		mcm_strings[desc_key] = desc
+		if desc != "":
+			desc_key = f'$DCURSES_DESCRIPTION_{var_name}'
+			mcm_strings[desc_key] = desc
+			descriptions.append([var_name, desc_key])
 
 		var_def = var.strip().split(" ")[3][:-1]
 		colors.append([var_name, var_def, rel])
-		descriptions.append([var_name, desc_key])
 		page_lines.append(f'{var_name}OID = AddColorOption("{title_key}", {var_name}, {flag})')
 		if (recalc):
 			recalcs.append(var_name)
@@ -135,12 +139,13 @@ def processLine(line, page_lines):
 
 		title_key = f'$DCURSES_{var_name}'
 		mcm_strings[title_key] = title
-		desc_key = f'$DCURSES_DESCRIPTION_{var_name}'
-		mcm_strings[desc_key] = desc
+		if desc != "":
+			desc_key = f'$DCURSES_DESCRIPTION_{var_name}'
+			mcm_strings[desc_key] = desc
+			descriptions.append([var_name, desc_key])
 
 		var_def = var.strip().split(" ")[3][:-1]
 		texts.append([var_name, var_def, rel])
-		descriptions.append([var_name, desc_key])
 		page_lines.append(f'{var_name}OID = AddInputOption("{title_key}", {var_name}, {flag})')
 	elif line.startswith("keycode "):
 		if len(line.split("//")) != 3:
@@ -150,12 +155,13 @@ def processLine(line, page_lines):
 
 		title_key = f'$DCURSES_{var_name}'
 		mcm_strings[title_key] = title
-		desc_key = f'$DCURSES_DESCRIPTION_{var_name}'
-		mcm_strings[desc_key] = desc
+		if desc != "":
+			desc_key = f'$DCURSES_DESCRIPTION_{var_name}'
+			mcm_strings[desc_key] = desc
+			descriptions.append([var_name, desc_key])
 
 		var_def = var.strip().split(" ")[3][:-1]
 		keycodes.append([var_name, var_def, rel])
-		descriptions.append([var_name, desc_key])
 		page_lines.append(f'{var_name}OID = AddKeyMapOption("{title_key}", {var_name}, {flag})')
 		if (recalc):
 			recalcs.append(var_name)

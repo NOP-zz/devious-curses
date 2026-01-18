@@ -33,14 +33,14 @@ namespace DCURSES {
 		//Flag flag_AND							//ESP:Advanced Nudity Detection.esp
 		//Page Main								
 		//Header Chances
-		float baseChance = 6.5;					//Base Event Chance//How likely are you to trigger a trap before modifiers.//{1}%//(0,100,0.1)
-		float containerModifier = 1;			//Container Modifier//Modifier for containers.//{1}x//(0,10,0.1)
-		float bossContainerModifier = 2;		//Boss Chest Modifier//Modifier for boss chests.\nIs applied with the container modifier.//{1}x//(0,10,0.1)
+		float baseChance = 6.5f;				//Base Event Chance//How likely are you to trigger a trap before modifiers.//{1}%//(0,100,0.1)
+		float containerModifier = 1.0f;			//Container Modifier//Modifier for containers.//{1}x//(0,10,0.1)
+		float bossContainerModifier = 2.0f;		//Boss Chest Modifier//Modifier for boss chests.\nIs applied with the container modifier.//{1}x//(0,10,0.1)
 		float deadBodyModifier = 1.3f;			//Dead Body Modifier//Modifier for corpses.//{1}x//(0,10,0.1)
 		float pickpocketModifier = 1.3f;		//Pickpocket Modifier//Modifier for pickpocketing.//{1}x//(0,10,0.1)
 		float doorModifier = 1.0f;				//Door Modifier//Modifier for doors.//{1}x//(0,10,0.1)
 		bool onlyLockedDoors = true;			//Only Locked Doors//Only trigger events when the door is locked.
-		float lockedModifier = 2;				//Locked Modifier//Modifier for locked doors and chests.\nThis will not apply if the lock requires a key or you already have the key to the lock.//{1}x//(0,10,0.1)
+		float lockedModifier = 2.0f;			//Locked Modifier//Modifier for locked doors and chests.\nThis will not apply if the lock requires a key or you already have the key to the lock.//{1}x//(0,10,0.1)
 		float lockDifficultyModifier = 1.3f;	//Lock Difficulty Modifier//If this is greater than 1, locked things will have a higher chance to cause a curse the harder the lock is to pick.\nIf set to 10 a master level lock will multiply the chance by 10 while an adept lock would multiply the chance by 5.//{1}//(1,10,0.1)
 		int minGoldRequired = 20;				//Container Gold Value//Requires a container to have at least this total value of items in it to trigger any events.//{0}//(0,5000,10)
 		bool eventScaling = true;				//Event Scaling//Make events less likely right after triggering one, and more likely if not triggered in a while.
@@ -61,7 +61,8 @@ namespace DCURSES {
 		//Header Chastity
 		int beltWeight = 40;					//Belts Weight//Chance to be equipped with a chastity belt.//{0}//(0,100,1)
 		bool beltPlugs = true;					//Belt Plugs//Equip plugs with all belts.
-		bool noBeltPiercing = false;			//No Chastity Piercings//Prevent chastity belts that also function as clitoral piercings. None of these devices exist within base DD.
+		int chastityPiercingWeight = 20;		//Chastity Piercing Weight//Chance to be equipped with a chastity piercing.\nWill only matter if you have a mod like Devious Chastity Piercings.//{0}//(0,100,1)
+		bool useGenderedChastity = true;		//Use Gendered Chastity//Equip futa characters with cock cages instead of regular belts. Will also prevent female characters from getting cages.\nWill do nothing without Vivis Cockcages Devious Patch.		**RECALC
 		int braWeight = 30;						//Bras Weight//Chance to be equipped with a chastity bra.//{0}//(0,100,1)
 		int plugsWeight = 50;					//Plugs Weight//Chance to be equipped with plugs when no belt is worn.//{0}//(0,100,1)
 		int lockingPlugsWeight = 30;			//Locking Plugs Weight//Chance to be equipped with plugs that can lock.//{0}//(0,100,1)
@@ -115,7 +116,7 @@ namespace DCURSES {
 		int eventOppressiveWeight = 15;			//Oppressive Curse Weight//Chance to receive an oppressive device event.//{0}//(0,500,1)
 		//Header Contraption Curse
 		int eventContraptionWeight = 25;		//Contraption Curse Weight//Chance to be bound in a contraption from DDC.//{0}//(0,500,1)																											
-		float eventContraptionTime = 4.0;		//Contraption Release Time//Will be automatically released after this many in game hours. Set to 0 to disable automatic release.//{1}//(0,24,0.1)													
+		float eventContraptionTime = 4.0f;		//Contraption Release Time//Will be automatically released after this many in game hours. Set to 0 to disable automatic release.//{1}//(0,24,0.1)													
 		bool eventContDevices = true;			//Contraption Devices//Will allow certain devices such as collars, gags, cuffs, and plugs to be equipped when triggering a contraption event.\nWill follow all other rules set for devices.			
 		bool eventContAllDevices = false;		//Use All Devices//Will allow any device other than heavy bondage to be equipped when triggering a contraption event.\nWill follow all other rules set for devices.									
 		int eventContDeviceOverride = 0;		//Device Count Override//When equipping devices for contraption events this number will be used instead of the min / max on the main page.\nSet to 0 to use the default number of devices.//{0}//(0,10,1)
@@ -145,10 +146,20 @@ namespace DCURSES {
 		//Header Nudity Sex
 		bool ANDSexTopless = true;				//Topless Trigger//Sex nudity modifier will apply when topless.																?:? flag_AND
 		bool ANDSexBottomless = true;			//Bottomless Trigger//Sex nudity modifier will apply when bottomless.														?:? flag_AND
+		bool ANDSexShowingChest = true;			//Chest Trigger//Sex nudity modifier will apply when showing chest.															?:? flag_AND
+		bool ANDSexShowingGenitals = true;		//Genitals Trigger//Sex nudity modifier will apply when showing genitals.													?:? flag_AND
+		bool ANDSexShowingAss = false;			//Ass Trigger//Sex nudity modifier will apply when showing ass.																?:? flag_AND
+		bool ANDSexShowingBra = false;			//Bra Trigger//Sex nudity modifier will apply when showing bra.																?:? flag_AND
+		bool ANDSexShowingUnderwear = false;	//Underwear Trigger//Sex nudity modifier will apply when showing underwear.													?:? flag_AND
 		//Column
 		//Header Nudity Consequence
 		bool ANDConsTopless = true;				//Topless Trigger//Nudity consequence will trigger when topless.															?:? flag_AND
 		bool ANDConsBottomless = true;			//Bottomless Trigger//Nudity consequence will trigger when bottomless.														?:? flag_AND
+		bool ANDConsShowingChest = true;		//Chest Trigger//Nudity consequence will trigger when showing chest.														?:? flag_AND
+		bool ANDConsShowingGenitals = true;		//Genitals Trigger//Nudity consequence will trigger when showing genitals.													?:? flag_AND
+		bool ANDConsShowingAss = false;			//Ass Trigger//Nudity consequence will trigger when showing ass.															?:? flag_AND
+		bool ANDConsShowingBra = false;			//Bra Trigger//Nudity consequence will trigger when showing bra.															?:? flag_AND
+		bool ANDConsShowingUnderwear = false;	//Underwear Trigger//Nudity consequence will trigger when showing underwear.												?:? flag_AND
 		//Page Lewd Marks
 		//Header Allure
 		int LMAllureWeight = 10;				//Allure Mark Weight//This mark will make everyone around you horny all the time.//{0}//(0,500,1)							?:? flag_LewdMarks
@@ -161,15 +172,15 @@ namespace DCURSES {
 		int LMHeatContainerCount = 50;			//Container Count//How many containers you must open before the mark will fade.//{0}//(10,200,1)							?:? flag_LewdMarks
 		color LMHeatColor = 0xe3143a;			//Color//Color for mark.																									?:? flag_LewdMarks
 		//Header Branding
-		int LMBrandingWeight = 10;				//Branding Mark//This mark will force you to have a certain number of tattoos!//{0}//(0,500,1)								?:? flag_LewdMarks
-		float LMBrandingChance = 1.5;			//Chance//How likely you are to receive a random tattoo per 15 seconds.\nRequires Rape Tattoos//{1}%//(0,100,0.1)			?:? flag_RT_LM
-		int LMBrandingTotal = 12;				//Total Tattoos//How many tattoos you need before the mark releases. The mark itself counts as 2.//{0}//(1,20,1)			?:? flag_LewdMarks
-		bool LMBrandingPunish = true;			//Punishment//You will be punished by loosing gold if your total tattoo count decreases.									?:? flag_LewdMarks
-		color LMBrandingColor = 0x220022;		//Color//Color for mark.																									?:? flag_LewdMarks
+		int LMBrandingWeight = 10;				//Branding Mark//This mark will force you to have a certain number of tattoos!//{0}//(0,500,1)								?:? flag_RT_LM
+		float LMBrandingChance = 1.5f;			//Chance//How likely you are to receive a random tattoo per 15 seconds.\nRequires Rape Tattoos//{1}%//(0,100,0.1)			?:? flag_RT_LM
+		int LMBrandingTotal = 12;				//Total Tattoos//How many tattoos you need before the mark releases. The mark itself counts as 2.//{0}//(1,20,1)			?:? flag_RT_LM
+		bool LMBrandingPunish = true;			//Punishment//You will be punished by loosing gold if your total tattoo count decreases.									?:? flag_RT_LM
+		color LMBrandingColor = 0x220022;		//Color//Color for mark.																									?:? flag_RT_LM
 		//Column
 		//Header Bondage
 		int LMBondageWeight = 5;				//Bondage Mark//With this mark devices that are in your inventory might equip themselves.//{0}//(0,500,1)					?:? flag_LewdMarks
-		float LMBondageChance = 5;				//Chance//How likely an item might be equipped per 15 seconds.//{1}%//(0,100,0.1)											?:? flag_LewdMarks
+		float LMBondageChance = 5.0f;			//Chance//How likely an item might be equipped per 15 seconds.//{1}%//(0,100,0.1)											?:? flag_LewdMarks
 		int LMBondageDeviceCount = 8;			//Device Count//How many devices need to be equipped before the mark will fade.//{0}//(1,50,1)								?:? flag_LewdMarks
 		color LMBondageColor = 0x7908cf;		//Color//Color for mark.																									?:? flag_LewdMarks
 		//Header Nudity
@@ -191,14 +202,22 @@ namespace DCURSES {
 		bool oppSCollarDrainsMagicka = true;	//Magicka Drain//The collar will drain all of your magicka when summoning.
 		bool oppSCollarAutoRemove = true;		//Auto Remove//Remove the collar as soon as the requirements are met instead of just giving the key for it.
 		int oppSMinSummonArousal = 90;			//Summon Arousal//Will change the arousal of all of your summons to be at least this value.//{0}//(0,100,1)
-		float oppSummonChance = 1.5;			//Summon Chance//The chance per second that the collar summons an atronach to have sex with you.\nThis won't happen if you already have a different summon.//{1}%//(0,100,0.1)
+		float oppSummonChance = 1.5f;			//Summon Chance//The chance per second that the collar summons an atronach to have sex with you.\nThis won't happen if you already have a different summon.//{1}%//(0,100,0.1)
 		//Header Dwarven Cuirass
 		int oppDwarvenCuirassWeight = 15;		//Weight//How likely that you will be equipped with a devious dwarven cuirass that will control your actions.//{0}//(0,500,1)
 		int oppDwarvenValueNeeded = 200;		//Dwarven Parts Value//How much value of dwarven parts like gears and gyros the dwarven cuirass needs to take before it is removed.\nDoes not count ingots, centurion dynamos, or pots, pans, cups, etc.//{0}//(30,2000,10)
 		bool oppDwarvenHeavyRestraint = false;	//Heavy Restraint//The cuirass will count as a heavy bondage like a straitjacket. This will make removing the device much harder.\nWill only affect the cuirass before it is equipped.
 		bool oppDwarvenRequireLoc = true;		//Require Location//The cuirass can only be found in dwarven locations.
 		int oppDwarvenArousal = 25;				//Masturbation Arousal//If your arousal is above this there is a chance that the dwarven cuirass will force you to masturbate!\nSet to 100 to disable//{0}//(10,100,1)
+		//Header Nocturnal Piercings
+		int oppNocturnalWeight = 10;			//Weight//How likely that you will be equipped with a piercing that can grant invisibility.//{0}//(0,500,1)
+		int oppNocturnalSexCount = 3;			//Public Sex Count//How many times you need to have sex in front of people before the piercing is removed.//{0}//(1,100,1)
+		int oppNocturnalPeople = 7;				//Spectators//How many people need to watch you have sex for it to count.\nFollowers are not counted for this.//{0}//(2,15,1)
+		int oppNocturnalArousal = 35;			//Arousal//At what arousal will the invisibility automatically drop.//{0}//(10,95,1)
+		float oppNocturnalHandChance = 3.5f;	//Shadow Hand Chance//The chance per second that an invisible hand will touch you.//{1}%//(0,50,0.1)
+		float oppNocturnalRecastChance = 33.3f;	//Recast Chance//The chance that an invisible hand will touch you every time the spell is recast.//{1}%//(10,100,0.1)
 		//Column
+		//Empty
 		//Header Living Latex
 		int oppLivingLatexWeight = 20;			//Weight//How likely that you will be encased in latex that will bind you with ebonite.//{0}//(0,500,1)
 		int oppLivingLatexStartTime = 15;		//Start Time//How long in minutes do you have to wear the latex before it isn't dormant.\n//{0}//(1,60,1)
@@ -212,6 +231,7 @@ namespace DCURSES {
 		int oppMadnessPlugIterations = 5;		//Number of Events//How many events the plug will do before it is removed.//{0}//(1,20,1)
 		int oppMadnessplugOrgasms = 6;			//Orgasms Per Event//How many times the plug must make you orgasm per event.\nThis only counts orgasms caused by devious devices.//{0}//(1,100,1)
 		bool oppMadnessAllOrgasms = false;		//Include Sex//This will increase the counter for orgasms after having sex instead of only using device orgasms.
+		bool oppMadnessBeltFilter = true;		//Belt Filter//The plug will only be equipped if you are not wearing a belt (or vaginal plug) that can't be removed.
 		bool oppMadnessChaos = false;			//True Madness//Will remove the restrictions on what events can happen. These events may result in PERMANENT changes to your character (Lowering your health, magicka, or stamina).
 		//Page Locations
 		bool useLocationModifiers = true;		//Use Location Modifiers//Weather or not to apply the location modifiers listed below to event chances.
@@ -235,36 +255,43 @@ namespace DCURSES {
 		float apocryphaModifier = 2.0f;			//Apocrypha Modifier//Modifier for events to happen in apocrypha.//{1}x//(0,10,0.1)
 		float wildernessModifier = 0.9f;		//Wilderness Modifier//Modifier for events to happen in the wilderness.//{1}x//(0,10,0.1)
 		//Page Keys
-		float keyLossChance = 80;				//Key Loss Chance//How likely you are to lose your keys during an event.//{1}%//(0,100,0.1)
-		float keyChance = 7;					//Key Find Chance//How likely you are to find a key in a container.//{1}%//(0,100,0.1)
+		float keyLossChance = 80.0f;			//Key Loss Chance//How likely you are to lose your keys during an event.//{1}%//(0,100,0.1)
+		float keyChance = 7.0f;					//Key Find Chance//How likely you are to find a key in a container.//{1}%//(0,100,0.1)
 		int minKeysLooted = 1;					//Min Keys//The minimum number of keys that can be found at a time.//{0}//(1,10,1)
 		int maxKeysLooted = 1;					//Max Keys//The maximum number of keys that can be found at a time.//{0}//(1,10,1)
 		float keyBonus = 1.0f;					//Bonus Chance Per Device//A bonus chance to get a key per locking device worn.//{1}%//(0,10,0.1)
 		bool keyForgiveness = true;				//Key Forgiveness//Make keys more likely if it has been a while since you got any.
-		float keyPickpocketBonus = 2.0;			//Pickpocket Bonus//Multiplier to key chance when pickpocketing someone.\nSet to 0 to disable keys when pickpocketing.//{1}x//(0,10,0.1)
+		float keyPickpocketBonus = 2.0f;		//Pickpocket Bonus//Multiplier to key chance when pickpocketing someone.\nSet to 0 to disable keys when pickpocketing.//{1}x//(0,10,0.1)
 		int maxHeldKeys = 3;					//Max Held Keys//Sets the maximum allowed amount of keys that you can carry while still finding more.\nWith this enabled no devices will be equipped that require more keys than you can find.\nFor example if you have two restraint keys and one chastity key and this is set to three you will no longer find keys.\nSet to 0 to disable.//{0}//(0,100,1) **RECALC
 		//Column
 		int restraintsKeyWeight = 80;			//Restraints Key Weight//Chance to find a restraints key.//{0}//(0,100,1)
 		int chastityKeyWeight = 50;				//Chastity Key Weight//Chance to find a chastity key.//{0}//(0,100,1)
 		int piercingToolWeight = 20;			//Piercing Tool Weight//Chance to find a piercing removal tool.//{0}//(0,100,1)
 		//Empty
-		float magicKeyChance = 10.0;			//Magic Key Chance//Chance that magic keys will be found in boss chests. They will destroy all restraints you are wearing.\nYou can only have a max of one at a time and they can never be lost.\nSet to 0 to disable//{1}//(0,50,0.1)
+		float magicKeyChance = 10.0f;			//Magic Key Chance//Chance that magic keys will be found in boss chests. They will destroy all restraints you are wearing.\nYou can only have a max of one at a time and they can never be lost.\nSet to 0 to disable//{1}//(0,50,0.1)
 		bool preferRelevantKeys = true;			//Prefer Relevant Keys//You will only find keys that would unlock items you are wearing.
 		bool vanishingKeys = true;				//Vanishing Keys//Keys will be removed from containers after you close the menu.
+		float keyLuckyBonus = 1.75f;			//Lucky Bonus//Keys chance will be multiplied by this value if you are lucky.//{2}//(1,10,0.01)
 		//Page Quest Interactions
 		//Flag flag_enable_qi					//enableQuestInteractions
 		bool enableQuestInteractions = true;	//Quest Interactions//Certain quests may have some additional events tied to them.\n The mod page has more information about each quest.		**RELOAD
-		//Empty
-		bool enableQIMalkoran = true;			//Malkoran//The Malkoran event.									?:? flag_enable_qi
-		bool enableQISanguine = true;			//Sanguine//The Sanguine events.								?:? flag_enable_qi
-		bool enableQIBlackStar = true;			//Black Star//The Black Star event.								?:? flag_enable_qi
-		bool enableQIMindOfMadness = true;		//Sheogorath//The Sheogorath event.								?:? flag_enable_qi
-		//Column
 		//Header Quest Toggles
-		bool enableQIProvingHonor = true;		//Proving Honor//The Proving Honor event.						?:? flag_enable_qi
-		bool enableQISaarthal = true;			//Saarthal//The Saarthal event.									?:? flag_enable_qi
-		bool enableQIDwemerMuseum = true;		//Dwemer Museam//The Dwemer Museum event.						?:? flag_enable_qi
-		bool enableQIThalmorEmbassy = true;		//Thalmor Embassy//The Thalmor Embassy event.					?:? flag_enable_qi
+		bool enableQIMalkoran = true;			//Malkoran//									?:? flag_enable_qi
+		bool enableQISanguine = true;			//Sanguine//									?:? flag_enable_qi
+		bool enableQIBlackStar = true;			//Black Star//									?:? flag_enable_qi
+		bool enableQIMindOfMadness = true;		//Sheogorath//									?:? flag_enable_qi
+		bool enableQILaidToRest = true;			//Laid To Rest//								?:? flag_enable_qi
+		bool enableQICriedWolf = true;			//The Man Who Cried Wolf//						?:? flag_enable_qi
+		//Column
+		//Empty
+		//Empty
+		bool enableQIProvingHonor = true;		//Proving Honor//								?:? flag_enable_qi
+		bool enableQISaarthal = true;			//Saarthal//									?:? flag_enable_qi
+		bool enableQIBrelyna = true;			//Brelyna's Practice//							?:? flag_enable_qi
+		bool enableQIDwemerMuseum = true;		//Dwemer Museum//								?:? flag_enable_qi
+		bool enableQITrinityRestored = true;	//Trinity Restored//							?:? flag_enable_qi
+		bool enableQIThalmorEmbassy = true;		//Thalmor Embassy//								?:? flag_enable_qi
+		bool enableQIRingmaker = true;			//Ringmaker//									?:? flag_enable_qi
 		//Page Misc
 		//Flag flag_events_disabled				//ModSuspended
 		//Flag flag_wearingOppDevice			//!WearingOppressiveDevice()
@@ -272,7 +299,8 @@ namespace DCURSES {
 		bool generalDeviceAntiCheat = false;	//Lock Menus While Restrained//All menus will be disabled while you are wearing any devices.
 		bool noMessageBoxes = false;			//Remove Message Boxes//No message boxes will be shown.
 		bool bossChestUseModelPath = true;		//Boss Chest Models//Use the model of chests to determine if they are a boss chest.\nThere will be a higher chance for non-vanilla chests being marked correctly, but also for some non-boss chests to be treated like one.\nThis includes the models for standard, dwarven, falmer, apocrypha, soul cairn, and snow elf boss chests.
-		float rDeviceBaseChance = 1.5;			//Device Base Chance//Chance to loot a random bondage item from a container or a dead body.//{1}%//(0,100,0.1)
+		float rDeviceBaseChance = 1.5f;			//Device Base Chance//Chance to loot a random bondage item from a container or a dead body.//{1}%//(0,100,0.1)
+		float rDeviceLuckyBonus = 2.5f;			//Device Lucky Bonus//Device base chance will be multiplied by this value if you are lucky.//{2}//(1,10,0.01)
 		bool dragonHoard = true;				//Dragon Hoards//Dragons will drop more gold, but the gold they carry is likely to be cursed.\nWith this enabled some settings might be ignored when looting dragons.
 		bool bossExtraGold = true;				//Boss Chest Extra Gold//Boss chests will have extra gold.
 		bool useThemes = false;					//Use Device Themes//Events that equip the player with devices will try to keep all devices equipped to a consistent theme.\nWARNING: this will increase the time taken to run each event and may cause lag spikes.
@@ -280,16 +308,16 @@ namespace DCURSES {
 		keycode setDebugKey = -1;				//Debug Menu Key//
 		bool disableForce3rdPerson = true;		//Disable 3rd Person//This mod will not force the player into 3rd person.
 		bool enableSlowStrip = false;			//Use Sexlab Strip//Replace the built in stripping algorithm with the one from sexlab.\nCan fix rare cases of crashing on stripping and also give more control over what gets stripped.
-		float tatSolventChance = 0.5;			//Universal Solvent Chance//Chance to find universal solvent when looting dead bodies. Universal solvent will remove all lewd marks and tattoos.\nHaving more tattoos will slightly increase the chance of finding one.\nSet to 0 to disable.//{1}//(0,50,0.1)
-		float arousalPotionChance = 1.0;		//Frigid Wash Chance//Chance to find a potion that will reduce your arousal. The chance increases slightly with high arousal.\nYou can only cary a max of 3 at a time.//{1}//(0,100,0.1)
+		float tatSolventChance = 0.5f;			//Universal Solvent Chance//Chance to find universal solvent when looting dead bodies. Universal solvent will remove all lewd marks and tattoos.\nHaving more tattoos will slightly increase the chance of finding one.\nSet to 0 to disable.//{1}//(0,50,0.1)
+		float arousalPotionChance = 1.0f;		//Frigid Wash Chance//Chance to find a potion that will reduce your arousal. The chance increases slightly with high arousal.\nYou can only cary a max of 3 at a time.//{1}//(0,100,0.1)
 		bool resumeEvents = false;				//Resume Events//Events have been disabled by another mod. Enable this and exit the MCM to re-enable events.				?:? flag_events_disabled
 		bool saveDependentSettings = false;		//Save Dependent Settings//If enabled your settings for this save will not be synced with all of your other saves.
 		bool setAllDefaultSettings = false;		//Return to Default [WARNING]//If you exit the menu with this enabled all settings in the MCM will be reset to default.
 		//Page Consequences
 		//Header Triggers
-		float consTriggerNude = 15.0;			//Nudity//Chance for a consequence when talking to someone while nude.//{1}%//(0,100,0.1)
-		float consTriggerRestrained = 50.0;		//Restrained//Chance for a consequence when talking to someone while in heavy restraints.//{1}%//(0,100,0.1)
-		float consTriggerSex = 10.0;			//Sex//Chance for a consequence after having sex with an actor.\nWill be triggered by any scene, not just those started by this mod.//{1}%//(0,100,0.1)
+		float consTriggerNude = 15.0f;			//Nudity//Chance for a consequence when talking to someone while nude.//{1}%//(0,100,0.1)
+		float consTriggerRestrained = 50.0f;	//Restrained//Chance for a consequence when talking to someone while in heavy restraints.//{1}%//(0,100,0.1)
+		float consTriggerSex = 10.0f;			//Sex//Chance for a consequence after having sex with an actor.\nWill be triggered by any scene, not just those started by this mod.//{1}%//(0,100,0.1)
 		//Empty
 		bool consAllowFollowers = false;		//Allow Followers//Talking to or having sex with followers can trigger consequences.
 		bool consAllowCreatures = false;		//Allow Creatures//Talking to or having sex with creatures can trigger consequences.
@@ -332,13 +360,13 @@ namespace DCURSES {
 		int sexArousalBootsModifier = 0;		//Boots Modifier//Modifier for arousal if wearing restraining boots.//-{0}//(0,50,1)																					?:? flag_enable_random_sex
 		int sexArousalHobbleModifier = 0;		//Hobbled Modifier//Modifier for arousal if unable to run.\nThis can be because of a device or being over-encumbered.//-{0}//(0,50,1)									?:? flag_enable_random_sex
 		int sexArousalVisibleModifier = 5;		//Visible Devices Modifier//Modifier for arousal if the player has any visible devices.//-{0}//(0,50,1)																	?:? flag_enable_random_sex
-		float sexArousalTattooModifier = 1;		//Tattoo Modifier//Modifier for arousal for each tattoo the player has.//-{1}//(0,10,0.1)																					?:? flag_sex_slave_tats
+		float sexArousalTattooModifier = 1.0f;	//Tattoo Modifier//Modifier for arousal for each tattoo the player has.//-{1}//(0,10,0.1)																					?:? flag_sex_slave_tats
 		int sexArousalCreatureModifier = 0;		//Creature Modifier//Modifier for arousal if the aggressor is a creature.//-{0}//(0,50,1)																				?:? flag_enable_random_sex
 		int sexArousalFollowerModifier = 10;	//Follower Modifier//Modifier for arousal if the aggressor is your follower.//-{0}//(0,50,1)																			?:? flag_enable_random_sex
 		int sexArousalSpouseModifier = 20;		//Spouse Modifier//Modifier for arousal if the aggressor is your spouse.//-{0}//(0,50,1)																				?:? flag_enable_random_sex
 		int sexArousalSummonModifier = 0;		//Summon Modifier//Modifier for arousal if the aggressor is your summon.//-{0}//(0,50,1)																				?:? flag_enable_random_sex
 		//Header Search
-		float sexSearchRadius = 2000;			//Search Radius//How far away can actors be from the player.//{0}//(100,10000,100)																						?:? flag_enable_random_sex
+		int sexSearchRadius = 2000;				//Search Radius//How far away can actors be from the player.//{0}//(100,10000,100)																						?:? flag_enable_random_sex
 		int sexSearchInterval = 5;				//Search Interval//How often the actor search happens in seconds.//{0}//(5,120,1)																						?:? flag_enable_random_sex
 		//Column
 		//Header Allowed Actors
@@ -386,6 +414,11 @@ namespace DCURSES {
 		return settings.excludedFollowers;
 	}
 
+	bool ShouldUseGenderedChastity() {
+		auto vivis = StaticDataHolder::GetSingleton()->LookupModByName("VivisCockcageSE_TRX_CBBE_devious_patch.esp");
+		return settings.useGenderedChastity && vivis;
+	}
+
 	void RecalculateDeviceLists();
 
 	void ResetMCMSettings() {
@@ -406,6 +439,8 @@ namespace DCURSES {
 		SetMCMInt("minArousal",settings.minArousal);
 		settings.beltWeight = 40;
 		SetMCMInt("beltWeight",settings.beltWeight);
+		settings.chastityPiercingWeight = 20;
+		SetMCMInt("chastityPiercingWeight",settings.chastityPiercingWeight);
 		settings.braWeight = 30;
 		SetMCMInt("braWeight",settings.braWeight);
 		settings.plugsWeight = 50;
@@ -544,6 +579,14 @@ namespace DCURSES {
 		SetMCMInt("oppDwarvenValueNeeded",settings.oppDwarvenValueNeeded);
 		settings.oppDwarvenArousal = 25;
 		SetMCMInt("oppDwarvenArousal",settings.oppDwarvenArousal);
+		settings.oppNocturnalWeight = 10;
+		SetMCMInt("oppNocturnalWeight",settings.oppNocturnalWeight);
+		settings.oppNocturnalSexCount = 3;
+		SetMCMInt("oppNocturnalSexCount",settings.oppNocturnalSexCount);
+		settings.oppNocturnalPeople = 7;
+		SetMCMInt("oppNocturnalPeople",settings.oppNocturnalPeople);
+		settings.oppNocturnalArousal = 35;
+		SetMCMInt("oppNocturnalArousal",settings.oppNocturnalArousal);
 		settings.oppLivingLatexWeight = 20;
 		SetMCMInt("oppLivingLatexWeight",settings.oppLivingLatexWeight);
 		settings.oppLivingLatexStartTime = 15;
@@ -608,6 +651,8 @@ namespace DCURSES {
 		SetMCMInt("sexArousalSpouseModifier",settings.sexArousalSpouseModifier);
 		settings.sexArousalSummonModifier = 0;
 		SetMCMInt("sexArousalSummonModifier",settings.sexArousalSummonModifier);
+		settings.sexSearchRadius = 2000;
+		SetMCMInt("sexSearchRadius",settings.sexSearchRadius);
 		settings.sexSearchInterval = 5;
 		SetMCMInt("sexSearchInterval",settings.sexSearchInterval);
 		settings.sexRequiredPlayerArousal = 0;
@@ -660,6 +705,10 @@ namespace DCURSES {
 		SetMCMFloat("LMBondageChance",settings.LMBondageChance);
 		settings.oppSummonChance = 1.5f;
 		SetMCMFloat("oppSummonChance",settings.oppSummonChance);
+		settings.oppNocturnalHandChance = 3.5f;
+		SetMCMFloat("oppNocturnalHandChance",settings.oppNocturnalHandChance);
+		settings.oppNocturnalRecastChance = 33.3f;
+		SetMCMFloat("oppNocturnalRecastChance",settings.oppNocturnalRecastChance);
 		settings.oppLivingLatexGem = 6.0f;
 		SetMCMFloat("oppLivingLatexGem",settings.oppLivingLatexGem);
 		settings.oppLivingLatexMore = 0.0f;
@@ -704,8 +753,12 @@ namespace DCURSES {
 		SetMCMFloat("keyPickpocketBonus",settings.keyPickpocketBonus);
 		settings.magicKeyChance = 10.0f;
 		SetMCMFloat("magicKeyChance",settings.magicKeyChance);
+		settings.keyLuckyBonus = 1.75f;
+		SetMCMFloat("keyLuckyBonus",settings.keyLuckyBonus);
 		settings.rDeviceBaseChance = 1.5f;
 		SetMCMFloat("rDeviceBaseChance",settings.rDeviceBaseChance);
+		settings.rDeviceLuckyBonus = 2.5f;
+		SetMCMFloat("rDeviceLuckyBonus",settings.rDeviceLuckyBonus);
 		settings.tatSolventChance = 0.5f;
 		SetMCMFloat("tatSolventChance",settings.tatSolventChance);
 		settings.arousalPotionChance = 1.0f;
@@ -718,8 +771,6 @@ namespace DCURSES {
 		SetMCMFloat("consTriggerSex",settings.consTriggerSex);
 		settings.sexArousalTattooModifier = 1.0f;
 		SetMCMFloat("sexArousalTattooModifier",settings.sexArousalTattooModifier);
-		settings.sexSearchRadius = 2000.0f;
-		SetMCMFloat("sexSearchRadius",settings.sexSearchRadius);
 		settings.onlyLockedDoors = true;
 		SetMCMBool("onlyLockedDoors",settings.onlyLockedDoors);
 		settings.eventScaling = true;
@@ -732,8 +783,8 @@ namespace DCURSES {
 		SetMCMBool("stripOnlyKeywords",settings.stripOnlyKeywords);
 		settings.beltPlugs = true;
 		SetMCMBool("beltPlugs",settings.beltPlugs);
-		settings.noBeltPiercing = false;
-		SetMCMBool("noBeltPiercing",settings.noBeltPiercing);
+		settings.useGenderedChastity = true;
+		SetMCMBool("useGenderedChastity",settings.useGenderedChastity);
 		settings.plugsDontCount = true;
 		SetMCMBool("plugsDontCount",settings.plugsDontCount);
 		settings.allowLegShackles = false;
@@ -756,10 +807,30 @@ namespace DCURSES {
 		SetMCMBool("ANDSexTopless",settings.ANDSexTopless);
 		settings.ANDSexBottomless = true;
 		SetMCMBool("ANDSexBottomless",settings.ANDSexBottomless);
+		settings.ANDSexShowingChest = true;
+		SetMCMBool("ANDSexShowingChest",settings.ANDSexShowingChest);
+		settings.ANDSexShowingGenitals = true;
+		SetMCMBool("ANDSexShowingGenitals",settings.ANDSexShowingGenitals);
+		settings.ANDSexShowingAss = false;
+		SetMCMBool("ANDSexShowingAss",settings.ANDSexShowingAss);
+		settings.ANDSexShowingBra = false;
+		SetMCMBool("ANDSexShowingBra",settings.ANDSexShowingBra);
+		settings.ANDSexShowingUnderwear = false;
+		SetMCMBool("ANDSexShowingUnderwear",settings.ANDSexShowingUnderwear);
 		settings.ANDConsTopless = true;
 		SetMCMBool("ANDConsTopless",settings.ANDConsTopless);
 		settings.ANDConsBottomless = true;
 		SetMCMBool("ANDConsBottomless",settings.ANDConsBottomless);
+		settings.ANDConsShowingChest = true;
+		SetMCMBool("ANDConsShowingChest",settings.ANDConsShowingChest);
+		settings.ANDConsShowingGenitals = true;
+		SetMCMBool("ANDConsShowingGenitals",settings.ANDConsShowingGenitals);
+		settings.ANDConsShowingAss = false;
+		SetMCMBool("ANDConsShowingAss",settings.ANDConsShowingAss);
+		settings.ANDConsShowingBra = false;
+		SetMCMBool("ANDConsShowingBra",settings.ANDConsShowingBra);
+		settings.ANDConsShowingUnderwear = false;
+		SetMCMBool("ANDConsShowingUnderwear",settings.ANDConsShowingUnderwear);
 		settings.LMBrandingPunish = true;
 		SetMCMBool("LMBrandingPunish",settings.LMBrandingPunish);
 		settings.LMNudityChestOnly = false;
@@ -782,6 +853,8 @@ namespace DCURSES {
 		SetMCMBool("oppLivingLatexOpen",settings.oppLivingLatexOpen);
 		settings.oppMadnessAllOrgasms = false;
 		SetMCMBool("oppMadnessAllOrgasms",settings.oppMadnessAllOrgasms);
+		settings.oppMadnessBeltFilter = true;
+		SetMCMBool("oppMadnessBeltFilter",settings.oppMadnessBeltFilter);
 		settings.oppMadnessChaos = false;
 		SetMCMBool("oppMadnessChaos",settings.oppMadnessChaos);
 		settings.useLocationModifiers = true;
@@ -802,14 +875,24 @@ namespace DCURSES {
 		SetMCMBool("enableQIBlackStar",settings.enableQIBlackStar);
 		settings.enableQIMindOfMadness = true;
 		SetMCMBool("enableQIMindOfMadness",settings.enableQIMindOfMadness);
+		settings.enableQILaidToRest = true;
+		SetMCMBool("enableQILaidToRest",settings.enableQILaidToRest);
+		settings.enableQICriedWolf = true;
+		SetMCMBool("enableQICriedWolf",settings.enableQICriedWolf);
 		settings.enableQIProvingHonor = true;
 		SetMCMBool("enableQIProvingHonor",settings.enableQIProvingHonor);
 		settings.enableQISaarthal = true;
 		SetMCMBool("enableQISaarthal",settings.enableQISaarthal);
+		settings.enableQIBrelyna = true;
+		SetMCMBool("enableQIBrelyna",settings.enableQIBrelyna);
 		settings.enableQIDwemerMuseum = true;
 		SetMCMBool("enableQIDwemerMuseum",settings.enableQIDwemerMuseum);
+		settings.enableQITrinityRestored = true;
+		SetMCMBool("enableQITrinityRestored",settings.enableQITrinityRestored);
 		settings.enableQIThalmorEmbassy = true;
 		SetMCMBool("enableQIThalmorEmbassy",settings.enableQIThalmorEmbassy);
+		settings.enableQIRingmaker = true;
+		SetMCMBool("enableQIRingmaker",settings.enableQIRingmaker);
 		settings.oppDeviceAntiCheat = true;
 		SetMCMBool("oppDeviceAntiCheat",settings.oppDeviceAntiCheat);
 		settings.generalDeviceAntiCheat = false;
@@ -905,6 +988,7 @@ namespace DCURSES {
 			{"restraintCap", settings.restraintCap},
 			{"minArousal", settings.minArousal},
 			{"beltWeight", settings.beltWeight},
+			{"chastityPiercingWeight", settings.chastityPiercingWeight},
 			{"braWeight", settings.braWeight},
 			{"plugsWeight", settings.plugsWeight},
 			{"lockingPlugsWeight", settings.lockingPlugsWeight},
@@ -974,6 +1058,10 @@ namespace DCURSES {
 			{"oppDwarvenCuirassWeight", settings.oppDwarvenCuirassWeight},
 			{"oppDwarvenValueNeeded", settings.oppDwarvenValueNeeded},
 			{"oppDwarvenArousal", settings.oppDwarvenArousal},
+			{"oppNocturnalWeight", settings.oppNocturnalWeight},
+			{"oppNocturnalSexCount", settings.oppNocturnalSexCount},
+			{"oppNocturnalPeople", settings.oppNocturnalPeople},
+			{"oppNocturnalArousal", settings.oppNocturnalArousal},
 			{"oppLivingLatexWeight", settings.oppLivingLatexWeight},
 			{"oppLivingLatexStartTime", settings.oppLivingLatexStartTime},
 			{"oppMadnessPlugWeight", settings.oppMadnessPlugWeight},
@@ -1006,6 +1094,7 @@ namespace DCURSES {
 			{"sexArousalFollowerModifier", settings.sexArousalFollowerModifier},
 			{"sexArousalSpouseModifier", settings.sexArousalSpouseModifier},
 			{"sexArousalSummonModifier", settings.sexArousalSummonModifier},
+			{"sexSearchRadius", settings.sexSearchRadius},
 			{"sexSearchInterval", settings.sexSearchInterval},
 			{"sexRequiredPlayerArousal", settings.sexRequiredPlayerArousal},
 			{"sexRequiredPlayerTattoos", settings.sexRequiredPlayerTattoos},
@@ -1025,6 +1114,8 @@ namespace DCURSES {
 			{"LMBrandingChance", settings.LMBrandingChance},
 			{"LMBondageChance", settings.LMBondageChance},
 			{"oppSummonChance", settings.oppSummonChance},
+			{"oppNocturnalHandChance", settings.oppNocturnalHandChance},
+			{"oppNocturnalRecastChance", settings.oppNocturnalRecastChance},
 			{"oppLivingLatexGem", settings.oppLivingLatexGem},
 			{"oppLivingLatexMore", settings.oppLivingLatexMore},
 			{"playerHomeModifier", settings.playerHomeModifier},
@@ -1047,21 +1138,22 @@ namespace DCURSES {
 			{"keyBonus", settings.keyBonus},
 			{"keyPickpocketBonus", settings.keyPickpocketBonus},
 			{"magicKeyChance", settings.magicKeyChance},
+			{"keyLuckyBonus", settings.keyLuckyBonus},
 			{"rDeviceBaseChance", settings.rDeviceBaseChance},
+			{"rDeviceLuckyBonus", settings.rDeviceLuckyBonus},
 			{"tatSolventChance", settings.tatSolventChance},
 			{"arousalPotionChance", settings.arousalPotionChance},
 			{"consTriggerNude", settings.consTriggerNude},
 			{"consTriggerRestrained", settings.consTriggerRestrained},
 			{"consTriggerSex", settings.consTriggerSex},
 			{"sexArousalTattooModifier", settings.sexArousalTattooModifier},
-			{"sexSearchRadius", settings.sexSearchRadius},
 			{"onlyLockedDoors", settings.onlyLockedDoors},
 			{"eventScaling", settings.eventScaling},
 			{"bossOnlyHeavy", settings.bossOnlyHeavy},
 			{"stripPlayerOnEvent", settings.stripPlayerOnEvent},
 			{"stripOnlyKeywords", settings.stripOnlyKeywords},
 			{"beltPlugs", settings.beltPlugs},
-			{"noBeltPiercing", settings.noBeltPiercing},
+			{"useGenderedChastity", settings.useGenderedChastity},
 			{"plugsDontCount", settings.plugsDontCount},
 			{"allowLegShackles", settings.allowLegShackles},
 			{"eventContDevices", settings.eventContDevices},
@@ -1073,8 +1165,18 @@ namespace DCURSES {
 			{"udUseMisc", settings.udUseMisc},
 			{"ANDSexTopless", settings.ANDSexTopless},
 			{"ANDSexBottomless", settings.ANDSexBottomless},
+			{"ANDSexShowingChest", settings.ANDSexShowingChest},
+			{"ANDSexShowingGenitals", settings.ANDSexShowingGenitals},
+			{"ANDSexShowingAss", settings.ANDSexShowingAss},
+			{"ANDSexShowingBra", settings.ANDSexShowingBra},
+			{"ANDSexShowingUnderwear", settings.ANDSexShowingUnderwear},
 			{"ANDConsTopless", settings.ANDConsTopless},
 			{"ANDConsBottomless", settings.ANDConsBottomless},
+			{"ANDConsShowingChest", settings.ANDConsShowingChest},
+			{"ANDConsShowingGenitals", settings.ANDConsShowingGenitals},
+			{"ANDConsShowingAss", settings.ANDConsShowingAss},
+			{"ANDConsShowingBra", settings.ANDConsShowingBra},
+			{"ANDConsShowingUnderwear", settings.ANDConsShowingUnderwear},
 			{"LMBrandingPunish", settings.LMBrandingPunish},
 			{"LMNudityChestOnly", settings.LMNudityChestOnly},
 			{"oppOneAtATime", settings.oppOneAtATime},
@@ -1086,6 +1188,7 @@ namespace DCURSES {
 			{"oppLivingLatexRequireRem", settings.oppLivingLatexRequireRem},
 			{"oppLivingLatexOpen", settings.oppLivingLatexOpen},
 			{"oppMadnessAllOrgasms", settings.oppMadnessAllOrgasms},
+			{"oppMadnessBeltFilter", settings.oppMadnessBeltFilter},
 			{"oppMadnessChaos", settings.oppMadnessChaos},
 			{"useLocationModifiers", settings.useLocationModifiers},
 			{"keyForgiveness", settings.keyForgiveness},
@@ -1096,10 +1199,15 @@ namespace DCURSES {
 			{"enableQISanguine", settings.enableQISanguine},
 			{"enableQIBlackStar", settings.enableQIBlackStar},
 			{"enableQIMindOfMadness", settings.enableQIMindOfMadness},
+			{"enableQILaidToRest", settings.enableQILaidToRest},
+			{"enableQICriedWolf", settings.enableQICriedWolf},
 			{"enableQIProvingHonor", settings.enableQIProvingHonor},
 			{"enableQISaarthal", settings.enableQISaarthal},
+			{"enableQIBrelyna", settings.enableQIBrelyna},
 			{"enableQIDwemerMuseum", settings.enableQIDwemerMuseum},
+			{"enableQITrinityRestored", settings.enableQITrinityRestored},
 			{"enableQIThalmorEmbassy", settings.enableQIThalmorEmbassy},
+			{"enableQIRingmaker", settings.enableQIRingmaker},
 			{"oppDeviceAntiCheat", settings.oppDeviceAntiCheat},
 			{"generalDeviceAntiCheat", settings.generalDeviceAntiCheat},
 			{"noMessageBoxes", settings.noMessageBoxes},
@@ -1193,6 +1301,8 @@ namespace DCURSES {
 		SetMCMInt("minArousal",settings.minArousal);
 		settings.beltWeight = static_cast<int>(j.value("beltWeight", 40));
 		SetMCMInt("beltWeight",settings.beltWeight);
+		settings.chastityPiercingWeight = static_cast<int>(j.value("chastityPiercingWeight", 20));
+		SetMCMInt("chastityPiercingWeight",settings.chastityPiercingWeight);
 		settings.braWeight = static_cast<int>(j.value("braWeight", 30));
 		SetMCMInt("braWeight",settings.braWeight);
 		settings.plugsWeight = static_cast<int>(j.value("plugsWeight", 50));
@@ -1331,6 +1441,14 @@ namespace DCURSES {
 		SetMCMInt("oppDwarvenValueNeeded",settings.oppDwarvenValueNeeded);
 		settings.oppDwarvenArousal = static_cast<int>(j.value("oppDwarvenArousal", 25));
 		SetMCMInt("oppDwarvenArousal",settings.oppDwarvenArousal);
+		settings.oppNocturnalWeight = static_cast<int>(j.value("oppNocturnalWeight", 10));
+		SetMCMInt("oppNocturnalWeight",settings.oppNocturnalWeight);
+		settings.oppNocturnalSexCount = static_cast<int>(j.value("oppNocturnalSexCount", 3));
+		SetMCMInt("oppNocturnalSexCount",settings.oppNocturnalSexCount);
+		settings.oppNocturnalPeople = static_cast<int>(j.value("oppNocturnalPeople", 7));
+		SetMCMInt("oppNocturnalPeople",settings.oppNocturnalPeople);
+		settings.oppNocturnalArousal = static_cast<int>(j.value("oppNocturnalArousal", 35));
+		SetMCMInt("oppNocturnalArousal",settings.oppNocturnalArousal);
 		settings.oppLivingLatexWeight = static_cast<int>(j.value("oppLivingLatexWeight", 20));
 		SetMCMInt("oppLivingLatexWeight",settings.oppLivingLatexWeight);
 		settings.oppLivingLatexStartTime = static_cast<int>(j.value("oppLivingLatexStartTime", 15));
@@ -1395,6 +1513,8 @@ namespace DCURSES {
 		SetMCMInt("sexArousalSpouseModifier",settings.sexArousalSpouseModifier);
 		settings.sexArousalSummonModifier = static_cast<int>(j.value("sexArousalSummonModifier", 0));
 		SetMCMInt("sexArousalSummonModifier",settings.sexArousalSummonModifier);
+		settings.sexSearchRadius = static_cast<int>(j.value("sexSearchRadius", 2000));
+		SetMCMInt("sexSearchRadius",settings.sexSearchRadius);
 		settings.sexSearchInterval = static_cast<int>(j.value("sexSearchInterval", 5));
 		SetMCMInt("sexSearchInterval",settings.sexSearchInterval);
 		settings.sexRequiredPlayerArousal = static_cast<int>(j.value("sexRequiredPlayerArousal", 0));
@@ -1447,6 +1567,10 @@ namespace DCURSES {
 		SetMCMFloat("LMBondageChance",settings.LMBondageChance);
 		settings.oppSummonChance = static_cast<float>(j.value("oppSummonChance", 1.5));
 		SetMCMFloat("oppSummonChance",settings.oppSummonChance);
+		settings.oppNocturnalHandChance = static_cast<float>(j.value("oppNocturnalHandChance", 3.5));
+		SetMCMFloat("oppNocturnalHandChance",settings.oppNocturnalHandChance);
+		settings.oppNocturnalRecastChance = static_cast<float>(j.value("oppNocturnalRecastChance", 33.3));
+		SetMCMFloat("oppNocturnalRecastChance",settings.oppNocturnalRecastChance);
 		settings.oppLivingLatexGem = static_cast<float>(j.value("oppLivingLatexGem", 6.0));
 		SetMCMFloat("oppLivingLatexGem",settings.oppLivingLatexGem);
 		settings.oppLivingLatexMore = static_cast<float>(j.value("oppLivingLatexMore", 0.0));
@@ -1491,8 +1615,12 @@ namespace DCURSES {
 		SetMCMFloat("keyPickpocketBonus",settings.keyPickpocketBonus);
 		settings.magicKeyChance = static_cast<float>(j.value("magicKeyChance", 10.0));
 		SetMCMFloat("magicKeyChance",settings.magicKeyChance);
+		settings.keyLuckyBonus = static_cast<float>(j.value("keyLuckyBonus", 1.75));
+		SetMCMFloat("keyLuckyBonus",settings.keyLuckyBonus);
 		settings.rDeviceBaseChance = static_cast<float>(j.value("rDeviceBaseChance", 1.5));
 		SetMCMFloat("rDeviceBaseChance",settings.rDeviceBaseChance);
+		settings.rDeviceLuckyBonus = static_cast<float>(j.value("rDeviceLuckyBonus", 2.5));
+		SetMCMFloat("rDeviceLuckyBonus",settings.rDeviceLuckyBonus);
 		settings.tatSolventChance = static_cast<float>(j.value("tatSolventChance", 0.5));
 		SetMCMFloat("tatSolventChance",settings.tatSolventChance);
 		settings.arousalPotionChance = static_cast<float>(j.value("arousalPotionChance", 1.0));
@@ -1505,8 +1633,6 @@ namespace DCURSES {
 		SetMCMFloat("consTriggerSex",settings.consTriggerSex);
 		settings.sexArousalTattooModifier = static_cast<float>(j.value("sexArousalTattooModifier", 1.0));
 		SetMCMFloat("sexArousalTattooModifier",settings.sexArousalTattooModifier);
-		settings.sexSearchRadius = static_cast<float>(j.value("sexSearchRadius", 2000.0));
-		SetMCMFloat("sexSearchRadius",settings.sexSearchRadius);
 		settings.onlyLockedDoors = static_cast<bool>(j.value("onlyLockedDoors", true));
 		SetMCMBool("onlyLockedDoors",settings.onlyLockedDoors);
 		settings.eventScaling = static_cast<bool>(j.value("eventScaling", true));
@@ -1519,8 +1645,8 @@ namespace DCURSES {
 		SetMCMBool("stripOnlyKeywords",settings.stripOnlyKeywords);
 		settings.beltPlugs = static_cast<bool>(j.value("beltPlugs", true));
 		SetMCMBool("beltPlugs",settings.beltPlugs);
-		settings.noBeltPiercing = static_cast<bool>(j.value("noBeltPiercing", false));
-		SetMCMBool("noBeltPiercing",settings.noBeltPiercing);
+		settings.useGenderedChastity = static_cast<bool>(j.value("useGenderedChastity", true));
+		SetMCMBool("useGenderedChastity",settings.useGenderedChastity);
 		settings.plugsDontCount = static_cast<bool>(j.value("plugsDontCount", true));
 		SetMCMBool("plugsDontCount",settings.plugsDontCount);
 		settings.allowLegShackles = static_cast<bool>(j.value("allowLegShackles", false));
@@ -1543,10 +1669,30 @@ namespace DCURSES {
 		SetMCMBool("ANDSexTopless",settings.ANDSexTopless);
 		settings.ANDSexBottomless = static_cast<bool>(j.value("ANDSexBottomless", true));
 		SetMCMBool("ANDSexBottomless",settings.ANDSexBottomless);
+		settings.ANDSexShowingChest = static_cast<bool>(j.value("ANDSexShowingChest", true));
+		SetMCMBool("ANDSexShowingChest",settings.ANDSexShowingChest);
+		settings.ANDSexShowingGenitals = static_cast<bool>(j.value("ANDSexShowingGenitals", true));
+		SetMCMBool("ANDSexShowingGenitals",settings.ANDSexShowingGenitals);
+		settings.ANDSexShowingAss = static_cast<bool>(j.value("ANDSexShowingAss", false));
+		SetMCMBool("ANDSexShowingAss",settings.ANDSexShowingAss);
+		settings.ANDSexShowingBra = static_cast<bool>(j.value("ANDSexShowingBra", false));
+		SetMCMBool("ANDSexShowingBra",settings.ANDSexShowingBra);
+		settings.ANDSexShowingUnderwear = static_cast<bool>(j.value("ANDSexShowingUnderwear", false));
+		SetMCMBool("ANDSexShowingUnderwear",settings.ANDSexShowingUnderwear);
 		settings.ANDConsTopless = static_cast<bool>(j.value("ANDConsTopless", true));
 		SetMCMBool("ANDConsTopless",settings.ANDConsTopless);
 		settings.ANDConsBottomless = static_cast<bool>(j.value("ANDConsBottomless", true));
 		SetMCMBool("ANDConsBottomless",settings.ANDConsBottomless);
+		settings.ANDConsShowingChest = static_cast<bool>(j.value("ANDConsShowingChest", true));
+		SetMCMBool("ANDConsShowingChest",settings.ANDConsShowingChest);
+		settings.ANDConsShowingGenitals = static_cast<bool>(j.value("ANDConsShowingGenitals", true));
+		SetMCMBool("ANDConsShowingGenitals",settings.ANDConsShowingGenitals);
+		settings.ANDConsShowingAss = static_cast<bool>(j.value("ANDConsShowingAss", false));
+		SetMCMBool("ANDConsShowingAss",settings.ANDConsShowingAss);
+		settings.ANDConsShowingBra = static_cast<bool>(j.value("ANDConsShowingBra", false));
+		SetMCMBool("ANDConsShowingBra",settings.ANDConsShowingBra);
+		settings.ANDConsShowingUnderwear = static_cast<bool>(j.value("ANDConsShowingUnderwear", false));
+		SetMCMBool("ANDConsShowingUnderwear",settings.ANDConsShowingUnderwear);
 		settings.LMBrandingPunish = static_cast<bool>(j.value("LMBrandingPunish", true));
 		SetMCMBool("LMBrandingPunish",settings.LMBrandingPunish);
 		settings.LMNudityChestOnly = static_cast<bool>(j.value("LMNudityChestOnly", false));
@@ -1569,6 +1715,8 @@ namespace DCURSES {
 		SetMCMBool("oppLivingLatexOpen",settings.oppLivingLatexOpen);
 		settings.oppMadnessAllOrgasms = static_cast<bool>(j.value("oppMadnessAllOrgasms", false));
 		SetMCMBool("oppMadnessAllOrgasms",settings.oppMadnessAllOrgasms);
+		settings.oppMadnessBeltFilter = static_cast<bool>(j.value("oppMadnessBeltFilter", true));
+		SetMCMBool("oppMadnessBeltFilter",settings.oppMadnessBeltFilter);
 		settings.oppMadnessChaos = static_cast<bool>(j.value("oppMadnessChaos", false));
 		SetMCMBool("oppMadnessChaos",settings.oppMadnessChaos);
 		settings.useLocationModifiers = static_cast<bool>(j.value("useLocationModifiers", true));
@@ -1589,14 +1737,24 @@ namespace DCURSES {
 		SetMCMBool("enableQIBlackStar",settings.enableQIBlackStar);
 		settings.enableQIMindOfMadness = static_cast<bool>(j.value("enableQIMindOfMadness", true));
 		SetMCMBool("enableQIMindOfMadness",settings.enableQIMindOfMadness);
+		settings.enableQILaidToRest = static_cast<bool>(j.value("enableQILaidToRest", true));
+		SetMCMBool("enableQILaidToRest",settings.enableQILaidToRest);
+		settings.enableQICriedWolf = static_cast<bool>(j.value("enableQICriedWolf", true));
+		SetMCMBool("enableQICriedWolf",settings.enableQICriedWolf);
 		settings.enableQIProvingHonor = static_cast<bool>(j.value("enableQIProvingHonor", true));
 		SetMCMBool("enableQIProvingHonor",settings.enableQIProvingHonor);
 		settings.enableQISaarthal = static_cast<bool>(j.value("enableQISaarthal", true));
 		SetMCMBool("enableQISaarthal",settings.enableQISaarthal);
+		settings.enableQIBrelyna = static_cast<bool>(j.value("enableQIBrelyna", true));
+		SetMCMBool("enableQIBrelyna",settings.enableQIBrelyna);
 		settings.enableQIDwemerMuseum = static_cast<bool>(j.value("enableQIDwemerMuseum", true));
 		SetMCMBool("enableQIDwemerMuseum",settings.enableQIDwemerMuseum);
+		settings.enableQITrinityRestored = static_cast<bool>(j.value("enableQITrinityRestored", true));
+		SetMCMBool("enableQITrinityRestored",settings.enableQITrinityRestored);
 		settings.enableQIThalmorEmbassy = static_cast<bool>(j.value("enableQIThalmorEmbassy", true));
 		SetMCMBool("enableQIThalmorEmbassy",settings.enableQIThalmorEmbassy);
+		settings.enableQIRingmaker = static_cast<bool>(j.value("enableQIRingmaker", true));
+		SetMCMBool("enableQIRingmaker",settings.enableQIRingmaker);
 		settings.oppDeviceAntiCheat = static_cast<bool>(j.value("oppDeviceAntiCheat", true));
 		SetMCMBool("oppDeviceAntiCheat",settings.oppDeviceAntiCheat);
 		settings.generalDeviceAntiCheat = static_cast<bool>(j.value("generalDeviceAntiCheat", false));
@@ -1682,6 +1840,7 @@ namespace DCURSES {
 		//CODEGEN_START_UPDATE
 		bool recalculate = false;
 		if (settings.maxHeldKeys != GetMCMSetting("maxHeldKeys")->GetSInt()) {recalculate = true;}
+		if (settings.useGenderedChastity != GetMCMSetting("useGenderedChastity")->GetBool()) {recalculate = true;}
 		if (settings.onlyUseUnforgivingDevices != GetMCMSetting("onlyUseUnforgivingDevices")->GetBool()) {recalculate = true;}
 		if (settings.udUseAbadon != GetMCMSetting("udUseAbadon")->GetBool()) {recalculate = true;}
 		if (settings.udUseMisc != GetMCMSetting("udUseMisc")->GetBool()) {recalculate = true;}
@@ -1693,6 +1852,7 @@ namespace DCURSES {
 		settings.restraintCap = GetMCMSetting("restraintCap")->GetSInt();
 		settings.minArousal = GetMCMSetting("minArousal")->GetSInt();
 		settings.beltWeight = GetMCMSetting("beltWeight")->GetSInt();
+		settings.chastityPiercingWeight = GetMCMSetting("chastityPiercingWeight")->GetSInt();
 		settings.braWeight = GetMCMSetting("braWeight")->GetSInt();
 		settings.plugsWeight = GetMCMSetting("plugsWeight")->GetSInt();
 		settings.lockingPlugsWeight = GetMCMSetting("lockingPlugsWeight")->GetSInt();
@@ -1762,6 +1922,10 @@ namespace DCURSES {
 		settings.oppDwarvenCuirassWeight = GetMCMSetting("oppDwarvenCuirassWeight")->GetSInt();
 		settings.oppDwarvenValueNeeded = GetMCMSetting("oppDwarvenValueNeeded")->GetSInt();
 		settings.oppDwarvenArousal = GetMCMSetting("oppDwarvenArousal")->GetSInt();
+		settings.oppNocturnalWeight = GetMCMSetting("oppNocturnalWeight")->GetSInt();
+		settings.oppNocturnalSexCount = GetMCMSetting("oppNocturnalSexCount")->GetSInt();
+		settings.oppNocturnalPeople = GetMCMSetting("oppNocturnalPeople")->GetSInt();
+		settings.oppNocturnalArousal = GetMCMSetting("oppNocturnalArousal")->GetSInt();
 		settings.oppLivingLatexWeight = GetMCMSetting("oppLivingLatexWeight")->GetSInt();
 		settings.oppLivingLatexStartTime = GetMCMSetting("oppLivingLatexStartTime")->GetSInt();
 		settings.oppMadnessPlugWeight = GetMCMSetting("oppMadnessPlugWeight")->GetSInt();
@@ -1794,6 +1958,7 @@ namespace DCURSES {
 		settings.sexArousalFollowerModifier = GetMCMSetting("sexArousalFollowerModifier")->GetSInt();
 		settings.sexArousalSpouseModifier = GetMCMSetting("sexArousalSpouseModifier")->GetSInt();
 		settings.sexArousalSummonModifier = GetMCMSetting("sexArousalSummonModifier")->GetSInt();
+		settings.sexSearchRadius = GetMCMSetting("sexSearchRadius")->GetSInt();
 		settings.sexSearchInterval = GetMCMSetting("sexSearchInterval")->GetSInt();
 		settings.sexRequiredPlayerArousal = GetMCMSetting("sexRequiredPlayerArousal")->GetSInt();
 		settings.sexRequiredPlayerTattoos = GetMCMSetting("sexRequiredPlayerTattoos")->GetSInt();
@@ -1820,6 +1985,8 @@ namespace DCURSES {
 		settings.LMBrandingChance = GetMCMSetting("LMBrandingChance")->GetFloat();
 		settings.LMBondageChance = GetMCMSetting("LMBondageChance")->GetFloat();
 		settings.oppSummonChance = GetMCMSetting("oppSummonChance")->GetFloat();
+		settings.oppNocturnalHandChance = GetMCMSetting("oppNocturnalHandChance")->GetFloat();
+		settings.oppNocturnalRecastChance = GetMCMSetting("oppNocturnalRecastChance")->GetFloat();
 		settings.oppLivingLatexGem = GetMCMSetting("oppLivingLatexGem")->GetFloat();
 		settings.oppLivingLatexMore = GetMCMSetting("oppLivingLatexMore")->GetFloat();
 		settings.playerHomeModifier = GetMCMSetting("playerHomeModifier")->GetFloat();
@@ -1842,21 +2009,22 @@ namespace DCURSES {
 		settings.keyBonus = GetMCMSetting("keyBonus")->GetFloat();
 		settings.keyPickpocketBonus = GetMCMSetting("keyPickpocketBonus")->GetFloat();
 		settings.magicKeyChance = GetMCMSetting("magicKeyChance")->GetFloat();
+		settings.keyLuckyBonus = GetMCMSetting("keyLuckyBonus")->GetFloat();
 		settings.rDeviceBaseChance = GetMCMSetting("rDeviceBaseChance")->GetFloat();
+		settings.rDeviceLuckyBonus = GetMCMSetting("rDeviceLuckyBonus")->GetFloat();
 		settings.tatSolventChance = GetMCMSetting("tatSolventChance")->GetFloat();
 		settings.arousalPotionChance = GetMCMSetting("arousalPotionChance")->GetFloat();
 		settings.consTriggerNude = GetMCMSetting("consTriggerNude")->GetFloat();
 		settings.consTriggerRestrained = GetMCMSetting("consTriggerRestrained")->GetFloat();
 		settings.consTriggerSex = GetMCMSetting("consTriggerSex")->GetFloat();
 		settings.sexArousalTattooModifier = GetMCMSetting("sexArousalTattooModifier")->GetFloat();
-		settings.sexSearchRadius = GetMCMSetting("sexSearchRadius")->GetFloat();
 		settings.onlyLockedDoors = GetMCMSetting("onlyLockedDoors")->GetBool();
 		settings.eventScaling = GetMCMSetting("eventScaling")->GetBool();
 		settings.bossOnlyHeavy = GetMCMSetting("bossOnlyHeavy")->GetBool();
 		settings.stripPlayerOnEvent = GetMCMSetting("stripPlayerOnEvent")->GetBool();
 		settings.stripOnlyKeywords = GetMCMSetting("stripOnlyKeywords")->GetBool();
 		settings.beltPlugs = GetMCMSetting("beltPlugs")->GetBool();
-		settings.noBeltPiercing = GetMCMSetting("noBeltPiercing")->GetBool();
+		settings.useGenderedChastity = GetMCMSetting("useGenderedChastity")->GetBool();
 		settings.plugsDontCount = GetMCMSetting("plugsDontCount")->GetBool();
 		settings.allowLegShackles = GetMCMSetting("allowLegShackles")->GetBool();
 		settings.eventContDevices = GetMCMSetting("eventContDevices")->GetBool();
@@ -1868,8 +2036,18 @@ namespace DCURSES {
 		settings.udUseMisc = GetMCMSetting("udUseMisc")->GetBool();
 		settings.ANDSexTopless = GetMCMSetting("ANDSexTopless")->GetBool();
 		settings.ANDSexBottomless = GetMCMSetting("ANDSexBottomless")->GetBool();
+		settings.ANDSexShowingChest = GetMCMSetting("ANDSexShowingChest")->GetBool();
+		settings.ANDSexShowingGenitals = GetMCMSetting("ANDSexShowingGenitals")->GetBool();
+		settings.ANDSexShowingAss = GetMCMSetting("ANDSexShowingAss")->GetBool();
+		settings.ANDSexShowingBra = GetMCMSetting("ANDSexShowingBra")->GetBool();
+		settings.ANDSexShowingUnderwear = GetMCMSetting("ANDSexShowingUnderwear")->GetBool();
 		settings.ANDConsTopless = GetMCMSetting("ANDConsTopless")->GetBool();
 		settings.ANDConsBottomless = GetMCMSetting("ANDConsBottomless")->GetBool();
+		settings.ANDConsShowingChest = GetMCMSetting("ANDConsShowingChest")->GetBool();
+		settings.ANDConsShowingGenitals = GetMCMSetting("ANDConsShowingGenitals")->GetBool();
+		settings.ANDConsShowingAss = GetMCMSetting("ANDConsShowingAss")->GetBool();
+		settings.ANDConsShowingBra = GetMCMSetting("ANDConsShowingBra")->GetBool();
+		settings.ANDConsShowingUnderwear = GetMCMSetting("ANDConsShowingUnderwear")->GetBool();
 		settings.LMBrandingPunish = GetMCMSetting("LMBrandingPunish")->GetBool();
 		settings.LMNudityChestOnly = GetMCMSetting("LMNudityChestOnly")->GetBool();
 		settings.oppOneAtATime = GetMCMSetting("oppOneAtATime")->GetBool();
@@ -1881,6 +2059,7 @@ namespace DCURSES {
 		settings.oppLivingLatexRequireRem = GetMCMSetting("oppLivingLatexRequireRem")->GetBool();
 		settings.oppLivingLatexOpen = GetMCMSetting("oppLivingLatexOpen")->GetBool();
 		settings.oppMadnessAllOrgasms = GetMCMSetting("oppMadnessAllOrgasms")->GetBool();
+		settings.oppMadnessBeltFilter = GetMCMSetting("oppMadnessBeltFilter")->GetBool();
 		settings.oppMadnessChaos = GetMCMSetting("oppMadnessChaos")->GetBool();
 		settings.useLocationModifiers = GetMCMSetting("useLocationModifiers")->GetBool();
 		settings.keyForgiveness = GetMCMSetting("keyForgiveness")->GetBool();
@@ -1891,10 +2070,15 @@ namespace DCURSES {
 		settings.enableQISanguine = GetMCMSetting("enableQISanguine")->GetBool();
 		settings.enableQIBlackStar = GetMCMSetting("enableQIBlackStar")->GetBool();
 		settings.enableQIMindOfMadness = GetMCMSetting("enableQIMindOfMadness")->GetBool();
+		settings.enableQILaidToRest = GetMCMSetting("enableQILaidToRest")->GetBool();
+		settings.enableQICriedWolf = GetMCMSetting("enableQICriedWolf")->GetBool();
 		settings.enableQIProvingHonor = GetMCMSetting("enableQIProvingHonor")->GetBool();
 		settings.enableQISaarthal = GetMCMSetting("enableQISaarthal")->GetBool();
+		settings.enableQIBrelyna = GetMCMSetting("enableQIBrelyna")->GetBool();
 		settings.enableQIDwemerMuseum = GetMCMSetting("enableQIDwemerMuseum")->GetBool();
+		settings.enableQITrinityRestored = GetMCMSetting("enableQITrinityRestored")->GetBool();
 		settings.enableQIThalmorEmbassy = GetMCMSetting("enableQIThalmorEmbassy")->GetBool();
+		settings.enableQIRingmaker = GetMCMSetting("enableQIRingmaker")->GetBool();
 		settings.oppDeviceAntiCheat = GetMCMSetting("oppDeviceAntiCheat")->GetBool();
 		settings.generalDeviceAntiCheat = GetMCMSetting("generalDeviceAntiCheat")->GetBool();
 		settings.noMessageBoxes = GetMCMSetting("noMessageBoxes")->GetBool();

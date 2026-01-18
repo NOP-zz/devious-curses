@@ -40,10 +40,11 @@ namespace DCURSES {
                 QICheckObjectActivation(activatedObject); // Must do first!
                 if (IsModDisabled()) {
                     log::trace("Activate skipped, mod is disabled.");
-                    return RE::BSEventNotifyControl::kContinue;
+                    //return RE::BSEventNotifyControl::kContinue;
                 }
                 CalculateEventChance(activatedObject);
-                return RE::BSEventNotifyControl::kContinue;
+                OppNocturnalTryRecast();
+                //return RE::BSEventNotifyControl::kContinue;
             }
             return RE::BSEventNotifyControl::kContinue;
         }
@@ -154,6 +155,13 @@ namespace DCURSES {
     {
         virtual RE::BSEventNotifyControl ProcessEvent(const RE::TESSpellCastEvent* spellEvent, RE::BSTEventSource<RE::TESSpellCastEvent>*) override {
             TatsOnSpellCast(spellEvent);
+            QIOnSpellCast(spellEvent);
+
+            auto player = RE::PlayerCharacter::GetSingleton();
+            auto actor = spellEvent->object->As<RE::Actor>();
+            if (actor && actor == player) {
+                OppNocturnalTryRecast();
+            }
 
             return RE::BSEventNotifyControl::kContinue;
         }
@@ -195,6 +203,8 @@ namespace DCURSES {
                         OppLatexMagicEvent();
                     });
                 }
+
+                OppNocturnalTryRecast();
             }
 
             return RE::BSEventNotifyControl::kContinue;
@@ -255,7 +265,7 @@ namespace DCURSES {
                         }
                     }
                     else if (arg == "tattoo") {
-                        if (!DoTattooEvent("", numArg)) {
+                        if (!DoTattooEvent(player, "", numArg)) {
                             log::warn("Unable to run Tattoo event");
                         }
                     }
@@ -356,6 +366,14 @@ namespace DCURSES {
                             log::warn("Unable to equip player with Madness Plug");
                         }
                     }
+                    else if (strArg == "nocturnalpiercing") {
+                        if (OppNocturnalPiercingEvent("")) {
+                            log::info("Equipping player with Nocturnal Piercing");
+                        }
+                        else {
+                            log::warn("Unable to equip player with Nocturnal Piercing");
+                        }
+                    }
                     else {
                         log::warn("Bad ModEvent strArg: {}", strArg);
                         return RE::BSEventNotifyControl::kContinue;
@@ -372,6 +390,7 @@ namespace DCURSES {
                     RE::TESObjectARMO* dwarven_heavy = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(DWARVEN_CURIAS_HEAVY, "Devious Curses.esp");
                     RE::TESObjectARMO* madness_plug = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(MADNESS_PLUG, "Devious Curses.esp");
                     RE::TESObjectARMO* madness_piercings = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(MADNESS_PIERCINGS, "Devious Curses.esp");
+                    RE::TESObjectARMO* nocturnal_piercing = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(NOCTURNAL_PIERCING, "Devious Curses.esp");
                     
                     auto scriptManager = ScriptingManager();
                     scriptManager.UnlockDevice(player, summoner_collar, nullptr, nullptr, true, false);
@@ -381,6 +400,7 @@ namespace DCURSES {
                     scriptManager.UnlockDevice(player, dwarven_heavy, nullptr, nullptr, true, false);
                     scriptManager.UnlockDevice(player, madness_plug, nullptr, nullptr, true, false);
                     scriptManager.UnlockDevice(player, madness_piercings, nullptr, nullptr, true, false);
+                    scriptManager.UnlockDevice(player, nocturnal_piercing, nullptr, nullptr, true, false);
                 }
                 else {
                     log::warn("Received bad ModEvent name {}", name);

@@ -15,7 +15,7 @@ namespace DCURSES {
 	constexpr int ODEVICE_MADNESS_DIVISOR = 1000;
 
 	bool DoStandardEvent(RE::Actor*, bool, std::string, std::string, int, std::vector<std::string>);
-	bool DoLewdMarkEvent(std::string containerName);
+	bool DoLewdMarkEvent(std::string containerName, double multiplier);
 
 	ODBitmask GetOppDeviceMask() {
 		ODBitmask mask;
@@ -32,6 +32,8 @@ namespace DCURSES {
 		RE::TESObjectARMO* dwarven_heavy_r = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(DWARVEN_CURIAS_HEAVY_R, "Devious Curses.esp");
 		RE::TESObjectARMO* madness_plug = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(MADNESS_PLUG, "Devious Curses.esp");
 		RE::TESObjectARMO* madness_plug_r = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(MADNESS_PLUG_R, "Devious Curses.esp");
+		RE::TESObjectARMO* nocturnal_piercing = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(NOCTURNAL_PIERCING, "Devious Curses.esp");
+		RE::TESObjectARMO* nocturnal_piercing_r = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(NOCTURNAL_PIERCING_R, "Devious Curses.esp");
 
 		auto playerInventory = RE::PlayerCharacter::GetSingleton()->GetInventory();
 		for (auto const& [k, v] : playerInventory) {
@@ -48,6 +50,9 @@ namespace DCURSES {
 				}
 				if (armor == madness_plug || armor == madness_plug_r) {
 					mask |= ODBitmask::MadnessPlug;
+				}
+				if (armor == nocturnal_piercing || armor == nocturnal_piercing_r) {
+					mask |= ODBitmask::NocturnalPiercing;
 				}
 			}
 		}
@@ -219,11 +224,45 @@ namespace DCURSES {
 			scriptManager.UnlockDevice(player, currentPlug);
 		}
 
+		if (settings.oppMadnessBeltFilter) {
+			auto currentBelt = GetWornInventoryDeviceByKeyword(player, "zad_DeviousBelt");
+			if (currentBelt && !DeviceInventoryIsGeneric(currentBelt)) {
+				return false;
+			}
+
+			auto currentVag = GetWornInventoryDeviceByKeyword(player, "zad_DeviousPlugVaginal");
+			if (currentVag && !DeviceInventoryIsGeneric(currentVag)) {
+				return false;
+			}
+		}
+
 		RE::TESObjectARMO* madness_plug = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(MADNESS_PLUG, "Devious Curses.esp");
 		scriptManager.LockDevice(player, madness_plug, true);
 
 		if (!containerName.empty()) {
 			PlayerMessage(Translator(Translation::ODeviceMadnessPlugStart, containerName));
+		};
+		return true;
+	}
+
+	bool OppNocturnalPiercingEvent(std::string containerName) {
+		auto player = RE::PlayerCharacter::GetSingleton();
+
+		auto scriptManager = ScriptingManager();
+
+		auto currentPiercing = GetWornInventoryDeviceByKeyword(player, "zad_DeviousPiercingsVaginal");
+		if (currentPiercing && !DeviceInventoryIsGeneric(currentPiercing)) {
+			return false;
+		}
+		else {
+			scriptManager.UnlockDevice(player, currentPiercing);
+		}
+
+		RE::TESObjectARMO* nocturnal_piercing = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(NOCTURNAL_PIERCING, "Devious Curses.esp");
+		scriptManager.LockDevice(player, nocturnal_piercing, true);
+
+		if (!containerName.empty()) {
+			PlayerMessage(Translator(Translation::ODeviceNocturnalPiercingStart, containerName));
 		};
 		return true;
 	}
@@ -239,6 +278,7 @@ namespace DCURSES {
 		auto _OppDwarvenCuirassEvent = [](std::string s) {return OppDwarvenCuirassEvent(s); };
 		events.push_back(std::make_pair(_OppDwarvenCuirassEvent, settings.oppDwarvenCuirassWeight));
 		events.push_back(std::make_pair(OppMadnessPlugEvent, settings.oppMadnessPlugWeight));
+		events.push_back(std::make_pair(OppNocturnalPiercingEvent, settings.oppNocturnalWeight));
 
 		double sum = Util::VectorGetWeightsSum(events);
 		if (sum == 0) {
@@ -279,6 +319,13 @@ namespace DCURSES {
 		return device_mask & ODBitmask::MadnessPlug;
 	}
 
+	bool IsWearingOppNocturnal(ODBitmask device_mask = UINT32_MAX) {
+		if (device_mask == UINT32_MAX) {
+			device_mask = GetOppDeviceMask();
+		}
+		return device_mask & ODBitmask::NocturnalPiercing;
+	}
+
 	void OppLatexMagicEvent() {
 		auto player = RE::PlayerCharacter::GetSingleton();
 
@@ -313,6 +360,75 @@ namespace DCURSES {
 		}
 	}
 
+	void OppNocturnalHands(bool fromRecast = false) {
+		std::vector<std::pair<bool (*)(RE::Actor*, ScriptingManager&), double>> results;
+
+		results.push_back({ [](RE::Actor* player, ScriptingManager& scriptManager) {
+			scriptManager.VibrateEffect(player, 2, 30, true);
+			scriptManager.DBGNotification(Translator(Translation::ODeviceNocturnalPiercingVibrate));
+			return true;
+		} , 10 });
+
+		results.push_back({ [](RE::Actor* player, ScriptingManager& scriptManager) {
+			scriptManager.VibrateEffect(player, 5, 30, true);
+			scriptManager.DBGNotification(Translator(Translation::ODeviceNocturnalPiercingVibrate));
+			return true;
+		} , 5 });
+
+		if (fromRecast) {
+			results.push_back({ [](RE::Actor* player, ScriptingManager& scriptManager) {
+				scriptManager.ModifyArousal(player, 7);
+				scriptManager.DBGNotification(Translator(Translation::ODeviceNocturnalPiercingHandsRecast));
+				return true;
+			} , 100 });
+
+			results.push_back({ [](RE::Actor* player, ScriptingManager& scriptManager) {
+				scriptManager.ModifyArousal(player, 19);
+				scriptManager.DBGNotification(Translator(Translation::ODeviceNocturnalPiercingHands4));
+				return true;
+			} , 25 });
+		}
+		else {
+			results.push_back({ [](RE::Actor* player, ScriptingManager& scriptManager) {
+				scriptManager.ModifyArousal(player, 4);
+				scriptManager.DBGNotification(Translator(Translation::ODeviceNocturnalPiercingHands));
+				return true;
+			} , 75 });
+
+			results.push_back({ [](RE::Actor* player, ScriptingManager& scriptManager) {
+				scriptManager.ModifyArousal(player, 7);
+				scriptManager.DBGNotification(Translator(Translation::ODeviceNocturnalPiercingHands2));
+				return true;
+			} , 50 });
+
+			results.push_back({ [](RE::Actor* player, ScriptingManager& scriptManager) {
+				scriptManager.ModifyArousal(player, 11);
+				scriptManager.DBGNotification(Translator(Translation::ODeviceNocturnalPiercingHands3));
+				return true;
+			} , 35 });
+
+			results.push_back({ [](RE::Actor* player, ScriptingManager& scriptManager) {
+				scriptManager.ModifyArousal(player, 19);
+				scriptManager.DBGNotification(Translator(Translation::ODeviceNocturnalPiercingHands4));
+				return true;
+			} , 20 });
+		}
+
+		Util::ShuffleVector(results);
+
+		auto player = RE::PlayerCharacter::GetSingleton();
+		auto scriptManager = ScriptingManager();
+
+		while (!results.empty()) {
+			auto pair = Util::VectorSelectWeighted(results);
+			if (pair.first(player, scriptManager)) {
+				return;
+			}
+			results.erase(std::remove(results.begin(), results.end(), pair), results.end());
+		}
+		log::warn("Unable to select Madness Event");
+	}
+
 	void OppDeviceUpdate() {
 		if (counters.clock_GlobalTicker % ODEVICE_TICK == 0) {
 			auto player = RE::PlayerCharacter::GetSingleton();
@@ -324,6 +440,8 @@ namespace DCURSES {
 			RE::TESObjectARMO* latex_open = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(LIVING_LATEX_OPEN, "Devious Curses.esp");
 			RE::TESObjectARMO* dwarven_cuirass = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(DWARVEN_CURIAS, "Devious Curses.esp");
 			RE::TESObjectARMO* dwarven_heavy = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(DWARVEN_CURIAS_HEAVY, "Devious Curses.esp");
+			//RE::TESObjectARMO* nocturnal_piercing = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(NOCTURNAL_PIERCING, "Devious Curses.esp");
+
 
 			auto oppDeviceMask = GetOppDeviceMask();
 
@@ -331,6 +449,7 @@ namespace DCURSES {
 			bool isWearingLatex = oppDeviceMask & ODBitmask::LivingLatex;
 			bool isWearingDwarven = oppDeviceMask & ODBitmask::DwarvenCuirass;
 			bool isWearingMadness = oppDeviceMask & ODBitmask::MadnessPlug;
+			bool isWearingNocturnal = oppDeviceMask & ODBitmask::NocturnalPiercing;
 
 			if (isWearingSummonerCollar && oppdCounters.summonCollarCounter == INT64_MIN) {
 				log::trace("Reseting summoner collar counter.");
@@ -363,6 +482,14 @@ namespace DCURSES {
 			}
 			else if (!isWearingMadness) {
 				oppdCounters.madnessPlugCounter = INT64_MIN;
+			}
+
+			if (isWearingNocturnal && oppdCounters.nocturnalPiercingCounter == INT64_MIN) {
+				log::trace("Reseting nocturnal piercing counter.");
+				oppdCounters.nocturnalPiercingCounter = settings.oppNocturnalSexCount;
+			}
+			else if (!isWearingNocturnal) {
+				oppdCounters.nocturnalPiercingCounter = INT64_MIN;
 			}
 
 			//Summoner Collar
@@ -419,6 +546,9 @@ namespace DCURSES {
 							std::vector<std::string> skips;
 							if (!settings.oppLivingLatexHeavy) {
 								skips.push_back("zad_DeviousHeavyBondage");
+							}
+							else {
+								UnequipItems(player);
 							}
 							DoStandardEvent(player, false, "", "(black & (ebonite | rubber)) | plugpumps", 20, skips);
 							AIEventLivingLatexActivate();
@@ -605,6 +735,39 @@ namespace DCURSES {
 				auto sexCountTotal = (oppdCounters.madnessPlugCounter / ODEVICE_MADNESS_DIVISOR) * settings.oppMadnessplugOrgasms + oppdCounters.madnessPlugCounter % ODEVICE_MADNESS_DIVISOR;
 				SetEffectMagnitude(MADNESS_PLUG_EFFECT, static_cast<float>(sexCountTotal));
 			}
+
+			//Nocturnal Piercing
+			if (isWearingNocturnal) {
+				auto invis_effect = GetEffectByFormID(NOCTURNAL_INVIS_EFFECT);
+				RE::SpellItem* nocturnal_invis = StaticDataHolder::GetSingleton()->LookupForm<RE::SpellItem>(NOCTURNAL_INVIS_SPELL, "Devious Curses.esp");
+
+				if (invis_effect) {
+					//log::trace("Is invisible");
+
+					if (scriptManager.GetArousal(player) >= settings.oppNocturnalArousal) {
+						RE::MagicTarget* target = player->GetMagicTarget();
+						auto player_handle = player->GetHandle();
+						target->DispelEffect(nocturnal_invis, player_handle);
+					}
+					else {
+						invis_effect->elapsedSeconds = 1.0;
+					}
+				}
+				else {
+					//log::trace("Is not invisible");
+					if (scriptManager.GetArousal(player) < settings.oppNocturnalArousal) {
+						//log::trace("Attempting invis cast");
+						RE::MagicCaster* caster = player->GetMagicCaster(RE::MagicSystem::CastingSource::kOther);
+						caster->CastSpellImmediate(nocturnal_invis, false, player, 1.0f, false, 0.0f, nullptr);
+					}
+				}
+				
+				if (Util::randomDouble() < settings.oppNocturnalHandChance) {
+					OppNocturnalHands();
+				}
+
+				SetEffectMagnitude(NOCTURNAL_PIERCING_EFFECT, static_cast<float>(oppdCounters.nocturnalPiercingCounter));
+			}
 		}
 	}
 
@@ -673,7 +836,7 @@ namespace DCURSES {
 
 		results.push_back({ [](RE::Actor*, ScriptingManager&) {// Lewd Mark
 			if (GetLewdMark() == MARK::TAT_NONE) {
-				DoLewdMarkEvent("");
+				DoLewdMarkEvent("", Util::randomDouble(0.5,3));
 				log::trace("Madness Lewd Mark");
 				PlayerMessage(Translator(Translation::ODeviceMadnessPlugMark));
 				return true;
@@ -681,9 +844,10 @@ namespace DCURSES {
 			return false;
 		} , 75 });
 
-		results.push_back({ [](RE::Actor* player, ScriptingManager& scriptManager) {// Full Tattoos
+		results.push_back({ [](RE::Actor* player, ScriptingManager&) {// Full Tattoos
 			if (CheckRapeTattoos() && GetTattooCount(player) <= 5) {
-				scriptManager.RTDoTattooEvent(player, 20);
+				//scriptManager.RTDoTattooEvent(player, 20);
+				DoTattooEvent(player, "", 20, true);
 				log::trace("Madness Full Tattoos");
 				PlayerMessage(Translator(Translation::ODeviceMadnessPlugTattoos));
 				return true;
@@ -784,7 +948,27 @@ namespace DCURSES {
 		}
 	}
 
-	void OppDDPlayerOrgasm() {
+	void OppNocturnalPlayerSex() {
+		if (IsWearingOppNocturnal()) {
+			auto player = RE::PlayerCharacter::GetSingleton();
+			auto watching_actors = Util::GetWatchingActors(player);
+			log::trace("Sex: {} watching", watching_actors.size());
+			if (watching_actors.size() >= settings.oppNocturnalPeople) {
+				oppdCounters.nocturnalPiercingCounter -= 1;
+				if (oppdCounters.nocturnalPiercingCounter > 0 && DoStandardEvent(player, false, "", "black & leather", 2, { "zad_DeviousHeavyBondage" })) {
+					PlayerMessage(Translator(Translation::ODeviceNocturnalPiercingAnger));
+				}
+				else if (oppdCounters.nocturnalPiercingCounter <= 0) {
+					RE::TESObjectARMO* nocturnal_piercing = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(NOCTURNAL_PIERCING, "Devious Curses.esp");
+					ScriptingManager().UnlockDevice(player, nocturnal_piercing, nullptr, nullptr, true, false);
+					DoStandardEvent(player, false, "", "(black & leather) | plug | piercing", 20, {});
+					PlayerMessage(Translator(Translation::ODeviceNocturnalPiercingRemove));
+				}
+			}
+		}
+	}
+
+	void OppMadnessPlayerOrgasm() {
 
 		//Madness Plug
 		if (IsWearingOppMadness()) {
@@ -828,6 +1012,21 @@ namespace DCURSES {
 				oppdCounters.madnessPlugCounter += settings.oppMadnessplugOrgasms;
 
 				OppDoMadnessEffect();
+			}
+		}
+	}
+
+	void OppNocturnalTryRecast() {
+		if (IsWearingOppNocturnal()) {
+			auto player = RE::PlayerCharacter::GetSingleton();
+			if (ScriptingManager().GetArousal(player) < settings.oppNocturnalArousal) {
+				RE::SpellItem* nocturnal_invis = StaticDataHolder::GetSingleton()->LookupForm<RE::SpellItem>(NOCTURNAL_INVIS_SPELL, "Devious Curses.esp");
+				RE::MagicCaster* caster = player->GetMagicCaster(RE::MagicSystem::CastingSource::kOther);
+				caster->CastSpellImmediate(nocturnal_invis, false, player, 1.0f, false, 0.0f, nullptr);
+
+				if (Util::randomDouble() <= settings.oppNocturnalRecastChance) {
+					OppNocturnalHands(true);
+				}
 			}
 		}
 	}

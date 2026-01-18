@@ -12,6 +12,7 @@ namespace DCURSES {
 			LivingLatex = 1 << 1,
 			DwarvenCuirass = 1 << 2,
 			MadnessPlug = 1 << 3,
+			NocturnalPiercing = 1 << 4,
 		};
 
 		ODBitmask() {

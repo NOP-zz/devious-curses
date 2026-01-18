@@ -6,19 +6,26 @@
 using namespace SKSE;
 
 namespace DCURSES {
-	constexpr auto QUEST_DA01 = 0x28AD6;
-	constexpr auto QUEST_DA09 = 0x4E4E1;
-	constexpr auto QUEST_DA14 = 0x1BB9B;
-	constexpr auto QUEST_DA15 = 0x2AC68;
+	static constexpr auto QUEST_DA01 = 0x28AD6;
+	static constexpr auto QUEST_DA09 = 0x4E4E1;
+	static constexpr auto QUEST_DA14 = 0x1BB9B;
+	static constexpr auto QUEST_DA15 = 0x2AC68;
 
-	constexpr auto QUEST_C01 = 0x6E803;
-	constexpr auto QUEST_C03 = 0x1CEF4;
+	static constexpr auto QUEST_C01 = 0x6E803;
+	static constexpr auto QUEST_C03 = 0x1CEF4;
 
-	constexpr auto QUEST_MG04 = 0x1F254;
+	static constexpr auto QUEST_MG04 = 0x1F254;
 
-	constexpr auto QUEST_TG06 = 0x21552;
+	static constexpr auto QUEST_TG06 = 0x21552;
+	static constexpr auto QUEST_TG08A = 0x57F99;
 
-	constexpr auto QUEST_MQ201 = 0x35D5F;
+	static constexpr auto QUEST_MQ201 = 0x35D5F;
+	static constexpr auto QUEST_MGRAppBrelyna = 0xC0416;
+
+	static constexpr auto QUEST_MS14 = 0x25F3E;
+	static constexpr auto QUEST_MS06START = 0x93807;
+
+	static constexpr auto QUEST_FREEFORMRIFTEN18 = 0x5B3A5;
 
 	void QIMeridiaInteraction() {
 		if (!settings.enableQIMalkoran) { return; }
@@ -142,6 +149,30 @@ namespace DCURSES {
 		}
 	}
 
+	void QIMGBrelyna1() {
+		if (!settings.enableQIBrelyna || settings.eventLewdMarkWeight == 0) { return; }
+		Util::ExecuteWithDelay(1s, [] {
+			if (DoLewdMarkEvent("", Util::randomDouble(0.4, 0.9))) {
+				PlayerMessage(Translator(Translation::QIBrelyna));
+			}
+		});
+		
+	}
+
+	void QIMGBrelyna2() {
+		if (!settings.enableQIBrelyna || settings.petSuitWeight == 0) { return; }
+		auto player = RE::PlayerCharacter::GetSingleton();
+
+		auto suit = GetWornInventoryDeviceByKeyword(player, "zad_DeviousSuit");
+		auto bondage = GetWornInventoryDeviceByKeyword(player, "zad_DeviousHeavyBondage");
+		if (!suit && !bondage) {
+			auto dev = GetRandomDevice(&devices.petSuits);
+			if (dev.has_value()) {
+				ScriptingManager().LockDevice(player, (*dev).inv, true);
+			}
+		}
+	}
+
 	void QIDwemerMuseum() {
 		if (!settings.enableQIDwemerMuseum) { return; }
 
@@ -156,6 +187,14 @@ namespace DCURSES {
 		}
 		else {
 			PlayerMessage(Translator(Translation::QIDwemerMuseum));
+		}
+	}
+
+	void QITrinityRestored() {
+		if (!settings.enableQITrinityRestored) { return; }
+
+		if (OppNocturnalPiercingEvent("")) {
+			PlayerMessage(Translator(Translation::QITrinityRestored));
 		}
 	}
 
@@ -177,32 +216,90 @@ namespace DCURSES {
 		}
 	}
 
+	void QILaidToRest() {
+		if (!settings.enableQILaidToRest) { return; }
+
+		auto player = RE::PlayerCharacter::GetSingleton();
+
+		if (DoStandardEvent(player, false, "", "(red & (leather | (lustr & belt))) | (piercing & shock) | (plug & (primitive | iron))", 20, { "zad_DeviousHeavyBondage", "zad_DeviousBlindfold", "zad_DeviousHood", "zad_DeviousSuit" })) {
+			PlayerMessage(Translator(Translation::QILaidToRest));
+		}
+	}
+	void QICriedWolf() {
+		if (!settings.enableQICriedWolf) { return; }
+
+		std::thread{ [] {
+			auto player = RE::PlayerCharacter::GetSingleton();
+			while (player->IsInCombat()) {
+				std::this_thread::sleep_for(250ms);
+			}
+			Util::ExecuteWithDelay(5ms, [player]{
+				if (DoStandardEvent(player, false, "", "(steel | iron | rust) | (piercing & (charge | punish | common))", 20)) {
+					PlayerMessage(Translator(Translation::QICriedWolf));
+				}
+			});
+		} }.detach();
+	}
+
+	void QIRingmaker() {
+		if (!settings.enableQILaidToRest) { return; }
+
+		auto player = RE::PlayerCharacter::GetSingleton();
+		auto scriptingManager = ScriptingManager();
+
+		RE::TESObjectARMO* lucky_piercings = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(LUCKY_PIERCINGS, "Devious Curses.esp");
+		auto collar = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(DDX_GOLDEN_COLLAR, "Devious Devices - Expansion.esm");
+		auto cuffsA = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(DDX_GOLDEN_CUFFS_ARMS, "Devious Devices - Expansion.esm");
+		auto cuffsL = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(DDX_GOLDEN_CUFFS_LEGS, "Devious Devices - Expansion.esm");
+		auto piercings = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(CHASTITY_PIERCING_GOLD8, "Devious Chastity Piercing.esp");
+
+		scriptingManager.LockDevice(player, lucky_piercings, true);
+		scriptingManager.LockDevice(player, collar, true);
+		scriptingManager.LockDevice(player, cuffsA, true);
+		scriptingManager.LockDevice(player, cuffsL, true);
+		if (piercings )scriptingManager.LockDevice(player, piercings, true);
+		PlayerMessage(Translator(Translation::QIRingmaker));
+	}
+
 	void QICheckQuestStage(RE::FormID quest_id, uint16_t stage) {
 		if (!settings.enableQuestInteractions) { return; }
 
 		auto quest = RE::TESForm::LookupByID(quest_id)->As<RE::TESQuest>();
+		if (!quest) { return; }
 
-		if (quest == RE::TESForm::LookupByID(QUEST_DA09)->As<RE::TESQuest>()) {
+		if (quest_id == QUEST_DA09) {
 			if (stage == 410) QIMeridiaInteraction();
 		}
-		if (quest == RE::TESForm::LookupByID(QUEST_DA14)->As<RE::TESQuest>()) {
+		if (quest_id == QUEST_DA14) {
 			if (stage == 5) QISanguineInteraction1();
 			if (stage == 200) QISanguineInteractionEnd();
 		}
-		if (quest == RE::TESForm::LookupByID(QUEST_TG06)->As<RE::TESQuest>()) {
+		if (quest_id == QUEST_TG06) {
 			if (stage == 50) QIDwemerMuseum();
 		}
-		if (quest == RE::TESForm::LookupByID(QUEST_C03)->As<RE::TESQuest>()) {
+		if (quest_id == QUEST_C03) {
 			if (stage == 25) QICompanionsCollarJoke();
 		}
-		if (quest == RE::TESForm::LookupByID(QUEST_DA01)->As<RE::TESQuest>()) {
+		if (quest_id == QUEST_DA01) {
 			if (stage == 50) QIBlackStarTouch();
 		}
-		if (quest == RE::TESForm::LookupByID(QUEST_MQ201)->As<RE::TESQuest>()) {
+		if (quest_id == QUEST_MQ201) {
 			if (stage == 100) QIMainDiplomaticImmunity();
 		}
-		if (quest == RE::TESForm::LookupByID(QUEST_DA15)->As<RE::TESQuest>()) {
+		if (quest_id == QUEST_DA15) {
 			if (stage == 90) QIMindOfMadness();
+		}
+		if (quest_id == QUEST_MS14) {
+			if (stage == 95) QILaidToRest();
+		}
+		if (quest_id == QUEST_MS06START) {
+			if (stage == 100) QICriedWolf();
+		}
+		if (quest_id == QUEST_FREEFORMRIFTEN18) {
+			if (stage == 200) QIRingmaker();
+		}
+		if (quest_id == QUEST_TG08A) {
+			if (stage == 60) QITrinityRestored();
 		}
 	}
 
@@ -217,6 +314,19 @@ namespace DCURSES {
 		if (object->formID == 0x236f5 && object->GetBaseObject()->formID == 0x21513 && !IsObjectRefKnown(object->formID) && !RE::TESForm::LookupByID(QUEST_C01)->As<RE::TESQuest>()->IsCompleted()) {
 			QICompanionsProvingHonor();
 			SetObjectRefKnown(object->formID);
+		}
+	}
+
+	void QIOnSpellCast(const RE::TESSpellCastEvent* spellEvent) {
+		auto actor = spellEvent->object->As<RE::Actor>();
+		auto player = RE::PlayerCharacter::GetSingleton();
+		if (settings.enableQuestInteractions && actor && actor != player) {
+			if (spellEvent->spell == 0xEA5EA) {
+				QIMGBrelyna1();
+			}
+			if (spellEvent->spell == 0x106B10) {
+				QIMGBrelyna2();
+			}
 		}
 	}
 }

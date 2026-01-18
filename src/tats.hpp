@@ -159,22 +159,22 @@ namespace DCURSES {
 		}
 	}
 
-	void SetDefaultEffectMagnitudeForMark(MARK mark) {
+	void SetDefaultEffectMagnitudeForMark(MARK mark, double multiplier = 1.0) {
 		switch (mark) {
 		case MARK::TAT_ALLURE:
-			SetEffectMagnitude(ALLURE_EFFECT, static_cast<float>(settings.LMAllureSex * Util::randomDouble(0.8, 1.2)));
+			SetEffectMagnitude(ALLURE_EFFECT, static_cast<float>(settings.LMAllureSex * Util::randomDouble(0.8, 1.2) * multiplier));
 			break;
 		case MARK::TAT_HEAT:
-			SetEffectMagnitude(HEAT_EFFECT, static_cast<float>(settings.LMHeatContainerCount * Util::randomDouble(0.8, 1.2)));
+			SetEffectMagnitude(HEAT_EFFECT, static_cast<float>(settings.LMHeatContainerCount * Util::randomDouble(0.8, 1.2) * multiplier));
 			break;
 		case MARK::TAT_BONDAGE:
-			SetEffectMagnitude(BONDAGE_EFFECT, static_cast<float>(settings.LMBondageDeviceCount * Util::randomDouble(0.8, 1.2)));
+			SetEffectMagnitude(BONDAGE_EFFECT, static_cast<float>(settings.LMBondageDeviceCount * Util::randomDouble(0.8, 1.2) * multiplier));
 			break;
 		case MARK::TAT_NUDITY:
-			SetEffectMagnitude(NUDITY_EFFECT, static_cast<float>(settings.LMNudityTalkTimes * Util::randomDouble(0.8, 1.2)));
+			SetEffectMagnitude(NUDITY_EFFECT, static_cast<float>(settings.LMNudityTalkTimes * Util::randomDouble(0.8, 1.2) * multiplier));
 			break;
 		case MARK::TAT_HEALSLUT:
-			SetEffectMagnitude(HEALSLUT_EFFECT, static_cast<float>(settings.LMHealslutHealing * Util::randomDouble(0.8, 1.2)));
+			SetEffectMagnitude(HEALSLUT_EFFECT, static_cast<float>(settings.LMHealslutHealing * Util::randomDouble(0.8, 1.2) * multiplier));
 			break;
 		case MARK::TAT_BRANDING:
 			SetEffectMagnitude(BRANDING_EFFECT, static_cast<float>(GetTattooCount(RE::PlayerCharacter::GetSingleton())));
@@ -422,7 +422,7 @@ namespace DCURSES {
 								ModifyEffectMagnitude(HEALSLUT_EFFECT, -spellEffect->GetMagnitude());
 								log::trace("Restoration cast on follower: {} healed", mag);
 								auto arousal = scriptManager.GetArousal(target);
-								if (arousal >= 99 && SexActorFilter(target)) {
+								if (settings.sexEnabled && arousal >= 99 && SexActorFilter(target)) {
 									scriptManager.StartSex(target, false);
 								}
 								else {
@@ -459,6 +459,8 @@ namespace DCURSES {
 			caster->CastSpellImmediate(restoration, false, player, 1.0f, false, 0.0f, nullptr);
 		}
 	}
+
+	bool DoTattooEvent(RE::Actor*, std::string, int, bool);
 
 	void TatsUpdate() {
 		auto mark = GetLewdMark();
@@ -627,7 +629,8 @@ namespace DCURSES {
 					}
 
 					if (Util::randomDouble() < settings.LMBrandingChance && CheckRapeTattoos()) {
-						scriptManager.RTDoTattooEvent(player, 1);
+						DoTattooEvent(player, "", 1, true);
+						//scriptManager.RTDoTattooEvent(player, 1);
 						//PlayerMessage("You feel a sharp pain as the mark brands you!");
 						PlayerMessage(Translator(Translation::MarkBrandingTattoo));
 					}
