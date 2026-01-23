@@ -62,7 +62,7 @@ namespace DCURSES {
 		plug = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(DDX_RUSTY_PEAR_VAGINAL, "Devious Devices - Expansion.esm");
 		scriptManager.LockDevice(player, plug, true);
 
-		DoStandardEvent(player, false, "", "(rust | (iron & belt))", 20, { "zad_DeviousGag", "zad_DeviousHeavyBondage", "zad_DeviousBondageMittens", "zad_DeviousPlugVaginal", "zad_DeviousPlugAnal" });
+		DoStandardEvent(player, false, "", "(rust | (iron & belt))", 20, 1, { "zad_DeviousGag", "zad_DeviousHeavyBondage", "zad_DeviousBondageMittens", "zad_DeviousPlugVaginal", "zad_DeviousPlugAnal" });
 
 		auto mark = GetLewdMark();
 		if (mark != MARK::TAT_NONE) {
@@ -103,7 +103,7 @@ namespace DCURSES {
 	void QIBlackStarTouch() {
 		if (!settings.enableQIBlackStar) { return; }
 
-		if (DoStandardEvent(RE::PlayerCharacter::GetSingleton(), false, "", "(plug & (chaos | black | filled | grand)) | (belt & (iron | rust)) | (piercing & gem)", 20, {})) {
+		if (DoStandardEvent(RE::PlayerCharacter::GetSingleton(), false, "", "(plug & (chaos | black | filled | grand)) | (belt & (iron | rust)) | (piercing & gem)", 20, 1, {})) {
 			PlayerMessage(Translator(Translation::QIBlackStarEquip));
 		}
 	}
@@ -128,8 +128,9 @@ namespace DCURSES {
 		auto player = RE::PlayerCharacter::GetSingleton();
 
 		if (
-			DoStandardEvent(player, false, "", "leather & red & (dress | cuffs | boots | gloves | collar)) & !pony", 20, {"zad_DeviousHeavyBondage", "zad_DeviousBondageMittens", "zad_DeviousGag", "zad_DeviousBlindfold"}) || 
-			DoStandardEvent(player, false, "", "", 20, { "zad_DeviousHeavyBondage", "zad_DeviousBondageMittens", "zad_DeviousGag", "zad_DeviousBlindfold" })
+			DoStandardEvent(player, false, "", "leather & red & (dress | cuffs | boots | gloves | collar)) & !pony", 20, 4, {"zad_DeviousHeavyBondage", "zad_DeviousBondageMittens", "zad_DeviousGag", "zad_DeviousBlindfold"}) || 
+			DoStandardEvent(player, false, "", "", 20, 4, { "zad_DeviousHeavyBondage", "zad_DeviousBondageMittens", "zad_DeviousGag", "zad_DeviousBlindfold" }) ||
+			DoStandardEvent(player, false, "", "!!", 20, 4, { "zad_DeviousHeavyBondage", "zad_DeviousBondageMittens", "zad_DeviousGag", "zad_DeviousBlindfold" })
 			) {
 			player->RemoveItem(clothes, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr, nullptr, nullptr);
 			player->RemoveItem(boots, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr, nullptr, nullptr);
@@ -201,7 +202,7 @@ namespace DCURSES {
 	void QICompanionsProvingHonor() {
 		if (!settings.enableQIProvingHonor) { return; }
 
-		if (DoStandardEvent(RE::PlayerCharacter::GetSingleton(), false, "", "silver", 20, {"zad_DeviousHeavyBondage"})) {
+		if (DoStandardEvent(RE::PlayerCharacter::GetSingleton(), false, "", "silver", 20, 1, {"zad_DeviousHeavyBondage"})) {
 			PlayerMessage(Translator(Translation::QIProvingHonor));
 		}
 	}
@@ -221,7 +222,7 @@ namespace DCURSES {
 
 		auto player = RE::PlayerCharacter::GetSingleton();
 
-		if (DoStandardEvent(player, false, "", "(red & (leather | (lustr & belt))) | (piercing & shock) | (plug & (primitive | iron))", 20, { "zad_DeviousHeavyBondage", "zad_DeviousBlindfold", "zad_DeviousHood", "zad_DeviousSuit" })) {
+		if (DoStandardEvent(player, false, "", "(red & (leather | (lustr & belt))) | (piercing & shock) | (plug & (primitive | iron))", 20, 1, { "zad_DeviousHeavyBondage", "zad_DeviousBlindfold", "zad_DeviousHood", "zad_DeviousSuit" })) {
 			PlayerMessage(Translator(Translation::QILaidToRest));
 		}
 	}

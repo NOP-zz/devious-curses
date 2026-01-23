@@ -426,7 +426,7 @@ namespace DCURSES {
 									scriptManager.StartSex(target, false);
 								}
 								else {
-									scriptManager.ModifyArousal(target, static_cast<int>(mag / 10));
+									scriptManager.ModifyArousal(target, mag / 10);
 								}
 								break;
 							}
@@ -532,7 +532,7 @@ namespace DCURSES {
 				log::trace("events marks update");
 				switch (mark) {
 				case MARK::TAT_HEAT: {
-					scriptManager.ModifyArousal(player, settings.LMHeatMod / 4);
+					scriptManager.ModifyArousal(player, settings.LMHeatMod / 4.0f);
 					if (GetEffectMagnitude(HEAT_EFFECT) <= 0) {
 						RemoveLewdMark();
 						AIContextRemoveLewdMark();
@@ -550,7 +550,7 @@ namespace DCURSES {
 							for (auto const& actorHandle : *arr) {
 								auto actorPtr = actorHandle.get();
 								if (auto actor = actorPtr.get(); actor && actor->Is3DLoaded() && !actor->IsDead() && actor->GetPosition().GetDistance(playerPosition) <= settings.sexSearchRadius) {
-									scriptManager.ModifyArousal(actor, settings.LMAllureMod / 4);
+									scriptManager.ModifyArousal(actor, settings.LMAllureMod / 4.0f);
 								}
 							}
 						}

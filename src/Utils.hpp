@@ -302,11 +302,13 @@ namespace DCURSES {
 				if (arr) {
 					for (auto& actorHandle : *arr) {
 						auto actorPtr = actorHandle.get();
-						if (auto actor = actorPtr.get(); actor && actor->Is3DLoaded() && !actor->IsDead()) {
-							if ((actor->IsPlayerTeammate() && excludeFollowers) || actor->IsPlayer()) {
+						//bool UNUSED = false;
+						if (auto actor = actorPtr.get(); actor && actor->Is3DLoaded() && !actor->IsDead() && !actor->IsChild()) {
+							if ((actor->IsPlayerTeammate() && excludeFollowers) || actor->IsPlayerRef()) {
 								continue;
 							}
 							int detection = actor->RequestDetectionLevel(target, RE::DETECTION_PRIORITY::kCritical);
+							log::trace("Actor watching {} ({})", actor->GetName(), detection);
 							if (detection > 0) {
 								result.push_back(actor);
 							}

@@ -17,6 +17,54 @@ namespace DCURSES {
 		return actor->IsCommandedActor() && actor->GetCommandingActor().get() == RE::PlayerCharacter::GetSingleton();
 	}
 
+	int GetDeviceMask(RE::Actor* actor) {
+		if (!actor) return 0;
+		int canAnal = 1;
+		int canVaginal = 1;
+		int canOral = 1;
+		int canBoobjob = 1;
+
+		for (auto const& [k, v] : actor->GetInventory()) {
+			if (v.second.get()->IsWorn()) {
+				RE::TESObjectARMO* wornArmor = k->As<RE::TESObjectARMO>();
+				if (!wornArmor) {
+					continue;
+				}
+
+				if (wornArmor->HasKeywordString("zad_DeviousBelt") && !wornArmor->HasKeywordString("zad_PermitVaginal")) {
+					canVaginal = 0;
+				}
+				if (wornArmor->HasKeywordString("zad_DeviousSuit") && !wornArmor->HasKeywordString("zad_PermitVaginal")) {
+					canVaginal = 0;
+				}
+				if (wornArmor->HasKeywordString("zad_DeviousPlugVaginal") && !wornArmor->HasKeywordString("zad_PermitVaginal")) {
+					canVaginal = 0;
+				}
+
+				if (wornArmor->HasKeywordString("zad_DeviousBelt") && !wornArmor->HasKeywordString("zad_PermitAnal")) {
+					canAnal = 0;
+				}
+				if (wornArmor->HasKeywordString("zad_DeviousSuit") && !wornArmor->HasKeywordString("zad_PermitAnal")) {
+					canAnal = 0;
+				}
+				if (wornArmor->HasKeywordString("zad_DeviousPlugAnal") && !wornArmor->HasKeywordString("zad_PermitAnal")) {
+					canAnal = 0;
+				}
+
+				if (wornArmor->HasKeywordString("zad_DeviousGag") && !wornArmor->HasKeywordString("zad_DeviousGagPanel") && !wornArmor->HasKeywordString("zad_PermitOral")) {
+					canOral = 0;
+				}
+
+				if (wornArmor->HasKeywordString("zad_DeviousBra") || wornArmor->HasKeywordString("zad_DeviousSuit")) {
+					canBoobjob = 0;
+				}
+			}
+		}
+		auto mask = canAnal | (canVaginal << 1) | (canOral << 2) | (canBoobjob << 3);
+		//log::trace("Device mask: {:b}", mask);
+		return mask;
+	}
+
 	bool SexActorFilter(RE::Actor* actor) {
 		if (!settings.sexEnabled || !actor) {
 			return false;
@@ -130,6 +178,9 @@ namespace DCURSES {
 					if (actor && actor->Is3DLoaded() && !actor->IsDead() && actor->GetPosition().GetSquaredDistance(playerPosition) <= settings.sexSearchRadius * settings.sexSearchRadius) {
 						if (actor->IsInFaction(zadDisable)) {
 							log::trace("Ignoring NPC {}.", actor->GetName());
+							continue;
+						}
+						if ((GetDeviceMask(actor) & 0b0011) == 0) {
 							continue;
 						}
 						bool actorIsCreature = Util::ActorIsCreature(actor);
@@ -279,54 +330,6 @@ namespace DCURSES {
 			}
 		}
 		return result;
-	}
-
-	int GetDeviceMask(RE::Actor* actor) {
-		if (!actor) return 0;
-		int canAnal = 1;
-		int canVaginal = 1;
-		int canOral = 1;
-		int canBoobjob = 1;
-
-		for (auto const& [k, v] : actor->GetInventory()) {
-			if (v.second.get()->IsWorn()) {
-				RE::TESObjectARMO* wornArmor = k->As<RE::TESObjectARMO>();
-				if (!wornArmor) {
-					continue;
-				}
-
-				if (wornArmor->HasKeywordString("zad_DeviousBelt") && !wornArmor->HasKeywordString("zad_PermitVaginal")) {
-					canVaginal = 0;
-				}
-				if (wornArmor->HasKeywordString("zad_DeviousSuit") && !wornArmor->HasKeywordString("zad_PermitVaginal")) {
-					canVaginal = 0;
-				}
-				if (wornArmor->HasKeywordString("zad_DeviousPlugVaginal") && !wornArmor->HasKeywordString("zad_PermitVaginal")) {
-					canVaginal = 0;
-				}
-
-				if (wornArmor->HasKeywordString("zad_DeviousBelt") && !wornArmor->HasKeywordString("zad_PermitAnal")) {
-					canAnal = 0;
-				}
-				if (wornArmor->HasKeywordString("zad_DeviousSuit") && !wornArmor->HasKeywordString("zad_PermitAnal")) {
-					canAnal = 0;
-				}
-				if (wornArmor->HasKeywordString("zad_DeviousPlugAnal") && !wornArmor->HasKeywordString("zad_PermitAnal")) {
-					canAnal = 0;
-				}
-
-				if (wornArmor->HasKeywordString("zad_DeviousGag") && !wornArmor->HasKeywordString("zad_DeviousGagPanel") && !wornArmor->HasKeywordString("zad_PermitOral")) {
-					canOral = 0;
-				}
-
-				if (wornArmor->HasKeywordString("zad_DeviousBra") || wornArmor->HasKeywordString("zad_DeviousSuit")) {
-					canBoobjob = 0;
-				}
-			}
-		}
-		auto mask = canAnal | (canVaginal << 1) | (canOral << 2) | (canBoobjob << 3);
-		//log::trace("Device mask: {:b}", mask);
-		return mask;
 	}
 
 	std::string P_GetAnimationFilterTags(RE::StaticFunctionTag*, RE::Actor* akActor) {

@@ -14,7 +14,7 @@ namespace DCURSES {
 	constexpr int ODEVICE_TICK = 5;
 	constexpr int ODEVICE_MADNESS_DIVISOR = 1000;
 
-	bool DoStandardEvent(RE::Actor*, bool, std::string, std::string, int, std::vector<std::string>);
+	bool DoStandardEvent(RE::Actor*, bool, std::string, std::string, int, int, std::vector<std::string>);
 	bool DoLewdMarkEvent(std::string containerName, double multiplier);
 
 	ODBitmask GetOppDeviceMask() {
@@ -334,7 +334,7 @@ namespace DCURSES {
 			if (!settings.oppLivingLatexHeavy) {
 				skips.push_back("zad_DeviousHeavyBondage");
 			}
-			DoStandardEvent(player, false, "", "(black & (ebonite | rubber))", 4, skips);
+			DoStandardEvent(player, false, "", "(black & (ebonite | rubber))", 4, 1, skips);
 			//PlayerMessage("The latex writhes while being shocked. It seems as if it has been weakened significantly!");
 			PlayerMessage(Translator(Translation::ODeviceLivingLatexOnHit));
 			oppdCounters.livingLatexCounter = 1;
@@ -434,6 +434,12 @@ namespace DCURSES {
 			auto player = RE::PlayerCharacter::GetSingleton();
 			auto scriptManager = ScriptingManager();
 
+			// Device Weapon Fix
+			auto heavy = GetWornInventoryDeviceByKeyword(player, "zad_DeviousHeavyBondage");
+			if (heavy) {
+				UnequipItems(player);
+			}
+
 			RE::TESKey* summoner_collar_key = StaticDataHolder::GetSingleton()->LookupForm<RE::TESKey>(SUMMONER_COLLAR_KEY, "Devious Curses.esp");
 			RE::TESObjectARMO* summoner_collar = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(SUMMONER_COLLAR, "Devious Curses.esp");
 			RE::TESObjectARMO* latex = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(LIVING_LATEX, "Devious Curses.esp");
@@ -510,7 +516,7 @@ namespace DCURSES {
 					if (settings.oppSMinSummonArousal > 0) {
 						for (auto summon : summons_list) {
 							if (scriptManager.GetArousal(summon) < settings.oppSMinSummonArousal) {
-								scriptManager.ModifyArousal(summon, settings.oppSMinSummonArousal);
+								scriptManager.ModifyArousal(summon, static_cast<float>(settings.oppSMinSummonArousal));
 							}
 						}
 					}
@@ -550,7 +556,7 @@ namespace DCURSES {
 							else {
 								UnequipItems(player);
 							}
-							DoStandardEvent(player, false, "", "(black & (ebonite | rubber)) | plugpumps", 20, skips);
+							DoStandardEvent(player, false, "", "(black & (ebonite | rubber)) | plugpumps", 20, 1, skips);
 							AIEventLivingLatexActivate();
 							//PlayerMessage("Suddenly the latex suit springs to life, covering you in ebonite! Is it trying to protect itself?");
 							PlayerMessage(Translator(Translation::ODeviceLivingLatexTrigger));
@@ -568,7 +574,7 @@ namespace DCURSES {
 						if (!settings.oppLivingLatexHeavy) {
 							skips.push_back("zad_DeviousHeavyBondage");
 						}
-						if (DoStandardEvent(player, false, "", "(black & (ebonite | rubber))", Util::randomInt(1, 2), skips)) {
+						if (DoStandardEvent(player, false, "", "(black & (ebonite | rubber))", Util::randomInt(1, 2), 1, skips)) {
 							//DBGNotification("The latex has spread over your body!");
 							PlayerMessage(Translator(Translation::ODeviceLivingLatexSpread));
 						}
@@ -771,49 +777,70 @@ namespace DCURSES {
 		}
 	}
 
-	void OppDoMadnessEffect() {
+	void OppDoMadnessEffect(bool ending_event = false) {
 		std::vector<std::pair<bool (*)(RE::Actor*, ScriptingManager&), double>> results;
 
-		results.push_back({ [](RE::Actor* player, ScriptingManager& scriptManager) {// Piercings
-			auto currentPiercings = GetWornInventoryDeviceByKeyword(player, "zad_DeviousPiercingsNipple");
-			log::trace("Has Piercings: {}", (bool)currentPiercings);
-			if (currentPiercings && !DeviceInventoryIsGeneric(currentPiercings)) {
+		if (!ending_event) {
+			results.push_back({ [](RE::Actor* player, ScriptingManager& scriptManager) {// Piercings
+				auto currentPiercings = GetWornInventoryDeviceByKeyword(player, "zad_DeviousPiercingsNipple");
+				log::trace("Has Piercings: {}", (bool)currentPiercings);
+				if (currentPiercings && !DeviceInventoryIsGeneric(currentPiercings)) {
+					return false;
+				}
+				log::trace("Madness Piercings");
+				PlayerMessage(Translator(Translation::ODeviceMadnessPlugPiercings));
+				RE::TESObjectARMO* piercings = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(MADNESS_PIERCINGS, "Devious Curses.esp");
+				scriptManager.SwapDevices(player, piercings);
+				return true;
+			} , 5000 });
+
+			results.push_back({ [](RE::Actor*, ScriptingManager&) {// Increase Orgasms
+				if (oppdCounters.madnessPlugCounter <= 0) { return false; }
+				int r = static_cast<int>(std::max(Util::randomDouble(0.25, 2.0) * settings.oppMadnessplugOrgasms, 1.0));
+				oppdCounters.madnessPlugCounter += r;
+				PlayerMessage(Translator(Translation::ODeviceMadnessPlugDesire, r));
+				return true;
+			} , 25 });
+
+			results.push_back({ [](RE::Actor* player, ScriptingManager&) {// Standard Event
+				if (GetWornDeviceCount(player) <= settings.maxRestraints && DoStandardEvent(player, false, "", "", -1, 1, {})) {
+					log::trace("Madness Standard Event");
+					PlayerMessage(Translator(Translation::ODeviceMadnessPlugStandard));
+					return true;
+				}
 				return false;
-			}
-			log::trace("Madness Piercings");
-			PlayerMessage(Translator(Translation::ODeviceMadnessPlugPiercings));
-			RE::TESObjectARMO* piercings = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(MADNESS_PIERCINGS, "Devious Curses.esp");
-			scriptManager.SwapDevices(player, piercings);
-			return true;
-		} , 5000 });
+			} , 100 });
 
-		results.push_back({ [](RE::Actor*, ScriptingManager&) {// Increase Orgasms
-			int r = static_cast<int>(std::max(Util::randomDouble(0.25, 2.0) * settings.oppMadnessplugOrgasms, 1.0));
-			oppdCounters.madnessPlugCounter += r;
-			PlayerMessage(Translator(Translation::ODeviceMadnessPlugDesire, r));
-			return true;
-		} , 25 });
+			results.push_back({ [](RE::Actor* player, ScriptingManager&) {// Boss Event
+				if (DoStandardEvent(player, true, "", "", -1, settings.bossAditionalRestraints, {})) {
+					log::trace("Madness Boss Event");
+					PlayerMessage(Translator(Translation::ODeviceMadnessPlugBoss));
+					return true;
+				}
+				return false;
+			} , 75 });
 
-		results.push_back({ [](RE::Actor* player, ScriptingManager&) {// Standard Event
-			if (DoStandardEvent(player, false, "", "", -1, {})) {
-				log::trace("Madness Standard Event");
-				PlayerMessage(Translator(Translation::ODeviceMadnessPlugStandard));
+			results.push_back({ [](RE::Actor*, ScriptingManager&) {// Tie Followers
+			auto followers = Util::GetFollowers();
+			if (followers.size() > 0 && settings.allowFollowerEvents) {
+				auto didSomething = false;
+				for (auto follower : followers) {
+					log::trace("{} devices: {}", follower->GetName(), GetWornDeviceCount(follower));
+					if (GetWornDeviceCount(follower) <= settings.maxRestraints) {
+						didSomething |= DoStandardEvent(follower, false, "", "", -1, 1, {});
+					}
+				}
+				if (!didSomething) { return false; }
+				log::trace("Tie Followers");
+				PlayerMessage(Translator(Translation::ODeviceMadnessPlugFollowers));
 				return true;
 			}
 			return false;
-		} , 100 });
-
-		results.push_back({ [](RE::Actor* player, ScriptingManager&) {// Boss Event
-			if (DoStandardEvent(player, true, "", "", -1, {})) {
-				log::trace("Madness Boss Event");
-				PlayerMessage(Translator(Translation::ODeviceMadnessPlugBoss));
-				return true;
-			}
-			return false;
-		} , 75 });
+			} , 60 });
+		}
 
 		results.push_back({ [](RE::Actor* player, ScriptingManager&) {// Full Tie
-			if (DoStandardEvent(player, false, "", "", 20, {})) {
+			if (DoStandardEvent(player, false, "", "", 20, 5, {})) {
 				log::trace("Madness Full Tie");
 				PlayerMessage(Translator(Translation::ODeviceMadnessPlugFullTie));
 				return true;
@@ -821,22 +848,27 @@ namespace DCURSES {
 			return false;
 		} , 25 });
 
-		results.push_back({ [](RE::Actor*, ScriptingManager&) {// Tie Followers
+		results.push_back({ [](RE::Actor*, ScriptingManager&) {// Full Tie Followers
 			auto followers = Util::GetFollowers();
-			if (followers.size() > 0) {
+			if (followers.size() > 0 && settings.allowFollowerEvents) {
+				auto didSomething = false;
 				for (auto follower : followers) {
-					DoStandardEvent(follower, false, "", "", 20, {});
+					log::trace("{} devices: {}", follower->GetName(), GetWornDeviceCount(follower));
+					if (GetWornDeviceCount(follower) <= 15 + settings.followerDeviceModifier) {
+						didSomething |= DoStandardEvent(follower, false, "", "", 15, 5, {});
+					}
 				}
+				if (!didSomething) { return false; }
 				log::trace("Tie Followers");
-				PlayerMessage(Translator(Translation::ODeviceMadnessPlugFollowers));
+				PlayerMessage(Translator(Translation::ODeviceMadnessPlugFullTieFollowers));
 				return true;
 			}
 			return false;
-		} , 50 });
+		} , 30 });
 
 		results.push_back({ [](RE::Actor*, ScriptingManager&) {// Lewd Mark
 			if (GetLewdMark() == MARK::TAT_NONE) {
-				DoLewdMarkEvent("", Util::randomDouble(0.5,3));
+				DoLewdMarkEvent("", Util::randomDouble(0.3,0.8));
 				log::trace("Madness Lewd Mark");
 				PlayerMessage(Translator(Translation::ODeviceMadnessPlugMark));
 				return true;
@@ -845,7 +877,7 @@ namespace DCURSES {
 		} , 75 });
 
 		results.push_back({ [](RE::Actor* player, ScriptingManager&) {// Full Tattoos
-			if (CheckRapeTattoos() && GetTattooCount(player) <= 5) {
+			if (CheckRapeTattoos() && GetTattooCount(player) <= 7) {
 				//scriptManager.RTDoTattooEvent(player, 20);
 				DoTattooEvent(player, "", 20, true);
 				log::trace("Madness Full Tattoos");
@@ -855,9 +887,26 @@ namespace DCURSES {
 			return false;
 		} , 50 });
 
+		results.push_back({ [](RE::Actor*, ScriptingManager&) {// Full Tattoos Followers
+			auto followers = Util::GetFollowers();
+			if (CheckRapeTattoos() && followers.size() > 0 && settings.allowFollowerEvents) {
+				auto didSomething = false;
+				for (auto follower : followers) {
+					if (GetTattooCount(follower) <= 7) {
+						didSomething |= DoTattooEvent(follower, "", 20, true);
+					}
+				}
+				if (!didSomething) { return false; }
+				log::trace("Madness Full Tattoos Followers");
+				PlayerMessage(Translator(Translation::ODeviceMadnessPlugTattooFollowers));
+				return true;
+			}
+			return false;
+		} , 50 });
+
 		results.push_back({ [](RE::Actor* player, ScriptingManager& scriptManager) {// Launch
 			log::trace("Madness Launch");
-			scriptManager.PushActorAway(player, player, 500);
+			scriptManager.PushActorAway(player, player, 75);
 			return true;
 		} , 10 });
 
@@ -872,7 +921,7 @@ namespace DCURSES {
 		} , 10 });
 
 
-		if (settings.oppMadnessChaos) {
+		if (!ending_event && settings.oppMadnessChaos) {
 			results.push_back({ [](RE::Actor* player, ScriptingManager&) {// Stat Loss
 				log::trace("Madness Stat Loss");
 				PlayerMessage(Translator(Translation::ODeviceMadnessPlugStats));
@@ -955,13 +1004,13 @@ namespace DCURSES {
 			log::trace("Sex: {} watching", watching_actors.size());
 			if (watching_actors.size() >= settings.oppNocturnalPeople) {
 				oppdCounters.nocturnalPiercingCounter -= 1;
-				if (oppdCounters.nocturnalPiercingCounter > 0 && DoStandardEvent(player, false, "", "black & leather", 2, { "zad_DeviousHeavyBondage" })) {
+				if (oppdCounters.nocturnalPiercingCounter > 0 && DoStandardEvent(player, false, "", "black & leather", 2, 1, { "zad_DeviousHeavyBondage" })) {
 					PlayerMessage(Translator(Translation::ODeviceNocturnalPiercingAnger));
 				}
 				else if (oppdCounters.nocturnalPiercingCounter <= 0) {
 					RE::TESObjectARMO* nocturnal_piercing = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(NOCTURNAL_PIERCING, "Devious Curses.esp");
 					ScriptingManager().UnlockDevice(player, nocturnal_piercing, nullptr, nullptr, true, false);
-					DoStandardEvent(player, false, "", "(black & leather) | plug | piercing", 20, {});
+					DoStandardEvent(player, false, "", "(black & leather) | plug | piercing", 20, 1, {});
 					PlayerMessage(Translator(Translation::ODeviceNocturnalPiercingRemove));
 				}
 			}
@@ -983,10 +1032,11 @@ namespace DCURSES {
 				ScriptingManager().UnlockDevice(player, madness_piercings, nullptr, nullptr, true, false);
 				PlayerMessage(Translator(Translation::ODeviceMadnessPlugRemove));
 				Util::ExecuteWithDelay(500ms, [player] {
-					DoStandardEvent(player, false, "", "!!", 20, {});
-					});
+					OppDoMadnessEffect(true);
+				});
 				Util::ExecuteWithDelay(100ms, [player] {
-					for (int i = 0; i < 10; i++) {
+					auto count = Util::randomInt(10, 20);
+					for (int i = 0; i < count; i++) {
 						auto dev = GetRandomDevice(&devices.anything);
 						//activatedObject->GetContainer()->AddObjectToContainer((RE::TESBoundObject*)pair->first, 1, GetPlayer());
 						if (dev) {
@@ -997,13 +1047,23 @@ namespace DCURSES {
 							//activatedObject->AddObjectToContainer((RE::TESBoundObject*)dev.value().inv, nullptr, 1, nullptr);
 						}
 					}
-					RE::TESForm* gold = RE::TESForm::LookupByID(std::stoi("0f", 0, 16));
-					for (int i = 0; i < 100; i++) {
-						auto ptr = player->PlaceObjectAtMe((RE::TESBoundObject*)gold, false);
-						RE::TESObjectREFR* refr = ptr.get();
-						refr->data.location += RE::NiPoint3(Util::randomFloat(-50, 50), Util::randomFloat(-50, 50), Util::randomFloat(50, 150));
-						refr->MoveHavok(true);
-						//activatedObject->AddObjectToContainer((RE::TESBoundObject*)dev.value().inv, nullptr, 1, nullptr);
+
+					std::vector<std::pair<RE::TESForm*, int>> gold = {
+						{RE::TESForm::LookupByID(0x0f),		Util::randomInt(5,10)},
+						{RE::TESForm::LookupByID(0xD790C),	Util::randomInt(5,15)},
+						{RE::TESForm::LookupByID(0xD8E7F),	Util::randomInt(3,10)},
+						{RE::TESForm::LookupByID(0xD8E80),	Util::randomInt(1,5)},
+						{RE::TESForm::LookupByID(0x5ACDE),	Util::randomInt(2,5)},
+						{RE::TESForm::LookupByID(0x5AD9E),	Util::randomInt(1,3)},
+					};
+					for (auto& [gold_form, count] : gold) {
+						for (int i = 0; i < count; i++) {
+							auto ptr = player->PlaceObjectAtMe((RE::TESBoundObject*)gold_form, false);
+							RE::TESObjectREFR* refr = ptr.get();
+							refr->data.location += RE::NiPoint3(Util::randomFloat(-50, 50), Util::randomFloat(-50, 50), Util::randomFloat(50, 150));
+							refr->MoveHavok(true);
+							//activatedObject->AddObjectToContainer((RE::TESBoundObject*)dev.value().inv, nullptr, 1, nullptr);
+						}
 					}
 				});
 			}

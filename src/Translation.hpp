@@ -43,9 +43,11 @@ namespace DCURSES {
 		ODeviceMadnessPlugStandard,//The plug summons some devices directly onto you!
 		ODeviceMadnessPlugBoss,//The plug summons many devices directly onto you!
 		ODeviceMadnessPlugFullTie,//The plug summons as many devices as it can directly onto you!
-		ODeviceMadnessPlugFollowers,//The plug summons as many devices as it can directly onto your followers!
+		ODeviceMadnessPlugFollowers,//The plug summons some devices directly onto your followers!
+		ODeviceMadnessPlugFullTieFollowers,//The plug summons as many devices as it can directly onto your followers!
 		ODeviceMadnessPlugMark,//The plug brands you with a lewd mark!
 		ODeviceMadnessPlugTattoos,//The plug covers you with tattoos!
+		ODeviceMadnessPlugTattooFollowers,//The plug covers all of your followers with tattoos!
 		ODeviceMadnessPlugStats,//The plug saps your strength and you feel much weaker!
 		ODeviceMadnessPlugGold,//The plug magically destroys all of your gold!
 		ODeviceMadnessPlugCrash,//The plug makes you feel incredibly unstable!
@@ -75,6 +77,9 @@ namespace DCURSES {
 		EventMarkHealslut,//After a sharp pain, you see that you have a mark of the healslut.
 		EventWicked,//As you touch the {} you feel an overwhelming sense of wickedness!
 		EventAbadon,//As you touch the {} you feel an evil curse seeping into you!
+		EventAbadonWarrior,//As you touch the {} you feel empowered with the strength of a Warrior.
+		EventAbadonScout,//As you touch the {} you feel empowered with the agility of a Scout.
+		EventAbadonWitch,//As you touch the {} you feel empowered with the intelligence of a Witch.
 
 		MarkHeatRemove,//You feel a sense of calm as the heat mark fades from your body.
 		MarkAllureRemove,//You sense that people are no longer staring at you as the allure mark fades from your body.
@@ -104,7 +109,9 @@ namespace DCURSES {
 		QITrinityRestored,//After transacting your oath with Nocturnal, she bestows upon you a boon!
 
 		ItemMagicKey,//All of the devices you were wearing have magically disappeared!
+		ItemMagicKeyOther,//All of the devices {} was wearing have magically disappeared!
 		ItemTattooCharm,//All of your tattoos have faded from your body!
+		ItemTattooCharmOther,//All of {}'s tattoos have faded from their body!
 		ItemArousalPotion,//You feel your arousal fade from your body!
 
 		EffectLivingLatexWait,//The latex suit seems to be dormant. You will probably have to wait for a while.
@@ -145,6 +152,7 @@ namespace DCURSES {
 		static std::string GetTranslationKeyName(Translation key) {
 			switch (key) {
 				//CODEGEN_START_KEYNAME
+				case (Translation::ConsequenceRandomDeviceSex): return "ConsequenceRandomDeviceSex";
 				case (Translation::ConsequenceRandomDeviceTalk): return "ConsequenceRandomDeviceTalk";
 				case (Translation::ConsequenceSexContinue): return "ConsequenceSexContinue";
 				case (Translation::ConsequenceSexTalk): return "ConsequenceSexTalk";
@@ -175,8 +183,10 @@ namespace DCURSES {
 				case (Translation::ODeviceMadnessPlugBoss): return "ODeviceMadnessPlugBoss";
 				case (Translation::ODeviceMadnessPlugFullTie): return "ODeviceMadnessPlugFullTie";
 				case (Translation::ODeviceMadnessPlugFollowers): return "ODeviceMadnessPlugFollowers";
+				case (Translation::ODeviceMadnessPlugFullTieFollowers): return "ODeviceMadnessPlugFullTieFollowers";
 				case (Translation::ODeviceMadnessPlugMark): return "ODeviceMadnessPlugMark";
 				case (Translation::ODeviceMadnessPlugTattoos): return "ODeviceMadnessPlugTattoos";
+				case (Translation::ODeviceMadnessPlugTattooFollowers): return "ODeviceMadnessPlugTattooFollowers";
 				case (Translation::ODeviceMadnessPlugStats): return "ODeviceMadnessPlugStats";
 				case (Translation::ODeviceMadnessPlugGold): return "ODeviceMadnessPlugGold";
 				case (Translation::ODeviceMadnessPlugCrash): return "ODeviceMadnessPlugCrash";
@@ -205,6 +215,9 @@ namespace DCURSES {
 				case (Translation::EventMarkHealslut): return "EventMarkHealslut";
 				case (Translation::EventWicked): return "EventWicked";
 				case (Translation::EventAbadon): return "EventAbadon";
+				case (Translation::EventAbadonWarrior): return "EventAbadonWarrior";
+				case (Translation::EventAbadonScout): return "EventAbadonScout";
+				case (Translation::EventAbadonWitch): return "EventAbadonWitch";
 				case (Translation::MarkHeatRemove): return "MarkHeatRemove";
 				case (Translation::MarkAllureRemove): return "MarkAllureRemove";
 				case (Translation::MarkBondageDevice): return "MarkBondageDevice";
@@ -231,7 +244,9 @@ namespace DCURSES {
 				case (Translation::QIRingmaker): return "QIRingmaker";
 				case (Translation::QITrinityRestored): return "QITrinityRestored";
 				case (Translation::ItemMagicKey): return "ItemMagicKey";
+				case (Translation::ItemMagicKeyOther): return "ItemMagicKeyOther";
 				case (Translation::ItemTattooCharm): return "ItemTattooCharm";
+				case (Translation::ItemTattooCharmOther): return "ItemTattooCharmOther";
 				case (Translation::ItemArousalPotion): return "ItemArousalPotion";
 				case (Translation::EffectLivingLatexWait): return "EffectLivingLatexWait";
 				case (Translation::EffectLivingLatexDormant): return "EffectLivingLatexDormant";

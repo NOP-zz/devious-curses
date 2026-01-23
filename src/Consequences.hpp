@@ -296,6 +296,13 @@ namespace DCURSES {
 			return;
 		}
 		SetConsequenceTargetKnown(actor->formID);
+		if (actor->IsPlayerTeammate() && !settings.consAllowFollowers) {
+			return;
+		}
+
+		if (Util::ActorIsCreature(actor) && !settings.consAllowCreatures) {
+			return;
+		}
 		auto player = RE::PlayerCharacter::GetSingleton();
 		log::trace("Checking consequence dialogue");
 		DecrementCounterForMark(MARK::TAT_NUDITY);

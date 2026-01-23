@@ -61,6 +61,51 @@ namespace DCURSES {
         }
     };
 
+    class ContainerChangedEventSink : public RE::BSTEventSink<RE::TESContainerChangedEvent> {
+        virtual RE::BSEventNotifyControl ProcessEvent(const RE::TESContainerChangedEvent* containerEvent, RE::BSTEventSource<RE::TESContainerChangedEvent>*) override {
+            //auto source = RE::TESForm::LookupByID(containerEvent->oldContainer)->As<RE::TESObjectREFR>();
+            
+            if (containerEvent->oldContainer == 0x14) {
+                RE::TESKey* magicKey = StaticDataHolder::GetSingleton()->LookupForm<RE::TESKey>(MAGIC_KEY, "Devious Curses.esp");
+                RE::TESObjectMISC* tattooCharm = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectMISC>(TATTOO_CHARM, "Devious Curses.esp");
+
+                auto dest = RE::TESForm::LookupByID(containerEvent->newContainer);
+                if (dest) {
+                    auto actor = dest->As<RE::Actor>();
+                    if (actor) {
+                        auto movedForm = RE::TESForm::LookupByID(containerEvent->baseObj);
+                        if (movedForm == magicKey) {
+                            RemoveAllRestraints(actor, true);
+
+                            actor->RemoveItem((RE::TESBoundObject*)magicKey, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+                            PlayerMessage(Translator(Translation::ItemMagicKeyOther, actor->GetName()));
+                        }
+
+                        else if (movedForm == tattooCharm) {
+                            RemoveAllTattoos(actor);
+
+                            actor->RemoveItem((RE::TESBoundObject*)tattooCharm, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+                            PlayerMessage(Translator(Translation::ItemTattooCharmOther, actor->GetName()));
+                        }
+                    }
+                }
+            }
+
+            return RE::BSEventNotifyControl::kContinue;
+        }
+    public:
+        static void RegisterEvent() {
+            static ContainerChangedEventSink eventSink;
+            auto ScriptEventSource = RE::ScriptEventSourceHolder::GetSingleton();
+            if (!ScriptEventSource) {
+                return;
+            }
+            ScriptEventSource->PrependEventSink(&eventSink);
+
+            log::trace("Attached container changed event sink.");
+        }
+    };
+
     class EquipEventSink : public RE::BSTEventSink<RE::TESEquipEvent>
     {
         virtual RE::BSEventNotifyControl ProcessEvent(const RE::TESEquipEvent* equipEvent, RE::BSTEventSource<RE::TESEquipEvent>*) override {
@@ -71,6 +116,11 @@ namespace DCURSES {
             auto equipmentForm = RE::TESForm::LookupByID(equipEvent->baseObject);
             auto player = RE::PlayerCharacter::GetSingleton();
             if (equipActor == player && equipmentForm) {
+                auto armor = equipmentForm->As<RE::TESObjectARMO>();
+                if (armor && armor->HasKeywordString("zad_DeviousHeavyBondage")) {
+                	UnequipItems(player);
+                }
+
                 RE::TESKey* magicKey = StaticDataHolder::GetSingleton()->LookupForm<RE::TESKey>(MAGIC_KEY, "Devious Curses.esp");
                 RE::TESObjectMISC* tattooCharm = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectMISC>(TATTOO_CHARM, "Devious Curses.esp");
                 RE::TESObjectMISC* volatileGem = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectMISC>(VOLATILE_GEM, "Devious Curses.esp");
@@ -78,6 +128,32 @@ namespace DCURSES {
 
                 if (equipmentForm == magicKey) {
                     RemoveAllRestraints(player, true);
+
+                    if (settings.magicKeyOppressive) {
+                        RE::TESObjectARMO* summoner_collar = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(SUMMONER_COLLAR, "Devious Curses.esp");
+                        RE::TESObjectARMO* latex = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(LIVING_LATEX, "Devious Curses.esp");
+                        RE::TESObjectARMO* latex_open = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(LIVING_LATEX_OPEN, "Devious Curses.esp");
+                        RE::TESObjectARMO* dwarven_cuirass = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(DWARVEN_CURIAS, "Devious Curses.esp");
+                        RE::TESObjectARMO* dwarven_heavy = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(DWARVEN_CURIAS_HEAVY, "Devious Curses.esp");
+                        RE::TESObjectARMO* madness_plug = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(MADNESS_PLUG, "Devious Curses.esp");
+                        RE::TESObjectARMO* madness_piercings = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(MADNESS_PIERCINGS, "Devious Curses.esp");
+                        RE::TESObjectARMO* nocturnal_piercing = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(NOCTURNAL_PIERCING, "Devious Curses.esp");
+
+                        std::vector<RE::TESObjectARMO*> list = { summoner_collar, latex, latex_open, dwarven_cuirass, dwarven_heavy, madness_plug, nocturnal_piercing };
+
+                        Util::ShuffleVector(list);
+
+                        auto scriptManager = ScriptingManager();
+                        for (auto device : list) {
+                            if (ActorIsWearingDevice(player, device)) {
+                                scriptManager.UnlockDevice(player, device, nullptr, nullptr, true, false);
+                                if (device == madness_plug) {
+                                    scriptManager.UnlockDevice(player, madness_piercings, nullptr, nullptr, true, false);
+                                }
+                                break;
+                            }
+                        }
+                    }
 
                     player->RemoveItem((RE::TESBoundObject*)magicKey, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
                     AIEventMagicKey();
@@ -93,7 +169,8 @@ namespace DCURSES {
                     PlayerMessage(Translator(Translation::ItemTattooCharm));
                 }
                 else if (equipmentForm == arouaslPotion) {
-                    ScriptingManager().ModifyArousal(player, -100000);
+                    ScriptingManager().ModifyArousal(player, -1000);
+                    ScriptingManager().OSL_ModifyLibido(player, -settings.arousalPotionLibido);
 
                     PlayerMessage(Translator(Translation::ItemArousalPotion));
                 }
@@ -420,6 +497,7 @@ namespace DCURSES {
 
     void RegisterEventSinks() {
         ActivateEventSink::RegisterEvent();
+        ContainerChangedEventSink::RegisterEvent();
         EquipEventSink::RegisterEvent();
         QuestStageEventSink::RegisterEvent();
         MGEFEventSink::RegisterEvent();

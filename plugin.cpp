@@ -33,18 +33,16 @@
 #include <unordered_set>
 #include <algorithm>
 
-using namespace SKSE::log;
-using namespace SKSE::stl;
 using namespace SKSE;
 
 namespace DCURSES {
     //GLOBALS
-    constexpr auto VERSION = "0.8.0";
+    constexpr auto VERSION = "0.8.1";
 
     void InitializeLogging() {
-        auto path = log_directory();
+        auto path = log::log_directory();
         if (!path) {
-            report_and_fail("Unable to lookup SKSE logs directory.");
+            stl::report_and_fail("Unable to lookup SKSE logs directory.");
         }
         *path /= PluginDeclaration::GetSingleton()->GetName();
         *path += L".log";
@@ -138,13 +136,9 @@ namespace DCURSES {
     static int TEST = 0;
 
     void P_Test(RE::StaticFunctionTag*) {
-        //log::trace("Sending mod events...");
-        //DoContraptionEvent("");
-        //auto x = ScriptingManager();
-        //DoStandardEvent(RE::PlayerCharacter::GetSingleton(), false, "", "_ironpear & !bell & !chain", 3, { "zad_DeviousHeavyBondage", "zad_DeviousBlindfold", "zad_DeviousGag" });
-        //DoStandardEvent(RE::PlayerCharacter::GetSingleton(), false, "", "(red & (ebonite | rubber)) | piercing", 20, {"zad_DeviousHeavyBondage", "zad_DeviousSuit", "zad_DeviousGag"});
-        //DoEvent(false, "");
-        auto actors = Util::GetWatchingActors(RE::PlayerCharacter::GetSingleton());
+        log::trace("DCURSES Test");
+        //Util::GetWatchingActors(RE::PlayerCharacter::GetSingleton());
+        OppDoMadnessEffect();
     }
 
     bool PapyrusFunctions(RE::BSScript::IVirtualMachine* ivm) {

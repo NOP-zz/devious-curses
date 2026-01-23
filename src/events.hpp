@@ -38,7 +38,7 @@ namespace DCURSES {
         }
     }
 
-    bool DoStandardEvent(RE::Actor* actor, bool isBoss, std::string contName, std::string theme = "", int countOverride = -1, std::vector<std::string> skipKeywords = {}) {
+    bool DoStandardEvent(RE::Actor* actor, bool isBoss, std::string contName, std::string theme = "", int countOverride = -1, int minDevices = 1, std::vector<std::string> skipKeywords = {}) {
         if (Util::randomDouble() < settings.keyLossChance) {
             RemoveKeys(actor);
         }
@@ -64,6 +64,19 @@ namespace DCURSES {
             usedKeys.push_back("zad_DeviousHeavyBondage");
             log::trace("Not boss chest, no heavy restraints.");
         }
+
+        if (minDevices < 1) {
+            minDevices = 1;
+        }
+
+        if (!actor->IsPlayerRef()) {
+            if (!settings.followerHeavyRestraints) {
+                usedKeys.push_back("zad_DeviousHeavyBondage");
+            }
+            count += settings.followerDeviceModifier;
+        }
+
+        if (count < minDevices) { count = minDevices; }
 
         if (theme.empty() && settings.useThemes) {
             theme = GetRandomTheme();
@@ -149,7 +162,7 @@ namespace DCURSES {
         if (bailout == 0) {
             log::trace("Ran out of devices to equip.");
         }
-        if (to_equip.size() == 0) {
+        if (to_equip.size() < minDevices) {
             return false;
         }
 
@@ -163,7 +176,7 @@ namespace DCURSES {
 
         if (!settings.disableForce3rdPerson) scriptManager.ForceThirdPerson();
 
-        if (!contName.empty() && actor->IsPlayer()) {
+        if (!contName.empty() && actor->IsPlayerRef()) {
             //PlayerMessage(fmt::format("As you touch the {} you see restraints magically appear and wrap themselves around you!", contName));
             //Util::ExecuteWithDelay(4s, [contName] {
             PlayerMessage(Translator(Translation::EventDevices, contName));
@@ -221,7 +234,7 @@ namespace DCURSES {
         }
         ScriptingManager().RTDoTattooEvent(actor, num_tattoos);
 
-        if (!containerName.empty() && actor->IsPlayer()) {
+        if (!containerName.empty() && actor->IsPlayerRef()) {
             if (num_tattoos == 1) {
                 PlayerMessage(Translator(Translation::EventTattooOne, containerName));
             }
@@ -242,10 +255,10 @@ namespace DCURSES {
         target = target == nullptr ? RE::PlayerCharacter::GetSingleton() : target;
 
         if (settings.eventContAllDevices) {
-            DoStandardEvent(target, false, "", theme, settings.eventContDeviceOverride, { "zad_DeviousHeavyBondage" });
+            DoStandardEvent(target, false, "", theme, settings.eventContDeviceOverride, 1, { "zad_DeviousHeavyBondage" });
         }
         else if (settings.eventContDevices) {
-            DoStandardEvent(target, false, "", theme, settings.eventContDeviceOverride, { "zad_DeviousHeavyBondage", "zad_DeviousBelt", "zad_DeviousBra", "zad_DeviousHarness", "zad_DeviousBlindfold", "zad_DeviousHood", "zad_DeviousBoots", "zad_DeviousGloves", "zad_DeviousSuit", "zad_DeviousCorset"});
+            DoStandardEvent(target, false, "", theme, settings.eventContDeviceOverride, 1, { "zad_DeviousHeavyBondage", "zad_DeviousBelt", "zad_DeviousBra", "zad_DeviousHarness", "zad_DeviousBlindfold", "zad_DeviousHood", "zad_DeviousBoots", "zad_DeviousGloves", "zad_DeviousSuit", "zad_DeviousCorset"});
         }
 
         auto contraption = CreateAndLockContraption(target);
@@ -365,6 +378,82 @@ namespace DCURSES {
         return true;
     }
 
+    enum class AbadonEventType : uint32_t {
+        Warrior = 1,
+        Scout = 2,
+        Witch = 3
+    };
+
+    bool DoAbadonSetEvent(std::string containerName, RE::Actor* actor, AbadonEventType type) {
+        if (GetWornDeviceCount(actor) > 6) {
+            return false;
+        }
+
+        std::vector<uint32_t> set = {};
+
+        int count = -1;
+        switch (type) {
+        case AbadonEventType::Warrior: {
+            set = UD_ARMORSET01;
+            count = settings.eventAbadonWarriorCount;
+            break;
+        }
+        case AbadonEventType::Scout: {
+            set = UD_ARMORSET02;
+            count = settings.eventAbadonScoutCount;
+            break;
+        }
+        case AbadonEventType::Witch: {
+            set = UD_ARMORSET03;
+            count = settings.eventAbadonWitchCount;
+            break;
+        }
+        default:
+            return false;
+        }
+
+        Util::ShuffleVector(set);
+
+        auto scriptingManager = ScriptingManager();
+        for (auto form_id : set) {
+            auto to_equip = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(form_id, "UnforgivingDevices.esp");
+            auto conflicts = GetDeviceKeywords(to_equip, false);
+            bool can_equip = true;
+            for (auto conflict : conflicts) {
+                auto current = GetWornInventoryDeviceByKeyword(actor, conflict);
+                if (current && !DeviceInventoryIsGeneric(current)) {
+                    can_equip = false;
+                }
+            }
+            if (can_equip) {
+                scriptingManager.SwapDevices(actor, to_equip);
+                count -= 1;
+            }
+            if (count <= 0) {
+                break;
+            }
+        }
+
+        switch (type) {
+        case AbadonEventType::Warrior: {
+            PlayerMessage(Translator(Translation::EventAbadonWarrior, containerName));
+            break;
+        }
+        case AbadonEventType::Scout: {
+            PlayerMessage(Translator(Translation::EventAbadonScout, containerName));
+            break;
+        }
+        case AbadonEventType::Witch: {
+            PlayerMessage(Translator(Translation::EventAbadonWitch, containerName));
+            break;
+        }
+        default:
+            return false;
+        }
+
+        return true;
+    }
+
     std::vector<RE::Actor*> GetFollowersForEvent() {
         std::vector<RE::Actor*> result;
 
@@ -474,6 +563,39 @@ namespace DCURSES {
             }
             return false;
         }, settings.eventAbadonWeight });
+
+        events.push_back({ [](bool, std::string contName, RE::Actor* player) {
+            if (DoAbadonSetEvent(contName, player, AbadonEventType::Warrior)) {
+                log::info("Ran event Abadon Warrior");
+                if (settings.stripPlayerOnEvent) {
+                    UndressActor(player, false);
+                }
+                return true;
+            }
+            return false;
+        }, settings.eventAbadonWarriorWeight });
+
+        events.push_back({ [](bool, std::string contName, RE::Actor* player) {
+            if (DoAbadonSetEvent(contName, player, AbadonEventType::Scout)) {
+                log::info("Ran event Abadon Scout");
+                if (settings.stripPlayerOnEvent) {
+                    UndressActor(player, false);
+                }
+                return true;
+            }
+            return false;
+        }, settings.eventAbadonScoutWeight });
+
+        events.push_back({ [](bool, std::string contName, RE::Actor* player) {
+            if (DoAbadonSetEvent(contName, player, AbadonEventType::Witch)) {
+                log::info("Ran event Abadon Witch");
+                if (settings.stripPlayerOnEvent) {
+                    UndressActor(player, false);
+                }
+                return true;
+            }
+            return false;
+        }, settings.eventAbadonWitchWeight });
 
         events.push_back({ [](bool isBoss, std::string contName, RE::Actor* player) {
             if (DoStandardEvent(player, isBoss, contName)) {
@@ -671,7 +793,7 @@ namespace DCURSES {
                 RE::TESKey* magicKey = StaticDataHolder::GetSingleton()->LookupForm<RE::TESKey>(MAGIC_KEY, "Devious Curses.esp");
                 double c2 = settings.magicKeyChance * pow(1.5, (GetWornDeviceCount(player) - 1.0) / 9.0);
                 double r2 = Util::randomDouble();
-                if (GetItemCount(player, magicKey) == 0 && addedKeys.size() == 0) {
+                if (GetItemCount(player, magicKey) == 0) {
                     log::trace("Magic Key: {:.2f} ({:.2f})", c2, r2);
                     if (r2 < c2) {
                         activatedObject->AddObjectToContainer((RE::TESBoundObject*)magicKey, nullptr, 1, nullptr);
@@ -711,14 +833,16 @@ namespace DCURSES {
 
         log::trace("Activated {} type {} refID {:x} baseID {:x}", activatedObject->GetName(), RE::FormTypeToString(activatedObject->GetFormType()), activatedObject->formID, activatedObject->GetBaseObject()->GetFormID());
 
-        RE::ExtraDataList* dataList = &activatedObject->extraList;
-        if (dataList->HasType(RE::ExtraDataType::kAshPileRef)) {
-            auto pileRef = dataList->GetAshPileRef();
-            if (pileRef && pileRef.get() && pileRef.get().get()) {
-                activatedObject = pileRef.get().get();
-                log::trace("switching to ash pile reference {} type {} refID {:x} baseID {:x}", activatedObject->GetName(), RE::FormTypeToString(activatedObject->GetFormType()), activatedObject->formID, activatedObject->GetBaseObject()->GetFormID());
-            }
-        }
+        //if (!activatedObject->HasContainer()) {
+        //    RE::ExtraDataList* dataList = &activatedObject->extraList;
+        //    if (dataList->HasType(RE::ExtraDataType::kAshPileRef)) {
+        //        auto pileRef = dataList->GetAshPileRef();
+        //        if (pileRef && pileRef.get() && pileRef.get().get()) {
+        //            activatedObject = pileRef.get().get();
+        //            log::trace("switching to ash pile reference {} type {} refID {:x} baseID {:x}", activatedObject->GetName(), RE::FormTypeToString(activatedObject->GetFormType()), activatedObject->formID, activatedObject->GetBaseObject()->GetFormID());
+        //        }
+        //    }
+        //}
 
         auto player = RE::PlayerCharacter::GetSingleton();
 
@@ -984,6 +1108,13 @@ namespace DCURSES {
         if (!CheckUD()) {
             settings.eventAbadonWeight = 0;
             SetMCMInt("eventAbadonWeight", 0);
+
+            settings.eventAbadonWarriorWeight = 0;
+            SetMCMInt("eventAbadonWarriorWeight", 0);
+            settings.eventAbadonScoutWeight = 0;
+            SetMCMInt("eventAbadonScoutWeight", 0);
+            settings.eventAbadonWitchWeight = 0;
+            SetMCMInt("eventAbadonWitchWeight", 0);
         }
         if (!CheckLewdMarksInstalled()) {
             settings.eventLewdMarkWeight = 0;

@@ -585,7 +585,10 @@ namespace DCURSES {
 				if (Util::FormEditorIdContains(deviceRendered, "UD_AbadonPlug")) {
 					continue;
 				}
-				else if (Util::testFormComp("UD_&(ArmorSet|Abadon)", deviceRendered) && !settings.udUseAbadon) {
+				else if (!settings.udUseAbadonSets && Util::testFormComp("UD_ArmorSet", deviceRendered)) {
+					continue;
+				}
+				else if (!settings.udUseAbadon && Util::testFormComp("UD_&Abadon", deviceRendered)) {
 					continue;
 				}
 				else if (Util::FormEditorIdContains(deviceRendered, "UD_") && !settings.udUseMisc) {
@@ -1014,7 +1017,7 @@ namespace DCURSES {
 				if (!wornArmor) {
 					continue;
 				}
-				if (!Util::testFormComp(theme, wornArmor) && !theme.empty()) {
+				if (!theme.empty() && !Util::testFormComp(theme, wornArmor)) {
 					continue;
 				}
 				RE::TESObjectARMO* inv = DeviousDevicesAPI::g_API->GetDeviceInventory(wornArmor);
@@ -1218,15 +1221,15 @@ namespace DCURSES {
 
 	void RemoveAllRestraints(RE::Actor* actor, bool destroyAll = false) {
 		if (!actor) return;
-		log::trace("Attempting to remove all restraints");
+		log::trace("Attempting to remove all restraints from {}", actor->GetName());
 		std::vector<std::pair<RE::TESObjectARMO*, RE::TESObjectARMO*>> removes;
 
 		auto inventory = actor->GetInventory();
 		for (auto const& [k, v] : inventory) {
-			RE::TESObjectARMO* armor = k->As<RE::TESObjectARMO>();
-			if (armor && DeviceInventoryIsGeneric(armor) && v.second.get() && v.second.get()->IsWorn()) {
-				auto render = DeviousDevicesAPI::g_API->GetDeviceRender(armor);
-				if (render) {
+			RE::TESObjectARMO* render = k->As<RE::TESObjectARMO>();
+			if (render && DeviceRenderedIsGeneric(render) && v.second.get() && v.second.get()->IsWorn()) {
+				auto armor = DeviousDevicesAPI::g_API->GetDeviceInventory(render);
+				if (armor) {
 					removes.push_back(std::make_pair(armor, render));
 				}
 			}
@@ -1234,6 +1237,7 @@ namespace DCURSES {
 
 		auto scriptManager = ScriptingManager();
 		for (auto& [dev, rend] : removes) {
+			//log::trace("Removing device {}", dev->GetName());
 			scriptManager.UnlockDevice(actor, dev, rend, nullptr, destroyAll, true);
 		}
 	}
@@ -1303,14 +1307,39 @@ namespace DCURSES {
 		if (!akActor) return;
 
 		auto scriptManager = ScriptingManager();
-		auto rightHand = akActor->GetEquippedObject(false);
-		//UnequipSpell(akActor, rightHand, 1);
-		scriptManager.UnequipItem(akActor, rightHand);
-		auto leftHand = akActor->GetEquippedObject(true);
-		//UnequipSpell(akActor, leftHand, 0);
-		scriptManager.UnequipItem(akActor, leftHand);
-		akActor->DrawWeaponMagicHands(false);
 
+		auto shieldSlot = RE::BGSBipedObjectForm::BipedObjectSlot::kShield;
+		RE::TESObjectARMO* shield = akActor->GetWornArmor(shieldSlot);
+		if (shield) {
+			scriptManager.UnequipItem(akActor, shield);
+		}
+
+		auto rightHand = akActor->GetEquippedObject(false);
+		if (rightHand) {
+			auto rightHandSpell = rightHand->As<RE::SpellItem>();
+			if (rightHandSpell) {
+				scriptManager.UnequipSpell(akActor, rightHandSpell, 1);
+			}
+			else {
+				scriptManager.UnequipItem(akActor, rightHand);
+			}
+		}
+
+		auto leftHand = akActor->GetEquippedObject(false);
+		if (leftHand) {
+			auto leftHandSpell = leftHand->As<RE::SpellItem>();
+			if (leftHandSpell) {
+				scriptManager.UnequipSpell(akActor, leftHandSpell, 0);
+			}
+			else {
+				scriptManager.UnequipItem(akActor, leftHand);
+			}
+		}
+		if (leftHand || rightHand || shield) {
+			Util::ExecuteWithDelay(50ms, [akActor] {
+				akActor->DrawWeaponMagicHands(false);
+			});
+		}
 	}
 
 	bool UndressAndUnequipActor(RE::Actor* akActor) {
@@ -1321,8 +1350,6 @@ namespace DCURSES {
 
 	bool TestTheme(std::string theme, std::vector<std::string> skipKeywords = {}) {
 		RE::Actor* player = RE::PlayerCharacter::GetSingleton();
-
-		std::list<RE::TESObjectARMO*> to_equip;
 
 		std::string device_names = "";
 		std::string device_ids = "";

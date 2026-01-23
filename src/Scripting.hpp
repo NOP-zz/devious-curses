@@ -70,6 +70,14 @@ namespace DCURSES {
         return true;
     }
 
+    bool CheckOSL() {
+        RE::TESForm* form = StaticDataHolder::GetSingleton()->LookupForm(0x806, "OSLAroused.esp");
+        if (form == nullptr) {
+            return false;
+        }
+        return true;
+    }
+
     class ScriptIntent {
     public:
         std::string script_name;
@@ -316,17 +324,40 @@ namespace DCURSES {
             RunIntent(intent);
         }
 
-        void ModifyArousal(RE::Actor* actor, int arousal) {
+        int GetArousal(RE::Actor* actor) {
+            RE::TESFaction* sla_arousal = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x3FC36, "SexLabAroused.esm");
+            auto arousal = actor->GetFactionRank(sla_arousal, actor == RE::PlayerCharacter::GetSingleton());
+            return arousal;
+        }
+
+        void ModifyArousal(RE::Actor* actor, float arousal) {
+            if (CheckOSL()) {
+                OSL_ModifyArousal(actor, arousal);
+            }
+            else {
+                Generic_ModifyArousal(actor, static_cast<int>(arousal));
+            }
+        }
+
+        void Generic_ModifyArousal(RE::Actor* actor, int arousal) {
             RE::TESForm* aroused = StaticDataHolder::GetSingleton()->LookupForm(0x4290f, "SexLabAroused.esm");
             RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::Actor*, int, std::string>(std::move(actor), std::move(arousal), "");
             auto intent = ScriptIntent(aroused, RE::FormType::Quest, "slaFrameworkScr", "UpdateActorExposure", args);
             RunIntent(intent);
         }
 
-        int GetArousal(RE::Actor* actor) {
-            RE::TESFaction* sla_arousal = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x3FC36, "SexLabAroused.esm");
-            auto arousal = actor->GetFactionRank(sla_arousal, actor == RE::PlayerCharacter::GetSingleton());
-            return arousal;
+        void OSL_ModifyArousal(RE::Actor* actor, float arousal) {
+            if (!CheckOSL()) { return; }
+            RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::Actor*, float>(std::move(actor), std::move(arousal));
+            auto intent = ScriptIntent("OSLArousedNative", "ModifyArousal", args);
+            RunIntent(intent);
+        }
+
+        void OSL_ModifyLibido(RE::Actor* actor, float arousal) {
+            if (!CheckOSL()) { return; }
+            RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::Actor*, float>(std::move(actor), std::move(arousal));
+            auto intent = ScriptIntent("OSLArousedNative", "ModifyLibido", args);
+            RunIntent(intent);
         }
 
         void LockDevice(RE::Actor* akActor, RE::TESObjectARMO* deviceInventory, bool force = false) {
@@ -383,8 +414,14 @@ namespace DCURSES {
             RunIntent(intent);
         }
 
-        void UnequipSpell(RE::Actor* akActor, RE::TESForm* spell, int akSource) {
-            RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::TESForm*, int>(std::move(spell), std::move(akSource));
+        void UnequipItemSlot(RE::Actor* akActor, RE::BGSBipedObjectForm::BipedObjectSlot itemSlot) {
+            RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<int>(std::move(static_cast<int>(itemSlot)));
+            auto intent = ScriptIntent(akActor, RE::FormType::ActorCharacter, "Actor", "UnequipItemSlot", args);
+            RunIntent(intent);
+        }
+
+        void UnequipSpell(RE::Actor* akActor, RE::SpellItem* spell, int akSource) {
+            RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::SpellItem*, int>(std::move(spell), std::move(akSource));
             auto intent = ScriptIntent(akActor, RE::FormType::ActorCharacter, "Actor", "UnequipSpell", args);
             RunIntent(intent);
         }

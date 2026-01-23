@@ -122,25 +122,35 @@ namespace DCURSES {
 		int eventContDeviceOverride = 0;		//Device Count Override//When equipping devices for contraption events this number will be used instead of the min / max on the main page.\nSet to 0 to use the default number of devices.//{0}//(0,10,1)
 		//Header Wicked Curse
 		int eventWickedWeight = 15;				//Wicked Curse Weight//Chance to be bound in a device from Devious Wicked Devices.//{0}//(0,500,1)							?:? flag_WickedDevices
-		//Column
-		bool allowFollowerEvents = false;		//Follower Events//Allow followers to be affected by curses. Currently only applies to the Bondage Curse and Tattoo Curse.
-		bool onlyFemaleFollowers = true;		//Only Female Followers//Follower events will only trigger if the follower uses a female body (female & futa).
-		text excludedFollowers = "";			//Excluded Followers//List of followers that are excluded from events. Names should be comma-separated.\nThis will check to see if any part of their name matches.\nExample: "Lydia, J'zargo"
 		//Header Tattoo Curse
 		int eventTattooWeight = 15;				//Tattoo Curse Weight//Chance to receive random tattoos.\nRequires Rape Tattoos.//{0}//(0,500,1)							?:? flag_RapeTats
 		int eventTattooMin = 1;					//Tattoo Curse Min//Minimum number of tattoos that can be put on.//{0}//(1,10,1)											?:? flag_RapeTats
 		int eventTattooMax = 3;					//Tattoo Curse Max//Maximum number of tattoos that can be put on.//{0}//(1,10,1)											?:? flag_RapeTats
 		int eventTattooCap = 8;					//Tattoo Curse Cap//If you have this many tattoos already you won't get any more.//{0}//(0,20,1)							?:? flag_RapeTats
+		//Column
+		bool allowFollowerEvents = false;		//Follower Events//Allow followers to be affected by curses. Currently only applies to the Bondage Curse and Tattoo Curse.
+		bool onlyFemaleFollowers = true;		//Only Female Followers//Follower events will only trigger if the follower uses a female body (female & futa).
+		text excludedFollowers = "";			//Excluded Followers//List of followers that are excluded from events. Names should be comma-separated.\nThis will check to see if any part of their name matches.\nExample: "Lydia, J'zargo"
+		bool followerHeavyRestraints = false;	//Follower Heavy Restraints//Will allow events to equip heavy restraints on followers.
+		int followerDeviceModifier = 0;			//Follower Device Modifier//Will add (or subtrace) this many devices when equipping followers with devices.\nFollowers will always be equipped with at least one device.//{0}//(-10,10,1)
 		//Header Mark Curse
 		int eventLewdMarkWeight = 10;			//Lewd Mark Weight//Chance to receive a lewd mark.//{0}//(0,500,1) ?:? flag_LewdMarks
 		//Header Slavery Curse
 		int eventSimpleSlaveryWeight = 0;		//Simple Slavery Weight//Chance to trigger a Simple Slavery auction.//{0}//(0,500,1) ?:? flag_SimpleSlavery					**RELOAD
 		int eventSSMinRestraints = 6;			//Minimum Restraints//Minimum restraints that need to be equipped for a Simple Slavery auction to start.//{0}//(0,10,1)		?:? flag_SimpleSlavery
 		//Header Abadon Curse
-		int eventAbadonWeight = 5;				//Abadon Plug Weight//Chance to be equipped with an Abadon Plug. This will trigger exactly the same as the quest from UD.//{0}//(0,500,1) ?:? flag_UnforgivingDevices
+		int eventAbadonWeight = 5;				//Abadon Plug Weight//Chance to be equipped with an Abadon Plug. This will trigger exactly the same as the quest from UD.//{0}//(0,500,1)						?:? flag_UnforgivingDevices
+		//Header Abadon Sets
+		int eventAbadonWarriorWeight = 10;		//Abadon Warrior Weight//Chance to be equipped with devices from the Abadon Warrior set.//{0}//(0,500,1)														?:? flag_UnforgivingDevices
+		int eventAbadonWarriorCount = 5;		//Abadon Warrior Count//Number of Warrior devices that will be equipped durring the event//{0}//(1,10,1)														?:? flag_UnforgivingDevices
+		int eventAbadonScoutWeight = 10;		//Abadon Scout Weight//Chance to be equipped with devices from the Abadon Scout set.//{0}//(0,500,1)															?:? flag_UnforgivingDevices
+		int eventAbadonScoutCount = 5;			//Abadon Scout Count//Number of Scout devices that will be equipped durring the event//{0}//(1,10,1)															?:? flag_UnforgivingDevices
+		int eventAbadonWitchWeight = 10;		//Abadon Witch Weight//Chance to be equipped with devices from the Abadon Witch set.//{0}//(0,500,1)															?:? flag_UnforgivingDevices
+		int eventAbadonWitchCount = 5;			//Abadon Witch Count//Number of Witch devices that will be equipped durring the event//{0}//(1,10,1)															?:? flag_UnforgivingDevices
 		//Page Unforgiving Devices
 		bool onlyUseUnforgivingDevices = true;	//Only Unforgiving Devices//Only register devices to the mod that are converted to work with UD.\n(Will cause lag on menu close)													?:? flag_UnforgivingDevices  **RECALC
 		bool udUseAbadon = false;				//Allow Abadon Devices//Allow Abadon devices to be enabled in the normal random device search. Will not equip the Abadon Plug even if enabled.\n(Will cause lag on menu close)		?:? flag_UnforgivingDevices  **RECALC
+		bool udUseAbadonSets = false;			//Allow Abadon Sets//Allow Abadon Sets like Warrior and Witch to be enabled in the normal random device search.\n(Will cause lag on menu close)										?:? flag_UnforgivingDevices  **RECALC
 		bool udUseMisc = true;					//Allow Misc Unforgiving Devices//Allow devices like chargable plugs, punisher items, etc. to be enabled in the normal random device search\n(Will cause lag on menu close)			?:? flag_UnforgivingDevices  **RECALC
 		//Page Advanced Nudity Detection
 		//Header Nudity Sex
@@ -268,7 +278,8 @@ namespace DCURSES {
 		int chastityKeyWeight = 50;				//Chastity Key Weight//Chance to find a chastity key.//{0}//(0,100,1)
 		int piercingToolWeight = 20;			//Piercing Tool Weight//Chance to find a piercing removal tool.//{0}//(0,100,1)
 		//Empty
-		float magicKeyChance = 10.0f;			//Magic Key Chance//Chance that magic keys will be found in boss chests. They will destroy all restraints you are wearing.\nYou can only have a max of one at a time and they can never be lost.\nSet to 0 to disable//{1}//(0,50,0.1)
+		float magicKeyChance = 20.0f;			//Magic Key Chance//Chance that magic keys will be found in boss chests. They will destroy all restraints you are wearing.\nYou can only have a max of one at a time and they can never be lost.\nSet to 0 to disable//{1}//(0,50,0.1)
+		bool magicKeyOppressive = false;		//Magic Keys Remove Oppressive//Magic keys will remove one random oppressive device when used.
 		bool preferRelevantKeys = true;			//Prefer Relevant Keys//You will only find keys that would unlock items you are wearing.
 		bool vanishingKeys = true;				//Vanishing Keys//Keys will be removed from containers after you close the menu.
 		float keyLuckyBonus = 1.75f;			//Lucky Bonus//Keys chance will be multiplied by this value if you are lucky.//{2}//(1,10,0.01)
@@ -309,7 +320,8 @@ namespace DCURSES {
 		bool disableForce3rdPerson = true;		//Disable 3rd Person//This mod will not force the player into 3rd person.
 		bool enableSlowStrip = false;			//Use Sexlab Strip//Replace the built in stripping algorithm with the one from sexlab.\nCan fix rare cases of crashing on stripping and also give more control over what gets stripped.
 		float tatSolventChance = 0.5f;			//Universal Solvent Chance//Chance to find universal solvent when looting dead bodies. Universal solvent will remove all lewd marks and tattoos.\nHaving more tattoos will slightly increase the chance of finding one.\nSet to 0 to disable.//{1}//(0,50,0.1)
-		float arousalPotionChance = 1.0f;		//Frigid Wash Chance//Chance to find a potion that will reduce your arousal. The chance increases slightly with high arousal.\nYou can only cary a max of 3 at a time.//{1}//(0,100,0.1)
+		float arousalPotionChance = 5.0f;		//Frigid Wash Chance//Chance to find a potion that will reduce your arousal. The chance increases slightly with high arousal.\nYou can only cary a max of 3 at a time.//{1}//(0,100,0.1)
+		float arousalPotionLibido = 10.0f;		//Frigid Wash Libido//How much your libido will decrease when drinking a frigid wash. Only works if OSLAroused is installed.//{1}//(0,100,0.1)
 		bool resumeEvents = false;				//Resume Events//Events have been disabled by another mod. Enable this and exit the MCM to re-enable events.				?:? flag_events_disabled
 		bool saveDependentSettings = false;		//Save Dependent Settings//If enabled your settings for this save will not be synced with all of your other saves.
 		bool setAllDefaultSettings = false;		//Return to Default [WARNING]//If you exit the menu with this enabled all settings in the MCM will be reset to default.
@@ -531,6 +543,8 @@ namespace DCURSES {
 		SetMCMInt("eventTattooMax",settings.eventTattooMax);
 		settings.eventTattooCap = 8;
 		SetMCMInt("eventTattooCap",settings.eventTattooCap);
+		settings.followerDeviceModifier = 0;
+		SetMCMInt("followerDeviceModifier",settings.followerDeviceModifier);
 		settings.eventLewdMarkWeight = 10;
 		SetMCMInt("eventLewdMarkWeight",settings.eventLewdMarkWeight);
 		settings.eventSimpleSlaveryWeight = 0;
@@ -539,6 +553,18 @@ namespace DCURSES {
 		SetMCMInt("eventSSMinRestraints",settings.eventSSMinRestraints);
 		settings.eventAbadonWeight = 5;
 		SetMCMInt("eventAbadonWeight",settings.eventAbadonWeight);
+		settings.eventAbadonWarriorWeight = 10;
+		SetMCMInt("eventAbadonWarriorWeight",settings.eventAbadonWarriorWeight);
+		settings.eventAbadonWarriorCount = 5;
+		SetMCMInt("eventAbadonWarriorCount",settings.eventAbadonWarriorCount);
+		settings.eventAbadonScoutWeight = 10;
+		SetMCMInt("eventAbadonScoutWeight",settings.eventAbadonScoutWeight);
+		settings.eventAbadonScoutCount = 5;
+		SetMCMInt("eventAbadonScoutCount",settings.eventAbadonScoutCount);
+		settings.eventAbadonWitchWeight = 10;
+		SetMCMInt("eventAbadonWitchWeight",settings.eventAbadonWitchWeight);
+		settings.eventAbadonWitchCount = 5;
+		SetMCMInt("eventAbadonWitchCount",settings.eventAbadonWitchCount);
 		settings.LMAllureWeight = 10;
 		SetMCMInt("LMAllureWeight",settings.LMAllureWeight);
 		settings.LMAllureMod = 5;
@@ -751,7 +777,7 @@ namespace DCURSES {
 		SetMCMFloat("keyBonus",settings.keyBonus);
 		settings.keyPickpocketBonus = 2.0f;
 		SetMCMFloat("keyPickpocketBonus",settings.keyPickpocketBonus);
-		settings.magicKeyChance = 10.0f;
+		settings.magicKeyChance = 20.0f;
 		SetMCMFloat("magicKeyChance",settings.magicKeyChance);
 		settings.keyLuckyBonus = 1.75f;
 		SetMCMFloat("keyLuckyBonus",settings.keyLuckyBonus);
@@ -761,8 +787,10 @@ namespace DCURSES {
 		SetMCMFloat("rDeviceLuckyBonus",settings.rDeviceLuckyBonus);
 		settings.tatSolventChance = 0.5f;
 		SetMCMFloat("tatSolventChance",settings.tatSolventChance);
-		settings.arousalPotionChance = 1.0f;
+		settings.arousalPotionChance = 5.0f;
 		SetMCMFloat("arousalPotionChance",settings.arousalPotionChance);
+		settings.arousalPotionLibido = 10.0f;
+		SetMCMFloat("arousalPotionLibido",settings.arousalPotionLibido);
 		settings.consTriggerNude = 15.0f;
 		SetMCMFloat("consTriggerNude",settings.consTriggerNude);
 		settings.consTriggerRestrained = 50.0f;
@@ -797,10 +825,14 @@ namespace DCURSES {
 		SetMCMBool("allowFollowerEvents",settings.allowFollowerEvents);
 		settings.onlyFemaleFollowers = true;
 		SetMCMBool("onlyFemaleFollowers",settings.onlyFemaleFollowers);
+		settings.followerHeavyRestraints = false;
+		SetMCMBool("followerHeavyRestraints",settings.followerHeavyRestraints);
 		settings.onlyUseUnforgivingDevices = true;
 		SetMCMBool("onlyUseUnforgivingDevices",settings.onlyUseUnforgivingDevices);
 		settings.udUseAbadon = false;
 		SetMCMBool("udUseAbadon",settings.udUseAbadon);
+		settings.udUseAbadonSets = false;
+		SetMCMBool("udUseAbadonSets",settings.udUseAbadonSets);
 		settings.udUseMisc = true;
 		SetMCMBool("udUseMisc",settings.udUseMisc);
 		settings.ANDSexTopless = true;
@@ -861,6 +893,8 @@ namespace DCURSES {
 		SetMCMBool("useLocationModifiers",settings.useLocationModifiers);
 		settings.keyForgiveness = true;
 		SetMCMBool("keyForgiveness",settings.keyForgiveness);
+		settings.magicKeyOppressive = false;
+		SetMCMBool("magicKeyOppressive",settings.magicKeyOppressive);
 		settings.preferRelevantKeys = true;
 		SetMCMBool("preferRelevantKeys",settings.preferRelevantKeys);
 		settings.vanishingKeys = true;
@@ -1034,10 +1068,17 @@ namespace DCURSES {
 			{"eventTattooMin", settings.eventTattooMin},
 			{"eventTattooMax", settings.eventTattooMax},
 			{"eventTattooCap", settings.eventTattooCap},
+			{"followerDeviceModifier", settings.followerDeviceModifier},
 			{"eventLewdMarkWeight", settings.eventLewdMarkWeight},
 			{"eventSimpleSlaveryWeight", settings.eventSimpleSlaveryWeight},
 			{"eventSSMinRestraints", settings.eventSSMinRestraints},
 			{"eventAbadonWeight", settings.eventAbadonWeight},
+			{"eventAbadonWarriorWeight", settings.eventAbadonWarriorWeight},
+			{"eventAbadonWarriorCount", settings.eventAbadonWarriorCount},
+			{"eventAbadonScoutWeight", settings.eventAbadonScoutWeight},
+			{"eventAbadonScoutCount", settings.eventAbadonScoutCount},
+			{"eventAbadonWitchWeight", settings.eventAbadonWitchWeight},
+			{"eventAbadonWitchCount", settings.eventAbadonWitchCount},
 			{"LMAllureWeight", settings.LMAllureWeight},
 			{"LMAllureMod", settings.LMAllureMod},
 			{"LMAllureSex", settings.LMAllureSex},
@@ -1143,6 +1184,7 @@ namespace DCURSES {
 			{"rDeviceLuckyBonus", settings.rDeviceLuckyBonus},
 			{"tatSolventChance", settings.tatSolventChance},
 			{"arousalPotionChance", settings.arousalPotionChance},
+			{"arousalPotionLibido", settings.arousalPotionLibido},
 			{"consTriggerNude", settings.consTriggerNude},
 			{"consTriggerRestrained", settings.consTriggerRestrained},
 			{"consTriggerSex", settings.consTriggerSex},
@@ -1160,8 +1202,10 @@ namespace DCURSES {
 			{"eventContAllDevices", settings.eventContAllDevices},
 			{"allowFollowerEvents", settings.allowFollowerEvents},
 			{"onlyFemaleFollowers", settings.onlyFemaleFollowers},
+			{"followerHeavyRestraints", settings.followerHeavyRestraints},
 			{"onlyUseUnforgivingDevices", settings.onlyUseUnforgivingDevices},
 			{"udUseAbadon", settings.udUseAbadon},
+			{"udUseAbadonSets", settings.udUseAbadonSets},
 			{"udUseMisc", settings.udUseMisc},
 			{"ANDSexTopless", settings.ANDSexTopless},
 			{"ANDSexBottomless", settings.ANDSexBottomless},
@@ -1192,6 +1236,7 @@ namespace DCURSES {
 			{"oppMadnessChaos", settings.oppMadnessChaos},
 			{"useLocationModifiers", settings.useLocationModifiers},
 			{"keyForgiveness", settings.keyForgiveness},
+			{"magicKeyOppressive", settings.magicKeyOppressive},
 			{"preferRelevantKeys", settings.preferRelevantKeys},
 			{"vanishingKeys", settings.vanishingKeys},
 			{"enableQuestInteractions", settings.enableQuestInteractions},
@@ -1393,6 +1438,8 @@ namespace DCURSES {
 		SetMCMInt("eventTattooMax",settings.eventTattooMax);
 		settings.eventTattooCap = static_cast<int>(j.value("eventTattooCap", 8));
 		SetMCMInt("eventTattooCap",settings.eventTattooCap);
+		settings.followerDeviceModifier = static_cast<int>(j.value("followerDeviceModifier", 0));
+		SetMCMInt("followerDeviceModifier",settings.followerDeviceModifier);
 		settings.eventLewdMarkWeight = static_cast<int>(j.value("eventLewdMarkWeight", 10));
 		SetMCMInt("eventLewdMarkWeight",settings.eventLewdMarkWeight);
 		settings.eventSimpleSlaveryWeight = static_cast<int>(j.value("eventSimpleSlaveryWeight", 0));
@@ -1401,6 +1448,18 @@ namespace DCURSES {
 		SetMCMInt("eventSSMinRestraints",settings.eventSSMinRestraints);
 		settings.eventAbadonWeight = static_cast<int>(j.value("eventAbadonWeight", 5));
 		SetMCMInt("eventAbadonWeight",settings.eventAbadonWeight);
+		settings.eventAbadonWarriorWeight = static_cast<int>(j.value("eventAbadonWarriorWeight", 10));
+		SetMCMInt("eventAbadonWarriorWeight",settings.eventAbadonWarriorWeight);
+		settings.eventAbadonWarriorCount = static_cast<int>(j.value("eventAbadonWarriorCount", 5));
+		SetMCMInt("eventAbadonWarriorCount",settings.eventAbadonWarriorCount);
+		settings.eventAbadonScoutWeight = static_cast<int>(j.value("eventAbadonScoutWeight", 10));
+		SetMCMInt("eventAbadonScoutWeight",settings.eventAbadonScoutWeight);
+		settings.eventAbadonScoutCount = static_cast<int>(j.value("eventAbadonScoutCount", 5));
+		SetMCMInt("eventAbadonScoutCount",settings.eventAbadonScoutCount);
+		settings.eventAbadonWitchWeight = static_cast<int>(j.value("eventAbadonWitchWeight", 10));
+		SetMCMInt("eventAbadonWitchWeight",settings.eventAbadonWitchWeight);
+		settings.eventAbadonWitchCount = static_cast<int>(j.value("eventAbadonWitchCount", 5));
+		SetMCMInt("eventAbadonWitchCount",settings.eventAbadonWitchCount);
 		settings.LMAllureWeight = static_cast<int>(j.value("LMAllureWeight", 10));
 		SetMCMInt("LMAllureWeight",settings.LMAllureWeight);
 		settings.LMAllureMod = static_cast<int>(j.value("LMAllureMod", 5));
@@ -1613,7 +1672,7 @@ namespace DCURSES {
 		SetMCMFloat("keyBonus",settings.keyBonus);
 		settings.keyPickpocketBonus = static_cast<float>(j.value("keyPickpocketBonus", 2.0));
 		SetMCMFloat("keyPickpocketBonus",settings.keyPickpocketBonus);
-		settings.magicKeyChance = static_cast<float>(j.value("magicKeyChance", 10.0));
+		settings.magicKeyChance = static_cast<float>(j.value("magicKeyChance", 20.0));
 		SetMCMFloat("magicKeyChance",settings.magicKeyChance);
 		settings.keyLuckyBonus = static_cast<float>(j.value("keyLuckyBonus", 1.75));
 		SetMCMFloat("keyLuckyBonus",settings.keyLuckyBonus);
@@ -1623,8 +1682,10 @@ namespace DCURSES {
 		SetMCMFloat("rDeviceLuckyBonus",settings.rDeviceLuckyBonus);
 		settings.tatSolventChance = static_cast<float>(j.value("tatSolventChance", 0.5));
 		SetMCMFloat("tatSolventChance",settings.tatSolventChance);
-		settings.arousalPotionChance = static_cast<float>(j.value("arousalPotionChance", 1.0));
+		settings.arousalPotionChance = static_cast<float>(j.value("arousalPotionChance", 5.0));
 		SetMCMFloat("arousalPotionChance",settings.arousalPotionChance);
+		settings.arousalPotionLibido = static_cast<float>(j.value("arousalPotionLibido", 10.0));
+		SetMCMFloat("arousalPotionLibido",settings.arousalPotionLibido);
 		settings.consTriggerNude = static_cast<float>(j.value("consTriggerNude", 15.0));
 		SetMCMFloat("consTriggerNude",settings.consTriggerNude);
 		settings.consTriggerRestrained = static_cast<float>(j.value("consTriggerRestrained", 50.0));
@@ -1659,10 +1720,14 @@ namespace DCURSES {
 		SetMCMBool("allowFollowerEvents",settings.allowFollowerEvents);
 		settings.onlyFemaleFollowers = static_cast<bool>(j.value("onlyFemaleFollowers", true));
 		SetMCMBool("onlyFemaleFollowers",settings.onlyFemaleFollowers);
+		settings.followerHeavyRestraints = static_cast<bool>(j.value("followerHeavyRestraints", false));
+		SetMCMBool("followerHeavyRestraints",settings.followerHeavyRestraints);
 		settings.onlyUseUnforgivingDevices = static_cast<bool>(j.value("onlyUseUnforgivingDevices", true));
 		SetMCMBool("onlyUseUnforgivingDevices",settings.onlyUseUnforgivingDevices);
 		settings.udUseAbadon = static_cast<bool>(j.value("udUseAbadon", false));
 		SetMCMBool("udUseAbadon",settings.udUseAbadon);
+		settings.udUseAbadonSets = static_cast<bool>(j.value("udUseAbadonSets", false));
+		SetMCMBool("udUseAbadonSets",settings.udUseAbadonSets);
 		settings.udUseMisc = static_cast<bool>(j.value("udUseMisc", true));
 		SetMCMBool("udUseMisc",settings.udUseMisc);
 		settings.ANDSexTopless = static_cast<bool>(j.value("ANDSexTopless", true));
@@ -1723,6 +1788,8 @@ namespace DCURSES {
 		SetMCMBool("useLocationModifiers",settings.useLocationModifiers);
 		settings.keyForgiveness = static_cast<bool>(j.value("keyForgiveness", true));
 		SetMCMBool("keyForgiveness",settings.keyForgiveness);
+		settings.magicKeyOppressive = static_cast<bool>(j.value("magicKeyOppressive", false));
+		SetMCMBool("magicKeyOppressive",settings.magicKeyOppressive);
 		settings.preferRelevantKeys = static_cast<bool>(j.value("preferRelevantKeys", true));
 		SetMCMBool("preferRelevantKeys",settings.preferRelevantKeys);
 		settings.vanishingKeys = static_cast<bool>(j.value("vanishingKeys", true));
@@ -1843,6 +1910,7 @@ namespace DCURSES {
 		if (settings.useGenderedChastity != GetMCMSetting("useGenderedChastity")->GetBool()) {recalculate = true;}
 		if (settings.onlyUseUnforgivingDevices != GetMCMSetting("onlyUseUnforgivingDevices")->GetBool()) {recalculate = true;}
 		if (settings.udUseAbadon != GetMCMSetting("udUseAbadon")->GetBool()) {recalculate = true;}
+		if (settings.udUseAbadonSets != GetMCMSetting("udUseAbadonSets")->GetBool()) {recalculate = true;}
 		if (settings.udUseMisc != GetMCMSetting("udUseMisc")->GetBool()) {recalculate = true;}
 		settings.minGoldRequired = GetMCMSetting("minGoldRequired")->GetSInt();
 		settings.eventScalingMod = GetMCMSetting("eventScalingMod")->GetSInt();
@@ -1898,10 +1966,17 @@ namespace DCURSES {
 		settings.eventTattooMin = GetMCMSetting("eventTattooMin")->GetSInt();
 		settings.eventTattooMax = GetMCMSetting("eventTattooMax")->GetSInt();
 		settings.eventTattooCap = GetMCMSetting("eventTattooCap")->GetSInt();
+		settings.followerDeviceModifier = GetMCMSetting("followerDeviceModifier")->GetSInt();
 		settings.eventLewdMarkWeight = GetMCMSetting("eventLewdMarkWeight")->GetSInt();
 		settings.eventSimpleSlaveryWeight = GetMCMSetting("eventSimpleSlaveryWeight")->GetSInt();
 		settings.eventSSMinRestraints = GetMCMSetting("eventSSMinRestraints")->GetSInt();
 		settings.eventAbadonWeight = GetMCMSetting("eventAbadonWeight")->GetSInt();
+		settings.eventAbadonWarriorWeight = GetMCMSetting("eventAbadonWarriorWeight")->GetSInt();
+		settings.eventAbadonWarriorCount = GetMCMSetting("eventAbadonWarriorCount")->GetSInt();
+		settings.eventAbadonScoutWeight = GetMCMSetting("eventAbadonScoutWeight")->GetSInt();
+		settings.eventAbadonScoutCount = GetMCMSetting("eventAbadonScoutCount")->GetSInt();
+		settings.eventAbadonWitchWeight = GetMCMSetting("eventAbadonWitchWeight")->GetSInt();
+		settings.eventAbadonWitchCount = GetMCMSetting("eventAbadonWitchCount")->GetSInt();
 		settings.LMAllureWeight = GetMCMSetting("LMAllureWeight")->GetSInt();
 		settings.LMAllureMod = GetMCMSetting("LMAllureMod")->GetSInt();
 		settings.LMAllureSex = GetMCMSetting("LMAllureSex")->GetSInt();
@@ -2014,6 +2089,7 @@ namespace DCURSES {
 		settings.rDeviceLuckyBonus = GetMCMSetting("rDeviceLuckyBonus")->GetFloat();
 		settings.tatSolventChance = GetMCMSetting("tatSolventChance")->GetFloat();
 		settings.arousalPotionChance = GetMCMSetting("arousalPotionChance")->GetFloat();
+		settings.arousalPotionLibido = GetMCMSetting("arousalPotionLibido")->GetFloat();
 		settings.consTriggerNude = GetMCMSetting("consTriggerNude")->GetFloat();
 		settings.consTriggerRestrained = GetMCMSetting("consTriggerRestrained")->GetFloat();
 		settings.consTriggerSex = GetMCMSetting("consTriggerSex")->GetFloat();
@@ -2031,8 +2107,10 @@ namespace DCURSES {
 		settings.eventContAllDevices = GetMCMSetting("eventContAllDevices")->GetBool();
 		settings.allowFollowerEvents = GetMCMSetting("allowFollowerEvents")->GetBool();
 		settings.onlyFemaleFollowers = GetMCMSetting("onlyFemaleFollowers")->GetBool();
+		settings.followerHeavyRestraints = GetMCMSetting("followerHeavyRestraints")->GetBool();
 		settings.onlyUseUnforgivingDevices = GetMCMSetting("onlyUseUnforgivingDevices")->GetBool();
 		settings.udUseAbadon = GetMCMSetting("udUseAbadon")->GetBool();
+		settings.udUseAbadonSets = GetMCMSetting("udUseAbadonSets")->GetBool();
 		settings.udUseMisc = GetMCMSetting("udUseMisc")->GetBool();
 		settings.ANDSexTopless = GetMCMSetting("ANDSexTopless")->GetBool();
 		settings.ANDSexBottomless = GetMCMSetting("ANDSexBottomless")->GetBool();
@@ -2063,6 +2141,7 @@ namespace DCURSES {
 		settings.oppMadnessChaos = GetMCMSetting("oppMadnessChaos")->GetBool();
 		settings.useLocationModifiers = GetMCMSetting("useLocationModifiers")->GetBool();
 		settings.keyForgiveness = GetMCMSetting("keyForgiveness")->GetBool();
+		settings.magicKeyOppressive = GetMCMSetting("magicKeyOppressive")->GetBool();
 		settings.preferRelevantKeys = GetMCMSetting("preferRelevantKeys")->GetBool();
 		settings.vanishingKeys = GetMCMSetting("vanishingKeys")->GetBool();
 		settings.enableQuestInteractions = GetMCMSetting("enableQuestInteractions")->GetBool();

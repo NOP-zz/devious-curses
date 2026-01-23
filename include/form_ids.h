@@ -75,6 +75,33 @@ constexpr auto DDX_GOLDEN_COLLAR = 0x4000F;
 // UD
 constexpr auto UD_ABADONPLUG_INVENTORY = 0x135DDE;
 constexpr auto UD_ABADONPLUGANAL_INVENTORY = 0x13B43C;
+const std::vector<uint32_t> UD_ARMORSET01 = {
+	0x14FAB,
+	0x14FA0,
+	0x14FBA,
+	0x14FA7,
+	0x14FA5,
+	0x14FAD,
+	0x15050,
+	0x1504E,
+};
+const std::vector<uint32_t> UD_ARMORSET02 = {
+	0x14FDC,
+	0x14FDF,
+	0x14FD0,
+	0x14FDE,
+	0x14FD2,
+	0x14FDA,
+	0x15052,
+};
+const std::vector<uint32_t> UD_ARMORSET03 = {
+	0x14FE5,
+	0x14FED,
+	0x14FE7,
+	0x14FE9,
+	0x1504A,
+	0x1504C,
+};
 
 // OTHER
 constexpr auto CHASTITY_PIERCING_GOLD8 = 0x803;

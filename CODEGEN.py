@@ -402,7 +402,7 @@ with open("translationData/Devious Curses_ENGLISH.txt", "w", encoding='utf-16') 
 translations_raw = open(r"src\Translation.hpp", "r").read()
 translations = translations_raw.split("//TRNASLATIONS_START")[1].split("//TRNASLATIONS_END")[0].strip()
 translation_map = dict()
-for line in [x.strip() for x in translations.split('\n')[1:]]:
+for line in [x.strip() for x in translations.split('\n')]:
 	if line == "":
 		continue
 
