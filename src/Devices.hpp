@@ -143,7 +143,7 @@ namespace DCURSES {
 		if (!std::filesystem::exists(EXCLUSIONS_FILE)) {
 			log::warn("Unable to load exclusions file. Creating blank file.");
 			std::ofstream o(EXCLUSIONS_FILE);
-			o << j << std::endl;
+			o << std::setw(4) << j << std::endl;
 		}
 	}
 

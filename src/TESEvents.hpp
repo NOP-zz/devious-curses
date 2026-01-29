@@ -117,7 +117,7 @@ namespace DCURSES {
             auto player = RE::PlayerCharacter::GetSingleton();
             if (equipActor == player && equipmentForm) {
                 auto armor = equipmentForm->As<RE::TESObjectARMO>();
-                if (armor && armor->HasKeywordString("zad_DeviousHeavyBondage")) {
+                if (armor && armor->HasKeywordString("zad_DeviousHeavyBondage") && equipEvent->equipped) {
                 	UnequipItems(player);
                 }
 

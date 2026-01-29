@@ -435,10 +435,10 @@ namespace DCURSES {
 			auto scriptManager = ScriptingManager();
 
 			// Device Weapon Fix
-			auto heavy = GetWornInventoryDeviceByKeyword(player, "zad_DeviousHeavyBondage");
-			if (heavy) {
-				UnequipItems(player);
-			}
+			//auto heavy = GetWornInventoryDeviceByKeyword(player, "zad_DeviousHeavyBondage");
+			//if (heavy) {
+			//	UnequipItems(player);
+			//}
 
 			RE::TESKey* summoner_collar_key = StaticDataHolder::GetSingleton()->LookupForm<RE::TESKey>(SUMMONER_COLLAR_KEY, "Devious Curses.esp");
 			RE::TESObjectARMO* summoner_collar = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(SUMMONER_COLLAR, "Devious Curses.esp");
@@ -1035,8 +1035,8 @@ namespace DCURSES {
 					OppDoMadnessEffect(true);
 				});
 				Util::ExecuteWithDelay(100ms, [player] {
-					auto count = Util::randomInt(10, 20);
-					for (int i = 0; i < count; i++) {
+					auto device_count = Util::randomInt(10, 20);
+					for (int i = 0; i < device_count; i++) {
 						auto dev = GetRandomDevice(&devices.anything);
 						//activatedObject->GetContainer()->AddObjectToContainer((RE::TESBoundObject*)pair->first, 1, GetPlayer());
 						if (dev) {
@@ -1062,7 +1062,7 @@ namespace DCURSES {
 							RE::TESObjectREFR* refr = ptr.get();
 							refr->data.location += RE::NiPoint3(Util::randomFloat(-50, 50), Util::randomFloat(-50, 50), Util::randomFloat(50, 150));
 							refr->MoveHavok(true);
-							//activatedObject->AddObjectToContainer((RE::TESBoundObject*)dev.value().inv, nullptr, 1, nullptr);
+							//activatedObject->AddObjectToContainer((RE::TESBoundObject*)dev.value().inv, nullptr, 1, nullptr); 
 						}
 					}
 				});

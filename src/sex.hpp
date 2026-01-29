@@ -411,13 +411,6 @@ namespace DCURSES {
 		if (!settings.sexEnabled || !settings.sexRandomEnabled) {
 			return;
 		}
-		RE::TESFaction* SexlabAnimatingFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("00E50F", 0, 16), "SexLab.esm");
-		RE::TESFaction* ZadAnimatingFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("029567", 0, 16), "Devious Devices - Integration.esm");
-
-		if (player->IsInFaction(SexlabAnimatingFaction)) {
-			counters.clock_lastSex = 0;
-			return;
-		}
 
 		if (counters.clock_lastSex < settings.sexCooldown) {
 			return;
@@ -427,7 +420,7 @@ namespace DCURSES {
 			return;
 		}
 
-		if (player->IsInCombat() || player->IsInFaction(ZadAnimatingFaction) || player->IsInWater() || player->IsInRagdollState() || RE::UI::GetSingleton()->IsMenuOpen("Dialogue Menu") || RE::UI::GetSingleton()->IsMenuOpen("Crafting Menu")) {
+		if (player->IsInCombat() || player->IsInWater() || player->IsInRagdollState() || RE::UI::GetSingleton()->IsMenuOpen("Dialogue Menu") || RE::UI::GetSingleton()->IsMenuOpen("Crafting Menu")) {
 			return;
 		}
 
@@ -452,7 +445,6 @@ namespace DCURSES {
 
 		log::info("{}", actorData.second);
 
-		AIEventStartSex(actorData.first);
 		ScriptingManager().StartSex(actorData.first, settings.sexAggressiveAnims);
 
 		counters.clock_lastSex = -10;

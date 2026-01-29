@@ -412,7 +412,13 @@ namespace DCURSES {
             return false;
         }
 
+        if (count <= 0) {
+            return false;
+        }
+
         Util::ShuffleVector(set);
+
+        bool done_anything = false;
 
         auto scriptingManager = ScriptingManager();
         for (auto form_id : set) {
@@ -428,10 +434,15 @@ namespace DCURSES {
             if (can_equip) {
                 scriptingManager.SwapDevices(actor, to_equip);
                 count -= 1;
+                done_anything = true;
             }
             if (count <= 0) {
                 break;
             }
+        }
+
+        if (!done_anything) {
+            return false;
         }
 
         switch (type) {
@@ -1100,35 +1111,56 @@ namespace DCURSES {
         }
     }
 
-    void EventsStartup() {
+    void EventsCheckModIntergations() {
         if (!CheckSimpleSlavery()) {
-            settings.eventSimpleSlaveryWeight = 0;
-            SetMCMInt("eventSimpleSlaveryWeight", 0);
+            if (settings.eventSimpleSlaveryWeight != 0) {
+                settings.eventSimpleSlaveryWeight = 0;
+                SetMCMInt("eventSimpleSlaveryWeight", 0);
+            }
         }
         if (!CheckUD()) {
-            settings.eventAbadonWeight = 0;
-            SetMCMInt("eventAbadonWeight", 0);
+            if (settings.eventAbadonWeight != 0) {
+                settings.eventAbadonWeight = 0;
+                SetMCMInt("eventAbadonWeight", 0);
+            }
 
-            settings.eventAbadonWarriorWeight = 0;
-            SetMCMInt("eventAbadonWarriorWeight", 0);
-            settings.eventAbadonScoutWeight = 0;
-            SetMCMInt("eventAbadonScoutWeight", 0);
-            settings.eventAbadonWitchWeight = 0;
-            SetMCMInt("eventAbadonWitchWeight", 0);
+            if (settings.eventAbadonWarriorWeight != 0) {
+                settings.eventAbadonWarriorWeight = 0;
+                SetMCMInt("eventAbadonWarriorWeight", 0);
+            }
+
+            if (settings.eventAbadonScoutWeight != 0) {
+                settings.eventAbadonScoutWeight = 0;
+                SetMCMInt("eventAbadonScoutWeight", 0);
+            }
+
+            if (settings.eventAbadonWitchWeight != 0) {
+                settings.eventAbadonWitchWeight = 0;
+                SetMCMInt("eventAbadonWitchWeight", 0);
+            }
         }
         if (!CheckLewdMarksInstalled()) {
-            settings.eventLewdMarkWeight = 0;
-            SetMCMInt("eventLewdMarkWeight", 0);
+            if (settings.eventLewdMarkWeight != 0) {
+                settings.eventLewdMarkWeight = 0;
+                SetMCMInt("eventLewdMarkWeight", 0);
+            }
         }
         if (!CheckRapeTattoos()) {
-            settings.eventTattooWeight = 0;
-            SetMCMInt("eventTattooWeight", 0);
-            settings.LMBrandingChance = 0;
-            SetMCMFloat("LMBrandingChance", 0);
+            if (settings.eventTattooWeight != 0) {
+                settings.eventTattooWeight = 0;
+                SetMCMInt("eventTattooWeight", 0);
+            }
+
+            if (settings.LMBrandingChance != 0) {
+                settings.LMBrandingChance = 0;
+                SetMCMFloat("LMBrandingChance", 0);
+            }
         }
         if (!CheckWickedDevices()) {
-            settings.eventWickedWeight = 0;
-            SetMCMInt("eventWickedWeight", 0);
+            if (settings.eventWickedWeight != 0) {
+                settings.eventWickedWeight = 0;
+                SetMCMInt("eventWickedWeight", 0);
+            }
         }
     }
 }

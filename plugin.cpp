@@ -37,7 +37,7 @@ using namespace SKSE;
 
 namespace DCURSES {
     //GLOBALS
-    constexpr auto VERSION = "0.8.1";
+    constexpr auto VERSION = "0.8.2";
 
     void InitializeLogging() {
         auto path = log::log_directory();
@@ -66,9 +66,14 @@ namespace DCURSES {
         UPDATE_LOOP_RUNNING = true;
 
         std::thread{ [] {
-
+            bool shouldSkipNextLoop = false;
             while (true) {
                 std::this_thread::sleep_for(1000ms);
+
+                if (shouldSkipNextLoop) {
+                    //log::trace("Skip Loop Marked");
+                    shouldSkipNextLoop = false;
+                }
 
                 if (IsModDisabled()) {
                     //log::trace("Event timer skipped, mod is disabled.");
@@ -80,6 +85,19 @@ namespace DCURSES {
                     continue;
                 }
 
+
+                bool isInNonPausedMenu = false;
+                std::vector<std::string> menu_names = Util::split("InventoryMenu,Console,Dialogue Menu,MessageBoxMenu,MagicMenu,Loading Menu,TweenMenu,BarterMenu,GiftMenu,MapMenu,Lockpicking Menu,StatsMenu,ContainerMenu,Sleep/Wait Menu,LevelUp Menu,Journal Menu,Book Menu,FavoritesMenu,RaceSex Menu,Crafting Menu,Training Menu,Tutorial Menu", ",");
+                for (auto menu : menu_names) {
+                    if (RE::UI::GetSingleton()->IsMenuOpen(menu)) {
+                        if (menu != "Crafting Menu" && menu != "Dialogue Menu") {
+                            log::info("Event timer skipped, menu open: {}", menu);
+                        }
+                        isInNonPausedMenu = true;
+                    }
+                }
+                
+
                 auto player = RE::PlayerCharacter::GetSingleton();
 
                 if (player->IsDead() || player->IsDeleted() || player->IsDisabled()) {
@@ -88,28 +106,41 @@ namespace DCURSES {
 
                 RE::TESFaction* SexlabAnimatingFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("00E50F", 0, 16), "SexLab.esm");
                 RE::TESFaction* ZadAnimatingFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("029567", 0, 16), "Devious Devices - Integration.esm");
+
+                if (player->IsInFaction(SexlabAnimatingFaction)) {
+                    counters.clock_lastSex = 0;
+                }
+
                 bool isAnimating = player->IsInFaction(SexlabAnimatingFaction) || player->IsInFaction(ZadAnimatingFaction);
 
-                auto c1 = std::chrono::high_resolution_clock::now();
-                SexUpdate();
-                auto c2 = std::chrono::high_resolution_clock::now();
-                if (!isAnimating) { TatsUpdate(); }
-                auto c3 = std::chrono::high_resolution_clock::now();
-                if (!isAnimating) { OppDeviceUpdate(); }
-                auto c4 = std::chrono::high_resolution_clock::now();
+                if (!isAnimating && !isInNonPausedMenu && !shouldSkipNextLoop) {
+                    auto c1 = std::chrono::high_resolution_clock::now();
+                    SexUpdate();
+                    auto c2 = std::chrono::high_resolution_clock::now();
+                    TatsUpdate();
+                    auto c3 = std::chrono::high_resolution_clock::now();
+                    OppDeviceUpdate();
+                    auto c4 = std::chrono::high_resolution_clock::now();
 
-                auto d1 = (c2 - c1).count() / 1000000.0;
-                auto d2 = (c3 - c2).count() / 1000000.0;
-                auto d3 = (c4 - c3).count() / 1000000.0;
-                auto dt = (c4 - c1).count() / 1000000.0;
+                    auto d1 = (c2 - c1).count() / 1000000.0;
+                    auto d2 = (c3 - c2).count() / 1000000.0;
+                    auto d3 = (c4 - c3).count() / 1000000.0;
+                    auto dt = (c4 - c1).count() / 1000000.0;
 
-                if (dt >= 10) {
-                    log::trace("Notable Update Time: Sex: {:.4f}, Marks: {:.4f}, ODevices: {:.4f} total: {:.4f}ms", d1, d2, d3, dt);
+                    if (dt >= 10) {
+                        log::trace("Notable Update Time: Sex: {:.4f}, Marks: {:.4f}, ODevices: {:.4f} total: {:.4f}ms", d1, d2, d3, dt);
+                    }
+                }
+                
+                if (isAnimating || isInNonPausedMenu){
+                    shouldSkipNextLoop = true;
                 }
 
                 //Always do last!
                 counters.tick();
             }
+            log::critical("Event timer has stopped.");
+            UPDATE_LOOP_RUNNING = false;
         } }.detach();
     }
     
@@ -133,12 +164,11 @@ namespace DCURSES {
         return GetOppDeviceMask();
     }
 
-    static int TEST = 0;
-
     void P_Test(RE::StaticFunctionTag*) {
         log::trace("DCURSES Test");
-        //Util::GetWatchingActors(RE::PlayerCharacter::GetSingleton());
-        OppDoMadnessEffect();
+        //auto player = RE::PlayerCharacter::GetSingleton();
+        
+
     }
 
     bool PapyrusFunctions(RE::BSScript::IVirtualMachine* ivm) {
@@ -176,6 +206,8 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
     DCURSES::InitializeLogging();
 
     log::info("Initializing DeviousCurses version {}", DCURSES::VERSION);
+
+    DCURSES::LoadSettingsFile();
 
     SKSE::GetMessagingInterface()->RegisterListener([](SKSE::MessagingInterface::Message *message) {
         switch (message->type)
@@ -226,9 +258,14 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
                 log::info("Quick Loot IE Not Loaded.");
             }
 
-            DCURSES::EventsStartup();
-
-            DCURSES::LoadMCMSettings();
+            if (DCURSES::LoadSettingsFile()) {
+                DCURSES::PushSettingsToMCM();
+            }
+            else {
+                log::trace("Attempting settings load from papyrus");
+                DCURSES::P_UpdateSKSE(nullptr);
+            }
+            DCURSES::EventsCheckModIntergations();
             DCURSES::RecalculateDeviceLists();
             DCURSES::ScriptingManager().MCMRegisterModEvents();
 

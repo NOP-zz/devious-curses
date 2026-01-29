@@ -471,18 +471,39 @@ indent = settings_raw.split("//CODEGEN_START_FROMJSON")[0][index:]
 pre = settings_raw.split("//CODEGEN_START_FROMJSON")[0] + "//CODEGEN_START_FROMJSON"
 post = f"{indent}//CODEGEN_END_FROMJSON" + settings_raw.split("//CODEGEN_END_FROMJSON")[1]
 
-parse = lambda x, y: f'{indent}settings.{x} = static_cast<int>(j.value("{x}", {y}));{indent}SetMCMInt("{x}",settings.{x});'
+parse = lambda x, y: f'{indent}settings.{x} = static_cast<int>(j.value("{x}", {y}));'
 mid = ''.join(parse(x[0], x[1]) for x in sliders)
 mid += ''.join(parse(x[0], x[1]) for x in colors)
 mid += ''.join(parse(x[0], x[1]) for x in keycodes)
 
-parsef = lambda x, y: f'{indent}settings.{x} = static_cast<float>(j.value("{x}", {y}));{indent}SetMCMFloat("{x}",settings.{x});'
+parsef = lambda x, y: f'{indent}settings.{x} = static_cast<float>(j.value("{x}", {y}));'
 mid += ''.join(parsef(x[0], x[1]) for x in fsliders)
 
-parseb = lambda x, y: f'{indent}settings.{x} = static_cast<bool>(j.value("{x}", {y}));{indent}SetMCMBool("{x}",settings.{x});'
+parseb = lambda x, y: f'{indent}settings.{x} = static_cast<bool>(j.value("{x}", {y}));'
 mid += ''.join(parseb(x[0], x[1]) for x in options)
 
-parset = lambda x, y: f'{indent}settings.{x} = j.value("{x}", {y});{indent}SetMCMString("{x}",settings.{x});'
+parset = lambda x, y: f'{indent}settings.{x} = j.value("{x}", {y});'
+mid += ''.join(parset(x[0], x[1]) for x in texts)
+
+settings_raw = pre + mid + post
+
+index = settings_raw.split("//CODEGEN_START_PUSHMCM")[0].replace('\r', '').rfind('\n')
+indent = settings_raw.split("//CODEGEN_START_PUSHMCM")[0][index:]
+pre = settings_raw.split("//CODEGEN_START_PUSHMCM")[0] + "//CODEGEN_START_PUSHMCM"
+post = f"{indent}//CODEGEN_END_PUSHMCM" + settings_raw.split("//CODEGEN_END_PUSHMCM")[1]
+
+parse = lambda x, y: f'{indent}SetMCMInt("{x}",settings.{x});'
+mid = ''.join(parse(x[0], x[1]) for x in sliders)
+mid += ''.join(parse(x[0], x[1]) for x in colors)
+mid += ''.join(parse(x[0], x[1]) for x in keycodes)
+
+parsef = lambda x, y: f'{indent}SetMCMFloat("{x}",settings.{x});'
+mid += ''.join(parsef(x[0], x[1]) for x in fsliders)
+
+parseb = lambda x, y: f'{indent}SetMCMBool("{x}",settings.{x});'
+mid += ''.join(parseb(x[0], x[1]) for x in options)
+
+parset = lambda x, y: f'{indent}SetMCMString("{x}",settings.{x});'
 mid += ''.join(parset(x[0], x[1]) for x in texts)
 
 settings_raw = pre + mid + post
