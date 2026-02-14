@@ -6,7 +6,6 @@
 #include "Devices.hpp"
 #include "sex.hpp"
 #include "MGEF_Controller.hpp"
-#include "MinAI.hpp"
 
 using namespace SKSE;
 
@@ -90,8 +89,6 @@ namespace DCURSES {
 		auto magic = player->AsActorValueOwner()->GetActorValue(RE::ActorValue::kMagicka);
 		player->AsActorValueOwner()->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kDamage, RE::ActorValue::kMagicka, -magic);
 
-		AIEventSummonerCollarAdd();
-
 		ScriptingManager().LockDevice(player, summoner_collar, true);
 		if (!containerName.empty()) {
 			//PlayerMessage(fmt::format("As you touch the {} you feel very dizzy as a heavy collar forms around your neck and absorbs your magicka!", containerName));
@@ -114,8 +111,6 @@ namespace DCURSES {
 		auto stamina = player->AsActorValueOwner()->GetActorValue(RE::ActorValue::kStamina);
 		player->AsActorValueOwner()->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kDamage, RE::ActorValue::kStamina, -stamina / 2);
 
-		AIEventLivingLatexAdd();
-
 		auto scriptManager = ScriptingManager();
 
 		if (settings.oppLivingLatexOpen) {
@@ -135,7 +130,7 @@ namespace DCURSES {
 	bool OppDwarvenCuirassEvent(std::string containerName, bool skipLocation = false) {
 		auto player = RE::PlayerCharacter::GetSingleton();
 
-		if (settings.oppDwarvenRequireLoc && !skipLocation && !(player->GetCurrentLocation() && player->GetCurrentLocation()->HasKeywordString("LocTypeDwarvenAutomatons"))) {
+		if (settings.oppDwarvenRequireLoc && !skipLocation && GetPlayerLocationType() != LocationType::Dwarven) {
 			return false;
 		}
 
@@ -197,7 +192,6 @@ namespace DCURSES {
 			dwarven = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(DWARVEN_CURIAS, "Devious Curses.esp");
 		}
 
-		AIEventDwarvenCuirassAdd();
 		RemoveDwarvenStuff();
 
 		//Util::ExecuteWithDelay(1500ms, [player, dwarven] {
@@ -280,8 +274,7 @@ namespace DCURSES {
 		events.push_back(std::make_pair(OppMadnessPlugEvent, settings.oppMadnessPlugWeight));
 		events.push_back(std::make_pair(OppNocturnalPiercingEvent, settings.oppNocturnalWeight));
 
-		double sum = Util::VectorGetWeightsSum(events);
-		if (sum == 0) {
+		if (Util::VectorGetWeightsSum(events) == 0) {
 			return false;
 		}
 
@@ -289,7 +282,10 @@ namespace DCURSES {
 
 		while (!events.empty()) {
 			auto pair = Util::VectorSelectWeighted(events);
-			if (pair.first(containerName)) {
+			if (!pair.has_value()) {
+				return false;
+			}
+			if (pair.value().first(containerName)) {
 				counters.clock_GlobalTicker -= counters.clock_GlobalTicker % ODEVICE_TICK;
 				return true;
 			}
@@ -421,12 +417,16 @@ namespace DCURSES {
 
 		while (!results.empty()) {
 			auto pair = Util::VectorSelectWeighted(results);
-			if (pair.first(player, scriptManager)) {
+			if (!pair.has_value()) {
+				log::warn("Somehow got error on VectorSelectWeighted with static weights.");
+				return;
+			}
+			if (pair.value().first(player, scriptManager)) {
 				return;
 			}
 			results.erase(std::remove(results.begin(), results.end(), pair), results.end());
 		}
-		log::warn("Unable to select Madness Event");
+		log::warn("Unable to select Nocturnal Event");
 	}
 
 	void OppDeviceUpdate() {
@@ -557,10 +557,7 @@ namespace DCURSES {
 								UnequipItems(player);
 							}
 							DoStandardEvent(player, false, "", "(black & (ebonite | rubber)) | plugpumps", 20, 1, skips);
-							AIEventLivingLatexActivate();
-							//PlayerMessage("Suddenly the latex suit springs to life, covering you in ebonite! Is it trying to protect itself?");
 							PlayerMessage(Translator(Translation::ODeviceLivingLatexTrigger));
-							//SetEffectDescription(LIVING_LATEX_EFFECT, "The latex has awoken! Maybe you can weaken it by shocking it.");
 							SetEffectDescription(LIVING_LATEX_EFFECT, Translator(Translation::EffectLivingLatexAwoken));
 							oppdCounters.livingLatexCounter = 2;
 						}
@@ -584,7 +581,6 @@ namespace DCURSES {
 					if (GetWornDeviceCount(player, "(black & (ebonite | rubber))") == 0 || !settings.oppLivingLatexRequireRem) {
 						scriptManager.UnlockDevice(player, latex, nullptr, nullptr, true, false);
 						scriptManager.UnlockDevice(player, latex_open, nullptr, nullptr, true, false);
-						AIEventLivingLatexRemove();
 						//PlayerMessage("The latex suit dissolves from your body!");
 						PlayerMessage(Translator(Translation::ODeviceLivingLatexRemove));
 					}
@@ -600,11 +596,11 @@ namespace DCURSES {
 			if (isWearingDwarven) {
 				int playerArousal = scriptManager.GetArousal(player);
 				RE::TESObjectARMO* belt = nullptr;
-				RE::TESObjectARMO* piercingN = nullptr;
-				RE::TESObjectARMO* piercingV = nullptr;
-				RE::TESObjectARMO* plugA = nullptr;
-				RE::TESObjectARMO* plugV = nullptr;
-				RE::TESObjectARMO* collar = nullptr;
+				bool canPiercingN = true;
+				bool canPiercingV = true;
+				bool canPlugA = true;
+				bool canPlugV = !settings.useGenderedPlugs || SexLab::GetSex(player) == 1;
+				bool canCollar = true;
 				auto playerInventory = player->GetInventory();
 				for (auto const& [k, v] : playerInventory) {
 					if (v.second.get()->IsWorn()) {
@@ -619,22 +615,22 @@ namespace DCURSES {
 						for (std::string kw : GetDeviceKeywords(rend, false)) {
 							//log::trace("kw: {}", kw);
 							if (kw == "zad_DeviousBelt") {
-								belt = wornArmor;
+								belt = rend;
 							}
 							else if (kw == "zad_DeviousPiercingsNipple") {
-								piercingN = wornArmor;
+								canPiercingN = false;
 							}
 							else if (kw == "zad_DeviousPiercingsVaginal") {
-								piercingV = wornArmor;
+								canPiercingV = false;
 							}
 							else if (kw == "zad_DeviousPlugAnal") {
-								plugA = wornArmor;
+								canPlugA = false;
 							}
 							else if (kw == "zad_DeviousPlugVaginal") {
-								plugV = wornArmor;
+								canPlugV = false;
 							}
 							else if (kw == "zad_DeviousCollar") {
-								collar = wornArmor;
+								canCollar = false;
 							}
 						}
 					}
@@ -651,25 +647,28 @@ namespace DCURSES {
 					PlayerMessage(Translator(Translation::ODeviceDwarvenCuirassMasturbate));
 					StartMasturbationImpl();
 				}
-				else if (oppdCounters.dwarvenCuirassCounter <= settings.oppDwarvenValueNeeded / 2 && !(piercingN && piercingV && plugA && plugV && collar) && Util::randomDouble() <= 10) {
+				else if (oppdCounters.dwarvenCuirassCounter <= settings.oppDwarvenValueNeeded / 2 && (canPiercingN || canPiercingV || canPlugA || canPlugV || canCollar) && Util::randomDouble() <= 10) {
 					DeviceList* deviceList;
 					std::vector<std::pair<DeviceList*, double>> list;
-					if (!piercingN) { list.push_back({ &devices.piercingsN, 10.0 }); }
-					if (!piercingV) { list.push_back({ &devices.piercingsV, 10.0 }); }
-					if (!plugA) { list.push_back({ &devices.plugsA, 30.0 }); }
-					if (!plugV) { list.push_back({ &devices.plugsV, 30.0 }); }
-					if (!collar) {
+					if (canPiercingN) { list.push_back({ &devices.piercingsN, 10.0 }); }
+					if (canPiercingV) { list.push_back({ &devices.piercingsV, 10.0 }); }
+					if (canPlugA) { list.push_back({ &devices.plugsA, 30.0 }); }
+					if (canPlugV) { list.push_back({ &devices.plugsV, 30.0 }); }
+					if (canCollar) {
 						auto collars = GetAdjustedDeviceList(&devices.collars, {}, "metal | steel | rust | lustr");
 						list.push_back({ &collars, 20.0 });
 					}
-					deviceList = Util::VectorSelectWeighted(list).first;
-					
-					auto device = GetRandomDevice(deviceList);
-					if (device.has_value()) {
-						scriptManager.LockDevice(player, device->inv);
+					auto potentialList = Util::VectorSelectWeighted(list);
+					if (potentialList.has_value()) {
+						deviceList = potentialList.value().first;
 
-						oppdCounters.dwarvenCuirassCounter += Util::randomInt(4,20);
-						PlayerMessage(Translator(Translation::ODeviceDwarvenCuirassCraft, device->inv->GetName()));
+						auto device = GetRandomDevice(deviceList);
+						if (device.has_value()) {
+							scriptManager.LockDevice(player, device->inv);
+
+							oppdCounters.dwarvenCuirassCounter += Util::randomInt(4, 20);
+							PlayerMessage(Translator(Translation::ODeviceDwarvenCuirassCraft, device->inv->GetName()));
+						}
 					}
 				}
 				else {
@@ -688,7 +687,7 @@ namespace DCURSES {
 							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x10ec8e, "Skyrim.esm"), 10.0 }); //Sphere Master
 							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x10e753, "Skyrim.esm"), 20.0 }); //Centurion Guardian
 							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x23a96, "Skyrim.esm"), 30.0 }); //Centurion Guardian
-							thing = Util::VectorSelectWeighted(list).first;
+							thing = Util::VectorSelectWeighted(list).value().first;
 						}
 						else if (level >= 38) {
 							std::vector<std::pair<RE::TESNPC*, double>> list;
@@ -696,7 +695,7 @@ namespace DCURSES {
 							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x10f9b9, "Skyrim.esm"), 10.0 }); //Centurion
 							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x10ec8e, "Skyrim.esm"), 30.0 }); //Sphere Master
 							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x10e753, "Skyrim.esm"), 30.0 }); //Centurion Guardian
-							thing = Util::VectorSelectWeighted(list).first;
+							thing = Util::VectorSelectWeighted(list).value().first;
 						}
 						else if (level >= 30) {
 							std::vector<std::pair<RE::TESNPC*, double>> list;
@@ -704,20 +703,20 @@ namespace DCURSES {
 							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x10ec87, "Skyrim.esm"), 10.0 }); //Spider Guardian
 							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x23a97, "Skyrim.esm"), 30.0 }); //Sphere Guardian
 							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x10f9b9, "Skyrim.esm"), 30.0 }); //Centurion
-							thing = Util::VectorSelectWeighted(list).first;
+							thing = Util::VectorSelectWeighted(list).value().first;
 						}
 						else if (level >= 24) {
 							std::vector<std::pair<RE::TESNPC*, double>> list;
 							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x23a98, "Skyrim.esm"), 10.0 }); //Spider
 							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x10ec89, "Skyrim.esm"), 30.0 }); //Sphere
 							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x10ec87, "Skyrim.esm"), 30.0 }); //Spider Guardian
-							thing = Util::VectorSelectWeighted(list).first;
+							thing = Util::VectorSelectWeighted(list).value().first;
 						}
 						else if (level >= 16) {
 							std::vector<std::pair<RE::TESNPC*, double>> list;
 							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x10ec86, "Skyrim.esm"), 10.0 }); //Spider Worker
 							list.push_back({ StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x23a98, "Skyrim.esm"), 20.0 }); //Spider
-							thing = Util::VectorSelectWeighted(list).first;
+							thing = Util::VectorSelectWeighted(list).value().first;
 						}
 						else {
 							thing = StaticDataHolder::GetSingleton()->LookupForm<RE::TESNPC>(0x10ec86, "Skyrim.esm"); //Spider Worker
@@ -740,6 +739,12 @@ namespace DCURSES {
 			if (isWearingMadness) {
 				auto sexCountTotal = (oppdCounters.madnessPlugCounter / ODEVICE_MADNESS_DIVISOR) * settings.oppMadnessplugOrgasms + oppdCounters.madnessPlugCounter % ODEVICE_MADNESS_DIVISOR;
 				SetEffectMagnitude(MADNESS_PLUG_EFFECT, static_cast<float>(sexCountTotal));
+				if (settings.oppMadnessAllOrgasms) {
+					SetEffectDescription(MADNESS_PLUG_EFFECT, Translator(Translation::ODeviceMadnessDescriptionSex));
+				}
+				else {
+					SetEffectDescription(MADNESS_PLUG_EFFECT, Translator(Translation::ODeviceMadnessDescription));
+				}
 			}
 
 			//Nocturnal Piercing
@@ -906,7 +911,7 @@ namespace DCURSES {
 
 		results.push_back({ [](RE::Actor* player, ScriptingManager& scriptManager) {// Launch
 			log::trace("Madness Launch");
-			scriptManager.PushActorAway(player, player, 75);
+			scriptManager.PushActorAway(player, player, 15);
 			return true;
 		} , 10 });
 
@@ -977,7 +982,11 @@ namespace DCURSES {
 
 		while (!results.empty()) {
 			auto pair = Util::VectorSelectWeighted(results);
-			if (pair.first(player, scriptManager)) {
+			if (!pair.has_value()) {
+				log::warn("Somehow got error on VectorSelectWeighted with static weights.");
+				break;
+			}
+			if (pair.value().first(player, scriptManager)) {
 				return;
 			}
 			results.erase(std::remove(results.begin(), results.end(), pair), results.end());

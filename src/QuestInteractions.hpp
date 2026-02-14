@@ -30,7 +30,6 @@ namespace DCURSES {
 	void QIMeridiaInteraction() {
 		if (!settings.enableQIMalkoran) { return; }
 
-		auto player = RE::PlayerCharacter::GetSingleton();
 		auto mark = GetLewdMark();
 		if (mark == MARK::TAT_BRANDING) {
 			return;
@@ -40,9 +39,7 @@ namespace DCURSES {
 		}
 
 		AddLewdMark(MARK::TAT_BRANDING);
-		AIContextAddBrandingMark();
-		SetEffectMagnitude(BRANDING_EFFECT, static_cast<float>(GetTattooCount(player)));
-		//PlayerMessage("As you kill Malkoran he curses you with a mark of branding!");
+		SetMarkToDefaultSettings(MARK::TAT_BRANDING);
 		PlayerMessage(Translator(Translation::QIMalkoranCurse));
 	}
 
@@ -69,8 +66,7 @@ namespace DCURSES {
 			RemoveLewdMark();
 		}
 		AddLewdMark(MARK::TAT_NUDITY);
-		AIContextAddNudityMark();
-		SetEffectMagnitude(NUDITY_EFFECT, static_cast<float>(settings.LMNudityTalkTimes));
+		SetMarkToDefaultSettings(MARK::TAT_NUDITY);
 
 		Util::ExecuteWithDelay(4s, [] {
 			//PlayerMessage("As you awaken you notice that you're covered in chains and have a strange mark on you. Hopefully Sam can fix this..."); 
@@ -88,7 +84,6 @@ namespace DCURSES {
 		auto mark = GetLewdMark();
 		if (mark == MARK::TAT_NUDITY) {
 			RemoveLewdMark();
-			AIContextRemoveLewdMark();
 		}
 
 		//PlayerMessage(fmt::format("Now that your wild adventure with Sanguine is over, he gives you a magic key{}!", (mark == MARK::TAT_NUDITY) ? " and removes your nudity mark" : ""));

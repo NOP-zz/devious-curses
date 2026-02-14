@@ -4,6 +4,10 @@
 #include "include/SexLabPPFunctions.h"
 #include "include/SlaveTatsNG_Interface.h"
 
+namespace DCURSES {
+    constexpr auto DCURSES_VERSION = "0.8.3";
+}
+
 #include "src/Utils.hpp"
 #include "src/Settings.hpp"
 #include "src/Devices.hpp"
@@ -19,9 +23,11 @@
 #include "src/O_Devices.hpp"
 #include "src/QuestInteractions.hpp"
 #include "src/ModEvents.hpp"
-#include "src/MinAI.hpp"
+#include "src/Locations.hpp"
+#include "src/FastTravel.hpp"
 
 #include "src/Translation.hpp"
+#include "src//DebugMode.hpp"
 
 #include <d3d11.h>
 #include <windows.h>
@@ -36,9 +42,6 @@
 using namespace SKSE;
 
 namespace DCURSES {
-    //GLOBALS
-    constexpr auto VERSION = "0.8.2";
-
     void InitializeLogging() {
         auto path = log::log_directory();
         if (!path) {
@@ -167,8 +170,6 @@ namespace DCURSES {
     void P_Test(RE::StaticFunctionTag*) {
         log::trace("DCURSES Test");
         //auto player = RE::PlayerCharacter::GetSingleton();
-        
-
     }
 
     bool PapyrusFunctions(RE::BSScript::IVirtualMachine* ivm) {
@@ -203,17 +204,26 @@ std::string getJContainersPluginName() {
 SKSEPluginLoad(const SKSE::LoadInterface *skse) {
     SKSE::Init(skse);
 
-    DCURSES::InitializeLogging();
+    using namespace DCURSES;
 
-    log::info("Initializing DeviousCurses version {}", DCURSES::VERSION);
+    SKSE::AllocTrampoline(14);
 
-    DCURSES::LoadSettingsFile();
+    InitializeLogging();
+
+    auto version_string = std::string(DCURSES_VERSION);
+    log::info("Initializing DeviousCurses version {}", version_string);
+
+    LoadSettingsFile();
+
+    if (settings.debugMode) {
+        log::debug("Debug mode");
+    }
 
     SKSE::GetMessagingInterface()->RegisterListener([](SKSE::MessagingInterface::Message *message) {
         switch (message->type)
         {
         case SKSE::MessagingInterface::kDataLoaded: {
-            if (!DCURSES::CheckESPLoaded()) {
+            if (!CheckESPLoaded()) {
                 stl::report_and_fail("Devious Curses ESP is not loaded. If you are on skyrim version older than 1.6.1130 (Not AE) make sure to install Backported Extended ESL Support.");
                 return;
             }
@@ -230,19 +240,25 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
             }
 
             log::trace("Calling JCWrapper init()");
-            DCURSES::jcontainers::JCWrapper::GetSingleton()->Init();
-            DCURSES::RegisterEventSinks();
+            jcontainers::JCWrapper::GetSingleton()->Init();
+            RegisterEventSinks();
 
-            DCURSES::QLIEAttemptInit();
+            QLIEAttemptInit();
+
+            InstallFastTravelHooks();
+
+            if (settings.debugMode) {
+                Debug::AddLocationData();
+            }
 
             break;
         }
 
         case SKSE::MessagingInterface::kNewGame:
         case SKSE::MessagingInterface::kPostLoadGame: {
-            DCURSES::MGEFOnGameLoad();
+            MGEFOnGameLoad();
 
-            DCURSES::StaticDataHolder::GetSingleton()->InvalidateCache();
+            StaticDataHolder::GetSingleton()->InvalidateCache();
 
             bool DDNG_loaded = DeviousDevicesAPI::LoadAPI();
 
@@ -254,34 +270,34 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
                 log::trace("Devious Devices NG loaded: {}.", DeviousDevicesAPI::g_API->GetDatabase().size());
             }
 
-            if (!DCURSES::QLIEAttemptRegisterEvent()) {
+            if (!QLIEAttemptRegisterEvent()) {
                 log::info("Quick Loot IE Not Loaded.");
             }
 
-            if (DCURSES::LoadSettingsFile()) {
-                DCURSES::PushSettingsToMCM();
+            if (LoadSettingsFile()) {
+                PushSettingsToMCM();
             }
             else {
                 log::trace("Attempting settings load from papyrus");
                 DCURSES::P_UpdateSKSE(nullptr);
             }
-            DCURSES::EventsCheckModIntergations();
-            DCURSES::RecalculateDeviceLists();
-            DCURSES::ScriptingManager().MCMRegisterModEvents();
+            EventsCheckModIntergations();
+            RecalculateDeviceLists();
+            ScriptingManager().MCMRegisterModEvents();
 
-            DCURSES::counters.clock_SexTimeout -= 2;
+            counters.clock_SexTimeout -= 2;
            
 
-            DCURSES::Util::ExecuteWithDelay(2s, [] {
-                DCURSES::StartUpdateLoop();
+            Util::ExecuteWithDelay(2s, [] {
+                StartUpdateLoop();
             });
 
             break;
         }
         case SKSE::MessagingInterface::kPostLoad: {
-            DCURSES::CreateExclusionsFileIfNeeded();
-            DCURSES::CreateModExclusionsFileIfNeeded();
-            DCURSES::CreateThemesFileIfNeeded();
+            CreateExclusionsFileIfNeeded();
+            CreateModExclusionsFileIfNeeded();
+            CreateThemesFileIfNeeded();
 
             std::string pluginName = getJContainersPluginName();
 
@@ -290,7 +306,7 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
                 if (a_msg && a_msg->type == jc::message_root_interface) {
                     const jc::root_interface* root = jc::root_interface::from_void(a_msg->data);
                     if (root)
-                        DCURSES::jcontainers::JCWrapper::GetSingleton()->PreInit(root);
+                        jcontainers::JCWrapper::GetSingleton()->PreInit(root);
                 }
                 });
 
@@ -298,26 +314,27 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
 
         }
         case SKSE::MessagingInterface::kSaveGame: {
-            DCURSES::counters.clock_SexTimeout -= 2;
-            DCURSES::SaveMCMSettings();
+            counters.clock_SexTimeout -= 2;
+            SaveMCMSettings();
             break;
         }
         case SKSE::MessagingInterface::kInputLoaded: {
-            DCURSES::Translator::CheckMCMTranslations();
-            DCURSES::Translator::UpdateTranslations();
+            Translator::CheckMCMTranslations();
+            Translator::UpdateTranslations();
+            break;
         }
         }
         
     });
 
     log::trace("Initializing Papyrus binding...");
-    if (GetPapyrusInterface()->Register(DCURSES::PapyrusFunctions)) {
+    if (GetPapyrusInterface()->Register(PapyrusFunctions)) {
         log::trace("Papyrus functions bound.");
     } else {
         stl::report_and_fail("Failure to register Papyrus bindings.");
     }
 
-    DCURSES::InitializeSerialization();
+    InitializeSerialization();
 
     return true;
 }

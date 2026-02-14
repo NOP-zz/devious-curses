@@ -3,11 +3,12 @@
 
 #include "tats.hpp"
 #include "devices.hpp"
+#include "Locations.hpp"
 #include "Consequences.hpp"
 #include "themes.hpp"
 #include "Contraptions.hpp"
 #include "O_Devices.hpp"
-#include "MinAI.hpp"
+#include "ModEvents.hpp"
 
 #include "../include/DDNG_API.h"
 #include "../include/form_ids.h"
@@ -73,6 +74,9 @@ namespace DCURSES {
             if (!settings.followerHeavyRestraints) {
                 usedKeys.push_back("zad_DeviousHeavyBondage");
             }
+            if (!settings.followerGags) {
+                usedKeys.push_back("zad_DeviousGag");
+            }
             count += settings.followerDeviceModifier;
         }
 
@@ -81,6 +85,8 @@ namespace DCURSES {
         if (theme.empty() && settings.useThemes) {
             theme = GetRandomTheme();
         }
+
+        auto sex = SexLab::GetSex(actor);
 
         bool removeHandItems = false;
 
@@ -114,7 +120,7 @@ namespace DCURSES {
                         device_ids += ",";
                     }
                 }
-                if (!vectorContains(usedKeys, "zad_DeviousPlugVaginal") && !rend->HasKeywordString("zad_PermitVaginal")) {
+                if (!vectorContains(usedKeys, "zad_DeviousPlugVaginal") && !rend->HasKeywordString("zad_PermitVaginal") && (!settings.useGenderedPlugs || sex == 1)) {
                     std::optional<DeviceData> plug;
                     plug = GetRandomDevice(&devices.plugsVBasic, {}, theme);
                     if (!plug) {
@@ -246,7 +252,6 @@ namespace DCURSES {
             }
         }
 
-        AIEventTattoos(num_tattoos);
         return true;
     }
 
@@ -262,7 +267,6 @@ namespace DCURSES {
         }
 
         auto contraption = CreateAndLockContraption(target);
-        AIEventContraption(contraption->GetName());
 
         counters.clock_SexTimeout -= 5;
 
@@ -314,12 +318,13 @@ namespace DCURSES {
         } , settings.LMHealslutWeight });
 
         auto pair = Util::VectorSelectWeighted(marks);
-        auto mark = pair.first();
+        if (!pair.has_value()) {
+            return false;
+        }
+        auto mark = pair.value().first();
 
         AddLewdMark(mark);
-        SetDefaultEffectMagnitudeForMark(mark, multiplier);
-        TatsUpdateContext(mark);
-        AIEventAddLewdMark();
+        SetMarkToDefaultSettings(mark, multiplier);
 
         return true;
     }
@@ -626,7 +631,11 @@ namespace DCURSES {
 
         while (!events.empty()) {
             auto pair = Util::VectorSelectWeighted(events);
-            if (pair.first(isBoss, contName, player)) {
+            if (!pair.has_value()) {
+                log::error("No valid event triggered!");
+                return false;
+            }
+            if (pair.value().first(isBoss, contName, player)) {
                 return true;
             }
             events.erase(std::remove(events.begin(), events.end(), pair), events.end());
@@ -746,7 +755,6 @@ namespace DCURSES {
         RE::TESFaction* warlockFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x26724, "Skyrim.esm");
         RE::TESFaction* necromancerFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x34B74, "Skyrim.esm");
         if (data.isDeadActor && (actor->IsInFaction(warlockFaction) || actor->IsInFaction(necromancerFaction))) {
-            log::trace("Data: Mage");
             data.isMage = true;
         }
 
@@ -778,71 +786,75 @@ namespace DCURSES {
             GenerateRandomDevices(activatedObject);
         }
 
-        SKSE::GetTaskInterface()->AddTask([data, activatedObject, player, addedKeys] {
-            if (data.isLeveled && data.isBoss && settings.bossExtraGold) {
-                log::trace("Adding extra gold to boss chest.");
-                RE::TESForm* gold = RE::TESForm::LookupByID(std::stoi("0f", 0, 16));
-                activatedObject->AddObjectToContainer((RE::TESBoundObject*)gold, nullptr, (player->GetLevel()), nullptr);
-            }
+        //SKSE::GetTaskInterface()->AddTask([data, activatedObject, player, addedKeys] {
+        if (data.isLeveled && data.isBoss && settings.bossExtraGold) {
+            log::trace("Adding extra gold to boss chest.");
+            RE::TESForm* gold = RE::TESForm::LookupByID(std::stoi("0f", 0, 16));
+            activatedObject->AddObjectToContainer((RE::TESBoundObject*)gold, nullptr, (player->GetLevel()), nullptr);
+        }
 
-            if (data.isDragon) {
-                log::trace("Actor is dragon and dragon hoards are on.");
-                RE::TESForm* gold = RE::TESForm::LookupByID(std::stoi("0f", 0, 16));
-                activatedObject->AddObjectToContainer((RE::TESBoundObject*)gold, nullptr, static_cast<int>(player->GetLevel() * 80.0 * Util::randomDouble(0.3, 1) + Util::randomDouble(50, 200)), nullptr);
-            }
+        if (data.isDragon) {
+            log::trace("Actor is dragon and dragon hoards are on.");
+            RE::TESForm* gold = RE::TESForm::LookupByID(std::stoi("0f", 0, 16));
+            activatedObject->AddObjectToContainer((RE::TESBoundObject*)gold, nullptr, static_cast<int>(player->GetLevel() * 80.0 * Util::randomDouble(0.3, 1) + Util::randomDouble(50, 200)), nullptr);
+        }
 
-            if (data.isMage && IsWearingOppLatex() && oppdCounters.livingLatexCounter == 2) {
-                double r = Util::randomDouble();
-                RE::TESObjectMISC* volatileGem = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectMISC>(VOLATILE_GEM, "Devious Curses.esp");
-                if (GetItemCount(player, volatileGem) == 0 && r <= settings.oppLivingLatexGem) {
-                    log::trace("Adding volatile gem to Mage.");
-                    activatedObject->AddObjectToContainer((RE::TESBoundObject*)volatileGem, nullptr, 1, nullptr);
-                }
+        if (data.isMage && IsWearingOppLatex() && oppdCounters.livingLatexCounter == 2) {
+            double r = Util::randomDouble();
+            RE::TESObjectMISC* volatileGem = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectMISC>(VOLATILE_GEM, "Devious Curses.esp");
+            if (GetItemCount(player, volatileGem) == 0 && r <= settings.oppLivingLatexGem) {
+                log::trace("Adding volatile gem to Mage.");
+                activatedObject->AddObjectToContainer((RE::TESBoundObject*)volatileGem, nullptr, 1, nullptr);
             }
+        }
 
-            if (data.isBoss && settings.magicKeyChance > 0) {
-                RE::TESKey* magicKey = StaticDataHolder::GetSingleton()->LookupForm<RE::TESKey>(MAGIC_KEY, "Devious Curses.esp");
-                double c2 = settings.magicKeyChance * pow(1.5, (GetWornDeviceCount(player) - 1.0) / 9.0);
-                double r2 = Util::randomDouble();
-                if (GetItemCount(player, magicKey) == 0) {
-                    log::trace("Magic Key: {:.2f} ({:.2f})", c2, r2);
-                    if (r2 < c2) {
-                        activatedObject->AddObjectToContainer((RE::TESBoundObject*)magicKey, nullptr, 1, nullptr);
-                    }
+        if (data.isBoss && settings.magicKeyChance > 0) {
+            RE::TESKey* magicKey = StaticDataHolder::GetSingleton()->LookupForm<RE::TESKey>(MAGIC_KEY, "Devious Curses.esp");
+            double c2 = settings.magicKeyChance * pow(1.5, (GetWornDeviceCount(player) - 1.0) / 9.0);
+            double r2 = Util::randomDouble();
+            if (GetItemCount(player, magicKey) == 0) {
+                log::trace("Magic Key: {:.2f} ({:.2f})", c2, r2);
+                if (r2 < c2) {
+                    activatedObject->AddObjectToContainer((RE::TESBoundObject*)magicKey, nullptr, 1, nullptr);
                 }
             }
-            else if (data.isDeadActor && settings.tatSolventChance > 0) {
-                RE::TESObjectMISC* solvent = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectMISC>(TATTOO_CHARM, "Devious Curses.esp");
-                double c2 = settings.tatSolventChance * pow(1.5, (GetTattooCount(player) - 1.0) / 9.0);
-                double r2 = Util::randomDouble();
-                if (GetItemCount(player, solvent) == 0) {
-                    log::trace("Solvent: {:.2f} ({:.2f})", c2, r2);
-                    if (r2 < c2) {
-                        activatedObject->AddObjectToContainer((RE::TESBoundObject*)solvent, nullptr, 1, nullptr);
-                    }
+        }
+        else if (data.isDeadActor && settings.tatSolventChance > 0) {
+            RE::TESObjectMISC* solvent = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectMISC>(TATTOO_CHARM, "Devious Curses.esp");
+            double c2 = settings.tatSolventChance * pow(1.5, (GetTattooCount(player) - 1.0) / 9.0);
+            double r2 = Util::randomDouble();
+            if (GetItemCount(player, solvent) == 0) {
+                log::trace("Solvent: {:.2f} ({:.2f})", c2, r2);
+                if (r2 < c2) {
+                    activatedObject->AddObjectToContainer((RE::TESBoundObject*)solvent, nullptr, 1, nullptr);
                 }
             }
-            else if (data.isLeveled && settings.arousalPotionChance > 0) {
-                RE::AlchemyItem* arouaslPotion = StaticDataHolder::GetSingleton()->LookupForm<RE::AlchemyItem>(AROUSAL_POTION, "Devious Curses.esp");
-                double c2 = settings.arousalPotionChance * pow(1.5, (ScriptingManager().GetArousal(player) - 50.0) / 50.0);
-                double r2 = Util::randomDouble();
-                if (GetItemCount(player, arouaslPotion) <= 2) {
-                    log::trace("Arousal Potion: {:.2f} ({:.2f})", c2, r2);
-                    if (r2 < c2) {
-                        activatedObject->AddObjectToContainer((RE::TESBoundObject*)arouaslPotion, nullptr, 1, nullptr);
-                    }
+        }
+        else if (data.isLeveled && settings.arousalPotionChance > 0) {
+            RE::AlchemyItem* arouaslPotion = StaticDataHolder::GetSingleton()->LookupForm<RE::AlchemyItem>(AROUSAL_POTION, "Devious Curses.esp");
+            double c2 = settings.arousalPotionChance * pow(1.5, (ScriptingManager().GetArousal(player) - 50.0) / 50.0);
+            double r2 = Util::randomDouble();
+            if (GetItemCount(player, arouaslPotion) <= 2) {
+                log::trace("Arousal Potion: {:.2f} ({:.2f})", c2, r2);
+                if (r2 < c2) {
+                    activatedObject->AddObjectToContainer((RE::TESBoundObject*)arouaslPotion, nullptr, 1, nullptr);
                 }
             }
-        });
+        }
+        //});
     }
+
+    RE::TESObjectREFR* LastActivatedObjectREFR = nullptr;
 
     void CalculateEventChance(RE::TESObjectREFR* activatedObject) {
         if (!activatedObject) {
-            log::warn("OnObjectActivated called with a null object reference.");
+            log::warn("CalculateEventChance called with a null object reference.");
             return;
         }
 
         log::trace("Activated {} type {} refID {:x} baseID {:x}", activatedObject->GetName(), RE::FormTypeToString(activatedObject->GetFormType()), activatedObject->formID, activatedObject->GetBaseObject()->GetFormID());
+        auto lastObject = LastActivatedObjectREFR;
+        LastActivatedObjectREFR = activatedObject;
 
         //if (!activatedObject->HasContainer()) {
         //    RE::ExtraDataList* dataList = &activatedObject->extraList;
@@ -869,7 +881,7 @@ namespace DCURSES {
 
         //log::trace("Worn items: {}", GetWornDeviceCount(GetPlayer()));
         if (IsObjectRefKnown(activatedObject->formID)) {
-            if (settings.vanishingKeys && activatedObject != player) {
+            if (settings.vanishingKeys && activatedObject != player && activatedObject != lastObject) {
                 log::trace("Removing keys from container.");
                 RemoveKeys(activatedObject);
             }
@@ -926,33 +938,33 @@ namespace DCURSES {
         int playerArousal = ScriptingManager().GetArousal(player);
 
         float chance = settings.baseChance;
-        std::string logMessage = "modifiers: ";
+        std::string logMessage = fmt::format("{}% -> ", settings.baseChance);
 
         if (settings.arousalModifier > 1.01f && playerArousal > 0) {
             float modifier = (settings.arousalModifier - 1) * playerArousal / 100.0f + 1;
             chance *= modifier;
-            logMessage += fmt::format("(arousal {}) ", playerArousal);
+            logMessage += fmt::format("(arousal {} {:.2f}) ", playerArousal, modifier);
         }
 
 
         if (data.isDeadActor) {
             chance *= settings.deadBodyModifier;
-            logMessage += "(dead) ";
+            logMessage += fmt::format("(dead {}) ", settings.deadBodyModifier);
         }
         else if (data.isLeveled) {
-            DecrementCounterForMark(MARK::TAT_HEAT);
+            lewdMarkCounters.heatCounter -= 1;
             chance *= settings.containerModifier;
-            logMessage += "(container) ";
+            logMessage += fmt::format("(container {}) ", settings.containerModifier);
         }
         else if (data.isDoor) {
             if (!settings.onlyLockedDoors || data.isLocked) {
                 chance *= settings.doorModifier;
-                logMessage += "(door) ";
+                logMessage += fmt::format("(door {}) ", settings.doorModifier);
             }
         }
         else if (data.isPickpocket) {
             chance *= settings.pickpocketModifier;
-            logMessage += "(pickpocket) ";
+            logMessage += fmt::format("(pickpocket {}) ", settings.pickpocketModifier);
         }
         else {
             return;
@@ -960,128 +972,64 @@ namespace DCURSES {
 
         if (data.isBoss) {
             chance *= settings.bossContainerModifier;
-            logMessage += "(boss) ";
+            logMessage += fmt::format("(boss {}) ", settings.bossContainerModifier);
         }
         if (data.isLocked) {
             chance *= settings.lockedModifier;
             if (data.lockLevel >= 0 && settings.lockDifficultyModifier > 1.0) {
                 float modifier = (settings.lockDifficultyModifier - 1) * (data.lockLevel / 5.0f) + 1;
                 chance *= modifier;
-                logMessage += fmt::format("(locked {:.2f}) ", modifier);
+                logMessage += fmt::format("(locked {:.2f}) ", modifier * settings.lockedModifier);
             }
             else {
-                logMessage += "(locked) ";
+                logMessage += fmt::format("(locked {}) ", settings.lockedModifier);
             }
         }
 
-        float locationChance = 1.0f;
-        std::string locationMessage = "";
+        auto location_type = GetPlayerLocationType();
 
-        auto location = player->GetCurrentLocation();
-        if (location) log::trace("current location: {}", location->GetName());
-        if (settings.useLocationModifiers) {
-            if (!location) {
-                locationChance = settings.wildernessModifier;
-                locationMessage = "wilderness";
+        float location_chance = GetLocationTypeEventModifier(location_type);
+        std::string location_name = GetLocationTypeString(location_type);
+
+        if (data.isLocked) {
+            location_name += " [L]";
+            if (location_chance < settings.lockedLocationBypass) {
+                location_chance = settings.lockedLocationBypass;
             }
-            else if (location->HasKeywordString("LocTypePlayerHouse")) {
-                locationChance = settings.playerHomeModifier;
-                locationMessage = "player home";
+        }
+        if (data.isDragon) {
+            location_name += " [D]";
+            if (location_chance < 1.0) {
+                location_chance = 1.0;
             }
-            else if (location->HasKeywordString("LocTypeCity") || location->HasKeywordString("LocTypeCastle") || location->HasKeywordString("LocTypeTemple") || location->HasKeywordString("LocTypeInn") || location->HasKeywordString("LocTypeHouse")) {
-                locationChance = settings.cityModifier;
-                locationMessage = "city";
-            }
-            else if (location->HasKeywordString("LocTypeTown") || location->HasKeywordString("LocTypeHabitation") || location->HasKeywordString("LocTypeDwelling")) {
-                locationChance = settings.townModifier;
-                locationMessage = "town";
-            }
-            else if (location->HasKeywordString("LocTypeDraugrCrypt") || location->HasKeywordString("LocTypeDragonPriestLair")) {
-                locationChance = settings.draugrModifier;
-                locationMessage = "draugr";
-            }
-            else if (location->HasKeywordString("LocTypeDwarvenAutomatons") && location->HasKeywordString("LocTypeFalmerHive")) {
-                if (settings.dwarvenModifier > settings.falmerModifier) { locationChance = settings.dwarvenModifier; locationMessage = "dwarven"; }
-                else { locationChance = settings.falmerModifier; locationMessage = "falmer"; }
-            }
-            else if (location->HasKeywordString("LocTypeDwarvenAutomatons")) {
-                locationChance = settings.dwarvenModifier;
-                locationMessage = "dwarven";
-            }
-            else if (location->HasKeywordString("LocTypeFalmerHive")) {
-                locationChance = settings.falmerModifier;
-                locationMessage = "falmer";
-            }
-            else if (location->HasKeywordString("LocTypeForswornCamp") || location->HasKeywordString("LocTypeHagravenNest")) {
-                locationChance = settings.forswornModifier;
-                locationMessage = "forsworn";
-            }
-            else if (location->HasKeywordString("LocTypeVampireLair")) {
-                locationChance = settings.vampireModifier;
-                locationMessage = "vampire";
-            }
-            else if (location->HasKeywordString("LocTypeWarlockLair")) {
-                locationChance = settings.warlockModifier;
-                locationMessage = "warlock";
-            }
-            else if (location->HasKeywordString("LocTypeDragonLair")) {
-                locationChance = settings.warlockModifier;
-                locationMessage = "dragon lair";
-            }
-            else if (location->HasKeywordString("LocTypeApocrypha")) {
-                locationChance = settings.apocryphaModifier;
-                locationMessage = "apocrypha";
-            }
-            else if (location->HasKeywordString("LocTypeBanditCamp") || location->HasKeywordString("LocTypeMilitaryCamp") || location->HasKeywordString("LocTypeMilitaryFort") || location->HasKeywordString("LocTypeDungeon")) {
-                locationChance = settings.banditModifier;
-                locationMessage = "bandit";
-            }
-            else if (!player->GetParentCell()->IsInteriorCell()) {
-                locationChance = settings.wildernessModifier;
-                locationMessage = "wilderness";
-            }
-            else {
-                log::warn("Player in unknown location {}.", location->GetName());
-                std::string keys = "Keywords: ";
-                for (uint32_t i = 0; i < location->numKeywords; i++) {
-                    keys += Util::GetFormEditorId(location->keywords[i]) + std::string(", ");
-                }
-                log::warn("{}", keys);
-                locationChance = settings.wildernessModifier;
-                locationMessage = "wilderness";
+        }
+        if ((player->WouldBeStealing(activatedObject) || data.isPickpocket)) {
+            location_name += " [T]";
+            if (location_chance < settings.theftLocationBypass) {
+                location_chance = settings.theftLocationBypass;
             }
         }
 
-        if (data.isLocked && locationChance < settings.lockedLocationBypass) {
-            locationChance = settings.lockedLocationBypass;
-            locationMessage += " [L]";
-        }
-        if (data.isDragon && locationChance < 1.0) {
-            locationChance = 1.0;
-            locationMessage += " [D]";
-        }
-        if ((player->WouldBeStealing(activatedObject) || data.isPickpocket) && locationChance < settings.theftLocationBypass) {
-            locationChance = settings.theftLocationBypass;
-            locationMessage += " [T]";
-        }
-
-        chance *= locationChance;
-        logMessage += fmt::format("({} {}) ", locationMessage, locationChance);
+        chance *= location_chance;
+        logMessage += fmt::format("({} {}) ", location_name, location_chance);
 
         if (data.isDragon) {
             chance *= settings.bossContainerModifier * 1.2f;
             //chance *= actor->GetLevel() / 75.0f + 1;
-            logMessage += "(dragon) ";
+            logMessage += fmt::format("(dragon {:.2f}) ", settings.bossContainerModifier * 1.2f);
         }
         else if (settings.eventScaling) {
             float eventScaling = ((3.0f * settings.eventScalingMod) / ((-2.0f * settings.eventScalingMod) - counters.SinceLastEvent)) + 2.0f;
-            logMessage += fmt::format("scaling: {:.2f}x ", eventScaling);
+            logMessage += fmt::format("(scaling {:.2f}) ", eventScaling);
             chance *= eventScaling;
         }
 
         if (!data.isDragon && GetWornDeviceCount(player) > settings.restraintCap) {
             log::trace("No event: Too many devices.");
             chance = 0.0;
+        }
+        else if (data.isDragon) {
+            log::trace("Device count restriction skipped: Dragon hoard.");
         }
 
         if (playerArousal < settings.minArousal && settings.minArousal > 0) {
@@ -1091,15 +1039,15 @@ namespace DCURSES {
 
         double r = Util::randomDouble();
 
-        logMessage = fmt::format("Event: {} total: {:.2f}% ({:.2f})", logMessage, chance, r);
-        log::info("{}", logMessage);
+        auto EventMessage = fmt::format("Event: {} Total: {:.2f}%", logMessage, chance);
+        log::info("{}", EventMessage);
         if (r < chance) {
             auto objectName = activatedObject->GetName();
             //WaitForEventAction(objectName, data, !(data.isDoor || data.isLocked || DCURSES_QLIE_LOADED));
             //activatedObject
             
             for (int i = 0; i < 6; i++) {
-                Util::ExecuteWithDelay(250ms * i, [] {
+                Util::ExecuteWithDelay(200ms * i, [] {
                     ScriptingManager().CloseContainerMenus();
                 });
             }

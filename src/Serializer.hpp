@@ -14,7 +14,6 @@ namespace DCURSES {
         uint64_t clock_GlobalTicker = 0;
         int64_t SinceLastKey = 0;
         int64_t SinceLastEvent = 0;
-        int64_t ActiveLewdMark = 0;
         int64_t dummyDoNotUse00 = 0;
         int64_t dummyDoNotUse01 = 0;
         int64_t dummyDoNotUse02 = 0;
@@ -25,6 +24,7 @@ namespace DCURSES {
         int64_t dummyDoNotUse07 = 0;
         int64_t dummyDoNotUse08 = 0;
         int64_t dummyDoNotUse09 = 0;
+        int64_t dummyDoNotUse10 = 0;
 
         void tick() {
             clock_SexTimeout += 1;
@@ -53,6 +53,28 @@ namespace DCURSES {
 
     static_assert(sizeof(OppDeviceCounters) == 0x8 * 12); //Set version 0.5.1
 
+    class LewdMarkCounters {
+    public:
+        int32_t currentMark = 0;
+        int32_t heatCounter = INT32_MIN;
+        int32_t allureCounter = INT32_MIN;
+        int32_t bondageCounter = INT32_MIN;
+        int32_t healslutCounter = INT32_MIN;
+        int32_t nudityCounter = INT32_MIN;
+        int32_t dummyDoNotUse00 = INT32_MIN;
+        int32_t dummyDoNotUse01 = INT32_MIN;
+        int32_t dummyDoNotUse02 = INT32_MIN;
+        int32_t dummyDoNotUse03 = INT32_MIN;
+        int32_t dummyDoNotUse04 = INT32_MIN;
+        int32_t dummyDoNotUse05 = INT32_MIN;
+        int32_t dummyDoNotUse06 = INT32_MIN;
+        int32_t dummyDoNotUse07 = INT32_MIN;
+        int32_t dummyDoNotUse08 = INT32_MIN;
+        int32_t dummyDoNotUse09 = INT32_MIN;
+    } lewdMarkCounters;
+
+    static_assert(sizeof(LewdMarkCounters) == 0x4 * 16); //Set version 0.8.3
+
     class RefLists {
     public:
         uint32_t eventList[REF_COUNT];
@@ -75,6 +97,7 @@ namespace DCURSES {
 
     inline const auto RefListsRecord = _byteswap_ulong('REFL');
     inline const auto OppDeviceCounterRecord = _byteswap_ulong('ODCR');
+    inline const auto LewdMarkCounterRecord = _byteswap_ulong('LMCR');
     inline const auto ClocksRecord = _byteswap_ulong('CLKS');
 
     bool IsObjectRefKnown(uint32_t refId) {
@@ -154,6 +177,12 @@ namespace DCURSES {
             return;
         }
         serde->WriteRecordData(&oppdCounters, sizeof(OppDeviceCounters));
+
+        if (!serde->OpenRecord(LewdMarkCounterRecord, 0)) {
+            log::error("Unable to open record to write cosave data.");
+            return;
+        }
+        serde->WriteRecordData(&lewdMarkCounters, sizeof(LewdMarkCounters));
     }
 
     void OnGameLoaded(SerializationInterface* serde) {
@@ -186,6 +215,14 @@ namespace DCURSES {
                     log::warn("Error reading odevice info, all timers reset.");
                 }
             }
+            if (type == LewdMarkCounterRecord) {
+                if (sizeof(LewdMarkCounters) == size) {
+                    serde->ReadRecordData(&lewdMarkCounters, sizeof(LewdMarkCounters));
+                }
+                else {
+                    log::warn("Error reading lewd mark info, all timers reset.");
+                }
+            }
         }
     }
 
@@ -193,6 +230,7 @@ namespace DCURSES {
         refLists = RefLists();
         counters = Counters();
         oppdCounters = OppDeviceCounters();
+        lewdMarkCounters = LewdMarkCounters();
     }
 
 

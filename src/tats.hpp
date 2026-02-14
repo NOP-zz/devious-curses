@@ -3,7 +3,6 @@
 #include "jcontainers.hpp"
 #include "Settings.hpp"
 #include "MGEF_Controller.hpp"
-#include "MinAI.hpp"
 #include "sex.hpp"
 
 #include "../include/SlaveTatsNG_Interface.h"
@@ -104,7 +103,7 @@ namespace DCURSES {
 	}
 
 	MARK GetLewdMark() {
-		return static_cast<MARK>(counters.ActiveLewdMark);
+		return static_cast<MARK>(lewdMarkCounters.currentMark);
 	}
 
 	int GetColorForMark(MARK mark) {
@@ -127,54 +126,28 @@ namespace DCURSES {
 		return 0;
 	}
 
-	void DecrementCounterForMark(MARK mark) {
-		if (mark == GetLewdMark()) {
-			switch (mark) {
-			case MARK::TAT_NONE:
-				log::warn("Decrementing counter for NONE mark.");
-				break;
-			case MARK::TAT_ALLURE:
-				ModifyEffectMagnitude(ALLURE_EFFECT, -1);
-				log::info("Decrementing counter for Allure mark.");
-				break;
-			case MARK::TAT_HEAT:
-				ModifyEffectMagnitude(HEAT_EFFECT, -1);
-				log::info("Decrementing counter for Heat mark.");
-				break;
-			case MARK::TAT_BONDAGE:
-				ModifyEffectMagnitude(BONDAGE_EFFECT, -1);
-				log::info("Decrementing counter for Bondage mark.");
-				break;
-			case MARK::TAT_NUDITY:
-				ModifyEffectMagnitude(NUDITY_EFFECT, -1);
-				log::info("Decrementing counter for Nudity mark.");
-				break;
-			case MARK::TAT_HEALSLUT:
-				log::warn("Decrementing counter for Healslut mark.");
-				break;
-			case MARK::TAT_BRANDING:
-				log::warn("Decrementing counter for Branding mark.");
-				break;
-			}
-		}
-	}
-
-	void SetDefaultEffectMagnitudeForMark(MARK mark, double multiplier = 1.0) {
+	void SetMarkToDefaultSettings(MARK mark, double multiplier = 1.0) {
+		double rand = Util::randomDouble(0.8, 1.2);
 		switch (mark) {
 		case MARK::TAT_ALLURE:
-			SetEffectMagnitude(ALLURE_EFFECT, static_cast<float>(settings.LMAllureSex * Util::randomDouble(0.8, 1.2) * multiplier));
+			lewdMarkCounters.allureCounter = static_cast<int32_t>(settings.LMAllureSex * rand * multiplier);
+			SetEffectMagnitude(ALLURE_EFFECT, static_cast<float>(lewdMarkCounters.allureCounter));
 			break;
 		case MARK::TAT_HEAT:
-			SetEffectMagnitude(HEAT_EFFECT, static_cast<float>(settings.LMHeatContainerCount * Util::randomDouble(0.8, 1.2) * multiplier));
+			lewdMarkCounters.heatCounter = static_cast<int32_t>(settings.LMHeatContainerCount * rand * multiplier);
+			SetEffectMagnitude(HEAT_EFFECT, static_cast<float>(lewdMarkCounters.heatCounter));
 			break;
 		case MARK::TAT_BONDAGE:
-			SetEffectMagnitude(BONDAGE_EFFECT, static_cast<float>(settings.LMBondageDeviceCount * Util::randomDouble(0.8, 1.2) * multiplier));
+			lewdMarkCounters.bondageCounter = static_cast<int32_t>(settings.LMBondageDeviceCount * rand * multiplier);
+			SetEffectMagnitude(BONDAGE_EFFECT, static_cast<float>(lewdMarkCounters.bondageCounter));
 			break;
 		case MARK::TAT_NUDITY:
-			SetEffectMagnitude(NUDITY_EFFECT, static_cast<float>(settings.LMNudityTalkTimes * Util::randomDouble(0.8, 1.2) * multiplier));
+			lewdMarkCounters.nudityCounter = static_cast<int32_t>(settings.LMNudityTalkTimes * rand * multiplier);
+			SetEffectMagnitude(NUDITY_EFFECT, static_cast<float>(lewdMarkCounters.nudityCounter));
 			break;
 		case MARK::TAT_HEALSLUT:
-			SetEffectMagnitude(HEALSLUT_EFFECT, static_cast<float>(settings.LMHealslutHealing * Util::randomDouble(0.8, 1.2) * multiplier));
+			lewdMarkCounters.healslutCounter = static_cast<int32_t>(settings.LMHealslutHealing * rand * multiplier);
+			SetEffectMagnitude(HEALSLUT_EFFECT, static_cast<float>(lewdMarkCounters.healslutCounter));
 			break;
 		case MARK::TAT_BRANDING:
 			SetEffectMagnitude(BRANDING_EFFECT, static_cast<float>(GetTattooCount(RE::PlayerCharacter::GetSingleton())));
@@ -292,7 +265,7 @@ namespace DCURSES {
 		return true;
 	}
 
-	int GetLewdMarkApplied() {
+	int32_t GetLewdMarkApplied() {
 		if (!slavetats_ng::iface) return 0;
 		if (!jcontainers::JCWrapper::GetSingleton()->IsInitialized()) return 0;
 
@@ -326,20 +299,20 @@ namespace DCURSES {
 		if (!jcontainers::JCWrapper::GetSingleton()->IsInitialized()) return false;
 		if (!CheckLewdMarksInstalled()) return false;
 		
-		int index = static_cast<int>(mark);
+		int index = static_cast<int32_t>(mark);
 
 		auto base_color = GetColorForMark(mark);
 		auto glowColor = Util::ColorScale(base_color, 0.8);
 
 		if (_AddLewdMarkGlow(index, glowColor, glowColor) && _AddLewdMarkMain(index, base_color, glowColor)) {
-			counters.ActiveLewdMark = index;
+			lewdMarkCounters.currentMark = index;
 			return true;
 		}
 		return false;
 		
 	}
 
-	void RemoveLewdMark(int64_t index = -1) {
+	void RemoveLewdMark(int32_t index = -1) {
 		if (!slavetats_ng::iface) return;
 		if (!jcontainers::JCWrapper::GetSingleton()->IsInitialized()) return;
 		if (!CheckLewdMarksInstalled()) return;
@@ -347,10 +320,10 @@ namespace DCURSES {
 		auto actor = RE::PlayerCharacter::GetSingleton();
 
 		if (index == -1) {
-			index = static_cast<int64_t>(GetLewdMark());
+			index = static_cast<int32_t>(GetLewdMark());
 		}
 
-		counters.ActiveLewdMark = 0;
+		lewdMarkCounters.currentMark = 0;
 
 		slavetats_ng::simple_remove_tattoo(actor, "LewdMarks", fmt::format("{:03}", index), true);
 		slavetats_ng::simple_remove_tattoo(actor, "LewdMarks-glow", fmt::format("{:03}", index), true);
@@ -368,30 +341,6 @@ namespace DCURSES {
 		JValue::cleanPool("DCURSES");
 		if (actor == RE::PlayerCharacter::GetSingleton()) {
 			RemoveLewdMark();
-			AIContextRemoveLewdMark();
-		}
-	}
-
-	void TatsUpdateContext(MARK mark) {
-		switch (mark) {
-		case MARK::TAT_NONE:
-			AIContextRemoveLewdMark();
-			break;
-		case MARK::TAT_ALLURE:
-			AIContextAddAllureMark();
-			break;
-		case MARK::TAT_HEAT:
-			AIContextAddHeatMark();
-			break;
-		case MARK::TAT_NUDITY:
-			AIContextAddNudityMark();
-			break;
-		case MARK::TAT_BONDAGE:
-			AIContextAddBondageMark();
-			break;
-		case MARK::TAT_BRANDING:
-			AIContextAddBrandingMark();
-			break;
 		}
 	}
 
@@ -419,7 +368,8 @@ namespace DCURSES {
 						for (auto spellEffect : spell->effects) {
 							if (spellEffect && spellEffect->baseEffect == effect) {
 								float mag = spellEffect->GetMagnitude() * (effect->data.castingType == RE::MagicSystem::CastingType::kConcentration ? 0.5f : 1.0f);
-								ModifyEffectMagnitude(HEALSLUT_EFFECT, -spellEffect->GetMagnitude());
+								lewdMarkCounters.healslutCounter -= static_cast<int32_t>(ceilf(mag));
+								SetEffectMagnitude(HEALSLUT_EFFECT, static_cast<float>(lewdMarkCounters.healslutCounter));
 								log::trace("Restoration cast on follower: {} healed", mag);
 								auto arousal = scriptManager.GetArousal(target);
 								if (settings.sexEnabled && arousal >= 99 && SexActorFilter(target)) {
@@ -450,7 +400,7 @@ namespace DCURSES {
 
 	void TatsOnSexEnd(RE::Actor* actor) {
 		auto mark = GetLewdMark();
-		DecrementCounterForMark(MARK::TAT_ALLURE);
+		lewdMarkCounters.allureCounter -= 1;
 		if (mark == MARK::TAT_HEALSLUT && actor->IsPlayerTeammate() && !actor->IsCommandedActor()) {
 			log::trace("Casting magicka spell");
 			auto player = RE::PlayerCharacter::GetSingleton();
@@ -464,7 +414,7 @@ namespace DCURSES {
 
 	void TatsUpdate() {
 		auto mark = GetLewdMark();
-		auto index = static_cast<int64_t>(mark);
+		auto index = static_cast<int32_t>(mark);
 		auto applied = GetLewdMarkApplied();
 
 		if (applied != index) {
@@ -511,10 +461,6 @@ namespace DCURSES {
 			break;
 		}
 
-		if (counters.clock_GlobalTicker % 90 == 0) {
-			TatsUpdateContext(mark);
-		}
-
 		auto player = RE::PlayerCharacter::GetSingleton();
 		auto scriptManager = ScriptingManager();
 
@@ -526,181 +472,235 @@ namespace DCURSES {
 			player->RemovePerk(healslut_perk);
 		}
 
-		if (mark != MARK::TAT_NONE) {
-			//int base_color = mark == 11 ? settings.LMHeatColor : (mark == 13 ? settings.LMAllureColor : (mark == 71 ? settings.LMBondageColor : (mark == 79 ? settings.LMNudityColor : 0)));
-			if (counters.clock_GlobalTicker % 15 == 0) {
-				log::trace("events marks update");
-				switch (mark) {
-				case MARK::TAT_HEAT: {
-					scriptManager.ModifyArousal(player, settings.LMHeatMod / 4.0f);
-					if (GetEffectMagnitude(HEAT_EFFECT) <= 0) {
-						RemoveLewdMark();
-						AIContextRemoveLewdMark();
-						//PlayerMessage("You feel a sense of calm as the heat mark fades from your body.");
-						PlayerMessage(Translator(Translation::MarkHeatRemove));
-					}
-					break;
+		if (mark == MARK::TAT_NONE) {
+			return;
+		}
+		else {
+			switch (mark) {
+			case (MARK::TAT_ALLURE): {
+				if (lewdMarkCounters.allureCounter <= 0) {
+					lewdMarkCounters.allureCounter = INT32_MIN;
+					RemoveLewdMark();
+					PlayerMessage(Translator(Translation::MarkAllureRemove));
+					return;
 				}
-				case MARK::TAT_ALLURE: {
-					auto playerPosition = RE::PlayerCharacter::GetSingleton()->GetPosition();
+				if (lewdMarkCounters.allureCounter == INT32_MIN) {
+					SetMarkToDefaultSettings(MARK::TAT_ALLURE);
+				}
 
-					if (const auto processLists = RE::ProcessLists::GetSingleton(); processLists) {
-						RE::BSSimpleList<RE::ActorHandle>* arr = &(processLists->aliveActorList);
-						if (arr) {
-							for (auto const& actorHandle : *arr) {
-								auto actorPtr = actorHandle.get();
-								if (auto actor = actorPtr.get(); actor && actor->Is3DLoaded() && !actor->IsDead() && actor->GetPosition().GetDistance(playerPosition) <= settings.sexSearchRadius) {
-									scriptManager.ModifyArousal(actor, settings.LMAllureMod / 4.0f);
-								}
-							}
-						}
-					}
-					if (GetEffectMagnitude(ALLURE_EFFECT) <= 0) {
-						RemoveLewdMark();
-						AIContextRemoveLewdMark();
-						//PlayerMessage("You sense that people are no longer staring at you as the allure mark fades from your body.");
-						PlayerMessage(Translator(Translation::MarkAllureRemove));
-					}
-					break;
-				}
-				case MARK::TAT_BONDAGE: {
-					if (Util::randomDouble() < settings.LMBondageChance) {
-						log::trace("Attempting bondage event");
-						std::vector<RE::TESObjectARMO*> equipable;
-
-						auto inventory = player->GetInventory();
-						auto keywords = GetKeywordsCantEquip(player);
-						for (auto const& [k, v] : inventory) {
-							RE::TESObjectARMO* armor = k->As<RE::TESObjectARMO>();
-							if (armor && armor->HasKeywordString("zad_InventoryDevice") && DeviceHasGenericKey(armor) && v.second.get() && !v.second.get()->IsWorn()) {
-								auto render = DeviousDevicesAPI::g_API->GetDeviceRender(armor);
-								if (render) {
-									bool canEquip = true;
-									for (auto const& key : render->GetKeywords()) {
-										if (vectorContains(keywords, Util::GetFormEditorId(key))) {
-											canEquip = false;
-										}
-									}
-									if (canEquip) {
-										equipable.push_back(armor);
-									}
-								}
-							}
-						}
-						log::trace("Total devices found for event: {}", equipable.size());
-						if (equipable.size() == 0) {
-							log::trace("Bondage mark found no items in inventory");
-							break;
-						}
-						auto device = equipable[Util::randomInt(static_cast<int>(equipable.size()))];
-						log::trace("Equipping device: {}", device->GetName());
-						DecrementCounterForMark(MARK::TAT_BONDAGE);
-						scriptManager.LockDevice(player, device);
-						//PlayerMessage(fmt::format("Your mark pulses with light as your {} appears on your body!", device->GetName()));
-						PlayerMessage(Translator(Translation::MarkBondageDevice, device->GetName()));
-					}
-					if (GetEffectMagnitude(BONDAGE_EFFECT) <= 0) {
-						RemoveLewdMark();
-						AIContextRemoveLewdMark();
-						//PlayerMessage("You feel much less oppressed as the bondage mark fades from your body.");
-						PlayerMessage(Translator(Translation::MarkBondageRemove));
-					}
-					break;
-				}
-				case MARK::TAT_NUDITY: {
-					if (GetEffectMagnitude(NUDITY_EFFECT) <= 0) {
-						RemoveLewdMark();
-						AIContextRemoveLewdMark();
-						//PlayerMessage("You feel less helpless as the nudity mark fades from your body.");
-						PlayerMessage(Translator(Translation::MarkNudityRemove));
-					}
-					break;
-				}
-				case MARK::TAT_BRANDING: {
-					int tattoo_count = GetTattooCount(player);
-					float mag = GetEffectMagnitude(BRANDING_EFFECT);
-					if (settings.LMBrandingPunish && mag > tattoo_count) {
-						RE::TESForm* gold = RE::TESForm::LookupByID(std::stoi("0f", 0, 16));
-						int goldCount = GetItemCount(player, gold);
-						int toRemove = static_cast<int>(goldCount * Util::randomDouble(0.2, 0.4));
-						player->RemoveItem((RE::TESBoundObject*)gold, toRemove, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
-						//PlayerMessage(fmt::format("You loose {} gold as punishment for loosing tattoos!", toRemove));
-						PlayerMessage(Translator(Translation::MarkBrandingPunish, toRemove));
-					}
-
-					if (Util::randomDouble() < settings.LMBrandingChance && CheckRapeTattoos()) {
-						DoTattooEvent(player, "", 1, true);
-						//scriptManager.RTDoTattooEvent(player, 1);
-						//PlayerMessage("You feel a sharp pain as the mark brands you!");
-						PlayerMessage(Translator(Translation::MarkBrandingTattoo));
-					}
-					if (tattoo_count >= settings.LMBrandingTotal) {
-						RemoveLewdMark();
-						AIContextRemoveLewdMark();
-						//PlayerMessage("You feel the branding mark fade from your body.");
-						PlayerMessage(Translator(Translation::MarkBrandingRemove));
-					}
-					else {
-						Util::ExecuteWithDelay(750ms, [player] {SetEffectMagnitude(BRANDING_EFFECT, static_cast<float>(GetTattooCount(player))); });
-					}
-					break;
-				}
-				case MARK::TAT_HEALSLUT: {
-					if (GetEffectMagnitude(HEALSLUT_EFFECT) <= 0) {
-						RemoveLewdMark();
-						AIContextRemoveLewdMark();
-						PlayerMessage(Translator(Translation::MarkHealslutRemove));
-					}
-					break;
-				}
-				}
+				SetEffectMagnitude(ALLURE_EFFECT, static_cast<float>(lewdMarkCounters.allureCounter));
+				break;
 			}
-			if (mark == MARK::TAT_NUDITY) {
-				typedef RE::BIPED_MODEL::BipedObjectSlot BOS;
+			case (MARK::TAT_BONDAGE): {
+				if (lewdMarkCounters.bondageCounter <= 0) {
+					lewdMarkCounters.bondageCounter = INT32_MIN;
+					RemoveLewdMark();
+					PlayerMessage(Translator(Translation::MarkBondageRemove));
+					return;
+				}
 
-				if (settings.LMNudityChestOnly) {
-					std::vector<RE::TESForm*> removes;
+				if (lewdMarkCounters.bondageCounter == INT32_MIN) {
+					SetMarkToDefaultSettings(MARK::TAT_ALLURE);
+				}
 
-					RE::TESObjectARMO* equipped = player->GetWornArmor(BOS::kBody);
-					if (equipped != nullptr && !equipped->HasKeywordString("SexLabNoStrip")) {
-						//UnequipItem(player, equipped);
-						removes.push_back(equipped);
-					}
-					if (!settings.LMNudityAditionalForms.empty()) {
-						auto forms = Util::split(settings.LMNudityAditionalForms, ",");
-						for (auto s : forms) {
-							int form = -1;
-							try {
-								form = stoi(s);
+				SetEffectMagnitude(BONDAGE_EFFECT, static_cast<float>(lewdMarkCounters.bondageCounter));
+
+				break;
+			}
+			case (MARK::TAT_HEALSLUT): {
+				if (lewdMarkCounters.healslutCounter <= 0) {
+					lewdMarkCounters.healslutCounter = INT32_MIN;
+					RemoveLewdMark();
+					PlayerMessage(Translator(Translation::MarkHealslutRemove));
+					return;
+				}
+
+				if (lewdMarkCounters.healslutCounter == INT32_MIN) {
+					SetMarkToDefaultSettings(MARK::TAT_HEALSLUT);
+				}
+
+				SetEffectMagnitude(HEALSLUT_EFFECT, static_cast<float>(lewdMarkCounters.healslutCounter));
+
+				break;
+			}
+			case (MARK::TAT_HEAT): {
+				if (lewdMarkCounters.heatCounter <= 0) {
+					lewdMarkCounters.heatCounter = INT32_MIN;
+					RemoveLewdMark();
+					PlayerMessage(Translator(Translation::MarkHeatRemove));
+					return;
+				}
+
+				if (lewdMarkCounters.heatCounter == INT32_MIN) {
+					SetMarkToDefaultSettings(MARK::TAT_HEAT);
+				}
+
+				SetEffectMagnitude(HEAT_EFFECT, static_cast<float>(lewdMarkCounters.heatCounter));
+
+				break;
+			}
+			case (MARK::TAT_NUDITY): {
+				if (lewdMarkCounters.nudityCounter <= 0) {
+					lewdMarkCounters.nudityCounter = INT32_MIN;
+					RemoveLewdMark();
+					PlayerMessage(Translator(Translation::MarkNudityRemove));
+					return;
+				}
+
+				if (lewdMarkCounters.nudityCounter == INT32_MIN) {
+					SetMarkToDefaultSettings(MARK::TAT_NUDITY);
+				}
+
+				SetEffectMagnitude(NUDITY_EFFECT, static_cast<float>(lewdMarkCounters.nudityCounter));
+
+				break;
+			}
+			case (MARK::TAT_BRANDING): {
+				auto playerTattooCount = GetTattooCount(player);
+				if (playerTattooCount >= settings.LMBrandingTotal) {
+					RemoveLewdMark();
+					PlayerMessage(Translator(Translation::MarkBrandingRemove));
+					return;
+				}
+
+				SetEffectMagnitude(BRANDING_EFFECT, static_cast<float>(playerTattooCount));
+
+				break;
+			}
+			}
+		}
+
+
+		if (counters.clock_GlobalTicker % 15 == 0) {
+			log::trace("events marks update");
+			switch (mark) {
+			case MARK::TAT_HEAT: {
+				scriptManager.ModifyArousal(player, settings.LMHeatMod / 4.0f);
+				break;
+			}
+			case MARK::TAT_ALLURE: {
+				auto playerPosition = RE::PlayerCharacter::GetSingleton()->GetPosition();
+
+				if (const auto processLists = RE::ProcessLists::GetSingleton(); processLists) {
+					RE::BSSimpleList<RE::ActorHandle>* arr = &(processLists->aliveActorList);
+					if (arr) {
+						for (auto const& actorHandle : *arr) {
+							auto actorPtr = actorHandle.get();
+							if (auto actor = actorPtr.get(); actor && actor->Is3DLoaded() && !actor->IsDead() && actor->GetPosition().GetDistance(playerPosition) <= settings.sexSearchRadius) {
+								scriptManager.ModifyArousal(actor, settings.LMAllureMod / 4.0f);
 							}
-							catch (...) {
-								log::warn("Bad string in LMNudityAditionalForms: {}", s);
-								continue;
-							}
-
-							if (form < 30 || form > 61) {
-								log::warn("Bad string in LMNudityAditionalForms, Form must be in range 30 - 61: {}", form);
-								continue;
-							}
-
-							equipped = player->GetWornArmor(static_cast<BOS>(1 << (form - 30)));
-							if (equipped != nullptr && !equipped->HasKeywordString("SexLabNoStrip")) {
-								//UnequipItem(player, equipped);
-								removes.push_back(equipped);
-							}
-
 						}
 					}
-					if (removes.size() > 0) {
-						log::trace("Lewd Mark removed {} items", removes.size());
-						for (auto item : removes) {
-							scriptManager.UnequipItem(player, item);
+				}
+				break;
+			}
+			case MARK::TAT_BONDAGE: {
+				if (Util::randomDouble() < settings.LMBondageChance) {
+					log::trace("Attempting bondage event");
+					std::vector<RE::TESObjectARMO*> equipable;
+
+					auto inventory = player->GetInventory();
+					auto keywords = GetKeywordsCantEquip(player);
+					for (auto const& [k, v] : inventory) {
+						RE::TESObjectARMO* armor = k->As<RE::TESObjectARMO>();
+						if (armor && armor->HasKeywordString("zad_InventoryDevice") && DeviceHasGenericKey(armor) && v.second.get() && !v.second.get()->IsWorn()) {
+							auto render = DeviousDevicesAPI::g_API->GetDeviceRender(armor);
+							if (render) {
+								bool canEquip = true;
+								for (auto const& key : render->GetKeywords()) {
+									if (vectorContains(keywords, Util::GetFormEditorId(key))) {
+										canEquip = false;
+									}
+								}
+								if (canEquip) {
+									equipable.push_back(armor);
+								}
+							}
 						}
 					}
+					log::trace("Total devices found for event: {}", equipable.size());
+					if (equipable.size() == 0) {
+						log::trace("Bondage mark found no items in inventory");
+						break;
+					}
+					auto device = equipable[Util::randomInt(static_cast<int>(equipable.size()))];
+					log::trace("Equipping device: {}", device->GetName());
+					lewdMarkCounters.bondageCounter -= 1;
+					scriptManager.LockDevice(player, device);
+					//PlayerMessage(fmt::format("Your mark pulses with light as your {} appears on your body!", device->GetName()));
+					PlayerMessage(Translator(Translation::MarkBondageDevice, device->GetName()));
+				}
+				break;
+			}
+			case MARK::TAT_BRANDING: {
+				int tattoo_count = GetTattooCount(player);
+				float mag = GetEffectMagnitude(BRANDING_EFFECT);
+				if (settings.LMBrandingPunish && mag > tattoo_count) {
+					RE::TESForm* gold = RE::TESForm::LookupByID(std::stoi("0f", 0, 16));
+					int goldCount = GetItemCount(player, gold);
+					int toRemove = static_cast<int>(goldCount * Util::randomDouble(0.2, 0.4));
+					player->RemoveItem((RE::TESBoundObject*)gold, toRemove, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+					//PlayerMessage(fmt::format("You loose {} gold as punishment for loosing tattoos!", toRemove));
+					PlayerMessage(Translator(Translation::MarkBrandingPunish, toRemove));
+					SetEffectMagnitude(BRANDING_EFFECT, static_cast<float>(GetTattooCount(player)));
+				}
+
+				if (Util::randomDouble() < settings.LMBrandingChance && CheckRapeTattoos()) {
+					DoTattooEvent(player, "", 1, true);
+					PlayerMessage(Translator(Translation::MarkBrandingTattoo));
 				}
 				else {
-					UndressActor(player, false);
+					Util::ExecuteWithDelay(750ms, [player] {SetEffectMagnitude(BRANDING_EFFECT, static_cast<float>(GetTattooCount(player))); });
 				}
+				break;
+			}
+			}
+		}
+		if (mark == MARK::TAT_NUDITY) {
+			typedef RE::BIPED_MODEL::BipedObjectSlot BOS;
+
+			if (settings.LMNudityChestOnly) {
+				std::vector<RE::TESForm*> removes;
+
+				RE::TESObjectARMO* equipped = player->GetWornArmor(BOS::kBody);
+				if (equipped != nullptr && !equipped->HasKeywordString("SexLabNoStrip")) {
+					//UnequipItem(player, equipped);
+					removes.push_back(equipped);
+				}
+				if (!settings.LMNudityAditionalForms.empty()) {
+					auto forms = Util::split(settings.LMNudityAditionalForms, ",");
+					for (auto s : forms) {
+						int form = -1;
+						try {
+							form = stoi(s);
+						}
+						catch (...) {
+							log::warn("Bad string in LMNudityAditionalForms: {}", s);
+							continue;
+						}
+
+						if (form < 30 || form > 61) {
+							log::warn("Bad string in LMNudityAditionalForms, Form must be in range 30 - 61: {}", form);
+							continue;
+						}
+
+						equipped = player->GetWornArmor(static_cast<BOS>(1 << (form - 30)));
+						if (equipped != nullptr && !equipped->HasKeywordString("SexLabNoStrip")) {
+							//UnequipItem(player, equipped);
+							removes.push_back(equipped);
+						}
+
+					}
+				}
+				if (removes.size() > 0) {
+					log::trace("Lewd Mark removed {} items", removes.size());
+					for (auto item : removes) {
+						scriptManager.UnequipItem(player, item);
+					}
+				}
+			}
+			else {
+				UndressActor(player, false);
 			}
 		}
 	}

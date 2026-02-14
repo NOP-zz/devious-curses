@@ -83,7 +83,7 @@ namespace DCURSES {
         std::string script_name;
         std::string function;
         RE::TESForm* form = nullptr;
-        RE::FormType type;
+        RE::FormType type = RE::FormType::None;
 
         RE::BSScript::IFunctionArguments* args;
 
@@ -183,6 +183,9 @@ namespace DCURSES {
             else if constexpr (std::is_integral_v<T> && std::is_signed_v<T>) {
                 data = a_result.GetSInt();
             }
+            else if constexpr (std::is_floating_point_v<T>) {
+                data = a_result.GetFloat();
+            }
             else if constexpr (std::is_same_v<RE::BGSRefAlias*, T>) {
                 data = a_result.Unpack<T>();
             }
@@ -279,19 +282,21 @@ namespace DCURSES {
         void RunIntentWithResult(ScriptIntent intent, std::function<ScriptCallback(std::optional<T>)> onCallback) {
             std::function<void(std::optional<T>, ScriptCallback)> newCallbackFunction = [onCallback](std::optional<T> data, ScriptCallback firstCallback) {
                 auto newCallback = onCallback(data);
-                auto tempCallback = firstCallback->nextCallback;
-                firstCallback->nextCallback = newCallback;
-                newCallback->nextCallback = tempCallback;
+                if (newCallback != nullptr) {
+                    auto tempCallback = firstCallback->nextCallback;
+                    firstCallback->nextCallback = newCallback;
+                    newCallback->nextCallback = tempCallback;
+                }
             };
             intents()->push_back({ intent, ScriptCallback(new ScriptCallbackFunctor_R<T>(intent, newCallbackFunction)) });
         }
 
         template<class T>
-        void RunIntentWithResultSimple(ScriptIntent intent, std::function<void(T)> onCallback) {
-            std::function<void(T, ScriptCallback, ScriptCallback)> newCallbackFunction = [onCallback](T data, ScriptCallback firstCallback, ScriptCallback nextCallback) {
+        void RunIntentWithResultSimple(ScriptIntent intent, std::function<void(std::optional<T>)> onCallback) {
+            std::function<void(std::optional<T>, ScriptCallback)> newCallbackFunction = [onCallback](std::optional<T> data, ScriptCallback) {
                 onCallback(data);
             };
-            RunIntentWithResult(intent, newCallbackFunction);
+            intents()->push_back({ intent, ScriptCallback(new ScriptCallbackFunctor_R<T>(intent, newCallbackFunction)) });
         }
 
         void RunOnMenuClose(std::function<void()> onCallback) {
@@ -328,6 +333,14 @@ namespace DCURSES {
             RE::TESFaction* sla_arousal = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x3FC36, "SexLabAroused.esm");
             auto arousal = actor->GetFactionRank(sla_arousal, actor == RE::PlayerCharacter::GetSingleton());
             return arousal;
+        }
+
+        void WithArousal(RE::Actor* actor, std::function<void(float)> func) {
+            RE::BSScript::IFunctionArguments* args2 = RE::MakeFunctionArguments<RE::Actor*>(std::move(actor));
+            auto intent2 = ScriptIntent("OSLArousedNative", "GetArousal", args2);
+            RunIntentWithResultSimple<float>(intent2, [func](std::optional<float> arousal) {
+                func(arousal.value_or(-1));
+            });
         }
 
         void ModifyArousal(RE::Actor* actor, float arousal) {

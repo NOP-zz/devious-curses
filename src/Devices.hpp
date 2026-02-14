@@ -38,6 +38,7 @@ namespace DCURSES {
 		RE::TESObjectARMO* rend;
 		bool isLockless;
 		int keyCount;
+		bool isCockCage;
 	};
 
 	typedef std::pair<std::vector<DeviceData>, std::string> DeviceList;
@@ -82,7 +83,6 @@ namespace DCURSES {
 		DeviceList beltsPiercings;
 		DeviceList beltsCages;
 		DeviceList bras;
-		DeviceList plugs;
 		DeviceList plugsV;
 		DeviceList plugsVBasic;
 		DeviceList plugsVLock;
@@ -275,9 +275,8 @@ namespace DCURSES {
 					devices.beltsPiercings.first.push_back(dev);
 				}
 				else {
-					if (ShouldUseGenderedChastity()) {
-						auto vivis = StaticDataHolder::GetSingleton()->LookupModByName("VivisCockcageSE_TRX_CBBE_devious_patch.esp");
-						if (vivis->IsFormInMod(dev.inv->formID)) {
+					if (settings.useGenderedChastity) {
+						if (dev.isCockCage) {
 							devices.beltsCages.first.push_back(dev);
 							//log::trace("Adding device as cage: {}", dev.inv->GetName());
 						}
@@ -287,16 +286,12 @@ namespace DCURSES {
 						}
 					}
 					else {
-						devices.beltsCages.first.push_back(dev);
 						devices.belts.first.push_back(dev);
 					}
 				}
 			}
 			if (rend->HasKeywordString("zad_DeviousBra") && !rend->HasKeywordString("zad_DeviousSuit") && !rend->HasKeywordString("zad_DeviousHarness")) { // Bras
 				devices.bras.first.push_back(dev);
-			}
-			if (rend->HasKeywordString("zad_DeviousPlug") && deviceTypeCount <= 1) { // All Plugs
-				devices.plugs.first.push_back(dev);
 			}
 			if (rend->HasKeywordString("zad_DeviousPlugVaginal") && deviceTypeCount <= 1) { // VPlugs
 				devices.plugsV.first.push_back(dev);
@@ -623,6 +618,16 @@ namespace DCURSES {
 				continue;
 			}
 
+			bool isCage = false;
+			if (deviceRendered->HasKeywordString("zad_DeviousBelt") && ((Util::testFormComp("Cage", deviceInventory) || Util::FormEditorIdContains(deviceRendered, "vivis")))) {
+				isCage = true;
+				typedef RE::BGSBipedObjectForm::BipedObjectSlot BOS;
+				auto slot = static_cast<uint32_t>(deviceRendered->GetSlotMask());
+				if (!(slot & (static_cast<uint32_t>(BOS::kModPelvisSecondary) | static_cast<uint32_t>(BOS::kModPelvisPrimary)))) {
+					log::warn("{} does not have propper slots set.", deviceInventory->GetName());
+				}
+			}
+
 			auto keyCount = API->GetPropertyInt(device, "NumberOfKeysNeeded", 1, 0);
 
 			if (keyCount > settings.maxHeldKeys && settings.maxHeldKeys > 0) {
@@ -639,6 +644,7 @@ namespace DCURSES {
 				deviceRendered,
 				isLockless,
 				keyCount,
+				isCage,
 			};
 
 			if (ProcessDevice(dat, exclusions, mod_excl)) {
@@ -655,7 +661,6 @@ namespace DCURSES {
 		devices.beltsPiercings.second = "beltsPiercings";
 		devices.beltsCages.second = "beltsCages";
 		devices.bras.second = "bras";
-		devices.plugs.second = "plugs";
 		devices.plugsV.second = "plugsV";
 		devices.plugsVBasic.second = "plugsVBasic";
 		devices.plugsVLock.second = "plugsVLock";
@@ -850,8 +855,8 @@ namespace DCURSES {
 		for (auto const& keyword : allDeviceKeywords) {
 			if (std::find(skipList.begin(), skipList.end(), keyword) == skipList.end()) {// Can equip this keyword
 				if (keyword == "zad_DeviousBelt") {
-					if (ShouldUseGenderedChastity()) {
-						if (sex == 2) {
+					if (devices.beltsCages.first.size() > 0) {
+						if (sex == 2 || sex == 0) {
 							lists.push_back(std::pair(&devices.beltsCages, settings.beltWeight));
 						}
 						else {
@@ -867,7 +872,7 @@ namespace DCURSES {
 				if (keyword == "zad_DeviousBra") {
 					lists.push_back(std::pair(&devices.bras, settings.braWeight));
 				}
-				if (keyword == "zad_DeviousPlugVaginal") {
+				if (keyword == "zad_DeviousPlugVaginal" && (!settings.useGenderedPlugs || sex == 1)) {
 					lists.push_back(std::pair(&devices.plugsVLock, settings.lockingPlugsWeight));
 					lists.push_back(std::pair(&devices.plugsVBasic, settings.plugsWeight));
 					lists.push_back(std::pair(&devices.plugsVInf, settings.inflatablePlugsWeight));
@@ -965,25 +970,14 @@ namespace DCURSES {
 			adjustedLists.push_back(std::make_pair(adj, list.second));
 		}
 
-		double weightMax = 0;
-		for (auto const& list : adjustedLists) {
-			if (list.first.first.size() > 0) {
-				weightMax += list.second;
-			}
-		}
+		auto list = Util::VectorSelectWeighted(adjustedLists);
 
-		double roll = Util::randomDouble(weightMax);
-		for (auto const& list : adjustedLists) {
-			if (roll < list.second && list.second != 0.0 && list.first.first.size() > 0) {
-				log::trace("Selected list {} ({:.2f}%)", list.first.second, 100.0 * list.second / weightMax);
-				return list.first;
-			}
-			if (list.first.first.size() > 0) {
-				roll -= list.second;
-			}
+		if (list.has_value()) {
+			return list.value().first;
 		}
-
-		return DeviceList();
+		else {
+			return DeviceList();
+		}
 	}
 
 	std::optional<DeviceData> GetRandomEquipableDevice(RE::Actor* actor, std::vector<std::string> skipList, std::string theme = "") {
@@ -997,11 +991,11 @@ namespace DCURSES {
 		}
 		auto dev = GetRandomDevice(&randomList);
 		if (!dev) {
-			log::trace("Failed to get device from list {} - Length {}", randomList.second, randomList.first.size());
+			//log::trace("Failed to get device from list {} - Length {}", randomList.second, randomList.first.size());
 			return std::nullopt;
 		}
 		else {
-			//log::info("Got device {} from list {} - Length {}", dev.value().inv->GetName(), randomList.second, randomList.first.size());
+			log::trace("Got device {} from list {} - Length {}", dev.value().inv->GetName(), randomList.second, randomList.first.size());
 		}
 		return dev;
 	}

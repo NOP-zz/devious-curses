@@ -66,23 +66,32 @@ namespace DCURSES {
 		}
 
 		template<class T>
-		std::pair<T, double> VectorSelectWeighted(std::vector<std::pair<T, double>> vector) {
+		double VectorGetWeightsSum(std::vector<std::pair<T, double>> vector) {
+			return std::accumulate(vector.begin(), vector.end(), 0.0, [](double acc, std::pair<T, double> x) {return acc + x.second; });
+		}
+
+		template<class T>
+		std::optional<std::pair<T, double>> VectorSelectWeighted(std::vector<std::pair<T, double>> vector) {
+			if (VectorGetWeightsSum(vector) == 0) {
+				return {};
+			}
 			std::vector<double> weights;
 			weights.reserve(vector.size());
 
 			for (auto [a, b] : vector) {
-				weights.push_back(b);
+				if (b < 0) {
+					log::error("Negative value in weighted vector, assigning 0");
+					weights.push_back(0);
+				}
+				else {
+					weights.push_back(b);
+				}
 			}
 
 			std::random_device rd;
 			std::mt19937 e2(rd());
 			std::discrete_distribution<size_t> d(weights.begin(), weights.end());
 			return vector[d(e2)];
-		}
-
-		template<class T>
-		double VectorGetWeightsSum(std::vector<std::pair<T, double>> vector) {
-			return std::accumulate(vector.begin(), vector.end(), 0.0, [](double acc, std::pair<T, double> x) {return acc + x.second; });
 		}
 
 		int ColorScale(int color, double mult) {
@@ -184,6 +193,24 @@ namespace DCURSES {
 			return tokens;
 		}
 
+		std::string join(std::vector<std::string> list, std::string token, std::string if_empty = "") {
+			std::string output;
+			if (list.size() >= 2) {
+				for (size_t i = 0; i < (list.size() - 1); i++) {
+					output += list.at(i);
+					output += token;
+				}
+			}
+			if (list.size() >= 1) {
+				output += list.back();
+			}
+			if (list.size() == 0) {
+				output += if_empty;
+			}
+
+			return output;
+		}
+
 		size_t findMatchingParen(const std::string& str, size_t index) {
 			int counter = 1;
 			for (size_t i = index + 1; i < str.size(); i++) {
@@ -263,17 +290,18 @@ namespace DCURSES {
 
 		template<class T>
 		T* GetCrosshairRefAs() {
-			for (int i = 0; i < 3; i++) {
-				auto ref = RE::CrosshairPickData::GetSingleton()->target[i];
-				if (ref && ref.get()) {
-					T* result = ref.get()->As<T>();
-					if (result) {
-						return result;
+			auto pickData = RE::CrosshairPickData::GetSingleton();
+			if (pickData) {
+				for (int i = 0; i < 3; i++) {
+					auto ref = pickData->target[i];
+					if (ref && ref.get()) {
+						T* result = ref.get()->As<T>();
+						if (result) {
+							return result;
+						}
 					}
 				}
 			}
-			//RE::TESForm* form = LookupForm(formid, modname);
-			//return (form && form->Is(T::FORMTYPE)) ? static_cast<T*>(form) : nullptr;
 			return nullptr;
 		}
 

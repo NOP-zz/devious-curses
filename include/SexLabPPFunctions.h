@@ -84,33 +84,9 @@ namespace SexLab {
 	// DOES NOT HANDLE CREATURES
 	int GetSex(RE::Actor* a_actor, bool a_skipfactions = false)
 	{
-		//int ret = -1;
 		if (!a_skipfactions) {
-			/*a_actor->VisitFactions([&](auto a_faction, auto a_rank) {
-				RE::TESFaction* SexlabGenderFaction = DCURSES::StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("043A43", 0, 16), "SexLab.esm");
-				if (a_faction == SexlabGenderFaction) {
-					switch (a_rank) {
-					case 0:
-						ret = 0;
-						break;
-					case 1:
-						ret = 1;
-						break;
-					case 2:
-						ret = 2;
-						break;
-					default:
-						break;
-					}
-					return true;
-				}
-				return false;
-				});
-			if (ret != -1) {
-				return ret;
-			}*/
 			RE::TESFaction* SexlabGenderFaction = DCURSES::StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("043A43", 0, 16), "SexLab.esm");
-			auto rank = a_actor->GetFactionRank(SexlabGenderFaction, false);
+			auto rank = a_actor->GetFactionRank(SexlabGenderFaction, a_actor == RE::PlayerCharacter::GetSingleton());
 			if (rank >= 0 && rank <= 2) {
 				return rank;
 			}

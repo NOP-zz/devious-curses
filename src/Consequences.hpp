@@ -132,13 +132,11 @@ namespace DCURSES {
 		if ((mask & 0b0111) != 0 && SexActorFilter(actor)) {
 			if (source == consequenceSource::kSex) {
 				scriptManager.StartSex(actor, settings.sexAggressiveAnims);
-				AIEventStartSex(actor);
 				//PlayerMessage(fmt::format("{} wasn't satisfied with your performance and goes in for another round!", actor->GetName()));
 				PlayerMessage(Translator(Translation::ConsequenceSexContinue, actor->GetName()));
 			}
 			else {
 				scriptManager.StartSex(actor, settings.sexAggressiveAnims);
-				AIEventStartSex(actor);
 				//PlayerMessage(fmt::format("Before you can talk to {} they grab you and takes of your clothes!", actor->GetName()));
 				PlayerMessage(Translator(Translation::ConsequenceSexTalk, actor->GetName()));
 			}
@@ -278,7 +276,10 @@ namespace DCURSES {
 
 		while (!consequences.empty()) {
 			auto pair = Util::VectorSelectWeighted(consequences);
-			if (pair.first(actor, source)) {
+			if (!pair.has_value()) {
+				return false;
+			}
+			if (pair.value().first(actor, source)) {
 				return true;
 			}
 			else if (!settings.consFallthrough) {
@@ -295,7 +296,7 @@ namespace DCURSES {
 		if (IsConsequenceTargetKnown(actor->formID)) {
 			return;
 		}
-		SetConsequenceTargetKnown(actor->formID);
+		
 		if (actor->IsPlayerTeammate() && !settings.consAllowFollowers) {
 			return;
 		}
@@ -305,10 +306,11 @@ namespace DCURSES {
 		}
 		auto player = RE::PlayerCharacter::GetSingleton();
 		log::trace("Checking consequence dialogue");
-		DecrementCounterForMark(MARK::TAT_NUDITY);
 		bool isNude = getIsNude(player, true);
 		
 		if (isNude) {
+			SetConsequenceTargetKnown(actor->formID);
+			lewdMarkCounters.nudityCounter -= 1;
 			if (Util::randomDouble() <= settings.consTriggerNude) {
 				log::trace("Nude Trigger");
 				if (DoConsequence(actor, consequenceSource::kNude)) {
@@ -317,6 +319,7 @@ namespace DCURSES {
 			}
 		}
 		if (GetWornInventoryDeviceByKeyword(player, "zad_DeviousHeavyBondage") && Util::randomDouble() < settings.consTriggerRestrained) {
+			SetConsequenceTargetKnown(actor->formID);
 			log::trace("Bondage Trigger");
 			if (DoConsequence(actor, consequenceSource::kRestrained)) {
 				//actor->EndDialogue();

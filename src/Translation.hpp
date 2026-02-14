@@ -53,6 +53,8 @@ namespace DCURSES {
 		ODeviceMadnessPlugCrash,//The plug makes you feel incredibly unstable!
 		ODeviceMadnessPlugRemove,//With a final flourish, the plug vanishes, leaving behind numerous devices!
 		ODeviceMadnessPlugHunger,//You feel the plug pulse with hunger, you will need to do an extra event!
+		ODeviceMadnessDescription,//The plug still needs to make you cum <mag> times in total! (This will not count orgasms from sex scenets)
+		ODeviceMadnessDescriptionSex,//You still need to orgasm <mag> times in total!
 		ODeviceNocturnalPiercingStart,//As you touch the {} you sense that it was cursed by an agent of nocturnal herself!
 		ODeviceNocturnalPiercingAnger,//Nocturnal seems angry with you being seen orgasming. She locks you in some restraints!
 		ODeviceNocturnalPiercingRemove,//Nocturnal takes her boon from you, leaving you bound and helpless!
@@ -118,6 +120,12 @@ namespace DCURSES {
 		EffectLivingLatexDormant,//The latex suit seems to be dormant. Maybe it would do something if it was attacked.
 		EffectLivingLatexAwoken,//The latex has awoken! Maybe you can weaken it by shocking it.
 		EffectLivingLatexCling,//The latex is clinging to you only by your other devices, removing them should do the trick!
+		
+		FastTravelUnableHeavy,//You are unable to fast travel due to your heavy bondage!
+		FastTravelUnableBoots,//You are unable to fast travel due to your boots!
+		FastTravelUnableBlind,//You can't fast travel while you're blinded!
+		FastTravelUnableHobble,//You are unable to fast travel due to your hobble dress!
+		FastTravelUnableDevices,//You can't fast travel while wearing any devious device!
 		//TRNASLATIONS_END
 	};
 
@@ -192,6 +200,8 @@ namespace DCURSES {
 				case (Translation::ODeviceMadnessPlugCrash): return "ODeviceMadnessPlugCrash";
 				case (Translation::ODeviceMadnessPlugRemove): return "ODeviceMadnessPlugRemove";
 				case (Translation::ODeviceMadnessPlugHunger): return "ODeviceMadnessPlugHunger";
+				case (Translation::ODeviceMadnessDescription): return "ODeviceMadnessDescription";
+				case (Translation::ODeviceMadnessDescriptionSex): return "ODeviceMadnessDescriptionSex";
 				case (Translation::ODeviceNocturnalPiercingStart): return "ODeviceNocturnalPiercingStart";
 				case (Translation::ODeviceNocturnalPiercingAnger): return "ODeviceNocturnalPiercingAnger";
 				case (Translation::ODeviceNocturnalPiercingRemove): return "ODeviceNocturnalPiercingRemove";
@@ -252,6 +262,11 @@ namespace DCURSES {
 				case (Translation::EffectLivingLatexDormant): return "EffectLivingLatexDormant";
 				case (Translation::EffectLivingLatexAwoken): return "EffectLivingLatexAwoken";
 				case (Translation::EffectLivingLatexCling): return "EffectLivingLatexCling";
+				case (Translation::FastTravelUnableHeavy): return "FastTravelUnableHeavy";
+				case (Translation::FastTravelUnableBoots): return "FastTravelUnableBoots";
+				case (Translation::FastTravelUnableBlind): return "FastTravelUnableBlind";
+				case (Translation::FastTravelUnableHobble): return "FastTravelUnableHobble";
+				case (Translation::FastTravelUnableDevices): return "FastTravelUnableDevices";
 				//CODEGEN_END_KEYNAME
 			}
 			log::error("Unable to find translation key name for id {}", static_cast<uint32_t>(key));

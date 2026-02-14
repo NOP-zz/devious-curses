@@ -156,16 +156,12 @@ namespace DCURSES {
                     }
 
                     player->RemoveItem((RE::TESBoundObject*)magicKey, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
-                    AIEventMagicKey();
-                    //PlayerMessage("All of the devices you were wearing have magically dissapeared!");
                     PlayerMessage(Translator(Translation::ItemMagicKey));
                 }
                 else if (equipmentForm == tattooCharm) {
                     RemoveAllTattoos(player);
 
                     player->RemoveItem((RE::TESBoundObject*)tattooCharm, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
-                    AIEventTattooCharm();
-                    //PlayerMessage("All of your tattoos have faded from your body!");
                     PlayerMessage(Translator(Translation::ItemTattooCharm));
                 }
                 else if (equipmentForm == arouaslPotion) {
@@ -364,17 +360,21 @@ namespace DCURSES {
                 else if (event == "setlewdmark") {
                     MARK mark = MARK::TAT_NONE;
                     uint32_t effect = 0;
+                    int32_t* assign = nullptr;
                     if (strArg == "heat") {
                         mark = MARK::TAT_HEAT;
                         effect = HEAT_EFFECT;
+                        assign = &lewdMarkCounters.heatCounter;
                     }
                     else if (strArg == "allure") {
                         mark = MARK::TAT_ALLURE;
                         effect = ALLURE_EFFECT;
+                        assign = &lewdMarkCounters.allureCounter;
                     }
                     else if (strArg == "bondage") {
                         mark = MARK::TAT_BONDAGE;
                         effect = BONDAGE_EFFECT;
+                        assign = &lewdMarkCounters.bondageCounter;
                     }
                     else if (strArg == "branding") {
                         mark = MARK::TAT_BRANDING;
@@ -383,10 +383,12 @@ namespace DCURSES {
                     else if (strArg == "healslut") {
                         mark = MARK::TAT_HEALSLUT;
                         effect = HEALSLUT_EFFECT;
+                        assign = &lewdMarkCounters.healslutCounter;
                     }
                     else if (strArg == "nudity") {
                         mark = MARK::TAT_NUDITY;
                         effect = NUDITY_EFFECT;
+                        assign = &lewdMarkCounters.nudityCounter;
                     }
                     else if (strArg != "none") {
                         log::warn("Bad ModEvent strArg: {}", strArg);
@@ -398,12 +400,13 @@ namespace DCURSES {
                         RemoveLewdMark();
                         if (mark != MARK::TAT_NONE) {
                             AddLewdMark(mark);
-                            SetDefaultEffectMagnitudeForMark(mark);
+                            SetMarkToDefaultSettings(mark);
                         }
                     }
 
-                    if (numArg > 0) {
+                    if (numArg > 0 && assign != nullptr) {
                         log::info("Updating lewd mark to {} ({})", strArg, numArg);
+                        *assign = numArg;
                         SetEffectMagnitude(effect, static_cast<float>(numArg));
                     }
                     else {

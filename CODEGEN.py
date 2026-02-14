@@ -8,8 +8,8 @@ settings_raw = open(r"src\Settings.hpp", "r").read()
 settings = settings_raw.split("//MCM_START")[1].split("//MCM_END")[0]
 
 mcm_strings = dict() # Dictionary of translation strings
-sliders = [] # List of pairs [[name, default, format, ranemin, rangemax, step, rel]...]
-fsliders = [] # List of pairs [[name, default, format, ranemin, rangemax, step, rel]...]
+sliders = [] # List of pairs [[name, default, format, ranemin, rangemax, step, rel, unsigned]...]
+fsliders = [] # List of pairs [[name, default, format, ranemin, rangemax, step, rel, unsigned]...]
 options = [] # List of pairs [[name, default, rel]...]
 colors = [] # List of pairs [[name, default, rel]...]
 texts = [] # List of pairs [[name, default, rel]...]
@@ -68,7 +68,7 @@ def processLine(line, page_lines):
 
 		var_def = var.strip().split(" ")[3][:-1]
 		range_min, range_max, step = [x.strip() for x in rang[1:-1].split(",")]
-		sliders.append([var_name, var_def, form, range_min, range_max, step, rel])
+		sliders.append([var_name, var_def, form, range_min, range_max, step, rel, int(range_min) >= 0])
 		page_lines.append(f'{var_name}OID = AddSliderOption("{title_key}", {var_name}, "{form}", {flag})')
 		if (recalc):
 			recalcs.append(var_name)
@@ -91,7 +91,7 @@ def processLine(line, page_lines):
 		if '.' not in var_def:
 			var_def = var_def + '.0'
 		range_min, range_max, step = [x.strip() for x in rang[1:-1].split(",")]
-		fsliders.append([var_name, var_def, form, range_min, range_max, step, rel])
+		fsliders.append([var_name, var_def, form, range_min, range_max, step, rel, float(range_min) >= 0])
 		page_lines.append(f'{var_name}OID = AddSliderOption("{title_key}", {var_name}, "{form}", {flag})')
 		if (recalc):
 			frecalcs.append(var_name)
@@ -417,6 +417,9 @@ with open("translationData/Devious Curses_ENGLISH.json", "w") as f:
 
 # C++ CODEGEN
 
+non_mcm_settings = [x.strip() for x in settings_raw.split("struct Settings {")[1].split("//MCM_START")[0].split("\n") if not x.strip().startswith("//") and not x == ""][:-1]
+non_mcm_options = [[x.split(" ")[1], x.split(";")[0].split(" ")[-1], False] for x in non_mcm_settings if x.split(" ")[0] == "bool"]
+
 #UpdateSKSE
 
 index = settings_raw.split("//CODEGEN_START_UPDATE")[0].replace('\r', '').rfind('\n')
@@ -435,13 +438,13 @@ mid += ''.join(parse(x) for x in frecalcs)
 parse = lambda x: f'{indent}if (settings.{x} != GetMCMSetting("{x}")->GetBool()) {{recalculate = true;}}'
 mid += ''.join(parse(x) for x in brecalcs)
 
-parse = lambda x: f'{indent}settings.{x} = GetMCMSetting("{x}")->GetSInt();'
-mid += ''.join(parse(x[0]) for x in sliders)
-mid += ''.join(parse(x[0]) for x in colors)
-mid += ''.join(parse(x[0]) for x in keycodes)
+parse = lambda x, y: f'{indent}settings.{x} = GetMCMSetting("{x}")->GetSInt();' + (f'{indent}if (settings.{x} < 0) {{settings.{x} = 0;}}' if y else '')
+mid += ''.join(parse(x[0], x[7]) for x in sliders)
+mid += ''.join(parse(x[0], False) for x in colors)
+mid += ''.join(parse(x[0], False) for x in keycodes)
 
-parsef = lambda x: f'{indent}settings.{x} = GetMCMSetting("{x}")->GetFloat();'
-mid += ''.join(parsef(x[0]) for x in fsliders)
+parsef = lambda x, y: f'{indent}settings.{x} = GetMCMSetting("{x}")->GetFloat();' + (f'{indent}if (settings.{x} < 0) {{settings.{x} = 0;}}' if y else '')
+mid += ''.join(parsef(x[0], x[7]) for x in fsliders)
 
 parseb = lambda x: f'{indent}settings.{x} = GetMCMSetting("{x}")->GetBool();'
 mid += ''.join(parseb(x[0]) for x in options)
@@ -464,6 +467,8 @@ mid += ''.join(parse(x[0]) for x in colors)
 mid += ''.join(parse(x[0]) for x in keycodes)
 mid += ''.join(parse(x[0]) for x in texts)
 
+mid += ''.join(parse(x[0]) for x in non_mcm_options)
+
 settings_raw = pre + mid + post
 
 index = settings_raw.split("//CODEGEN_START_FROMJSON")[0].replace('\r', '').rfind('\n')
@@ -471,16 +476,17 @@ indent = settings_raw.split("//CODEGEN_START_FROMJSON")[0][index:]
 pre = settings_raw.split("//CODEGEN_START_FROMJSON")[0] + "//CODEGEN_START_FROMJSON"
 post = f"{indent}//CODEGEN_END_FROMJSON" + settings_raw.split("//CODEGEN_END_FROMJSON")[1]
 
-parse = lambda x, y: f'{indent}settings.{x} = static_cast<int>(j.value("{x}", {y}));'
-mid = ''.join(parse(x[0], x[1]) for x in sliders)
-mid += ''.join(parse(x[0], x[1]) for x in colors)
-mid += ''.join(parse(x[0], x[1]) for x in keycodes)
+parse = lambda x, y, z: f'{indent}settings.{x} = static_cast<int>(j.value("{x}", {y}));' + (f'{indent}if (settings.{x} < 0) {{settings.{x} = 0;}}' if z else '')
+mid = ''.join(parse(x[0], x[1], x[7]) for x in sliders)
+mid += ''.join(parse(x[0], x[1], False) for x in colors)
+mid += ''.join(parse(x[0], x[1], False) for x in keycodes)
 
-parsef = lambda x, y: f'{indent}settings.{x} = static_cast<float>(j.value("{x}", {y}));'
-mid += ''.join(parsef(x[0], x[1]) for x in fsliders)
+parsef = lambda x, y, z: f'{indent}settings.{x} = static_cast<float>(j.value("{x}", {y}));' + (f'{indent}if (settings.{x} < 0) {{settings.{x} = 0;}}' if z else '')
+mid += ''.join(parsef(x[0], x[1], x[7]) for x in fsliders)
 
 parseb = lambda x, y: f'{indent}settings.{x} = static_cast<bool>(j.value("{x}", {y}));'
 mid += ''.join(parseb(x[0], x[1]) for x in options)
+mid += ''.join(parseb(x[0], x[1]) for x in non_mcm_options)
 
 parset = lambda x, y: f'{indent}settings.{x} = j.value("{x}", {y});'
 mid += ''.join(parset(x[0], x[1]) for x in texts)
@@ -526,6 +532,9 @@ mid += ''.join(parseb(x[0], x[1]) for x in options)
 
 parset = lambda x, y: f'{indent}settings.{x} = {y};{indent}SetMCMString("{x}",settings.{x});'
 mid += ''.join(parset(x[0], x[1]) for x in texts)
+
+parseb = lambda x, y: f'{indent}settings.{x} = {y};'
+mid += ''.join(parseb(x[0], x[1]) for x in non_mcm_options)
 
 settings_raw = pre + mid + post
 
