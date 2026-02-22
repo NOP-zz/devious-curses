@@ -6,6 +6,10 @@
 
 namespace DCURSES {
     constexpr auto DCURSES_VERSION = "0.8.3";
+
+    static bool can_restrict_fast_travel_hook = false;
+
+    static bool UPDATE_LOOP_RUNNING = false;
 }
 
 #include "src/Utils.hpp"
@@ -59,8 +63,6 @@ namespace DCURSES {
         spdlog::flush_on(spdlog::level::trace);
     }
 
-    static bool UPDATE_LOOP_RUNNING = false;
-
     void StartUpdateLoop() {
         if (UPDATE_LOOP_RUNNING) {
             return;
@@ -72,6 +74,8 @@ namespace DCURSES {
             bool shouldSkipNextLoop = false;
             while (true) {
                 std::this_thread::sleep_for(1000ms);
+                
+                SetFastTravelStatePapyrus();
 
                 if (shouldSkipNextLoop) {
                     //log::trace("Skip Loop Marked");
@@ -206,8 +210,6 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
 
     using namespace DCURSES;
 
-    SKSE::AllocTrampoline(14);
-
     InitializeLogging();
 
     auto version_string = std::string(DCURSES_VERSION);
@@ -217,6 +219,17 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
 
     if (settings.debugMode) {
         log::debug("Debug mode");
+    }
+
+    REL::Version version = skse->RuntimeVersion();
+
+    can_restrict_fast_travel_hook = version >= SKSE::RUNTIME_SSE_1_6_640 && !settings.debugMode;
+
+    if (can_restrict_fast_travel_hook) {
+        SKSE::AllocTrampoline(14);
+    }
+    else {
+        log::info("Fast travel hooks skipped for version < 1.6.640");
     }
 
     SKSE::GetMessagingInterface()->RegisterListener([](SKSE::MessagingInterface::Message *message) {
@@ -245,7 +258,9 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
 
             QLIEAttemptInit();
 
-            InstallFastTravelHooks();
+            if (can_restrict_fast_travel_hook) {
+                InstallFastTravelHooks();
+            }
 
             if (settings.debugMode) {
                 Debug::AddLocationData();

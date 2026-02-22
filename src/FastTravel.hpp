@@ -4,22 +4,15 @@
 
 namespace DCURSES {
 	inline static REL::Relocation<std::uintptr_t> Can_Fast_Travel_Map_Hook{ REL::ID(53095), 0x328 };
-	//inline static REL::Relocation<std::uintptr_t> Papyrus_Fast_Travel_Hook{ REL::ID(55457), 0xA1 };
 
 	bool CanFastTravelMap(RE::Actor*, bool);
 
 	inline static REL::Relocation<decltype(CanFastTravelMap)>  _CanFastTravelMap;
 
-	bool CanFastTravelMap(RE::Actor* actor, bool a_bool) {
+	bool CanFastTravelDevices(RE::Actor* actor) {
 		auto player = RE::PlayerCharacter::GetSingleton();
 		auto scriptManager = ScriptingManager();
 
-		if (player->IsGodMode()) {
-			return true;
-		}
-		
-		log::trace("Running Fast Travel Code");
-		
 		if (settings.restrictFastTravelFull) {
 			if (GetWornDeviceCount(player) > 0) {
 				scriptManager.DBGNotification(Translator(Translation::FastTravelUnableDevices));
@@ -49,12 +42,33 @@ namespace DCURSES {
 			}
 		}
 
-		return _CanFastTravelMap(actor, a_bool);
+		return true;
+	}
+
+	bool CanFastTravelMap(RE::Actor* actor, bool a_bool) {
+		auto player = RE::PlayerCharacter::GetSingleton();
+
+		if (player->IsGodMode()) {
+			return true;
+		}
+		
+		log::trace("Running Fast Travel Code");
+
+		return CanFastTravelDevices(actor) && _CanFastTravelMap(actor, a_bool);
 	}
 
 	void InstallFastTravelHooks() {
 		auto& trampoline = SKSE::GetTrampoline();
 		_CanFastTravelMap = trampoline.write_call<5>(Can_Fast_Travel_Map_Hook.address(), CanFastTravelMap);
 		log::trace("Installed ft hook");
+	}
+
+	void SetFastTravelStatePapyrus() {
+		if (!can_restrict_fast_travel_hook && (settings.restrictFastTravel || settings.restrictFastTravelFull)) {
+			auto player = RE::PlayerCharacter::GetSingleton();
+			auto scriptManager = ScriptingManager();
+
+			scriptManager.EnableFastTravel(CanFastTravelDevices(player));
+		}
 	}
 }

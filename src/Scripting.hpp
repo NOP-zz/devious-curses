@@ -483,6 +483,12 @@ namespace DCURSES {
             RunIntent(intent);
         }
 
+        void EnableFastTravel(bool enabled) {
+            RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<bool>(std::move(enabled));
+            auto intent = ScriptIntent("Game", "EnableFastTravel", args);
+            RunIntent(intent);
+        }
+
         void CloseContainerMenus() {
             RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<std::string, std::string, std::string>("HUD Menu", "_global.skse.CloseMenu", "ContainerMenu");
             //UI.InvokeString("HUD Menu", "_global.skse.CloseMenu", "InventoryMenu")
