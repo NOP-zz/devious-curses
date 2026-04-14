@@ -57,6 +57,26 @@ namespace DCURSES {
 		TAT_NUDITY = 79,
 	};
 
+	std::string GetMarkAsString(MARK mark) {
+		switch (mark) {
+		case MARK::TAT_NONE:
+			return "NONE";
+		case MARK::TAT_ALLURE:
+			return "ALLURE";
+		case MARK::TAT_HEAT:
+			return "HEAT";
+		case MARK::TAT_BONDAGE:
+			return "BONDAGE";
+		case MARK::TAT_NUDITY:
+			return "NUDITY";
+		case MARK::TAT_BRANDING:
+			return "BRANDING";
+		case MARK::TAT_HEALSLUT:
+			return "HEALSLUT";
+		}
+		return "NONE";
+	}
+
 	int GetTattooCount(RE::Actor* actor) {
 		if (!actor) return 0;
 		if (!slavetats_ng::iface) return 0;
@@ -608,7 +628,7 @@ namespace DCURSES {
 							if (render) {
 								bool canEquip = true;
 								for (auto const& key : render->GetKeywords()) {
-									if (vectorContains(keywords, Util::GetFormEditorId(key))) {
+									if (Util::vectorContains<std::string>(keywords, Util::GetFormEditorId(key))) {
 										canEquip = false;
 									}
 								}
@@ -694,13 +714,16 @@ namespace DCURSES {
 				}
 				if (removes.size() > 0) {
 					log::trace("Lewd Mark removed {} items", removes.size());
+					PlayerMessage(Translator(Translation::MarkNudityEnforce));
 					for (auto item : removes) {
 						scriptManager.UnequipItem(player, item);
 					}
 				}
 			}
 			else {
-				UndressActor(player, false);
+				if (UndressActor(player, false)) {
+					PlayerMessage(Translator(Translation::MarkNudityEnforce));
+				}
 			}
 		}
 	}

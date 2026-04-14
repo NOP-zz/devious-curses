@@ -59,6 +59,11 @@ namespace DCURSES {
 		}
 
 		template<class T>
+		bool vectorContains(std::vector<T> vec, T elem) {
+			return std::find(vec.begin(), vec.end(), elem) != vec.end();
+		}
+
+		template<class T>
 		void ShuffleVector(std::vector<T> &vector) {
 			auto seed1 = (unsigned int)std::chrono::system_clock::now().time_since_epoch().count();
 			std::mt19937 e2(seed1);
@@ -260,7 +265,6 @@ namespace DCURSES {
 			}
 			else {
 				return
-					tolower(form->GetName()).find(tolower(comp)) != std::string::npos ||
 					tolower(GetFormEditorId(form)).find(tolower(comp)) != std::string::npos;
 			}
 		}

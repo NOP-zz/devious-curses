@@ -3,7 +3,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 # Set your project name. This will be the name of your SKSE .dll file.
-project(DeviousCurses VERSION 0.0.1 LANGUAGES CXX)
+project(DeviousCurses VERSION 0.8.5 LANGUAGES CXX)
 
 
 set(sources
@@ -67,9 +67,9 @@ add_custom_target(
     COMMENT "Preparing Translation Files"
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_SOURCE_DIR}/translationData/Devious Curses_English.json" "${OUTPUT_FOLDER}/translations/Devious Curses_ENGLISH.json"
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_SOURCE_DIR}/translationData/Devious Curses_English.txt" "${OUTPUT_FOLDER}/interface/translations/Devious Curses_ENGLISH.txt"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_SOURCE_DIR}/Version.txt" "${OUTPUT_FOLDER}/Version.txt"
 
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_SOURCE_DIR}/translationData/Devious Curses_English.json" "${OUTPUT_FOLDER_VR}/translations/Devious Curses_ENGLISH.json"
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_SOURCE_DIR}/translationData/Devious Curses_English.txt" "${OUTPUT_FOLDER_VR}/interface/translations/Devious Curses_ENGLISH.txt"
 )
 add_dependencies(Translations Codegen)
-

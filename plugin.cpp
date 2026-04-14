@@ -1,13 +1,13 @@
 #include "include/DDNG_API.h"
 #include "include/form_ids.h"
-#include "include/quicklootAPI.h"
 #include "include/SexLabPPFunctions.h"
 #include "include/SlaveTatsNG_Interface.h"
 
 namespace DCURSES {
-    constexpr auto DCURSES_VERSION = "0.8.3";
+    //SET THIS IN CMakeLists.txt
+    constexpr auto DCURSES_VERSION = "0.8.5";
 
-    static bool can_restrict_fast_travel_hook = false;
+    static bool can_install_fast_travel_hook = false;
 
     static bool UPDATE_LOOP_RUNNING = false;
 }
@@ -80,6 +80,20 @@ namespace DCURSES {
                 if (shouldSkipNextLoop) {
                     //log::trace("Skip Loop Marked");
                     shouldSkipNextLoop = false;
+                }
+
+                //log::trace("last settings: {}", std::string(std::format("{:%H%M%S}", lastSettingsEditTime)));
+
+                if (lastSettingsEditTime < std::filesystem::last_write_time(SETTINGS_FILE)) {
+                    log::info("Updating settings from file due to file change.");
+                    LoadSettingsFile();
+                    lastSettingsEditTime = std::chrono::clock_cast<std::filesystem::file_time_type::clock>(std::chrono::system_clock::now());
+                }
+
+                if (lastTranslationsEditTime < std::filesystem::last_write_time(languageFilename)) {
+                    log::info("Updating language from file due to file change.");
+                    Translator::UpdateTranslations();
+                    lastTranslationsEditTime = std::chrono::clock_cast<std::filesystem::file_time_type::clock>(std::chrono::system_clock::now());
                 }
 
                 if (IsModDisabled()) {
@@ -171,13 +185,7 @@ namespace DCURSES {
         return GetOppDeviceMask();
     }
 
-    void P_Test(RE::StaticFunctionTag*) {
-        log::trace("DCURSES Test");
-        //auto player = RE::PlayerCharacter::GetSingleton();
-    }
-
     bool PapyrusFunctions(RE::BSScript::IVirtualMachine* ivm) {
-        ivm->RegisterFunction("Test", "DCursesLib", P_Test);
         ivm->RegisterFunction("GetRandomEquipableDevice", "DCursesLib", P_GetRandomEquipableDevice);
         ivm->RegisterFunction("NumDevicesVisible", "DCursesLib", P_numDevicesVisible);
         ivm->RegisterFunction("NumDevicesEquipped", "DCursesLib", P_numDevicesEquipped);
@@ -223,9 +231,9 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
 
     REL::Version version = skse->RuntimeVersion();
 
-    can_restrict_fast_travel_hook = version >= SKSE::RUNTIME_SSE_1_6_640 && !settings.debugMode;
+    can_install_fast_travel_hook = version >= SKSE::RUNTIME_SSE_1_6_640;
 
-    if (can_restrict_fast_travel_hook) {
+    if (can_install_fast_travel_hook) {
         SKSE::AllocTrampoline(14);
     }
     else {
@@ -258,7 +266,7 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
 
             QLIEAttemptInit();
 
-            if (can_restrict_fast_travel_hook) {
+            if (can_install_fast_travel_hook) {
                 InstallFastTravelHooks();
             }
 
@@ -326,7 +334,6 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
                 });
 
             break;
-
         }
         case SKSE::MessagingInterface::kSaveGame: {
             counters.clock_SexTimeout -= 2;
@@ -334,8 +341,14 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
             break;
         }
         case SKSE::MessagingInterface::kInputLoaded: {
-            Translator::CheckMCMTranslations();
+            if (settings.debugMode) {
+                Debug::CheckMCMTranslations();
+            }
             Translator::UpdateTranslations();
+
+            log::trace("Moving Russian Language File");
+
+
             break;
         }
         }

@@ -86,6 +86,9 @@ namespace DCURSES {
         else if (Util::GetFormEditorId(location) == "DLC2ApocryphaLocation") { // Apocrypha
             return LocationType::Apocrypha;
         }
+        else if (location->formID == 0x0003B871) { // Ratway
+            return LocationType::Bandit;
+        }
 
 
         else if (location->HasKeywordString("LocTypePlayerHouse")) {

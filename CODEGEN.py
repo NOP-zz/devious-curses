@@ -4,6 +4,25 @@ if len(sys.argv) == 2:
 	os.chdir(sys.argv[1])
 	print("Python codegen directory: "+sys.argv[1])
 
+#Version File
+cmakelists_raw = open(r"CMakeLists.txt", "r").read()
+
+match = re.search(r'project\(DeviousCurses VERSION (.*?) LANGUAGES CXX\)', cmakelists_raw)
+mod_version = match.group(1)
+
+plugin_data = open(r"plugin.cpp", "r").read()
+plugin_data = re.sub('constexpr auto DCURSES_VERSION = "unknown";', f'constexpr auto DCURSES_VERSION = "{mod_version}";', plugin_data)
+
+with open(r"plugin.cpp", "w") as f:
+	f.write(plugin_data)
+
+with open(r"Version.txt", "w") as f:
+	f.write(mod_version)
+
+
+
+#MCM CODEGEN
+
 settings_raw = open(r"src\Settings.hpp", "r").read()
 settings = settings_raw.split("//MCM_START")[1].split("//MCM_END")[0]
 
@@ -210,17 +229,7 @@ Function RegisterModEvents()
 	RegisterForModEvent("DeviceActorOrgasmEx", "OnDDOrgasm")
 	RegisterForModEvent("dhlp-Suspend", "OnDhlpSuspend")
 	RegisterForModEvent("dhlp-Resume", "OnDhlpResume")
-
-	UnregisterForAllKeys()
-	RegisterForKey(setDebugKey)
 EndFunction
-
-Event OnKeyDown(Int keycode)
-	If keycode == setDebugKey
-		DCurses_Debug.OpenDebugMenu(self)
-	EndIf
-
-EndEvent
 
 Event OnSexEnd(int tid, bool HasPlayer)
 	If HasPlayer

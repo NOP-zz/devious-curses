@@ -77,6 +77,8 @@ namespace DCURSES {
             if (!settings.followerGags) {
                 usedKeys.push_back("zad_DeviousGag");
             }
+
+            count = static_cast<int>(count * settings.followerDeviceMult + Util::randomFloat(0, 1));
             count += settings.followerDeviceModifier;
         }
 
@@ -105,7 +107,7 @@ namespace DCURSES {
             auto inv = dev.value().inv;
 
             if (settings.beltPlugs && rend->HasKeywordString("zad_DeviousBelt")) {
-                if (!vectorContains(usedKeys, "zad_DeviousPlugAnal") && !rend->HasKeywordString("zad_PermitAnal")) {
+                if (!Util::vectorContains<std::string>(usedKeys, "zad_DeviousPlugAnal") && !rend->HasKeywordString("zad_PermitAnal")) {
                     std::optional<DeviceData> plug;
                     plug = GetRandomDevice(&devices.plugsABasic, {}, theme);
                     if (!plug) {
@@ -120,7 +122,7 @@ namespace DCURSES {
                         device_ids += ",";
                     }
                 }
-                if (!vectorContains(usedKeys, "zad_DeviousPlugVaginal") && !rend->HasKeywordString("zad_PermitVaginal") && (!settings.useGenderedPlugs || sex == 1)) {
+                if (!Util::vectorContains<std::string>(usedKeys, "zad_DeviousPlugVaginal") && !rend->HasKeywordString("zad_PermitVaginal") && (!settings.useGenderedPlugs || sex == 1)) {
                     std::optional<DeviceData> plug;
                     plug = GetRandomDevice(&devices.plugsVBasic, {}, theme);
                     if (!plug) {
@@ -199,6 +201,8 @@ namespace DCURSES {
         msg.pop_back(); msg.pop_back();
         log::trace("usedKeys: {}", msg);
 
+        SendCurseModEvent("Bondage", contName, actor, theme);
+
         return true;
     }
 
@@ -222,6 +226,9 @@ namespace DCURSES {
         SKSE::GetModCallbackEventSource()->SendEvent(&modevent);
         //PlayerMessage(fmt::format("As you touch the {} you see a flash of light and immediately pass out. Through intermittent consciousness you can feel someone carrying you somewhere...", contName));
         PlayerMessage(Translator(Translation::EventSimpleSlavery, contName));
+
+        SendCurseModEvent("SimpleSlavery", contName, player, "");
+
         return true;
 
     }
@@ -252,6 +259,8 @@ namespace DCURSES {
             }
         }
 
+        SendCurseModEvent("Tattoo", containerName, actor, "");
+
         return true;
     }
 
@@ -272,6 +281,8 @@ namespace DCURSES {
 
         //PlayerMessage(fmt::format("As you touch the {} you feel yourself get dizzy as you are strung up into some sort of contraption!", containerName));
         PlayerMessage(Translator(Translation::EventContraption, containerName));
+
+        SendCurseModEvent("Contraption", containerName, RE::PlayerCharacter::GetSingleton(), contraption->GetName());
 
         return true;
     }
@@ -326,12 +337,16 @@ namespace DCURSES {
         AddLewdMark(mark);
         SetMarkToDefaultSettings(mark, multiplier);
 
+        SendCurseModEvent("LewdMark", containerName, player, GetMarkAsString(mark));
+
         return true;
     }
 
     void DoWickedEvent(std::string containerName) {
         CustomModEvent::SendModEvent("DwdEquipDeviceWithMcmChances", "", 1);
         PlayerMessage(Translator(Translation::EventWicked, containerName));
+
+        SendCurseModEvent("WickedDevices", containerName, RE::PlayerCharacter::GetSingleton(), "");
     }
 
     bool DoAbadonEvent(std::string containerName) {
@@ -379,6 +394,8 @@ namespace DCURSES {
         if (!containerName.empty()) {
             PlayerMessage(Translator(Translation::EventAbadon, containerName));
         }
+
+        SendCurseModEvent("AbadonPlug", containerName, player, "");
         
         return true;
     }
@@ -450,22 +467,29 @@ namespace DCURSES {
             return false;
         }
 
+        std::string typeString = "";
+
         switch (type) {
         case AbadonEventType::Warrior: {
             PlayerMessage(Translator(Translation::EventAbadonWarrior, containerName));
+            typeString = "Warrior";
             break;
         }
         case AbadonEventType::Scout: {
             PlayerMessage(Translator(Translation::EventAbadonScout, containerName));
+            typeString = "Scout";
             break;
         }
         case AbadonEventType::Witch: {
             PlayerMessage(Translator(Translation::EventAbadonWitch, containerName));
+            typeString = "Witch";
             break;
         }
         default:
             return false;
         }
+
+        SendCurseModEvent("AbadonSet", containerName, actor, typeString);
 
         return true;
     }
@@ -619,7 +643,7 @@ namespace DCURSES {
                 if (settings.allowFollowerEvents) {
                     log::info("Adding Devices to followers...");
                     for (auto follower : GetFollowersForEvent()) {
-                        DoStandardEvent(follower, isBoss, contName);
+                        DoStandardEvent(follower, isBoss, contName, settings.followerOverrideTheme);
                     }
                 }
                 return true;
@@ -752,10 +776,24 @@ namespace DCURSES {
             data.isDragon = true;
         }
 
-        RE::TESFaction* warlockFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x26724, "Skyrim.esm");
-        RE::TESFaction* necromancerFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x34B74, "Skyrim.esm");
-        if (data.isDeadActor && (actor->IsInFaction(warlockFaction) || actor->IsInFaction(necromancerFaction))) {
-            data.isMage = true;
+        if (actor && (data.isDeadActor && !Util::ActorIsCreature(actor))) {
+            auto actor_base = actor->GetActorBase();
+            if (settings.oppLivingLatexGemAll) {
+                data.isMage = true;
+            }
+            if (actor_base && actor_base->npcClass) {
+                auto class_data = actor_base->npcClass->data;
+                if (class_data.skillWeights.destruction >= 3 || class_data.skillWeights.restoration >= 3 || class_data.skillWeights.conjuration >= 3) {
+                    data.isMage = true;
+                }
+            }
+            else {
+                RE::TESFaction* warlockFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x26724, "Skyrim.esm");
+                RE::TESFaction* necromancerFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x34B74, "Skyrim.esm");
+                if ((actor->IsInFaction(warlockFaction) || actor->IsInFaction(necromancerFaction))) {
+                    data.isMage = true;
+                }
+            }
         }
 
         return data;
@@ -985,7 +1023,7 @@ namespace DCURSES {
                 logMessage += fmt::format("(locked {}) ", settings.lockedModifier);
             }
         }
-
+        
         auto location_type = GetPlayerLocationType();
 
         float location_chance = GetLocationTypeEventModifier(location_type);

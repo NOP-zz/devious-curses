@@ -525,6 +525,20 @@ namespace DCURSES {
             auto intent3 = ScriptIntent("Debug", "Notification", args);
             RunIntent(intent3);
         }
+
+        void OpenDebugMenu() {
+            RE::TESQuest* form = StaticDataHolder::GetSingleton()->LookupForm<RE::TESQuest>(DCURSES_MCM, "Devious Curses.esp");
+            if (!form) return;
+            auto handle = GetHP()->GetHandleForObject(RE::FormType::Quest, form);
+            RE::BSTSmartPointer<RE::BSScript::Object> mcmObject;
+            GetVM()->FindBoundObject(handle, "DCurses_MCM", mcmObject);
+            if (!mcmObject) return;
+
+
+            RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<RE::TESQuest*>(std::move(form));
+            auto intent = ScriptIntent("DCurses_Debug", "OpenDebugMenu", args);
+            RunIntent(intent);
+        }
     };
 
     uint32_t ScriptingManager::refCount = 0;

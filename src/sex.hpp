@@ -132,10 +132,10 @@ namespace DCURSES {
 		auto playerNumDevices = numDevicesVisible(player);
 		auto playerWornDeviceKeywords = GetWornDeviceKeywords(player);
 		auto playerIsNude = getIsNude(player);
-		auto playerIsWearingCollar = vectorContains(playerWornDeviceKeywords, "zad_DeviousCollar");
-		auto playerIsWearingHeavyBondage = vectorContains(playerWornDeviceKeywords, "zad_DeviousHeavyBondage");
-		auto playerIsWearingBlindfold = vectorContains(playerWornDeviceKeywords, "zad_DeviousBlindfold");
-		auto playerIsWearingBoots = vectorContains(playerWornDeviceKeywords, "zad_DeviousBoots");
+		auto playerIsWearingCollar = Util::vectorContains<std::string>(playerWornDeviceKeywords, "zad_DeviousCollar");
+		auto playerIsWearingHeavyBondage = Util::vectorContains<std::string>(playerWornDeviceKeywords, "zad_DeviousHeavyBondage");
+		auto playerIsWearingBlindfold = Util::vectorContains<std::string>(playerWornDeviceKeywords, "zad_DeviousBlindfold");
+		auto playerIsWearingBoots = Util::vectorContains<std::string>(playerWornDeviceKeywords, "zad_DeviousBoots");
 
 		RE::TESObjectARMO* summoner_collar = StaticDataHolder::GetSingleton()->LookupForm<RE::TESObjectARMO>(SUMMONER_COLLAR, "Devious Curses.esp");
 		auto playerHasSummonerCollar = ActorIsWearingDevice(player, summoner_collar);
@@ -335,6 +335,10 @@ namespace DCURSES {
 	std::string P_GetAnimationFilterTags(RE::StaticFunctionTag*, RE::Actor* akActor) {
 		int mask = GetDeviceMask(akActor);
 
+		if (!settings.sexFilterDevices) {
+			return "";
+		}
+
 		std::string tagsToRemove;
 
 		if (!(mask & 0b0100)) {
@@ -357,6 +361,10 @@ namespace DCURSES {
 		int mask = GetDeviceMask(akActor);
 
 		std::string tags;
+
+		if (!settings.sexFilterDevices) {
+			return "";
+		}
 
 		if (!(mask & 0b0100)) {
 			tags = "-Oral," + tags;

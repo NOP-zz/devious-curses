@@ -1,15 +1,17 @@
 #pragma once
 
 /*
-	Header File for QuickLoot integration
+	Header File for QuickLoot IE integration
 */
 
-namespace QuickLoot::API
+namespace QuickLoot::API4
 {
 	struct ItemStack
 	{
+		// This is a pointer to the inventory entry
 		RE::InventoryEntryData* entry;
-		RE::TESObjectREFR* dropRef;
+		// This is set if the inventory entry is for an item the NPC dropped on the floor.
+		RE::ObjectRefHandle dropRef;
 	};
 
 	namespace Events
@@ -23,56 +25,86 @@ namespace QuickLoot::API
 		struct TakingItemEvent
 		{
 			RE::Actor* actor;
-			RE::TESObjectREFR* container;
+			RE::ObjectRefHandle container;
 			const ItemStack* stack;
+			// Set this to HandleResult::kStop to prevent the item from being taken.
 			HandleResult result = HandleResult::kContinue;
 		};
 
 		struct TakeItemEvent
 		{
 			RE::Actor* actor;
-			RE::TESObjectREFR* container;
+			RE::ObjectRefHandle container;
 			const ItemStack* stack;
 		};
 
 		struct SelectItemEvent
 		{
 			RE::Actor* actor;
-			RE::TESObjectREFR* container;
+			RE::ObjectRefHandle container;
 			const ItemStack* stack;
 		};
 
 		struct OpeningLootMenuEvent
 		{
-			RE::TESObjectREFR* container;
+			RE::ObjectRefHandle container;
+			// Set this to HandleResult::kStop to prevent the loot menu from opening.
 			HandleResult result = HandleResult::kContinue;
 		};
 
 		struct OpenLootMenuEvent
 		{
-			RE::TESObjectREFR* container;
+			RE::ObjectRefHandle container;
 		};
 
 		struct CloseLootMenuEvent
 		{
-			RE::TESObjectREFR* container;
+			RE::ObjectRefHandle container;
 		};
 
 		struct InvalidateLootMenuEvent
 		{
-			RE::TESObjectREFR* container;
-			const ItemStack* stacks;
-			size_t stackCount;
+			RE::ObjectRefHandle container;
+			const RE::BSTArray<ItemStack>& inventory;
+		};
+
+		struct ModifyInventoryEvent
+		{
+			RE::ObjectRefHandle container;
+			// Modify this array to change what is displayed in the item list.
+			// Each ItemStack owns its InventoryEntryData object.
+			// - If you remove entries, make sure to delete their InventoryEntryData objects to avoid leaking memory.
+			// - If you add entries, allocate the InventoryEntryData objects with the new operator. QuickLoot will delete them once they are no longer needed.
+			RE::BSTArray<ItemStack>& inventory;
+		};
+
+		struct PopulateInfoBarEvent
+		{
+			RE::ObjectRefHandle container;
+			// The selected item stack. This is null if the container is empty.
+			const ItemStack* stack;
+			// Populate this array with text you want to display in the info bar. Some HTML is supported.
+			RE::BSTArray<RE::BSString> result;
+		};
+
+		struct ButtonDefinition
+		{
+			RE::BSString label;
+			// For a list of valid values, see https://github.com/MissCorruption/QuickLootIE/blob/main/src/Input/ButtonArtIndex.h
+			uint16_t buttonArtIndex;
+		};
+
+		struct PopulateButtonBarEvent
+		{
+			RE::ObjectRefHandle container;
+			// The selected item stack. This is null if the container is empty.
+			const ItemStack* stack;
+			// Populate this array with buttons you want to add.
+			RE::BSTArray<ButtonDefinition> result;
 		};
 
 		template <typename TEvent>
 		using EventHandler = void (*)(TEvent* e);
-
-		template <typename TEvent>
-		struct HandlerRegistrationRequest
-		{
-			EventHandler<TEvent> handler;
-		};
 
 		using TakingItemHandler = EventHandler<TakingItemEvent>;
 		using TakeItemHandler = EventHandler<TakeItemEvent>;
@@ -81,6 +113,9 @@ namespace QuickLoot::API
 		using OpenLootMenuHandler = EventHandler<OpenLootMenuEvent>;
 		using CloseLootMenuHandler = EventHandler<CloseLootMenuEvent>;
 		using InvalidateLootMenuHandler = EventHandler<InvalidateLootMenuEvent>;
+		using ModifyInventoryHandler = EventHandler<ModifyInventoryEvent>;
+		using PopulateInfoBarHandler = EventHandler<PopulateInfoBarEvent>;
+		using PopulateButtonBarHandler = EventHandler<PopulateButtonBarEvent>;
 	}
 
 	using namespace Events;
@@ -95,14 +130,14 @@ namespace QuickLoot::API
 		QuickLootAPI operator=(QuickLootAPI&) = delete;
 		QuickLootAPI operator=(QuickLootAPI&&) = delete;
 
-		static constexpr const LPCWSTR SERVER_PLUGIN_NAME = L"QuickLootIE";
+		static constexpr const char* SERVER_PLUGIN_NAME = "QuickLootIE";
 
 		// Call this before any other API function and pass your own plugin name.
 		static bool Init(const char* plugin)
 		{
 			using GetInterfaceProc = InterfaceV20 * (*)();
 
-			const auto dllHandle = GetModuleHandle(SERVER_PLUGIN_NAME);
+			const auto dllHandle = GetModuleHandleA(SERVER_PLUGIN_NAME);
 			const auto getInterfaceProc = reinterpret_cast<GetInterfaceProc>(GetProcAddress(dllHandle, "GetQuickLootInterfaceV20"));
 
 			if (getInterfaceProc) {
@@ -181,6 +216,27 @@ namespace QuickLoot::API
 			}
 		}
 
+		static void RegisterModifyInventoryHandler(ModifyInventoryHandler handler)
+		{
+			if (_interface) {
+				_interface->RegisterModifyInventoryHandler(_plugin, handler);
+			}
+		}
+
+		static void RegisterPopulateInfoBarHandler(PopulateInfoBarHandler handler)
+		{
+			if (_interface) {
+				_interface->RegisterPopulateInfoBarHandler(_plugin, handler);
+			}
+		}
+
+		static void RegisterPopulateButtonBarHandler(PopulateButtonBarHandler handler)
+		{
+			if (_interface) {
+				_interface->RegisterPopulateButtonBarHandler(_plugin, handler);
+			}
+		}
+
 	private:
 		// ReSharper disable once CppPolymorphicClassWithNonVirtualPublicDestructor
 		struct InterfaceV20
@@ -195,6 +251,15 @@ namespace QuickLoot::API
 			virtual void RegisterOpenLootMenuHandler(const char* plugin, OpenLootMenuHandler handler);
 			virtual void RegisterCloseLootMenuHandler(const char* plugin, CloseLootMenuHandler handler);
 			virtual void RegisterInvalidateLootMenuHandler(const char* plugin, InvalidateLootMenuHandler handler);
+
+			virtual void RegisterModifyInventoryHandler(const char* plugin, ModifyInventoryHandler handler);
+			virtual void RegisterPopulateInfoBarHandler(const char* plugin, PopulateInfoBarHandler handler);
+			virtual void RegisterPopulateButtonBarHandler(const char* plugin, PopulateButtonBarHandler handler);
+
+			virtual void ForceCurrentContainer(const char* plugin, RE::ObjectRefHandle container);
+			virtual void ClearForcedContainer(const char* plugin);
+			virtual void CloseLootMenu(const char* plugin);
+			virtual void RefreshLootMenu(const char* plugin);
 		};
 
 		static inline const char* _plugin;

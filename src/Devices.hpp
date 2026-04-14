@@ -460,10 +460,6 @@ namespace DCURSES {
 		return true;
 	}
 
-	bool vectorContains(std::vector<std::string> vec, std::string elem) {
-		return std::find(vec.begin(), vec.end(), elem) != vec.end();
-	}
-
 	RE::TESKey* GetDeviceKey(RE::TESObjectARMO* device) {
 		if (!device) return nullptr;
 
@@ -619,7 +615,7 @@ namespace DCURSES {
 			}
 
 			bool isCage = false;
-			if (deviceRendered->HasKeywordString("zad_DeviousBelt") && ((Util::testFormComp("Cage", deviceInventory) || Util::FormEditorIdContains(deviceRendered, "vivis")))) {
+			if (deviceRendered->HasKeywordString("zad_DeviousBelt") && ((Util::FormEditorIdContains(deviceInventory, "Cage") || Util::FormEditorIdContains(deviceRendered, "vivis")))) {
 				isCage = true;
 				typedef RE::BGSBipedObjectForm::BipedObjectSlot BOS;
 				auto slot = static_cast<uint32_t>(deviceRendered->GetSlotMask());
@@ -967,7 +963,9 @@ namespace DCURSES {
 
 		for (auto list : lists) {
 			auto adj = GetAdjustedDeviceList(list.first, skipList, theme);
-			adjustedLists.push_back(std::make_pair(adj, list.second));
+			if (adj.first.size() > 0) {
+				adjustedLists.push_back(std::make_pair(adj, list.second));
+			}
 		}
 
 		auto list = Util::VectorSelectWeighted(adjustedLists);

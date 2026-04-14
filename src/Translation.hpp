@@ -8,8 +8,13 @@
 #include "Utils.hpp"
 
 constexpr auto TRANSLATIONS_PREFIX = "Data/translations/Devious Curses_{}.json";
+constexpr auto TRANSLATIONS_PREFIX_STRINGS = "Data/translations/Devious Curses_Strings_{}.json";
 
 namespace DCURSES {
+
+	std::filesystem::file_time_type lastTranslationsEditTime = std::chrono::clock_cast<std::filesystem::file_time_type::clock>(std::chrono::system_clock::now());
+	std::string languageFilename = fmt::format(TRANSLATIONS_PREFIX, "ENGLISH");
+
 	enum class Translation : uint32_t {
 		//TRNASLATIONS_START
 		ConsequenceRandomDeviceSex,//Now that {} is done with you, they force a {} on you before you can react!
@@ -87,6 +92,7 @@ namespace DCURSES {
 		MarkAllureRemove,//You sense that people are no longer staring at you as the allure mark fades from your body.
 		MarkBondageDevice,//Your mark pulses with light as your {} appears on your body!
 		MarkBondageRemove,//You feel much less oppressed as the bondage mark fades from your body.
+		MarkNudityEnforce,//As you put on your clothes, you feel compelled to take them off again!
 		MarkNudityRemove,//You feel less helpless as the nudity mark fades from your body.
 		MarkBrandingPunish,//You loose {} gold as punishment for loosing tattoos!
 		MarkBrandingTattoo,//You feel a sharp pain as the mark brands you!
@@ -129,6 +135,8 @@ namespace DCURSES {
 		//TRNASLATIONS_END
 	};
 
+	bool GetDebugMode();
+
 	typedef std::map<std::string, std::string> TranslationsMap;
 
 	class Translator {
@@ -138,13 +146,13 @@ namespace DCURSES {
 			return &translations;
 		}
 
-		static TranslationsMap LoadTranslationsMap(std::string languageFilename) {
-			if (!std::filesystem::exists(languageFilename)) {
-				log::error("Unable to get translation file {}.", languageFilename);
+		static TranslationsMap LoadTranslationsMap(std::string langFilename) {
+			if (!std::filesystem::exists(langFilename)) {
+				log::error("Unable to get translation file {}.", langFilename);
 				return TranslationsMap();
 			}
 
-			std::ifstream i(languageFilename);
+			std::ifstream i(langFilename);
 			nlohmann::json j = nlohmann::json::parse("{}");
 
 			try {
@@ -152,7 +160,7 @@ namespace DCURSES {
 				return j.get<TranslationsMap>();
 			}
 			catch (...) {
-				log::error("Unable to parse Translation file {}.", languageFilename);
+				log::error("Unable to parse Translation file {}.", langFilename);
 				return TranslationsMap();
 			}
 		}
@@ -232,6 +240,7 @@ namespace DCURSES {
 				case (Translation::MarkAllureRemove): return "MarkAllureRemove";
 				case (Translation::MarkBondageDevice): return "MarkBondageDevice";
 				case (Translation::MarkBondageRemove): return "MarkBondageRemove";
+				case (Translation::MarkNudityEnforce): return "MarkNudityEnforce";
 				case (Translation::MarkNudityRemove): return "MarkNudityRemove";
 				case (Translation::MarkBrandingPunish): return "MarkBrandingPunish";
 				case (Translation::MarkBrandingTattoo): return "MarkBrandingTattoo";
@@ -304,7 +313,7 @@ namespace DCURSES {
 			translations->clear();
 
 			auto languageString = Util::toupper(RE::GetINISetting("sLanguage:General")->GetString());
-			std::string languageFilename = fmt::format(TRANSLATIONS_PREFIX, Util::toupper(languageString));
+			languageFilename = fmt::format(TRANSLATIONS_PREFIX, Util::toupper(languageString));
 			std::string englishFilename = fmt::format(TRANSLATIONS_PREFIX, "ENGLISH");
 
 			if (!std::filesystem::exists(languageFilename)) {
@@ -324,84 +333,15 @@ namespace DCURSES {
 
 				for (auto [key, value] : english) {
 					if (!lang.count(key)) {
-						log::warn("{} translation is missing key {}", languageString, key);
+						if (GetDebugMode()) {
+							log::warn("{} translation is missing key {}", languageString, key);
+						}
 						lang[key] = english[key];
 					}
 				}
 
 				*translations = lang;
 			}
-		}
-
-		static void CheckMCMTranslations() {
-			auto languageString = Util::toupper(RE::GetINISetting("sLanguage:General")->GetString());
-			if (languageString == "ENGLISH") {
-				return;
-			}
-
-			std::string languageFilename = fmt::format("Data/interface/translations/Devious Curses_{}.txt", Util::toupper(languageString));
-			std::string englishFilename = "Data/interface/translations/Devious Curses_ENGLISH.txt";
-			if (!std::filesystem::exists(languageFilename)) {
-				log::warn("MCM Translation file for {} does not exist, cloning ENGLISH.", languageString);
-				std::filesystem::copy_file(englishFilename, languageFilename);
-				return;
-			}
-
-			//std::filesystem::rename(languageFilename, languageFilename + ".temp");
-
-			std::ifstream eng(englishFilename, std::ios::binary);
-			eng.ignore(2);
-
-			std::ifstream lang(languageFilename, std::ios::binary);
-			lang.ignore(2);
-
-			std::vector<std::pair<std::string, std::string>> engMap;
-			std::map<std::string, std::string> langMap;
-			
-			std::string line;
-			while (std::getline(eng, line)) {
-				if (line.find('\t') == std::string::npos) { continue; }
-				auto token = line.substr(0, line.find('\t'));
-				if (token[0] == '\0') token = token.substr(1);
-				engMap.push_back({ token, line });
-			}
-			while (std::getline(lang, line)) {
-				if (line.find('\t') == std::string::npos) { continue; }
-				auto token = line.substr(0, line.find('\t'));
-				if (token[0] == '\0') token = token.substr(1);
-				langMap[token] = line;
-			}
-
-			std::ofstream out(languageFilename, std::ios::binary);
-
-			out << "\xFF\xFE";
-
-			for (auto& [token, value] : engMap) {
-				std::string tokenPrint;
-				for (size_t i = 0; i < token.size(); i++) {
-					if (token[i]) {
-						tokenPrint.push_back(token[i]);
-					}
-				}
-
-				if (langMap.count(token)) {
-					out << langMap[token] << '\n';
-					if (langMap[token] == value) {
-						log::warn("{} MCM translation matches english: {}", languageString, tokenPrint);
-					}
-				}
-				else {
-					
-					tokenPrint += (char)0;
-					log::warn("{} MCM translation missing key {}", languageString, tokenPrint);
-					out << value << '\n';
-				}
-			}
-
-			
-			out.close();
-
-			//std::filesystem::remove(languageFilename + ".temp");
 		}
 	};
 }

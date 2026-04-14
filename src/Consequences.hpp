@@ -308,17 +308,22 @@ namespace DCURSES {
 		log::trace("Checking consequence dialogue");
 		bool isNude = getIsNude(player, true);
 		
-		if (isNude) {
+		auto keywords = GetWornDeviceKeywords(player);
+		bool isChastity = Util::vectorContains<std::string>(keywords, "zad_DeviousBelt") && Util::vectorContains<std::string>(keywords, "zad_DeviousBra") && settings.consTolerableChastity;
+
+		if (isNude && !isChastity) {
 			SetConsequenceTargetKnown(actor->formID);
-			lewdMarkCounters.nudityCounter -= 1;
-			if (Util::randomDouble() <= settings.consTriggerNude) {
+			if (!settings.LMNuditySkipGagged || !GetWornInventoryDeviceByKeyword(player, "zad_DeviousGag")) {
+				lewdMarkCounters.nudityCounter -= 1;
+			}
+			if (Util::randomDouble() <= settings.consTriggerNude * settings.consGaggedMultiplier) {
 				log::trace("Nude Trigger");
 				if (DoConsequence(actor, consequenceSource::kNude)) {
 					//actor->EndDialogue();
 				}
 			}
 		}
-		if (GetWornInventoryDeviceByKeyword(player, "zad_DeviousHeavyBondage") && Util::randomDouble() < settings.consTriggerRestrained) {
+		if (GetWornInventoryDeviceByKeyword(player, "zad_DeviousHeavyBondage") && Util::randomDouble() < settings.consTriggerRestrained * settings.consGaggedMultiplier) {
 			SetConsequenceTargetKnown(actor->formID);
 			log::trace("Bondage Trigger");
 			if (DoConsequence(actor, consequenceSource::kRestrained)) {

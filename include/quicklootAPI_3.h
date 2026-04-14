@@ -6,7 +6,7 @@
 	Header File for QuickLoot integration
 */
 
-namespace QuickLoot
+namespace QuickLoot::API3
 {
 	struct Element
 	{

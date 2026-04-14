@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../include/form_ids.h"
+#include "DebugMode.hpp"
 #include "events.hpp"
 #include "QuestInteractions.hpp"
 
@@ -22,8 +23,6 @@ namespace DCURSES {
                 return;
             }
             ScriptEventSource->AddEventSink(&eventSink);
-
-            log::trace("Attached quest stage event sink.");
         }
     };
 
@@ -56,8 +55,6 @@ namespace DCURSES {
                 return;
             }
             ScriptEventSource->PrependEventSink(&eventSink);
-
-            log::trace("Attached activate event sink.");
         }
     };
 
@@ -101,8 +98,6 @@ namespace DCURSES {
                 return;
             }
             ScriptEventSource->PrependEventSink(&eventSink);
-
-            log::trace("Attached container changed event sink.");
         }
     };
 
@@ -196,8 +191,6 @@ namespace DCURSES {
                 return;
             }
             ScriptEventSource->AddEventSink(&eventSink);
-
-            log::trace("Attached equip event sink.");
         }
     };
 
@@ -219,8 +212,6 @@ namespace DCURSES {
                 return;
             }
             ScriptEventSource->AddEventSink(&eventSink);
-
-            log::trace("Attached magic event sink.");
         }
     };
 
@@ -247,8 +238,6 @@ namespace DCURSES {
                 return;
             }
             ScriptEventSource->AddEventSink(&eventSink);
-
-            log::trace("Attached spell event sink.");
         }
     };
 
@@ -291,8 +280,48 @@ namespace DCURSES {
                 return;
             }
             ScriptEventSource->AddEventSink(&eventSink);
+        }
+    };
 
-            log::trace("Attached hit event sink.");
+    typedef RE::InputEvent* InputEventPTR;
+
+    class InputEventSink : public RE::BSTEventSink<InputEventPTR>
+    {
+        virtual RE::BSEventNotifyControl ProcessEvent(const InputEventPTR* inputEventPtr, RE::BSTEventSource<InputEventPTR>*) override {
+            if (RE::UI::GetSingleton()->GameIsPaused()) {
+                return RE::BSEventNotifyControl::kContinue;
+            }
+
+            if (auto inputEvent = *inputEventPtr) {
+                if (auto buttonEvent = inputEvent->AsButtonEvent()) {
+                    auto device = static_cast<std::underlying_type_t<RE::INPUT_DEVICE>>(buttonEvent->GetDevice());
+                    if (buttonEvent->IsDown() && (device == 0 || device == 3 || device == 9)) {
+                        auto idCode = static_cast<int>(buttonEvent->GetIDCode());
+
+                        if (idCode <= 0) {
+                            return RE::BSEventNotifyControl::kContinue;
+                        }
+                        else if (idCode == 55 && settings.debugMode) {
+                            Debug::Test();
+                        }
+                        else if (idCode == settings.setDebugKey) {
+                            ScriptingManager().OpenDebugMenu();
+                        }
+                    }
+                }
+            }
+
+            return RE::BSEventNotifyControl::kContinue;
+        }
+
+    public:
+        static void RegisterEvent() {
+            static InputEventSink eventSink;
+            auto InputEventSource = RE::BSInputDeviceManager::GetSingleton();
+            if (!InputEventSource) {
+                return;
+            }
+            InputEventSource->AddEventSink(&eventSink);
         }
     };
 
@@ -493,12 +522,11 @@ namespace DCURSES {
         static void RegisterEvent() {
             static ModEventSink eventSink;
             SKSE::GetModCallbackEventSource()->AddEventSink(&eventSink);
-
-            log::trace("Attached mod event sink.");
         }
     };
 
     void RegisterEventSinks() {
+        log::trace("Attaching Event Sinks");
         ActivateEventSink::RegisterEvent();
         ContainerChangedEventSink::RegisterEvent();
         EquipEventSink::RegisterEvent();
@@ -506,6 +534,7 @@ namespace DCURSES {
         MGEFEventSink::RegisterEvent();
         SpellEventSink::RegisterEvent();
         HitEventSink::RegisterEvent();
+        InputEventSink::RegisterEvent();
         ModEventSink::RegisterEvent();
     }
 }

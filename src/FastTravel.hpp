@@ -3,13 +3,11 @@
 #include "Settings.hpp"
 
 namespace DCURSES {
-	inline static REL::Relocation<std::uintptr_t> Can_Fast_Travel_Map_Hook{ REL::ID(53095), 0x328 };
-
 	bool CanFastTravelMap(RE::Actor*, bool);
 
 	inline static REL::Relocation<decltype(CanFastTravelMap)>  _CanFastTravelMap;
 
-	bool CanFastTravelDevices(RE::Actor* actor) {
+	bool CanFastTravelDevices() {
 		auto player = RE::PlayerCharacter::GetSingleton();
 		auto scriptManager = ScriptingManager();
 
@@ -54,21 +52,22 @@ namespace DCURSES {
 		
 		log::trace("Running Fast Travel Code");
 
-		return CanFastTravelDevices(actor) && _CanFastTravelMap(actor, a_bool);
+		return CanFastTravelDevices() && _CanFastTravelMap(actor, a_bool);
 	}
 
 	void InstallFastTravelHooks() {
 		auto& trampoline = SKSE::GetTrampoline();
+		static REL::Relocation<std::uintptr_t> Can_Fast_Travel_Map_Hook{ REL::ID(53095), 0x328 };
+		
 		_CanFastTravelMap = trampoline.write_call<5>(Can_Fast_Travel_Map_Hook.address(), CanFastTravelMap);
 		log::trace("Installed ft hook");
 	}
 
 	void SetFastTravelStatePapyrus() {
-		if (!can_restrict_fast_travel_hook && (settings.restrictFastTravel || settings.restrictFastTravelFull)) {
-			auto player = RE::PlayerCharacter::GetSingleton();
+		if (!can_install_fast_travel_hook && (settings.restrictFastTravel || settings.restrictFastTravelFull)) {
 			auto scriptManager = ScriptingManager();
 
-			scriptManager.EnableFastTravel(CanFastTravelDevices(player));
+			scriptManager.EnableFastTravel(CanFastTravelDevices());
 		}
 	}
 }

@@ -17,6 +17,8 @@ constexpr auto SETTINGS_FILE = "Data/SKSE/Plugins/DeviousCurses.json";
 
 namespace DCURSES {
 
+	std::filesystem::file_time_type lastSettingsEditTime = std::chrono::clock_cast<std::filesystem::file_time_type::clock>(std::chrono::system_clock::now());
+
 	struct Settings {
 		bool debugMode = false;
 
@@ -48,11 +50,11 @@ namespace DCURSES {
 		int eventScalingMod = 15;				//Event Scaling Target//The number of events before traps start becoming more likely.//{0}//(1,50,1)
 		//Column
 		//Header Parameters
-		int minRestraints = 1;					//Min Restraints//Minimum number of restraints.//{0}//(1,15,1)
-		int maxRestraints = 3;					//Max Restraints//Maximum number of restraints.//{0}//(1,15,1)
+		int minRestraints = 1;					//Min Restraints//Minimum number of restraints.//{0}//(1,20,1)
+		int maxRestraints = 3;					//Max Restraints//Maximum number of restraints.//{0}//(1,20,1)
 		int bossAditionalRestraints = 2;		//Boss Restraints//Added restraints when opening a boss chest.//{0}//(0,10,1)
 		bool bossOnlyHeavy = true;				//Boss Heavy Restraints//Heavy restraints can only be applied from boss chests.
-		int restraintCap = 7;					//Restraints Cap//Events won't happen if you have more than this many restraints.//{0}//(1,15,1)
+		int restraintCap = 7;					//Restraints Cap//Events won't happen if you have more than this many restraints.//{0}//(1,20,1)
 		bool stripPlayerOnEvent = true;			//Strip Player//Toggle to choose if the player should be stripped on any event.\nIf a heavy bondage device is equipped the player will be stripped anyway.
 		bool stripOnlyKeywords = true;			//Strip Armor Keywords//This will only remove items that are tagged as armor or clothing through keywords.\nThis may cause some modded items to not be unequipped.
 		//Header Arousal
@@ -116,10 +118,12 @@ namespace DCURSES {
 		bool allowFollowerEvents = false;		//Follower Events//Allow followers to be affected by curses. Currently only applies to the Bondage Curse and Tattoo Curse.
 		bool onlyFemaleFollowers = true;		//Only Female Followers//Follower events will only trigger if the follower uses a female body (female & futa).
 		text excludedFollowers = "";			//Excluded Followers//List of followers that are excluded from events. Names should be comma-separated.\nThis will check to see if any part of their name matches.\nExample: "Lydia, J'zargo"
+		text followerOverrideTheme = "";		//Override Theme//This theme will be used for all events that affect followers.
 		//Column
 		bool followerHeavyRestraints = false;	//Follower Heavy Restraints//Will allow events to equip heavy restraints on followers.
 		bool followerGags = false;				//Follower Gags//Will allow gags to be equipped on followers.
-		int followerDeviceModifier = 0;			//Follower Device Modifier//Will add (or subtrace) this many devices when equipping followers with devices.\nFollowers will always be equipped with at least one device.//{0}//(-10,10,1)
+		float followerDeviceMult = 0.75f;		//Follower Device Multiplier//Will act as a multiplier on how many devices are equipped on followers.\nWill be applied before the modifier.//{2}//(0,3,0.02)
+		int followerDeviceModifier = 0;			//Follower Device Modifier//Will add (or subtract) this many devices when equipping followers with devices.\nFollowers will always be equipped with at least one device.//{0}//(-10,10,1)
 
 
 		//Page Events
@@ -211,6 +215,7 @@ namespace DCURSES {
 		bool LMNudityChestOnly = false;			//Chest Only//With this enabled only chest armor will be checked and removed. Otherwise all armor will be unequipped.		?:? flag_LewdMarks **RELOAD
 		text LMNudityAditionalForms = "";		//Strip Slots//A comma separated list of additional slots to strip. Will not strip devices.\nFor example: 46,47,49,52.		?:? flag_LMStripBody
 		int LMNudityTalkTimes = 35;				//Dialogue Times//How many times you have to talk to different characters before the mark will fade.//{0}//(3,100,1)		?:? flag_LewdMarks
+		bool LMNuditySkipGagged = true;			//Skip When Gagged//The Nudity Mark counter will not decrease when the player is gagged. You must actually talk to people.	?:? flag_LewdMarks
 		color LMNudityColor = 0xd676cb;			//Color//Color for mark.																									?:? flag_LewdMarks
 		//Header Healslut
 		int LMHealslutWeight = 5;				//Healslut Mark//With this mark you won't be able to deal damage and must heal your allies instead.//{0}//(0,500,1)			?:? flag_LewdMarks
@@ -244,7 +249,8 @@ namespace DCURSES {
 		//Header Living Latex
 		int oppLivingLatexWeight = 20;			//Weight//How likely that you will be encased in latex that will bind you with ebonite.//{0}//(0,500,1)
 		int oppLivingLatexStartTime = 15;		//Start Time//How long in minutes do you have to wear the latex before it isn't dormant.\n//{0}//(1,60,1)
-		float oppLivingLatexGem = 6.0f;			//Volatile Gem Chance//The chance to find a gem on dead mages and warlocks that will shock the latex when hit with a weapon.//{1}//(0,100,0.1)
+		float oppLivingLatexGem = 6.0f;			//Volatile Gem Chance//The chance to find a gem on dead mages and warlocks that will shock the latex when hit with a weapon or activated.//{1}//(0,100,0.1)
+		bool oppLivingLatexGemAll = false;		//Volatile Gems on All Characters//Volatile gems will drop from all humanoid NPCs, not just mages and warlocks.
 		bool oppLivingLatexHeavy = false;		//Heavy Bondage//The latex will bind you with heavy bondage devices.\nWarning: this will happen in combat.
 		float oppLivingLatexMore = 0.0f;		//Periodic Devices//How frequently in minutes the latex will bind you when active. Set to 0 to disable.\nWarning: this will happen in combat.//{1}//(0,10,0.1)
 		bool oppLivingLatexRequireRem = true;	//Clinging//The latex will cling to your other devices, requiring you to remove all of them before it will dissapear.
@@ -258,27 +264,27 @@ namespace DCURSES {
 		bool oppMadnessChaos = false;			//True Madness//Will remove the restrictions on what events can happen. These events may result in PERMANENT changes to your character (Lowering your health, magicka, or stamina).
 		
 		//Page Locations
-		bool useLocationModifiers = true;		//Use Location Modifiers//Weather or not to apply the location modifiers listed below to event chances.
-		//Empty
-		//Empty
-		float playerHomeModifier = 0.0f;		//Player Home Modifier//Modifier for events to happen inside of player homes.//{1}x//(0,10,0.1)
-		float cityModifier = 0.0f;				//City Modifier//Modifier for events to happen inside of walled cities.//{1}x//(0,10,0.1)
-		float townModifier = 0.0f;				//Town Modifier//Modifier for events to happen inside of towns.//{1}x//(0,10,0.1)
-		float banditModifier = 1.1f;			//Bandit Modifier//Modifier for events to happen in or near bandit hideouts.//{1}x//(0,10,0.1)
-		float draugrModifier = 1.2f;			//Draugr Modifier//Modifier for events to happen in draugr crypts.//{1}x//(0,10,0.1)
-		float soulCairnModifier = 1.5f;			//Soul Cairn Modifier//Modifier for events to happen in the soul cairn.//{1}x//(0,10,0.1)
-		//Column
 		float lockedLocationBypass = 0.6f;		//Lock Bypass//Locked containers can't have a location modifier less than this setting.\nUseful to make locked containers still trigger traps in cities.//{1}x//(0,10,0.1)
 		float theftLocationBypass = 1.1f;		//Theft Bypass//Stealing from containers can't have a location modifier less than this setting.\nUseful to make stealing from containers still trigger traps in cities.//{1}x//(0,10,0.1)
 		//Empty
-		float dwarvenModifier = 1.2f;			//Dwarven Modifier//Modifier for events to happen in dwarven ruins.//{1}x//(0,10,0.1)
-		float falmerModifier = 1.3f;			//Falmer Modifier//Modifier for events to happen in falmer hives.//{1}x//(0,10,0.1)
-		float forswornModifier = 1.1f;			//Forsworn Modifier//Modifier for events to happen in forsworn hideouts.//{1}x//(0,10,0.1)
-		float vampireModifier = 1.5f;			//Vampire Modifier//Modifier for events to happen in vampire lairs.//{1}x//(0,10,0.1)
-		float warlockModifier = 1.5f;			//Warlock Modifier//Modifier for events to happen in warlock lairs.//{1}x//(0,10,0.1)
-		float dragonLairModifier = 2.0f;		//Dragon Lair Modifier//Modifier for events to happen in dragon lairs.//{1}x//(0,10,0.1)
-		float apocryphaModifier = 2.0f;			//Apocrypha Modifier//Modifier for events to happen in apocrypha.//{1}x//(0,10,0.1)
-		float wildernessModifier = 0.9f;		//Wilderness Modifier//Modifier for events to happen in the wilderness.//{1}x//(0,10,0.1)
+		float playerHomeModifier = 0.0f;		//Player Home Modifier//Modifier for events to happen inside of player homes.//{1}x//(0,10,0.1)						
+		float cityModifier = 0.0f;				//City Modifier//Modifier for events to happen inside of walled cities.//{1}x//(0,10,0.1)							
+		float townModifier = 0.0f;				//Town Modifier//Modifier for events to happen inside of towns.//{1}x//(0,10,0.1)									
+		float banditModifier = 1.1f;			//Bandit Modifier//Modifier for events to happen in or near bandit hideouts.//{1}x//(0,10,0.1)						
+		float draugrModifier = 1.2f;			//Draugr Modifier//Modifier for events to happen in draugr crypts.//{1}x//(0,10,0.1)								
+		float soulCairnModifier = 1.5f;			//Soul Cairn Modifier//Modifier for events to happen in the soul cairn.//{1}x//(0,10,0.1)
+		//Column
+		//Empty
+		//Empty
+		//Empty
+		float dwarvenModifier = 1.2f;			//Dwarven Modifier//Modifier for events to happen in dwarven ruins.//{1}x//(0,10,0.1)								
+		float falmerModifier = 1.3f;			//Falmer Modifier//Modifier for events to happen in falmer hives.//{1}x//(0,10,0.1)									
+		float forswornModifier = 1.1f;			//Forsworn Modifier//Modifier for events to happen in forsworn hideouts.//{1}x//(0,10,0.1)							
+		float vampireModifier = 1.5f;			//Vampire Modifier//Modifier for events to happen in vampire lairs.//{1}x//(0,10,0.1)								
+		float warlockModifier = 1.5f;			//Warlock Modifier//Modifier for events to happen in warlock lairs.//{1}x//(0,10,0.1)								
+		float dragonLairModifier = 2.0f;		//Dragon Lair Modifier//Modifier for events to happen in dragon lairs.//{1}x//(0,10,0.1)							
+		float apocryphaModifier = 2.0f;			//Apocrypha Modifier//Modifier for events to happen in apocrypha.//{1}x//(0,10,0.1)									
+		float wildernessModifier = 0.9f;		//Wilderness Modifier//Modifier for events to happen in the wilderness.//{1}x//(0,10,0.1)							
 		
 		//Page Keys
 		float keyLossChance = 80.0f;			//Key Loss Chance//How likely you are to lose your keys during an event.//{1}%//(0,100,0.1)
@@ -355,9 +361,11 @@ namespace DCURSES {
 		//Empty
 		bool consAllowFollowers = false;		//Allow Followers//Talking to or having sex with followers can trigger consequences.
 		bool consAllowCreatures = false;		//Allow Creatures//Talking to or having sex with creatures can trigger consequences.
+		bool consTolerableChastity = true;		//Tolerable Chastity//Chastity will be considered tolerable and prevent the nudity trigger.
 		//Empty
 		bool consUseRelationships = true;		//Use Relationships//The relationship rank of the target actor will affect how they treat you. You are less likely to see all consequences except mercy when the relationship is better.
 		bool consRelationBondage = false;		//Relationship Bondage//Your friends want to tie you up so this is affected like mercy when Use Relationships is on.
+		float consGaggedMultiplier = 1.2f;		//Gagged Multiplier//Your consequence chance when talking to someone is multiplied by this if you are gagged.//{1}x//(0,5,0.1)
 		//Empty
 		bool consFallthrough = false;			//Try All Consequences//With this enabled if a consequence can't trigger it will try all the other consequences.\nThis will make it so that consequences are more likely to happen, but consequences with low weights might also be more common.
 		//Column
@@ -380,6 +388,7 @@ namespace DCURSES {
 		//Header General
 		bool sexEnabled = false;				//Enabled//Toggles sex on or off.\nSex will only occur from friendly characters.																						**RELOAD
 		bool sexAggressiveAnims = false;		//Prefer Aggressive Animations//Prefer using aggressive animations for all sex started by this mod.																		?:? flag_enable_sex
+		bool sexFilterDevices = true;			//Filter Animations By Device//Will use animation tags to filter animations based on devices worn.																		?:? flag_enable_sex
 		bool sexFilterFuta = true;				//Filter Futa Animations//This will prevent FF tagged animations for female & futa and prevent MF for female & female.\nOnly works for sexlab SE and not Sexlab P+		?:? flag_enable_sex
 		bool sexRandomEnabled = false;			//Random Sex//Characters that you encounter on your journey might have sex with you!																					**RELOAD
 		int sexCooldown = 30;					//Cooldown//How long in seconds after a scene ends before another can trigger.//{0}//(5,300,1)																			?:? flag_enable_random_sex
@@ -448,6 +457,10 @@ namespace DCURSES {
 
 	std::string GetExcludedFollowers() {
 		return settings.excludedFollowers;
+	}
+
+	bool GetDebugMode() {
+		return settings.debugMode;
 	}
 
 	void RecalculateDeviceLists();
@@ -743,6 +756,8 @@ namespace DCURSES {
 		SetMCMFloat("lockDifficultyModifier",settings.lockDifficultyModifier);
 		settings.arousalModifier = 1.4f;
 		SetMCMFloat("arousalModifier",settings.arousalModifier);
+		settings.followerDeviceMult = 0.75f;
+		SetMCMFloat("followerDeviceMult",settings.followerDeviceMult);
 		settings.eventContraptionTime = 4.0f;
 		SetMCMFloat("eventContraptionTime",settings.eventContraptionTime);
 		settings.LMBrandingChance = 1.5f;
@@ -759,6 +774,10 @@ namespace DCURSES {
 		SetMCMFloat("oppLivingLatexGem",settings.oppLivingLatexGem);
 		settings.oppLivingLatexMore = 0.0f;
 		SetMCMFloat("oppLivingLatexMore",settings.oppLivingLatexMore);
+		settings.lockedLocationBypass = 0.6f;
+		SetMCMFloat("lockedLocationBypass",settings.lockedLocationBypass);
+		settings.theftLocationBypass = 1.1f;
+		SetMCMFloat("theftLocationBypass",settings.theftLocationBypass);
 		settings.playerHomeModifier = 0.0f;
 		SetMCMFloat("playerHomeModifier",settings.playerHomeModifier);
 		settings.cityModifier = 0.0f;
@@ -771,10 +790,6 @@ namespace DCURSES {
 		SetMCMFloat("draugrModifier",settings.draugrModifier);
 		settings.soulCairnModifier = 1.5f;
 		SetMCMFloat("soulCairnModifier",settings.soulCairnModifier);
-		settings.lockedLocationBypass = 0.6f;
-		SetMCMFloat("lockedLocationBypass",settings.lockedLocationBypass);
-		settings.theftLocationBypass = 1.1f;
-		SetMCMFloat("theftLocationBypass",settings.theftLocationBypass);
 		settings.dwarvenModifier = 1.2f;
 		SetMCMFloat("dwarvenModifier",settings.dwarvenModifier);
 		settings.falmerModifier = 1.3f;
@@ -819,6 +834,8 @@ namespace DCURSES {
 		SetMCMFloat("consTriggerRestrained",settings.consTriggerRestrained);
 		settings.consTriggerSex = 10.0f;
 		SetMCMFloat("consTriggerSex",settings.consTriggerSex);
+		settings.consGaggedMultiplier = 1.2f;
+		SetMCMFloat("consGaggedMultiplier",settings.consGaggedMultiplier);
 		settings.sexArousalTattooModifier = 1.0f;
 		SetMCMFloat("sexArousalTattooModifier",settings.sexArousalTattooModifier);
 		settings.onlyLockedDoors = true;
@@ -893,6 +910,8 @@ namespace DCURSES {
 		SetMCMBool("LMBrandingPunish",settings.LMBrandingPunish);
 		settings.LMNudityChestOnly = false;
 		SetMCMBool("LMNudityChestOnly",settings.LMNudityChestOnly);
+		settings.LMNuditySkipGagged = true;
+		SetMCMBool("LMNuditySkipGagged",settings.LMNuditySkipGagged);
 		settings.oppOneAtATime = true;
 		SetMCMBool("oppOneAtATime",settings.oppOneAtATime);
 		settings.oppSCollarDrainsMagicka = true;
@@ -903,6 +922,8 @@ namespace DCURSES {
 		SetMCMBool("oppDwarvenHeavyRestraint",settings.oppDwarvenHeavyRestraint);
 		settings.oppDwarvenRequireLoc = true;
 		SetMCMBool("oppDwarvenRequireLoc",settings.oppDwarvenRequireLoc);
+		settings.oppLivingLatexGemAll = false;
+		SetMCMBool("oppLivingLatexGemAll",settings.oppLivingLatexGemAll);
 		settings.oppLivingLatexHeavy = false;
 		SetMCMBool("oppLivingLatexHeavy",settings.oppLivingLatexHeavy);
 		settings.oppLivingLatexRequireRem = true;
@@ -915,8 +936,6 @@ namespace DCURSES {
 		SetMCMBool("oppMadnessBeltFilter",settings.oppMadnessBeltFilter);
 		settings.oppMadnessChaos = false;
 		SetMCMBool("oppMadnessChaos",settings.oppMadnessChaos);
-		settings.useLocationModifiers = true;
-		SetMCMBool("useLocationModifiers",settings.useLocationModifiers);
 		settings.keyForgiveness = true;
 		SetMCMBool("keyForgiveness",settings.keyForgiveness);
 		settings.magicKeyOppressive = false;
@@ -985,6 +1004,8 @@ namespace DCURSES {
 		SetMCMBool("consAllowFollowers",settings.consAllowFollowers);
 		settings.consAllowCreatures = false;
 		SetMCMBool("consAllowCreatures",settings.consAllowCreatures);
+		settings.consTolerableChastity = true;
+		SetMCMBool("consTolerableChastity",settings.consTolerableChastity);
 		settings.consUseRelationships = true;
 		SetMCMBool("consUseRelationships",settings.consUseRelationships);
 		settings.consRelationBondage = false;
@@ -999,6 +1020,8 @@ namespace DCURSES {
 		SetMCMBool("sexEnabled",settings.sexEnabled);
 		settings.sexAggressiveAnims = false;
 		SetMCMBool("sexAggressiveAnims",settings.sexAggressiveAnims);
+		settings.sexFilterDevices = true;
+		SetMCMBool("sexFilterDevices",settings.sexFilterDevices);
 		settings.sexFilterFuta = true;
 		SetMCMBool("sexFilterFuta",settings.sexFilterFuta);
 		settings.sexRandomEnabled = false;
@@ -1031,6 +1054,8 @@ namespace DCURSES {
 		SetMCMBool("sexAlwaysAllowSummons",settings.sexAlwaysAllowSummons);
 		settings.excludedFollowers = "";
 		SetMCMString("excludedFollowers",settings.excludedFollowers);
+		settings.followerOverrideTheme = "";
+		SetMCMString("followerOverrideTheme",settings.followerOverrideTheme);
 		settings.LMNudityAditionalForms = "";
 		SetMCMString("LMNudityAditionalForms",settings.LMNudityAditionalForms);
 		settings.debugMode = false;
@@ -1183,6 +1208,7 @@ namespace DCURSES {
 			{"lockedModifier", settings.lockedModifier},
 			{"lockDifficultyModifier", settings.lockDifficultyModifier},
 			{"arousalModifier", settings.arousalModifier},
+			{"followerDeviceMult", settings.followerDeviceMult},
 			{"eventContraptionTime", settings.eventContraptionTime},
 			{"LMBrandingChance", settings.LMBrandingChance},
 			{"LMBondageChance", settings.LMBondageChance},
@@ -1191,14 +1217,14 @@ namespace DCURSES {
 			{"oppNocturnalRecastChance", settings.oppNocturnalRecastChance},
 			{"oppLivingLatexGem", settings.oppLivingLatexGem},
 			{"oppLivingLatexMore", settings.oppLivingLatexMore},
+			{"lockedLocationBypass", settings.lockedLocationBypass},
+			{"theftLocationBypass", settings.theftLocationBypass},
 			{"playerHomeModifier", settings.playerHomeModifier},
 			{"cityModifier", settings.cityModifier},
 			{"townModifier", settings.townModifier},
 			{"banditModifier", settings.banditModifier},
 			{"draugrModifier", settings.draugrModifier},
 			{"soulCairnModifier", settings.soulCairnModifier},
-			{"lockedLocationBypass", settings.lockedLocationBypass},
-			{"theftLocationBypass", settings.theftLocationBypass},
 			{"dwarvenModifier", settings.dwarvenModifier},
 			{"falmerModifier", settings.falmerModifier},
 			{"forswornModifier", settings.forswornModifier},
@@ -1221,6 +1247,7 @@ namespace DCURSES {
 			{"consTriggerNude", settings.consTriggerNude},
 			{"consTriggerRestrained", settings.consTriggerRestrained},
 			{"consTriggerSex", settings.consTriggerSex},
+			{"consGaggedMultiplier", settings.consGaggedMultiplier},
 			{"sexArousalTattooModifier", settings.sexArousalTattooModifier},
 			{"onlyLockedDoors", settings.onlyLockedDoors},
 			{"eventScaling", settings.eventScaling},
@@ -1258,18 +1285,19 @@ namespace DCURSES {
 			{"ANDConsShowingUnderwear", settings.ANDConsShowingUnderwear},
 			{"LMBrandingPunish", settings.LMBrandingPunish},
 			{"LMNudityChestOnly", settings.LMNudityChestOnly},
+			{"LMNuditySkipGagged", settings.LMNuditySkipGagged},
 			{"oppOneAtATime", settings.oppOneAtATime},
 			{"oppSCollarDrainsMagicka", settings.oppSCollarDrainsMagicka},
 			{"oppSCollarAutoRemove", settings.oppSCollarAutoRemove},
 			{"oppDwarvenHeavyRestraint", settings.oppDwarvenHeavyRestraint},
 			{"oppDwarvenRequireLoc", settings.oppDwarvenRequireLoc},
+			{"oppLivingLatexGemAll", settings.oppLivingLatexGemAll},
 			{"oppLivingLatexHeavy", settings.oppLivingLatexHeavy},
 			{"oppLivingLatexRequireRem", settings.oppLivingLatexRequireRem},
 			{"oppLivingLatexOpen", settings.oppLivingLatexOpen},
 			{"oppMadnessAllOrgasms", settings.oppMadnessAllOrgasms},
 			{"oppMadnessBeltFilter", settings.oppMadnessBeltFilter},
 			{"oppMadnessChaos", settings.oppMadnessChaos},
-			{"useLocationModifiers", settings.useLocationModifiers},
 			{"keyForgiveness", settings.keyForgiveness},
 			{"magicKeyOppressive", settings.magicKeyOppressive},
 			{"preferRelevantKeys", settings.preferRelevantKeys},
@@ -1304,6 +1332,7 @@ namespace DCURSES {
 			{"setAllDefaultSettings", settings.setAllDefaultSettings},
 			{"consAllowFollowers", settings.consAllowFollowers},
 			{"consAllowCreatures", settings.consAllowCreatures},
+			{"consTolerableChastity", settings.consTolerableChastity},
 			{"consUseRelationships", settings.consUseRelationships},
 			{"consRelationBondage", settings.consRelationBondage},
 			{"consFallthrough", settings.consFallthrough},
@@ -1311,6 +1340,7 @@ namespace DCURSES {
 			{"consBondageIgnoreMax", settings.consBondageIgnoreMax},
 			{"sexEnabled", settings.sexEnabled},
 			{"sexAggressiveAnims", settings.sexAggressiveAnims},
+			{"sexFilterDevices", settings.sexFilterDevices},
 			{"sexFilterFuta", settings.sexFilterFuta},
 			{"sexRandomEnabled", settings.sexRandomEnabled},
 			{"sexAllowMale", settings.sexAllowMale},
@@ -1334,12 +1364,14 @@ namespace DCURSES {
 			{"LMHealslutColor", settings.LMHealslutColor},
 			{"setDebugKey", settings.setDebugKey},
 			{"excludedFollowers", settings.excludedFollowers},
+			{"followerOverrideTheme", settings.followerOverrideTheme},
 			{"LMNudityAditionalForms", settings.LMNudityAditionalForms},
 			{"debugMode", settings.debugMode},
 			//CODEGEN_END_TOJSON
 		};
 		log::trace("Wrote settings to file {}", SETTINGS_FILE);
 		o << std::setw(4) << j << std::endl;
+		lastSettingsEditTime = std::chrono::clock_cast<std::filesystem::file_time_type::clock>(std::chrono::system_clock::now());
 	}
 
 	void P_UpdateSKSE(RE::StaticFunctionTag*);
@@ -1643,6 +1675,8 @@ namespace DCURSES {
 		if (settings.lockDifficultyModifier < 0) {settings.lockDifficultyModifier = 0;}
 		settings.arousalModifier = static_cast<float>(j.value("arousalModifier", 1.4));
 		if (settings.arousalModifier < 0) {settings.arousalModifier = 0;}
+		settings.followerDeviceMult = static_cast<float>(j.value("followerDeviceMult", 0.75));
+		if (settings.followerDeviceMult < 0) {settings.followerDeviceMult = 0;}
 		settings.eventContraptionTime = static_cast<float>(j.value("eventContraptionTime", 4.0));
 		if (settings.eventContraptionTime < 0) {settings.eventContraptionTime = 0;}
 		settings.LMBrandingChance = static_cast<float>(j.value("LMBrandingChance", 1.5));
@@ -1659,6 +1693,10 @@ namespace DCURSES {
 		if (settings.oppLivingLatexGem < 0) {settings.oppLivingLatexGem = 0;}
 		settings.oppLivingLatexMore = static_cast<float>(j.value("oppLivingLatexMore", 0.0));
 		if (settings.oppLivingLatexMore < 0) {settings.oppLivingLatexMore = 0;}
+		settings.lockedLocationBypass = static_cast<float>(j.value("lockedLocationBypass", 0.6));
+		if (settings.lockedLocationBypass < 0) {settings.lockedLocationBypass = 0;}
+		settings.theftLocationBypass = static_cast<float>(j.value("theftLocationBypass", 1.1));
+		if (settings.theftLocationBypass < 0) {settings.theftLocationBypass = 0;}
 		settings.playerHomeModifier = static_cast<float>(j.value("playerHomeModifier", 0.0));
 		if (settings.playerHomeModifier < 0) {settings.playerHomeModifier = 0;}
 		settings.cityModifier = static_cast<float>(j.value("cityModifier", 0.0));
@@ -1671,10 +1709,6 @@ namespace DCURSES {
 		if (settings.draugrModifier < 0) {settings.draugrModifier = 0;}
 		settings.soulCairnModifier = static_cast<float>(j.value("soulCairnModifier", 1.5));
 		if (settings.soulCairnModifier < 0) {settings.soulCairnModifier = 0;}
-		settings.lockedLocationBypass = static_cast<float>(j.value("lockedLocationBypass", 0.6));
-		if (settings.lockedLocationBypass < 0) {settings.lockedLocationBypass = 0;}
-		settings.theftLocationBypass = static_cast<float>(j.value("theftLocationBypass", 1.1));
-		if (settings.theftLocationBypass < 0) {settings.theftLocationBypass = 0;}
 		settings.dwarvenModifier = static_cast<float>(j.value("dwarvenModifier", 1.2));
 		if (settings.dwarvenModifier < 0) {settings.dwarvenModifier = 0;}
 		settings.falmerModifier = static_cast<float>(j.value("falmerModifier", 1.3));
@@ -1719,6 +1753,8 @@ namespace DCURSES {
 		if (settings.consTriggerRestrained < 0) {settings.consTriggerRestrained = 0;}
 		settings.consTriggerSex = static_cast<float>(j.value("consTriggerSex", 10.0));
 		if (settings.consTriggerSex < 0) {settings.consTriggerSex = 0;}
+		settings.consGaggedMultiplier = static_cast<float>(j.value("consGaggedMultiplier", 1.2));
+		if (settings.consGaggedMultiplier < 0) {settings.consGaggedMultiplier = 0;}
 		settings.sexArousalTattooModifier = static_cast<float>(j.value("sexArousalTattooModifier", 1.0));
 		if (settings.sexArousalTattooModifier < 0) {settings.sexArousalTattooModifier = 0;}
 		settings.onlyLockedDoors = static_cast<bool>(j.value("onlyLockedDoors", true));
@@ -1757,18 +1793,19 @@ namespace DCURSES {
 		settings.ANDConsShowingUnderwear = static_cast<bool>(j.value("ANDConsShowingUnderwear", false));
 		settings.LMBrandingPunish = static_cast<bool>(j.value("LMBrandingPunish", true));
 		settings.LMNudityChestOnly = static_cast<bool>(j.value("LMNudityChestOnly", false));
+		settings.LMNuditySkipGagged = static_cast<bool>(j.value("LMNuditySkipGagged", true));
 		settings.oppOneAtATime = static_cast<bool>(j.value("oppOneAtATime", true));
 		settings.oppSCollarDrainsMagicka = static_cast<bool>(j.value("oppSCollarDrainsMagicka", true));
 		settings.oppSCollarAutoRemove = static_cast<bool>(j.value("oppSCollarAutoRemove", true));
 		settings.oppDwarvenHeavyRestraint = static_cast<bool>(j.value("oppDwarvenHeavyRestraint", false));
 		settings.oppDwarvenRequireLoc = static_cast<bool>(j.value("oppDwarvenRequireLoc", true));
+		settings.oppLivingLatexGemAll = static_cast<bool>(j.value("oppLivingLatexGemAll", false));
 		settings.oppLivingLatexHeavy = static_cast<bool>(j.value("oppLivingLatexHeavy", false));
 		settings.oppLivingLatexRequireRem = static_cast<bool>(j.value("oppLivingLatexRequireRem", true));
 		settings.oppLivingLatexOpen = static_cast<bool>(j.value("oppLivingLatexOpen", false));
 		settings.oppMadnessAllOrgasms = static_cast<bool>(j.value("oppMadnessAllOrgasms", false));
 		settings.oppMadnessBeltFilter = static_cast<bool>(j.value("oppMadnessBeltFilter", true));
 		settings.oppMadnessChaos = static_cast<bool>(j.value("oppMadnessChaos", false));
-		settings.useLocationModifiers = static_cast<bool>(j.value("useLocationModifiers", true));
 		settings.keyForgiveness = static_cast<bool>(j.value("keyForgiveness", true));
 		settings.magicKeyOppressive = static_cast<bool>(j.value("magicKeyOppressive", false));
 		settings.preferRelevantKeys = static_cast<bool>(j.value("preferRelevantKeys", true));
@@ -1803,6 +1840,7 @@ namespace DCURSES {
 		settings.setAllDefaultSettings = static_cast<bool>(j.value("setAllDefaultSettings", false));
 		settings.consAllowFollowers = static_cast<bool>(j.value("consAllowFollowers", false));
 		settings.consAllowCreatures = static_cast<bool>(j.value("consAllowCreatures", false));
+		settings.consTolerableChastity = static_cast<bool>(j.value("consTolerableChastity", true));
 		settings.consUseRelationships = static_cast<bool>(j.value("consUseRelationships", true));
 		settings.consRelationBondage = static_cast<bool>(j.value("consRelationBondage", false));
 		settings.consFallthrough = static_cast<bool>(j.value("consFallthrough", false));
@@ -1810,6 +1848,7 @@ namespace DCURSES {
 		settings.consBondageIgnoreMax = static_cast<bool>(j.value("consBondageIgnoreMax", false));
 		settings.sexEnabled = static_cast<bool>(j.value("sexEnabled", false));
 		settings.sexAggressiveAnims = static_cast<bool>(j.value("sexAggressiveAnims", false));
+		settings.sexFilterDevices = static_cast<bool>(j.value("sexFilterDevices", true));
 		settings.sexFilterFuta = static_cast<bool>(j.value("sexFilterFuta", true));
 		settings.sexRandomEnabled = static_cast<bool>(j.value("sexRandomEnabled", false));
 		settings.sexAllowMale = static_cast<bool>(j.value("sexAllowMale", true));
@@ -1827,6 +1866,7 @@ namespace DCURSES {
 		settings.sexAlwaysAllowSummons = static_cast<bool>(j.value("sexAlwaysAllowSummons", false));
 		settings.debugMode = static_cast<bool>(j.value("debugMode", false));
 		settings.excludedFollowers = j.value("excludedFollowers", "");
+		settings.followerOverrideTheme = j.value("followerOverrideTheme", "");
 		settings.LMNudityAditionalForms = j.value("LMNudityAditionalForms", "");
 		//CODEGEN_END_FROMJSON
 
@@ -1981,6 +2021,7 @@ namespace DCURSES {
 		SetMCMFloat("lockedModifier",settings.lockedModifier);
 		SetMCMFloat("lockDifficultyModifier",settings.lockDifficultyModifier);
 		SetMCMFloat("arousalModifier",settings.arousalModifier);
+		SetMCMFloat("followerDeviceMult",settings.followerDeviceMult);
 		SetMCMFloat("eventContraptionTime",settings.eventContraptionTime);
 		SetMCMFloat("LMBrandingChance",settings.LMBrandingChance);
 		SetMCMFloat("LMBondageChance",settings.LMBondageChance);
@@ -1989,14 +2030,14 @@ namespace DCURSES {
 		SetMCMFloat("oppNocturnalRecastChance",settings.oppNocturnalRecastChance);
 		SetMCMFloat("oppLivingLatexGem",settings.oppLivingLatexGem);
 		SetMCMFloat("oppLivingLatexMore",settings.oppLivingLatexMore);
+		SetMCMFloat("lockedLocationBypass",settings.lockedLocationBypass);
+		SetMCMFloat("theftLocationBypass",settings.theftLocationBypass);
 		SetMCMFloat("playerHomeModifier",settings.playerHomeModifier);
 		SetMCMFloat("cityModifier",settings.cityModifier);
 		SetMCMFloat("townModifier",settings.townModifier);
 		SetMCMFloat("banditModifier",settings.banditModifier);
 		SetMCMFloat("draugrModifier",settings.draugrModifier);
 		SetMCMFloat("soulCairnModifier",settings.soulCairnModifier);
-		SetMCMFloat("lockedLocationBypass",settings.lockedLocationBypass);
-		SetMCMFloat("theftLocationBypass",settings.theftLocationBypass);
 		SetMCMFloat("dwarvenModifier",settings.dwarvenModifier);
 		SetMCMFloat("falmerModifier",settings.falmerModifier);
 		SetMCMFloat("forswornModifier",settings.forswornModifier);
@@ -2019,6 +2060,7 @@ namespace DCURSES {
 		SetMCMFloat("consTriggerNude",settings.consTriggerNude);
 		SetMCMFloat("consTriggerRestrained",settings.consTriggerRestrained);
 		SetMCMFloat("consTriggerSex",settings.consTriggerSex);
+		SetMCMFloat("consGaggedMultiplier",settings.consGaggedMultiplier);
 		SetMCMFloat("sexArousalTattooModifier",settings.sexArousalTattooModifier);
 		SetMCMBool("onlyLockedDoors",settings.onlyLockedDoors);
 		SetMCMBool("eventScaling",settings.eventScaling);
@@ -2056,18 +2098,19 @@ namespace DCURSES {
 		SetMCMBool("ANDConsShowingUnderwear",settings.ANDConsShowingUnderwear);
 		SetMCMBool("LMBrandingPunish",settings.LMBrandingPunish);
 		SetMCMBool("LMNudityChestOnly",settings.LMNudityChestOnly);
+		SetMCMBool("LMNuditySkipGagged",settings.LMNuditySkipGagged);
 		SetMCMBool("oppOneAtATime",settings.oppOneAtATime);
 		SetMCMBool("oppSCollarDrainsMagicka",settings.oppSCollarDrainsMagicka);
 		SetMCMBool("oppSCollarAutoRemove",settings.oppSCollarAutoRemove);
 		SetMCMBool("oppDwarvenHeavyRestraint",settings.oppDwarvenHeavyRestraint);
 		SetMCMBool("oppDwarvenRequireLoc",settings.oppDwarvenRequireLoc);
+		SetMCMBool("oppLivingLatexGemAll",settings.oppLivingLatexGemAll);
 		SetMCMBool("oppLivingLatexHeavy",settings.oppLivingLatexHeavy);
 		SetMCMBool("oppLivingLatexRequireRem",settings.oppLivingLatexRequireRem);
 		SetMCMBool("oppLivingLatexOpen",settings.oppLivingLatexOpen);
 		SetMCMBool("oppMadnessAllOrgasms",settings.oppMadnessAllOrgasms);
 		SetMCMBool("oppMadnessBeltFilter",settings.oppMadnessBeltFilter);
 		SetMCMBool("oppMadnessChaos",settings.oppMadnessChaos);
-		SetMCMBool("useLocationModifiers",settings.useLocationModifiers);
 		SetMCMBool("keyForgiveness",settings.keyForgiveness);
 		SetMCMBool("magicKeyOppressive",settings.magicKeyOppressive);
 		SetMCMBool("preferRelevantKeys",settings.preferRelevantKeys);
@@ -2102,6 +2145,7 @@ namespace DCURSES {
 		SetMCMBool("setAllDefaultSettings",settings.setAllDefaultSettings);
 		SetMCMBool("consAllowFollowers",settings.consAllowFollowers);
 		SetMCMBool("consAllowCreatures",settings.consAllowCreatures);
+		SetMCMBool("consTolerableChastity",settings.consTolerableChastity);
 		SetMCMBool("consUseRelationships",settings.consUseRelationships);
 		SetMCMBool("consRelationBondage",settings.consRelationBondage);
 		SetMCMBool("consFallthrough",settings.consFallthrough);
@@ -2109,6 +2153,7 @@ namespace DCURSES {
 		SetMCMBool("consBondageIgnoreMax",settings.consBondageIgnoreMax);
 		SetMCMBool("sexEnabled",settings.sexEnabled);
 		SetMCMBool("sexAggressiveAnims",settings.sexAggressiveAnims);
+		SetMCMBool("sexFilterDevices",settings.sexFilterDevices);
 		SetMCMBool("sexFilterFuta",settings.sexFilterFuta);
 		SetMCMBool("sexRandomEnabled",settings.sexRandomEnabled);
 		SetMCMBool("sexAllowMale",settings.sexAllowMale);
@@ -2125,6 +2170,7 @@ namespace DCURSES {
 		SetMCMBool("sexAlwaysAllowSpouse",settings.sexAlwaysAllowSpouse);
 		SetMCMBool("sexAlwaysAllowSummons",settings.sexAlwaysAllowSummons);
 		SetMCMString("excludedFollowers",settings.excludedFollowers);
+		SetMCMString("followerOverrideTheme",settings.followerOverrideTheme);
 		SetMCMString("LMNudityAditionalForms",settings.LMNudityAditionalForms);
 		//CODEGEN_END_PUSHMCM
 
@@ -2419,6 +2465,8 @@ namespace DCURSES {
 		if (settings.lockDifficultyModifier < 0) {settings.lockDifficultyModifier = 0;}
 		settings.arousalModifier = GetMCMSetting("arousalModifier")->GetFloat();
 		if (settings.arousalModifier < 0) {settings.arousalModifier = 0;}
+		settings.followerDeviceMult = GetMCMSetting("followerDeviceMult")->GetFloat();
+		if (settings.followerDeviceMult < 0) {settings.followerDeviceMult = 0;}
 		settings.eventContraptionTime = GetMCMSetting("eventContraptionTime")->GetFloat();
 		if (settings.eventContraptionTime < 0) {settings.eventContraptionTime = 0;}
 		settings.LMBrandingChance = GetMCMSetting("LMBrandingChance")->GetFloat();
@@ -2435,6 +2483,10 @@ namespace DCURSES {
 		if (settings.oppLivingLatexGem < 0) {settings.oppLivingLatexGem = 0;}
 		settings.oppLivingLatexMore = GetMCMSetting("oppLivingLatexMore")->GetFloat();
 		if (settings.oppLivingLatexMore < 0) {settings.oppLivingLatexMore = 0;}
+		settings.lockedLocationBypass = GetMCMSetting("lockedLocationBypass")->GetFloat();
+		if (settings.lockedLocationBypass < 0) {settings.lockedLocationBypass = 0;}
+		settings.theftLocationBypass = GetMCMSetting("theftLocationBypass")->GetFloat();
+		if (settings.theftLocationBypass < 0) {settings.theftLocationBypass = 0;}
 		settings.playerHomeModifier = GetMCMSetting("playerHomeModifier")->GetFloat();
 		if (settings.playerHomeModifier < 0) {settings.playerHomeModifier = 0;}
 		settings.cityModifier = GetMCMSetting("cityModifier")->GetFloat();
@@ -2447,10 +2499,6 @@ namespace DCURSES {
 		if (settings.draugrModifier < 0) {settings.draugrModifier = 0;}
 		settings.soulCairnModifier = GetMCMSetting("soulCairnModifier")->GetFloat();
 		if (settings.soulCairnModifier < 0) {settings.soulCairnModifier = 0;}
-		settings.lockedLocationBypass = GetMCMSetting("lockedLocationBypass")->GetFloat();
-		if (settings.lockedLocationBypass < 0) {settings.lockedLocationBypass = 0;}
-		settings.theftLocationBypass = GetMCMSetting("theftLocationBypass")->GetFloat();
-		if (settings.theftLocationBypass < 0) {settings.theftLocationBypass = 0;}
 		settings.dwarvenModifier = GetMCMSetting("dwarvenModifier")->GetFloat();
 		if (settings.dwarvenModifier < 0) {settings.dwarvenModifier = 0;}
 		settings.falmerModifier = GetMCMSetting("falmerModifier")->GetFloat();
@@ -2495,6 +2543,8 @@ namespace DCURSES {
 		if (settings.consTriggerRestrained < 0) {settings.consTriggerRestrained = 0;}
 		settings.consTriggerSex = GetMCMSetting("consTriggerSex")->GetFloat();
 		if (settings.consTriggerSex < 0) {settings.consTriggerSex = 0;}
+		settings.consGaggedMultiplier = GetMCMSetting("consGaggedMultiplier")->GetFloat();
+		if (settings.consGaggedMultiplier < 0) {settings.consGaggedMultiplier = 0;}
 		settings.sexArousalTattooModifier = GetMCMSetting("sexArousalTattooModifier")->GetFloat();
 		if (settings.sexArousalTattooModifier < 0) {settings.sexArousalTattooModifier = 0;}
 		settings.onlyLockedDoors = GetMCMSetting("onlyLockedDoors")->GetBool();
@@ -2533,18 +2583,19 @@ namespace DCURSES {
 		settings.ANDConsShowingUnderwear = GetMCMSetting("ANDConsShowingUnderwear")->GetBool();
 		settings.LMBrandingPunish = GetMCMSetting("LMBrandingPunish")->GetBool();
 		settings.LMNudityChestOnly = GetMCMSetting("LMNudityChestOnly")->GetBool();
+		settings.LMNuditySkipGagged = GetMCMSetting("LMNuditySkipGagged")->GetBool();
 		settings.oppOneAtATime = GetMCMSetting("oppOneAtATime")->GetBool();
 		settings.oppSCollarDrainsMagicka = GetMCMSetting("oppSCollarDrainsMagicka")->GetBool();
 		settings.oppSCollarAutoRemove = GetMCMSetting("oppSCollarAutoRemove")->GetBool();
 		settings.oppDwarvenHeavyRestraint = GetMCMSetting("oppDwarvenHeavyRestraint")->GetBool();
 		settings.oppDwarvenRequireLoc = GetMCMSetting("oppDwarvenRequireLoc")->GetBool();
+		settings.oppLivingLatexGemAll = GetMCMSetting("oppLivingLatexGemAll")->GetBool();
 		settings.oppLivingLatexHeavy = GetMCMSetting("oppLivingLatexHeavy")->GetBool();
 		settings.oppLivingLatexRequireRem = GetMCMSetting("oppLivingLatexRequireRem")->GetBool();
 		settings.oppLivingLatexOpen = GetMCMSetting("oppLivingLatexOpen")->GetBool();
 		settings.oppMadnessAllOrgasms = GetMCMSetting("oppMadnessAllOrgasms")->GetBool();
 		settings.oppMadnessBeltFilter = GetMCMSetting("oppMadnessBeltFilter")->GetBool();
 		settings.oppMadnessChaos = GetMCMSetting("oppMadnessChaos")->GetBool();
-		settings.useLocationModifiers = GetMCMSetting("useLocationModifiers")->GetBool();
 		settings.keyForgiveness = GetMCMSetting("keyForgiveness")->GetBool();
 		settings.magicKeyOppressive = GetMCMSetting("magicKeyOppressive")->GetBool();
 		settings.preferRelevantKeys = GetMCMSetting("preferRelevantKeys")->GetBool();
@@ -2579,6 +2630,7 @@ namespace DCURSES {
 		settings.setAllDefaultSettings = GetMCMSetting("setAllDefaultSettings")->GetBool();
 		settings.consAllowFollowers = GetMCMSetting("consAllowFollowers")->GetBool();
 		settings.consAllowCreatures = GetMCMSetting("consAllowCreatures")->GetBool();
+		settings.consTolerableChastity = GetMCMSetting("consTolerableChastity")->GetBool();
 		settings.consUseRelationships = GetMCMSetting("consUseRelationships")->GetBool();
 		settings.consRelationBondage = GetMCMSetting("consRelationBondage")->GetBool();
 		settings.consFallthrough = GetMCMSetting("consFallthrough")->GetBool();
@@ -2586,6 +2638,7 @@ namespace DCURSES {
 		settings.consBondageIgnoreMax = GetMCMSetting("consBondageIgnoreMax")->GetBool();
 		settings.sexEnabled = GetMCMSetting("sexEnabled")->GetBool();
 		settings.sexAggressiveAnims = GetMCMSetting("sexAggressiveAnims")->GetBool();
+		settings.sexFilterDevices = GetMCMSetting("sexFilterDevices")->GetBool();
 		settings.sexFilterFuta = GetMCMSetting("sexFilterFuta")->GetBool();
 		settings.sexRandomEnabled = GetMCMSetting("sexRandomEnabled")->GetBool();
 		settings.sexAllowMale = GetMCMSetting("sexAllowMale")->GetBool();
@@ -2602,6 +2655,7 @@ namespace DCURSES {
 		settings.sexAlwaysAllowSpouse = GetMCMSetting("sexAlwaysAllowSpouse")->GetBool();
 		settings.sexAlwaysAllowSummons = GetMCMSetting("sexAlwaysAllowSummons")->GetBool();
 		settings.excludedFollowers = GetMCMSetting("excludedFollowers")->GetString();
+		settings.followerOverrideTheme = GetMCMSetting("followerOverrideTheme")->GetString();
 		settings.LMNudityAditionalForms = GetMCMSetting("LMNudityAditionalForms")->GetString();
 		//CODEGEN_END_UPDATE
 

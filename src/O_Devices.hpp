@@ -60,11 +60,12 @@ namespace DCURSES {
 	}
 
 	int RemoveDwarvenStuff() {
+		static const std::vector<RE::FormID> ValidForms = {0x000AEBF1, 0x000C8861, 0x000C8864, 0x000C8866, 0x000C8868, 0x000C886A, 0x000C886C, 0x000C886E, 0x000C8870, 0x000C8872, 0x000C8874, 0x000C8878 };
 		auto player = RE::PlayerCharacter::GetSingleton();
 		auto inventory = player->GetInventory();
 		int value = 0;
 		for (auto const& [k, v] : inventory) {
-			if (k->GetFormType() == RE::FormType::Misc && Util::testFormComp("dwarven & (cog | gear | gyro | scrap | platemetal) & !ingot", k)) {
+			if (k->GetFormType() == RE::FormType::Misc && Util::vectorContains(ValidForms, k->formID)) {
 				value += k->GetGoldValue() * v.first;
 				player->RemoveItem(k, v.first, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
 			}
@@ -832,7 +833,7 @@ namespace DCURSES {
 				for (auto follower : followers) {
 					log::trace("{} devices: {}", follower->GetName(), GetWornDeviceCount(follower));
 					if (GetWornDeviceCount(follower) <= settings.maxRestraints) {
-						didSomething |= DoStandardEvent(follower, false, "", "", -1, 1, {});
+						didSomething |= DoStandardEvent(follower, false, "", settings.followerOverrideTheme, -1, 1, {});
 					}
 				}
 				if (!didSomething) { return false; }
@@ -860,7 +861,7 @@ namespace DCURSES {
 				for (auto follower : followers) {
 					log::trace("{} devices: {}", follower->GetName(), GetWornDeviceCount(follower));
 					if (GetWornDeviceCount(follower) <= 15 + settings.followerDeviceModifier) {
-						didSomething |= DoStandardEvent(follower, false, "", "", 15, 5, {});
+						didSomething |= DoStandardEvent(follower, false, "", settings.followerOverrideTheme, 15, 5, {});
 					}
 				}
 				if (!didSomething) { return false; }

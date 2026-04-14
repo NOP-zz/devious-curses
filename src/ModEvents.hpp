@@ -203,4 +203,13 @@ namespace DCURSES {
 			return *this;
 		}
 	};
+
+	void SendCurseModEvent(std::string eventName, std::string eventSource, RE::Actor* akActor, std::string otherEventData) {
+		auto modevent = CustomModEvent("DCurses_EventTriggered");
+		modevent.PushString(eventName);
+		modevent.PushString(eventSource);
+		modevent.PushForm(akActor);
+		modevent.PushString(otherEventData);
+		modevent.Send();
+	}
 }
