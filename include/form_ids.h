@@ -1,15 +1,25 @@
 #pragma once
 
-#include "../src/Utils.hpp"
-
 using namespace SKSE;
 
 namespace DCURSES {
+constexpr auto DCURSES_VERSION = "0.9.0";
+
+// SUMMONS
+constexpr auto SUMMON_FAMILIAR = 0x640B5;
+constexpr auto SUMMON_ATRONACH_FLAME = 0x204C0;
+constexpr auto SUMMON_ATRONACH_FROST = 0x204C1;
+constexpr auto SUMMON_ATRONACH_STORM = 0x204C2;
+constexpr auto SUMMON_DREMORA_LORD = 0x10DDEE;
+constexpr auto DCURSES_COLLAR_SUMMONED = 0x80D;
+
 // DCURSES
 constexpr auto TATTOO_CHARM = 0x809;
 constexpr auto VOLATILE_GEM = 0x839;
 constexpr auto AROUSAL_POTION = 0x83B;
+constexpr auto WARDING_CHARM = 0x845;
 constexpr auto DCURSES_MCM = 0x800;
+constexpr auto DCURSES_LIB = 0x804;
 
 // DEVICES
 constexpr auto SUMMONER_COLLAR = 0x810;
@@ -30,7 +40,6 @@ constexpr auto LUCKY_PIERCINGS_R = 0x83D;
 constexpr auto NOCTURNAL_PIERCING = 0x841;
 constexpr auto NOCTURNAL_PIERCING_R = 0x840;
 
-
 // KEYS
 constexpr auto MAGIC_KEY = 0x806;
 constexpr auto SUMMONER_COLLAR_KEY = 0x807;
@@ -48,7 +57,9 @@ constexpr auto NUDITY_EFFECT = 0x80F;
 constexpr auto BONDAGE_EFFECT = 0x811;
 constexpr auto BRANDING_EFFECT = 0x808;
 constexpr auto HEALSLUT_EFFECT = 0x835;
+constexpr auto PAINSLUT_EFFECT = 0x80D;
 constexpr auto SUMMONER_COLLAR_EFFECT = 0x803;
+constexpr auto SOMMONER_COLLAR_SUMMON_EFFECT = 0x802;
 constexpr auto LIVING_LATEX_EFFECT = 0x816;
 constexpr auto DWARVEN_CUIRASS_EFFECT = 0x82B;
 constexpr auto MADNESS_PLUG_EFFECT = 0x833;

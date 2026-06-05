@@ -3,23 +3,37 @@
 cmake_minimum_required(VERSION 3.21)
 
 # Set your project name. This will be the name of your SKSE .dll file.
-project(DeviousCurses VERSION 0.8.5 LANGUAGES CXX)
+project(DeviousCurses VERSION 0.9.0 LANGUAGES CXX)
 
 
 set(sources
         plugin.cpp
+        src/Consequences.cpp
+        src/Contraptions.cpp
+        src/DebugMode.cpp
+        src/Devices.cpp
+        src/Events.cpp
+        src/FastTravel.cpp
+        src/Locations.cpp
+        src/MGEF_Controller.cpp
+        src/Migration.cpp
+        src/ModEvents.cpp
+        src/OppDevices.cpp
+        src/QuestInteractions.cpp
+        src/Scripting.cpp
+        src/Serializer.cpp
+        src/Settings.cpp
+        src/Tats.cpp
+        src/TESEvents.cpp
+        src/Themes.cpp
+        src/Translation.cpp
+        src/Utils.cpp
+        src/Sex.cpp
 )
 
-add_custom_target(
-    Codegen ALL
-    COMMENT "Running Python Codegen"
-    COMMAND python CODEGEN.py
-    WORKING_DIRECTORY ./../../
-    VERBATIM
-)
+
 
 set(OUTPUT_FOLDER "S:/Skyrim/MO2/mods/DeviousCurses")
-set(OUTPUT_FOLDER_VR "S:/SkyrimVR/mo2/mods/DeviousCurses")
 
 # set(CommonLibSSE_DIR "S:/Skyrim/modding/CommonLibVR/build/debug-msvc-vcpkg-all")
 
@@ -32,7 +46,7 @@ target_precompile_headers(${PROJECT_NAME} PRIVATE PCH.h) # <--- PCH.h is require
 target_link_libraries(${PROJECT_NAME} PRIVATE d3d11.dll)
 target_link_libraries(${PROJECT_NAME} PRIVATE Microsoft::DirectXTK)
 target_link_libraries(${PROJECT_NAME} PUBLIC CommonLibSSE::CommonLibSSE)
-add_dependencies(${PROJECT_NAME} Codegen)
+target_include_directories(${PROJECT_NAME} PRIVATE include)
 
 
 set(SKYRIM_FOLDER "S:/SteamLibrary/steamapps/common/Skyrim Special Edition") # Change this to your skyrim instalation location
@@ -45,19 +59,23 @@ add_custom_command(
     COMMAND "${CMAKE_COMMAND}" -E make_directory "${OUTPUT_FOLDER}/SKSE/Plugins"
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different "$<TARGET_FILE:${PROJECT_NAME}>" "${OUTPUT_FOLDER}/SKSE/Plugins/$<TARGET_FILE_NAME:${PROJECT_NAME}>"
     
-    COMMAND "${CMAKE_COMMAND}" -E make_directory "${OUTPUT_FOLDER_VR}/SKSE/Plugins"
-    COMMAND "${CMAKE_COMMAND}" -E copy_if_different "$<TARGET_FILE:${PROJECT_NAME}>" "${OUTPUT_FOLDER_VR}/SKSE/Plugins/$<TARGET_FILE_NAME:${PROJECT_NAME}>"
     VERBATIM
 )
+
+add_custom_target(
+    Codegen ALL
+    COMMENT "Running Python Codegen"
+    COMMAND python CODEGEN.py
+    WORKING_DIRECTORY ./../../
+    VERBATIM
+)
+add_dependencies(${PROJECT_NAME} Codegen)
 
 add_custom_target(
     Papyrus ALL
     COMMENT "Compiling MCM"
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_SOURCE_DIR}/DCurses_MCM.psc" "${OUTPUT_FOLDER}/scripts/source/DCurses_MCM.psc"
     COMMAND "${SKYRIM_FOLDER}/Papyrus Compiler/PapyrusCompiler.exe" DCurses_MCM.psc -f="${SKYRIM_FOLDER}/Data/Scripts/Source/TESV_Papyrus_Flags.flg" -i="${SCRIPTS_SOURCE}\;${SKYRIM_FOLDER}/Data/Scripts/Source/" -o="${OUTPUT_FOLDER}/scripts" -q
-    
-    COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_SOURCE_DIR}/DCurses_MCM.psc" "${OUTPUT_FOLDER_VR}/scripts/source/DCurses_MCM.psc"
-    COMMAND "${SKYRIM_FOLDER}/Papyrus Compiler/PapyrusCompiler.exe" DCurses_MCM.psc -f="${SKYRIM_FOLDER}/Data/Scripts/Source/TESV_Papyrus_Flags.flg" -i="${SCRIPTS_SOURCE}\;${SKYRIM_FOLDER}/Data/Scripts/Source/" -o="${OUTPUT_FOLDER_VR}/scripts" -q
     WORKING_DIRECTORY "${OUTPUT_FOLDER}/scripts/source"
 )
 add_dependencies(Papyrus Codegen)
@@ -68,8 +86,5 @@ add_custom_target(
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_SOURCE_DIR}/translationData/Devious Curses_English.json" "${OUTPUT_FOLDER}/translations/Devious Curses_ENGLISH.json"
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_SOURCE_DIR}/translationData/Devious Curses_English.txt" "${OUTPUT_FOLDER}/interface/translations/Devious Curses_ENGLISH.txt"
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_SOURCE_DIR}/Version.txt" "${OUTPUT_FOLDER}/Version.txt"
-
-    COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_SOURCE_DIR}/translationData/Devious Curses_English.json" "${OUTPUT_FOLDER_VR}/translations/Devious Curses_ENGLISH.json"
-    COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_SOURCE_DIR}/translationData/Devious Curses_English.txt" "${OUTPUT_FOLDER_VR}/interface/translations/Devious Curses_ENGLISH.txt"
 )
 add_dependencies(Translations Codegen)

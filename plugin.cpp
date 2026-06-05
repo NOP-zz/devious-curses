@@ -1,46 +1,41 @@
-#include "include/DDNG_API.h"
-#include "include/form_ids.h"
-#include "include/SexLabPPFunctions.h"
-#include "include/SlaveTatsNG_Interface.h"
+/*
+0.9 TODO
+make fine consequence use getWatchingActors
+add stuff
+*/
 
-namespace DCURSES {
-    //SET THIS IN CMakeLists.txt
-    constexpr auto DCURSES_VERSION = "0.8.5";
+#include "FastTravel.h"
+#include "Settings.h"
+#include "Scripting.h"
+#include "Utils.h"
+#include "Serializer.h"
+#include "Sex.h"
+#include "OppDevices.h"
+#include "Tats.h"
+#include "Devices.h"
+#include "Migration.h"
+#include "TESEvents.h"
+#include "QuestInteractions.h"
+#include "QLIEIntegration.hpp"
+#include "DebugMode.h"
+#include "MGEF_Controller.h"
+#include "Events.h"
+#include "Themes.h"
+#include "Translation.h"
+#include "Consequences.h"
 
-    static bool can_install_fast_travel_hook = false;
-
-    static bool UPDATE_LOOP_RUNNING = false;
-}
-
-#include "src/Utils.hpp"
-#include "src/Settings.hpp"
-#include "src/Devices.hpp"
-#include "src/Scripting.hpp"
-#include "src/Serializer.hpp"
-#include "src/sex.hpp"
-#include "src/events.hpp"
-#include "src/Consequences.hpp"
-#include "src/TESEvents.hpp"
-#include "src/QLIEIntegration.hpp"
-#include "src/themes.hpp"
-#include "src/Contraptions.hpp"
-#include "src/O_Devices.hpp"
-#include "src/QuestInteractions.hpp"
-#include "src/ModEvents.hpp"
-#include "src/Locations.hpp"
-#include "src/FastTravel.hpp"
-
-#include "src/Translation.hpp"
-#include "src//DebugMode.hpp"
+#include "apis/jcontainers.hpp"
+#include "apis/DDNG_API.h"
+#include "apis/SlaveTatsNG_Interface.h"
 
 #include <d3d11.h>
 #include <windows.h>
 #include <debugapi.h>
 #include <chrono>
+#include <xstring>
 
 #include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/spdlog.h"
-#include <unordered_set>
 #include <algorithm>
 
 using namespace SKSE;
@@ -63,6 +58,9 @@ namespace DCURSES {
         spdlog::flush_on(spdlog::level::trace);
     }
 
+    static bool UPDATE_LOOP_RUNNING = false;
+    bool can_install_fast_travel_hook = false;
+
     void StartUpdateLoop() {
         if (UPDATE_LOOP_RUNNING) {
             return;
@@ -75,7 +73,7 @@ namespace DCURSES {
             while (true) {
                 std::this_thread::sleep_for(1000ms);
                 
-                SetFastTravelStatePapyrus();
+                SetFastTravelStatePapyrus(can_install_fast_travel_hook);
 
                 if (shouldSkipNextLoop) {
                     //log::trace("Skip Loop Marked");
@@ -83,18 +81,6 @@ namespace DCURSES {
                 }
 
                 //log::trace("last settings: {}", std::string(std::format("{:%H%M%S}", lastSettingsEditTime)));
-
-                if (lastSettingsEditTime < std::filesystem::last_write_time(SETTINGS_FILE)) {
-                    log::info("Updating settings from file due to file change.");
-                    LoadSettingsFile();
-                    lastSettingsEditTime = std::chrono::clock_cast<std::filesystem::file_time_type::clock>(std::chrono::system_clock::now());
-                }
-
-                if (lastTranslationsEditTime < std::filesystem::last_write_time(languageFilename)) {
-                    log::info("Updating language from file due to file change.");
-                    Translator::UpdateTranslations();
-                    lastTranslationsEditTime = std::chrono::clock_cast<std::filesystem::file_time_type::clock>(std::chrono::system_clock::now());
-                }
 
                 if (IsModDisabled()) {
                     //log::trace("Event timer skipped, mod is disabled.");
@@ -129,7 +115,8 @@ namespace DCURSES {
                 RE::TESFaction* ZadAnimatingFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("029567", 0, 16), "Devious Devices - Integration.esm");
 
                 if (player->IsInFaction(SexlabAnimatingFaction)) {
-                    counters.clock_lastSex = 0;
+                    Serialized::GetCounters()->clock_lastSex = 0;
+                    Serialized::GetCounters()->SinceLastSex = 0;
                 }
 
                 bool isAnimating = player->IsInFaction(SexlabAnimatingFaction) || player->IsInFaction(ZadAnimatingFaction);
@@ -142,14 +129,20 @@ namespace DCURSES {
                     auto c3 = std::chrono::high_resolution_clock::now();
                     OppDeviceUpdate();
                     auto c4 = std::chrono::high_resolution_clock::now();
+                    ConsUpdate();
+                    auto c5 = std::chrono::high_resolution_clock::now();
 
                     auto d1 = (c2 - c1).count() / 1000000.0;
                     auto d2 = (c3 - c2).count() / 1000000.0;
                     auto d3 = (c4 - c3).count() / 1000000.0;
-                    auto dt = (c4 - c1).count() / 1000000.0;
+                    auto d4 = (c5 - c4).count() / 1000000.0;
+                    auto dt = (c5 - c1).count() / 1000000.0;
 
                     if (dt >= 10) {
-                        log::trace("Notable Update Time: Sex: {:.4f}, Marks: {:.4f}, ODevices: {:.4f} total: {:.4f}ms", d1, d2, d3, dt);
+                        log::info("Notable Update Time: Sex: {:.4f}, Marks: {:.4f}, ODevices: {:.4f}, Consequence: {:.4f} total: {:.4f}ms", d1, d2, d3, d4, dt);
+                    }
+                    else if (Settings::GetSingleton()->debugMode && dt >= 0.1) {
+                        log::debug("Update Time: Sex: {:.4f}, Marks: {:.4f}, ODevices: {:.4f}, Consequence: {:.4f} total: {:.4f}ms", d1, d2, d3, d4, dt);
                     }
                 }
                 
@@ -158,7 +151,7 @@ namespace DCURSES {
                 }
 
                 //Always do last!
-                counters.tick();
+                Serialized::GetCounters()->tick();
             }
             log::critical("Event timer has stopped.");
             UPDATE_LOOP_RUNNING = false;
@@ -166,7 +159,7 @@ namespace DCURSES {
     }
     
     RE::TESObjectARMO* P_GetRandomEquipableDevice(RE::StaticFunctionTag*) {
-        auto dev = GetRandomEquipableDevice(RE::PlayerCharacter::GetSingleton(), std::vector<std::string>());
+        auto dev = GetRandomEquipableDevice(RE::PlayerCharacter::GetSingleton(), {});
         if (dev) {
             return dev.value().inv;
         }
@@ -174,7 +167,7 @@ namespace DCURSES {
     }
 
     int P_numDevicesVisible(RE::StaticFunctionTag*, RE::Actor* akActor) {
-        return numDevicesVisible(akActor);
+        return GetVisibleDeviceCount(akActor);
     }
 
     int P_numDevicesEquipped(RE::StaticFunctionTag*, RE::Actor* akActor) {
@@ -189,7 +182,6 @@ namespace DCURSES {
         ivm->RegisterFunction("GetRandomEquipableDevice", "DCursesLib", P_GetRandomEquipableDevice);
         ivm->RegisterFunction("NumDevicesVisible", "DCursesLib", P_numDevicesVisible);
         ivm->RegisterFunction("NumDevicesEquipped", "DCursesLib", P_numDevicesEquipped);
-        //ivm->RegisterFunction("OnUpdate", "DCursesLib", P_OnUpdate);
         ivm->RegisterFunction("WearingOppressiveDevice", "DCurses_MCM", P_WearingOppressiveDevice);
         PapyrusFunctionsSettigns(ivm);
         PapyrusFunctionsSex(ivm);
@@ -224,14 +216,16 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
     log::info("Initializing DeviousCurses version {}", version_string);
 
     LoadSettingsFile();
+    VersionMigrate();
+    SaveMCMSettings();
 
-    if (settings.debugMode) {
+    if (Settings::GetSingleton()->debugMode) {
         log::debug("Debug mode");
     }
 
     REL::Version version = skse->RuntimeVersion();
 
-    can_install_fast_travel_hook = version >= SKSE::RUNTIME_SSE_1_6_640;
+    can_install_fast_travel_hook = skse->RuntimeVersion() >= SKSE::RUNTIME_SSE_1_6_640;
 
     if (can_install_fast_travel_hook) {
         SKSE::AllocTrampoline(14);
@@ -270,7 +264,7 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
                 InstallFastTravelHooks();
             }
 
-            if (settings.debugMode) {
+            if (Settings::GetSingleton()->debugMode) {
                 Debug::AddLocationData();
             }
 
@@ -306,9 +300,10 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
             }
             EventsCheckModIntergations();
             RecalculateDeviceLists();
+            MCMSetHelpPageOptions();
             ScriptingManager().MCMRegisterModEvents();
 
-            counters.clock_SexTimeout -= 2;
+            Serialized::GetCounters()->clock_SexTimeout -= 2;
            
 
             Util::ExecuteWithDelay(2s, [] {
@@ -317,6 +312,7 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
 
             break;
         }
+
         case SKSE::MessagingInterface::kPostLoad: {
             CreateExclusionsFileIfNeeded();
             CreateModExclusionsFileIfNeeded();
@@ -331,28 +327,27 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
                     if (root)
                         jcontainers::JCWrapper::GetSingleton()->PreInit(root);
                 }
-                });
+            });
 
             break;
         }
         case SKSE::MessagingInterface::kSaveGame: {
-            counters.clock_SexTimeout -= 2;
+            Serialized::GetCounters()->clock_SexTimeout -= 2;
             SaveMCMSettings();
             break;
         }
         case SKSE::MessagingInterface::kInputLoaded: {
-            if (settings.debugMode) {
+            if (Settings::GetSingleton()->debugMode) {
+                Debug::CheckTranslations();
                 Debug::CheckMCMTranslations();
             }
             Translator::UpdateTranslations();
 
             log::trace("Moving Russian Language File");
 
-
             break;
         }
         }
-        
     });
 
     log::trace("Initializing Papyrus binding...");

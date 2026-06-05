@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../src/Utils.hpp"
+#include "Utils.h"
 #include "form_ids.h"
 #include <algorithm>
 
@@ -30,7 +30,7 @@ namespace SexLab {
 		{"SOS - Female Pubics.esp", 0xD63},
 	};
 
-	std::vector<RE::FormID> GetExcludeFactions() {
+	inline std::vector<RE::FormID> GetExcludeFactions() {
 		std::vector<RE::FormID> ret;
 		auto handler = RE::TESDataHandler::GetSingleton();
 		for (auto pair : SOS_ExcludeFactionData) {
@@ -42,7 +42,7 @@ namespace SexLab {
 		return ret;
 	}
 
-	bool IsFuta(RE::Actor* a_actor)
+	inline bool IsFuta(RE::Actor* a_actor)
 	{
 		static const auto tngkeyword = RE::TESForm::LookupByEditorID<RE::BGSKeyword>("TNG_SkinWithPenis");
 		if (tngkeyword) {
@@ -82,7 +82,7 @@ namespace SexLab {
 	}
 
 	// DOES NOT HANDLE CREATURES
-	int GetSex(RE::Actor* a_actor, bool a_skipfactions = false)
+	inline int GetSex(RE::Actor* a_actor, bool a_skipfactions = false)
 	{
 		if (!a_skipfactions) {
 			RE::TESFaction* SexlabGenderFaction = DCURSES::StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("043A43", 0, 16), "SexLab.esm");
