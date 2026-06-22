@@ -29,11 +29,17 @@ set(sources
         src/Translation.cpp
         src/Utils.cpp
         src/Sex.cpp
+
+        src/Quest/Radiant.cpp
+        src/Quest/QuestSettings.cpp
+        src/Quest/QuestEvents.cpp
+        src/Quest/Serialized.cpp
 )
 
 
 
 set(OUTPUT_FOLDER "S:/Skyrim/MO2/mods/DeviousCurses")
+set(QUEST_OUTPUT_FOLDER "S:/Skyrim/MO2/mods/DeviousCursesQuests")
 
 # set(CommonLibSSE_DIR "S:/Skyrim/modding/CommonLibVR/build/debug-msvc-vcpkg-all")
 
@@ -72,19 +78,29 @@ add_custom_target(
 add_dependencies(${PROJECT_NAME} Codegen)
 
 add_custom_target(
-    Papyrus ALL
+    MCM ALL
     COMMENT "Compiling MCM"
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_SOURCE_DIR}/DCurses_MCM.psc" "${OUTPUT_FOLDER}/scripts/source/DCurses_MCM.psc"
     COMMAND "${SKYRIM_FOLDER}/Papyrus Compiler/PapyrusCompiler.exe" DCurses_MCM.psc -f="${SKYRIM_FOLDER}/Data/Scripts/Source/TESV_Papyrus_Flags.flg" -i="${SCRIPTS_SOURCE}\;${SKYRIM_FOLDER}/Data/Scripts/Source/" -o="${OUTPUT_FOLDER}/scripts" -q
     WORKING_DIRECTORY "${OUTPUT_FOLDER}/scripts/source"
 )
-add_dependencies(Papyrus Codegen)
+add_dependencies(MCM Codegen)
+
+add_custom_target(
+    QuestMCM ALL
+    COMMENT "Compiling Quest MCM"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_SOURCE_DIR}/DCurses_QuestMCM.psc" "${QUEST_OUTPUT_FOLDER}/scripts/source/DCurses_QuestMCM.psc"
+    COMMAND "${SKYRIM_FOLDER}/Papyrus Compiler/PapyrusCompiler.exe" DCurses_QuestMCM.psc -f="${SKYRIM_FOLDER}/Data/Scripts/Source/TESV_Papyrus_Flags.flg" -i="${SCRIPTS_SOURCE}\;${SKYRIM_FOLDER}/Data/Scripts/Source\;${OUTPUT_FOLDER}/scripts/source/" -o="${QUEST_OUTPUT_FOLDER}/scripts" -q
+    WORKING_DIRECTORY "${QUEST_OUTPUT_FOLDER}/scripts/source"
+)
+add_dependencies(QuestMCM Codegen)
 
 add_custom_target(
     Translations ALL
     COMMENT "Preparing Translation Files"
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_SOURCE_DIR}/translationData/Devious Curses_English.json" "${OUTPUT_FOLDER}/translations/Devious Curses_ENGLISH.json"
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_SOURCE_DIR}/translationData/Devious Curses_English.txt" "${OUTPUT_FOLDER}/interface/translations/Devious Curses_ENGLISH.txt"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_SOURCE_DIR}/translationData/Devious Curses - Quests_English.txt" "${QUEST_OUTPUT_FOLDER}/interface/translations/Devious Curses - Quests_ENGLISH.txt"
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_SOURCE_DIR}/Version.txt" "${OUTPUT_FOLDER}/Version.txt"
 )
 add_dependencies(Translations Codegen)

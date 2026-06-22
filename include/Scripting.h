@@ -9,6 +9,8 @@ namespace DCURSES {
 
     bool CheckESPLoaded();
 
+    bool CheckQuestLoaded();
+
     bool CheckRapeTattoos();
 
     bool CheckUD();
@@ -129,6 +131,8 @@ namespace DCURSES {
             intents()->push_back({ intent, ScriptCallback(new ScriptCallbackFunctor_R<T>(intent, newCallbackFunction)) });
         }
 
+        void RunOrdered(std::function<void()> onCallback);
+
         void RunOnMenuClose(std::function<void()> onCallback);
 
         void Wait(float seconds);
@@ -177,6 +181,8 @@ namespace DCURSES {
         
         void ContraptionsUnlockActor(RE::Actor* akActor);
 
+        void QuestSetStage(RE::TESQuest* quest, int stage);
+
         void ForceThirdPerson();
 
         void DisableMenus();
@@ -200,19 +206,11 @@ namespace DCURSES {
         void DBGNotification(Translator trans);
     };
 
-    RE::BSScript::Variable* GetMCMSetting(std::string name);
+    RE::BSScript::Variable* GetMCMSetting(std::string name, std::string modname, std::string scriptname);
 
     bool IsModDisabled();
 
-    void SetMCMSetting(std::string name, RE::BSScript::Variable& value);
-
-    void SetMCMInt(std::string name, int value);
-
-    void SetMCMFloat(std::string name, float value);
-
-    void SetMCMBool(std::string name, bool value);
-
-    void SetMCMString(std::string name, std::string value);
+    void SetMCMSetting(std::string name, RE::BSScript::Variable& value, std::string modname, std::string scriptname);
 
     RE::BSTSmartPointer<RE::BSScript::Object> ContraptionsGetRefScript(RE::TESObjectREFR* furniture);
 }

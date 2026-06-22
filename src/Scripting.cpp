@@ -6,6 +6,8 @@
 #include "Settings.h"
 #include "Translation.h"
 
+#include "Quest/QuestSettings.h"
+
 //#undef GetObject
 
 using namespace SKSE;
@@ -24,6 +26,15 @@ namespace DCURSES {
 
     bool CheckESPLoaded() {
         RE::TESForm* form = RE::TESDataHandler::GetSingleton()->LookupForm(DCURSES_MCM, "Devious Curses.esp");
+        if (form == nullptr) {
+            return false;
+        }
+        return true;
+    }
+
+    bool CheckQuestLoaded()
+    {
+        RE::TESForm* form = RE::TESDataHandler::GetSingleton()->LookupForm(Quest::MCMQUEST, "Devious Curses - Quests.esp");
         if (form == nullptr) {
             return false;
         }
@@ -79,14 +90,19 @@ namespace DCURSES {
         return true;
     }
 
-    RE::BSScript::Variable* GetMCMSetting(std::string name) {
-
-        RE::TESForm* form = StaticDataHolder::GetSingleton()->LookupForm(DCURSES_MCM, "Devious Curses.esp");
-        if (!form) return nullptr;
+    RE::BSScript::Variable* GetMCMSetting(std::string name, std::string modname, std::string scriptname) {
+        RE::TESForm* form = StaticDataHolder::GetSingleton()->LookupForm(DCURSES_MCM, modname);
+        if (!form) {
+            log::error("Unable to get quest object for {}", modname);
+            return nullptr;
+        }
         auto handle = GetHP()->GetHandleForObject(RE::FormType::Quest, form);
         RE::BSTSmartPointer<RE::BSScript::Object> mcmObject;
-        GetVM()->FindBoundObject(handle, "DCurses_MCM", mcmObject);
-        if (!mcmObject) return nullptr;
+        GetVM()->FindBoundObject(handle, scriptname.c_str(), mcmObject);
+        if (!mcmObject) {
+            log::error("Unable to get script object for {}", scriptname);
+            return nullptr;
+        };
 
         RE::BSScript::Variable* variable = mcmObject->GetProperty(name);
         if (!variable) {
@@ -97,47 +113,29 @@ namespace DCURSES {
     }
 
     bool IsModDisabled() {
-        auto v = GetMCMSetting("ModSuspended");
+        auto v = GetMCMSetting("ModSuspended", "Devious Curses.esp", "DCurses_MCM");
         if (v && v->IsBool()) {
             return v->GetBool();
         }
         return false;
     }
 
-    void SetMCMSetting(std::string name, RE::BSScript::Variable& value) {
+    void SetMCMSetting(std::string name, RE::BSScript::Variable& value, std::string modname, std::string scriptname) {
 
-        RE::TESForm* form = StaticDataHolder::GetSingleton()->LookupForm(DCURSES_MCM, "Devious Curses.esp");
-        if (!form) return;
+        RE::TESForm* form = StaticDataHolder::GetSingleton()->LookupForm(DCURSES_MCM, modname);
+        if (!form) {
+            log::error("Unable to get quest object for {}", modname);
+            return;
+        }
         auto handle = GetHP()->GetHandleForObject(RE::FormType::Quest, form);
         RE::BSTSmartPointer<RE::BSScript::Object> mcmObject;
-        GetVM()->FindBoundObject(handle, "DCurses_MCM", mcmObject);
-        if (!mcmObject) return;
+        GetVM()->FindBoundObject(handle, scriptname.c_str(), mcmObject);
+        if (!mcmObject) {
+            log::error("Unable to get script object for {}", scriptname);
+            return;
+        };
 
         GetVM()->SetPropertyValue(mcmObject, name.c_str(), value);
-    }
-
-    void SetMCMInt(std::string name, int value) {
-        RE::BSScript::Variable var;
-        var.SetSInt(value);
-        SetMCMSetting(name, var);
-    }
-
-    void SetMCMFloat(std::string name, float value) {
-        RE::BSScript::Variable var;
-        var.SetFloat(value);
-        SetMCMSetting(name, var);
-    }
-
-    void SetMCMBool(std::string name, bool value) {
-        RE::BSScript::Variable var;
-        var.SetBool(value);
-        SetMCMSetting(name, var);
-    }
-
-    void SetMCMString(std::string name, std::string value) {
-        RE::BSScript::Variable var;
-        var.SetString(value);
-        SetMCMSetting(name, var);
     }
 
     RE::BSTSmartPointer<RE::BSScript::Object> ContraptionsGetRefScript(RE::TESObjectREFR* furniture) {
@@ -308,6 +306,15 @@ namespace DCURSES {
 
     void ScriptingManager::RunIntent(ScriptIntent intent) {
         intents()->push_back({ intent, ScriptCallback(new ScriptCallbackFunctor(intent)) });
+    }
+
+    void ScriptingManager::RunOrdered(std::function<void()> onCallback) {
+        std::function<void(std::optional<int>, ScriptCallback)> newCallbackFunction = [onCallback](std::optional<int>, ScriptCallback) {
+            onCallback();
+            };
+        RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<float>(std::move(0.001f));
+        auto intent = ScriptIntent("Utility", "Wait", args);
+        intents()->push_back({ intent, ScriptCallback(new ScriptCallbackFunctor_R<int>(intent, newCallbackFunction)) });
     }
 
     void ScriptingManager::RunOnMenuClose(std::function<void()> onCallback) {
@@ -549,6 +556,12 @@ namespace DCURSES {
         //UI.InvokeString("HUD Menu", "_global.skse.CloseMenu", "InventoryMenu")
         //auto intent2 = ScriptIntent("UI", "InvokeString", args2);
         //RunIntent(intent2);
+    }
+
+    void ScriptingManager::QuestSetStage(RE::TESQuest* quest, int stage) {
+        RE::BSScript::IFunctionArguments* args = RE::MakeFunctionArguments<int>(std::move(stage));
+        auto intent = ScriptIntent(quest, RE::FormType::Quest, "Quest", "SetStage", args);
+        RunIntent(intent);
     }
 
     void ScriptingManager::RequestSaveGame() {

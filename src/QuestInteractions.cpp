@@ -317,6 +317,11 @@ namespace DCURSES {
 	void QIBarenziah(RE::TESObjectREFR* object) {
 		if (!Settings::GetSingleton()->enableQIBarenziah) { return; }
 
+		auto player = RE::PlayerCharacter::GetSingleton();
+		auto settings = Settings::GetSingleton();
+
+		if (GetWornDeviceCount(player) > settings->restraintCap) { return; }
+
 		log::trace("Activated {}", object->GetName());
 
 		DoEvent(false, object->GetName());

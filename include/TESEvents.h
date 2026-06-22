@@ -52,6 +52,14 @@ namespace DCURSES {
         static void RegisterEvent();
     };
 
+    class LocationEventSink : public RE::BSTEventSink<RE::TESActorLocationChangeEvent>
+    {
+        virtual RE::BSEventNotifyControl ProcessEvent(const RE::TESActorLocationChangeEvent* locationEvent, RE::BSTEventSource<RE::TESActorLocationChangeEvent>*) override;
+
+    public:
+        static void RegisterEvent();
+    };
+
     class DeathEventSink : public RE::BSTEventSink<RE::TESDeathEvent>
     {
         virtual RE::BSEventNotifyControl ProcessEvent(const RE::TESDeathEvent* hitEvent, RE::BSTEventSource<RE::TESDeathEvent>*) override;

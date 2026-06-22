@@ -24,6 +24,9 @@ add stuff
 #include "Translation.h"
 #include "Consequences.h"
 
+#include "Quest/QuestSettings.h"
+#include "Quest/QuestEvents.h"
+
 #include "apis/jcontainers.hpp"
 #include "apis/DDNG_API.h"
 #include "apis/SlaveTatsNG_Interface.h"
@@ -111,15 +114,16 @@ namespace DCURSES {
                     continue;
                 }
 
-                RE::TESFaction* SexlabAnimatingFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("00E50F", 0, 16), "SexLab.esm");
-                RE::TESFaction* ZadAnimatingFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(std::stoi("029567", 0, 16), "Devious Devices - Integration.esm");
+                RE::TESFaction* SexlabAnimatingFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x00E50F, "SexLab.esm");
+                RE::TESFaction* ZadAnimatingFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x029567, "Devious Devices - Integration.esm");
+                RE::TESFaction* zadcNGInContraptionFaction = StaticDataHolder::GetSingleton()->LookupForm<RE::TESFaction>(0x097E0A, "Devious Devices - Contraptions.esm");
 
                 if (player->IsInFaction(SexlabAnimatingFaction)) {
                     Serialized::GetCounters()->clock_lastSex = 0;
                     Serialized::GetCounters()->SinceLastSex = 0;
                 }
 
-                bool isAnimating = player->IsInFaction(SexlabAnimatingFaction) || player->IsInFaction(ZadAnimatingFaction);
+                bool isAnimating = player->IsInFaction(SexlabAnimatingFaction) || player->IsInFaction(ZadAnimatingFaction) || player->IsInFaction(zadcNGInContraptionFaction);
 
                 if (!isAnimating && !isInNonPausedMenu && !shouldSkipNextLoop) {
                     auto c1 = std::chrono::high_resolution_clock::now();
@@ -184,6 +188,7 @@ namespace DCURSES {
         ivm->RegisterFunction("NumDevicesEquipped", "DCursesLib", P_numDevicesEquipped);
         ivm->RegisterFunction("WearingOppressiveDevice", "DCurses_MCM", P_WearingOppressiveDevice);
         PapyrusFunctionsSettigns(ivm);
+        Quest::PapyrusFunctionsSettigns(ivm);
         PapyrusFunctionsSex(ivm);
         PapyrusFunctionsTats(ivm);
         return true;
@@ -214,6 +219,8 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
 
     auto version_string = std::string(DCURSES_VERSION);
     log::info("Initializing DeviousCurses version {}", version_string);
+
+    Quest::LoadSettingsFile();
 
     LoadSettingsFile();
     VersionMigrate();
@@ -291,12 +298,16 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
                 log::info("Quick Loot IE Not Loaded.");
             }
 
+            if (Quest::LoadSettingsFile()) {
+                Quest::PushSettingsToMCM();
+            }
+
             if (LoadSettingsFile()) {
                 PushSettingsToMCM();
             }
             else {
                 log::trace("Attempting settings load from papyrus");
-                DCURSES::P_UpdateSKSE(nullptr);
+                DCURSES::GetSettingsFromMCM();
             }
             EventsCheckModIntergations();
             RecalculateDeviceLists();
@@ -309,6 +320,8 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
             Util::ExecuteWithDelay(2s, [] {
                 StartUpdateLoop();
             });
+
+            Quest::OnGameLoaded();
 
             break;
         }
@@ -334,6 +347,7 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
         case SKSE::MessagingInterface::kSaveGame: {
             Serialized::GetCounters()->clock_SexTimeout -= 2;
             SaveMCMSettings();
+            Quest::SaveMCMSettings();
             break;
         }
         case SKSE::MessagingInterface::kInputLoaded: {

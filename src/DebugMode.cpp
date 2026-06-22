@@ -10,6 +10,8 @@
 #include "Devices.h"
 #include <apis/DDNG_API.h>
 
+#include "Quest/QuestEvents.h"
+
 using namespace SKSE;
 
 namespace DCURSES::Debug {
@@ -30,7 +32,7 @@ namespace DCURSES::Debug {
 		log::debug("DCURSES Test Start");
 		//auto player = RE::PlayerCharacter::GetSingleton();
 
-
+		Quest::OnSettingsChanged();
 
 		log::debug("DCURSES Test End");
 	}

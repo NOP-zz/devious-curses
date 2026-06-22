@@ -14,6 +14,8 @@
 #include "Translation.h"
 #include "Utils.h"
 
+#include "Quest/QuestEvents.h"
+
 using namespace SKSE;
 
 namespace DCURSES {
@@ -29,8 +31,26 @@ namespace DCURSES {
         InputEventSink::RegisterEvent();
         ModEventSink::RegisterEvent();
         DeathEventSink::RegisterEvent();
+        LocationEventSink::RegisterEvent();
     }
-    inline void QuestStageEventSink::RegisterEvent() {
+
+    RE::BSEventNotifyControl LocationEventSink::ProcessEvent(const RE::TESActorLocationChangeEvent* locationEvent, RE::BSTEventSource<RE::TESActorLocationChangeEvent>*)
+    {
+        if (locationEvent->actor.get() == RE::PlayerCharacter::GetSingleton()) {
+            Quest::OnLocationChanged();
+        }
+        return RE::BSEventNotifyControl();
+    }
+    void LocationEventSink::RegisterEvent() {
+        static LocationEventSink eventSink;
+        auto ScriptEventSource = RE::ScriptEventSourceHolder::GetSingleton();
+        if (!ScriptEventSource) {
+            return;
+        }
+        ScriptEventSource->AddEventSink(&eventSink);
+    }
+
+    void QuestStageEventSink::RegisterEvent() {
         static QuestStageEventSink eventSink;
         auto ScriptEventSource = RE::ScriptEventSourceHolder::GetSingleton();
         if (!ScriptEventSource) {
@@ -38,12 +58,13 @@ namespace DCURSES {
         }
         ScriptEventSource->AddEventSink(&eventSink);
     }
-    inline RE::BSEventNotifyControl QuestStageEventSink::ProcessEvent(const RE::TESQuestStageEvent* questEvent, RE::BSTEventSource<RE::TESQuestStageEvent>*) {
+    RE::BSEventNotifyControl QuestStageEventSink::ProcessEvent(const RE::TESQuestStageEvent* questEvent, RE::BSTEventSource<RE::TESQuestStageEvent>*) {
         if (!questEvent) return RE::BSEventNotifyControl::kContinue;
         QICheckQuestStage(questEvent->formID, questEvent->stage);
+        Quest::CheckQuestStageChanged(questEvent->formID, questEvent->stage);
         return RE::BSEventNotifyControl::kContinue;
     }
-    inline RE::BSEventNotifyControl ActivateEventSink::ProcessEvent(const RE::TESActivateEvent* activateEvent, RE::BSTEventSource<RE::TESActivateEvent>*) {
+    RE::BSEventNotifyControl ActivateEventSink::ProcessEvent(const RE::TESActivateEvent* activateEvent, RE::BSTEventSource<RE::TESActivateEvent>*) {
         if (!activateEvent) return RE::BSEventNotifyControl::kContinue;
         auto activatedObject = activateEvent->objectActivated.get();
         auto activatingActor = activateEvent->actionRef.get();
@@ -58,13 +79,16 @@ namespace DCURSES {
                 //return RE::BSEventNotifyControl::kContinue;
             }
             QICheckObjectActivation(activatedObject); // Must do first!
-            CalculateEventChance(activatedObject);
+
+            if (!Quest::CheckObjectActivation(activatedObject)) {
+                CalculateEventChance(activatedObject);
+            }
             OppNocturnalTryRecast();
             //return RE::BSEventNotifyControl::kContinue;
         }
         return RE::BSEventNotifyControl::kContinue;
     }
-    inline void ActivateEventSink::RegisterEvent() {
+    void ActivateEventSink::RegisterEvent() {
         static ActivateEventSink eventSink;
         auto ScriptEventSource = RE::ScriptEventSourceHolder::GetSingleton();
         if (!ScriptEventSource) {
@@ -72,7 +96,7 @@ namespace DCURSES {
         }
         ScriptEventSource->PrependEventSink(&eventSink);
     }
-    inline RE::BSEventNotifyControl ContainerChangedEventSink::ProcessEvent(const RE::TESContainerChangedEvent* containerEvent, RE::BSTEventSource<RE::TESContainerChangedEvent>*) {
+    RE::BSEventNotifyControl ContainerChangedEventSink::ProcessEvent(const RE::TESContainerChangedEvent* containerEvent, RE::BSTEventSource<RE::TESContainerChangedEvent>*) {
         //auto source = RE::TESForm::LookupByID(containerEvent->oldContainer)->As<RE::TESObjectREFR>();
 
         if (containerEvent->oldContainer == 0x14) {
@@ -103,7 +127,7 @@ namespace DCURSES {
 
         return RE::BSEventNotifyControl::kContinue;
     }
-    inline void ContainerChangedEventSink::RegisterEvent() {
+    void ContainerChangedEventSink::RegisterEvent() {
         static ContainerChangedEventSink eventSink;
         auto ScriptEventSource = RE::ScriptEventSourceHolder::GetSingleton();
         if (!ScriptEventSource) {
@@ -111,7 +135,7 @@ namespace DCURSES {
         }
         ScriptEventSource->PrependEventSink(&eventSink);
     }
-    inline RE::BSEventNotifyControl EquipEventSink::ProcessEvent(const RE::TESEquipEvent* equipEvent, RE::BSTEventSource<RE::TESEquipEvent>*) {
+    RE::BSEventNotifyControl EquipEventSink::ProcessEvent(const RE::TESEquipEvent* equipEvent, RE::BSTEventSource<RE::TESEquipEvent>*) {
         if (!equipEvent || !equipEvent->actor || !equipEvent->baseObject) {
             return RE::BSEventNotifyControl::kContinue;
         }
@@ -192,7 +216,7 @@ namespace DCURSES {
         }
         return RE::BSEventNotifyControl::kContinue;
     }
-    inline void EquipEventSink::RegisterEvent() {
+    void EquipEventSink::RegisterEvent() {
         static EquipEventSink eventSink;
         auto ScriptEventSource = RE::ScriptEventSourceHolder::GetSingleton();
         if (!ScriptEventSource) {
@@ -200,14 +224,14 @@ namespace DCURSES {
         }
         ScriptEventSource->AddEventSink(&eventSink);
     }
-    inline RE::BSEventNotifyControl MGEFEventSink::ProcessEvent(const RE::TESMagicEffectApplyEvent* magicEvent, RE::BSTEventSource<RE::TESMagicEffectApplyEvent>*) {
+    RE::BSEventNotifyControl MGEFEventSink::ProcessEvent(const RE::TESMagicEffectApplyEvent* magicEvent, RE::BSTEventSource<RE::TESMagicEffectApplyEvent>*) {
         if (magicEvent) {
             OppDeviceOnMagicHitEvent(magicEvent);
             TatsOnMagicHitEvent(magicEvent);
         }
         return RE::BSEventNotifyControl::kContinue;
     }
-    inline void MGEFEventSink::RegisterEvent() {
+    void MGEFEventSink::RegisterEvent() {
         static MGEFEventSink eventSink;
         auto ScriptEventSource = RE::ScriptEventSourceHolder::GetSingleton();
         if (!ScriptEventSource) {
@@ -215,7 +239,7 @@ namespace DCURSES {
         }
         ScriptEventSource->AddEventSink(&eventSink);
     }
-    inline RE::BSEventNotifyControl SpellEventSink::ProcessEvent(const RE::TESSpellCastEvent* spellEvent, RE::BSTEventSource<RE::TESSpellCastEvent>*) {
+    RE::BSEventNotifyControl SpellEventSink::ProcessEvent(const RE::TESSpellCastEvent* spellEvent, RE::BSTEventSource<RE::TESSpellCastEvent>*) {
         TatsOnSpellCast(spellEvent);
         QIOnSpellCast(spellEvent);
 
@@ -227,7 +251,7 @@ namespace DCURSES {
 
         return RE::BSEventNotifyControl::kContinue;
     }
-    inline void SpellEventSink::RegisterEvent() {
+    void SpellEventSink::RegisterEvent() {
         static SpellEventSink eventSink;
         auto ScriptEventSource = RE::ScriptEventSourceHolder::GetSingleton();
         if (!ScriptEventSource) {
@@ -235,7 +259,7 @@ namespace DCURSES {
         }
         ScriptEventSource->AddEventSink(&eventSink);
     }
-    inline RE::BSEventNotifyControl HitEventSink::ProcessEvent(const RE::TESHitEvent* hitEvent, RE::BSTEventSource<RE::TESHitEvent>*) {
+    RE::BSEventNotifyControl HitEventSink::ProcessEvent(const RE::TESHitEvent* hitEvent, RE::BSTEventSource<RE::TESHitEvent>*) {
         auto player = RE::PlayerCharacter::GetSingleton();
         auto cause = hitEvent->cause.get();
         auto target = hitEvent->target.get();
@@ -262,7 +286,7 @@ namespace DCURSES {
 
         return RE::BSEventNotifyControl::kContinue;
     }
-    inline void HitEventSink::RegisterEvent() {
+    void HitEventSink::RegisterEvent() {
         static HitEventSink eventSink;
         auto ScriptEventSource = RE::ScriptEventSourceHolder::GetSingleton();
         if (!ScriptEventSource) {
@@ -270,7 +294,7 @@ namespace DCURSES {
         }
         ScriptEventSource->AddEventSink(&eventSink);
     }
-    inline RE::BSEventNotifyControl DeathEventSink::ProcessEvent(const RE::TESDeathEvent* hitEvent, RE::BSTEventSource<RE::TESDeathEvent>*) {
+    RE::BSEventNotifyControl DeathEventSink::ProcessEvent(const RE::TESDeathEvent* hitEvent, RE::BSTEventSource<RE::TESDeathEvent>*) {
         auto player = RE::PlayerCharacter::GetSingleton();
         auto playerArousal = ScriptingManager().GetArousal(player);
         auto mark = GetLewdMark();
@@ -280,7 +304,7 @@ namespace DCURSES {
 
         return RE::BSEventNotifyControl::kContinue;
     }
-    inline void DeathEventSink::RegisterEvent() {
+    void DeathEventSink::RegisterEvent() {
         static DeathEventSink eventSink;
         auto ScriptEventSource = RE::ScriptEventSourceHolder::GetSingleton();
         if (!ScriptEventSource) {
@@ -288,7 +312,7 @@ namespace DCURSES {
         }
         ScriptEventSource->AddEventSink(&eventSink);
     }
-    inline RE::BSEventNotifyControl InputEventSink::ProcessEvent(const InputEventPTR* inputEventPtr, RE::BSTEventSource<InputEventPTR>*) {
+    RE::BSEventNotifyControl InputEventSink::ProcessEvent(const InputEventPTR* inputEventPtr, RE::BSTEventSource<InputEventPTR>*) {
         if (RE::UI::GetSingleton()->GameIsPaused()) {
             return RE::BSEventNotifyControl::kContinue;
         }
@@ -315,7 +339,7 @@ namespace DCURSES {
 
         return RE::BSEventNotifyControl::kContinue;
     }
-    inline void InputEventSink::RegisterEvent() {
+    void InputEventSink::RegisterEvent() {
         static InputEventSink eventSink;
         auto InputEventSource = RE::BSInputDeviceManager::GetSingleton();
         if (!InputEventSource) {
@@ -323,7 +347,7 @@ namespace DCURSES {
         }
         InputEventSource->AddEventSink(&eventSink);
     }
-    inline RE::BSEventNotifyControl ModEventSink::ProcessEvent(const SKSE::ModCallbackEvent* modEvent, RE::BSTEventSource<SKSE::ModCallbackEvent>*) {
+    RE::BSEventNotifyControl ModEventSink::ProcessEvent(const SKSE::ModCallbackEvent* modEvent, RE::BSTEventSource<SKSE::ModCallbackEvent>*) {
         std::string name = Util::trim(Util::tolower(std::string(modEvent->eventName)));
         std::string strArg = Util::trim(Util::tolower(std::string(modEvent->strArg)));
         int numArg = static_cast<int>(modEvent->numArg);
@@ -519,7 +543,7 @@ namespace DCURSES {
         }
         return RE::BSEventNotifyControl::kContinue;
     }
-    inline void ModEventSink::RegisterEvent() {
+    void ModEventSink::RegisterEvent() {
         static ModEventSink eventSink;
         SKSE::GetModCallbackEventSource()->AddEventSink(&eventSink);
     }

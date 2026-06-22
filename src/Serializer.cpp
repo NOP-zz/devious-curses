@@ -2,6 +2,8 @@
 
 #include "SKSE/Interfaces.h"
 
+#include "Quest/Serialized.h"
+
 using namespace SKSE;
 
 namespace DCURSES {
@@ -175,6 +177,8 @@ namespace DCURSES {
             return;
         }
         serde->WriteRecordData(Serialized::GetLewdMarkCounters(), sizeof(LewdMarkCounters));
+
+        Quest::SerdeOnGameSaved(serde);
     }
 
     void OnGameLoaded(SKSE::SerializationInterface* serde) {
@@ -215,10 +219,14 @@ namespace DCURSES {
                     log::warn("Error reading lewd mark info, all timers reset.");
                 }
             }
+
+            Quest::SerdeOnRecordLoaded(serde, type, size, version);
         }
     }
-    void OnRevert(SKSE::SerializationInterface*) {
+    void OnRevert(SKSE::SerializationInterface* serde) {
         Serialized::ClearAll();
+
+        Quest::SerdeOnRevert(serde);
     }
     void InitializeSerialization() {
         log::trace("Initializing cosave serialization...");

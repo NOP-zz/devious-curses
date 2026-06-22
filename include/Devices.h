@@ -7,6 +7,28 @@ using namespace SKSE;
 
 namespace DCURSES {
 
+	inline const std::set<std::string> AllDeviceKeywords = {
+		"zad_DeviousBelt",
+		"zad_DeviousBra",
+		"zad_DeviousPlugVaginal",
+		"zad_DeviousPlugAnal",
+		"zad_DeviousCollar",
+		"zad_DeviousLegCuffs",
+		"zad_DeviousArmCuffs",
+		"zad_DeviousPiercingsNipple",
+		"zad_DeviousPiercingsVaginal",
+		"zad_DeviousBlindfold",
+		"zad_DeviousHarness",
+		"zad_DeviousHood",
+		"zad_DeviousGag",
+		"zad_DeviousBoots",
+		"zad_DeviousGloves",
+		"zad_DeviousSuit",
+		"zad_DeviousYoke",
+		"zad_DeviousArmbinder",
+		"zad_DeviousCorset",
+	};
+
 	struct DeviceData {
 	public:
 		RE::TESObjectARMO* inv;
@@ -162,7 +184,7 @@ namespace DCURSES {
 
 	std::optional<DeviceData> GetRandomEquipableDevice(RE::Actor* actor, std::set<std::string> skipList, std::string theme = "");
 
-	uint32_t GetItemCount(RE::Actor* actor, RE::TESForm* item);
+	uint32_t GetItemCount(RE::TESObjectREFR* object, RE::TESForm* item);
 
 	bool ActorIsWearingDevice(RE::Actor* actor, RE::TESObjectARMO* device);
 

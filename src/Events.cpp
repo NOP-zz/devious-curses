@@ -1225,51 +1225,69 @@ namespace DCURSES {
         if (!CheckSimpleSlavery()) {
             if (settings->eventSimpleSlaveryWeight != 0) {
                 settings->eventSimpleSlaveryWeight = 0;
-                SetMCMInt("eventSimpleSlaveryWeight", 0);
+                RE::BSScript::Variable var;
+                var.SetSInt(0);
+                SetMCMSetting("eventSimpleSlaveryWeight", var, "Devious Curses.esp", "DCurses_MCM");
             }
         }
         if (!CheckUD()) {
             if (settings->eventAbadonWeight != 0) {
                 settings->eventAbadonWeight = 0;
-                SetMCMInt("eventAbadonWeight", 0);
+                RE::BSScript::Variable var;
+                var.SetSInt(0);
+                SetMCMSetting("eventAbadonWeight", var, "Devious Curses.esp", "DCurses_MCM");
             }
 
             if (settings->eventAbadonWarriorWeight != 0) {
                 settings->eventAbadonWarriorWeight = 0;
-                SetMCMInt("eventAbadonWarriorWeight", 0);
+                RE::BSScript::Variable var;
+                var.SetSInt(0);
+                SetMCMSetting("eventAbadonWarriorWeight", var, "Devious Curses.esp", "DCurses_MCM");
             }
 
             if (settings->eventAbadonScoutWeight != 0) {
                 settings->eventAbadonScoutWeight = 0;
-                SetMCMInt("eventAbadonScoutWeight", 0);
+                RE::BSScript::Variable var;
+                var.SetSInt(0);
+                SetMCMSetting("eventAbadonScoutWeight", var, "Devious Curses.esp", "DCurses_MCM");
             }
 
             if (settings->eventAbadonWitchWeight != 0) {
                 settings->eventAbadonWitchWeight = 0;
-                SetMCMInt("eventAbadonWitchWeight", 0);
+                RE::BSScript::Variable var;
+                var.SetSInt(0);
+                SetMCMSetting("eventAbadonWitchWeight", var, "Devious Curses.esp", "DCurses_MCM");
             }
         }
         if (!CheckLewdMarksInstalled()) {
             if (settings->eventLewdMarkWeight != 0) {
                 settings->eventLewdMarkWeight = 0;
-                SetMCMInt("eventLewdMarkWeight", 0);
+                RE::BSScript::Variable var;
+                var.SetSInt(0);
+                SetMCMSetting("eventLewdMarkWeight", var, "Devious Curses.esp", "DCurses_MCM");
             }
         }
         if (!CheckRapeTattoos()) {
             if (settings->eventTattooWeight != 0) {
                 settings->eventTattooWeight = 0;
-                SetMCMInt("eventTattooWeight", 0);
+                RE::BSScript::Variable var;
+                var.SetSInt(0);
+                SetMCMSetting("eventTattooWeight", var, "Devious Curses.esp", "DCurses_MCM");
             }
 
             if (settings->LMBrandingChance != 0) {
                 settings->LMBrandingChance = 0;
-                SetMCMFloat("LMBrandingChance", 0);
+                RE::BSScript::Variable var;
+                var.SetFloat(0);
+                SetMCMSetting("LMBrandingChance", var, "Devious Curses.esp", "DCurses_MCM");
             }
         }
         if (!CheckWickedDevices()) {
             if (settings->eventWickedWeight != 0) {
                 settings->eventWickedWeight = 0;
-                SetMCMInt("eventWickedWeight", 0);
+                RE::BSScript::Variable var;
+                var.SetSInt(0);
+                SetMCMSetting("eventWickedWeight", var, "Devious Curses.esp", "DCurses_MCM");
             }
         }
     }

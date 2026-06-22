@@ -541,9 +541,7 @@ namespace DCURSES {
 
 	void PushSettingsToMCM();
 
-	void P_UpdateSKSE(RE::StaticFunctionTag*);
-
-	void P_OnMCMOpened(RE::StaticFunctionTag*);
+	void GetSettingsFromMCM();
 
 	bool PapyrusFunctionsSettigns(RE::BSScript::IVirtualMachine* ivm);
 

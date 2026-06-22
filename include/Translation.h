@@ -152,6 +152,9 @@ namespace DCURSES {
 		FastTravelUnableHobble,//You are unable to fast travel due to your hobble dress!
 		FastTravelUnableVisible,//You can't fast travel while any of your devices are visible!
 		FastTravelUnableDevices,//You can't fast travel while wearing any devious device!
+		FastTravelUnableNamed,//You can't fast travel while wearing {}!
+
+		QuestLFTrinketName,//{}'s Trinket
 		//TRNASLATIONS_END
 	};
 

@@ -173,6 +173,8 @@ namespace DCURSES {
 			case (Translation::FastTravelUnableHobble): return "FastTravelUnableHobble";
 			case (Translation::FastTravelUnableVisible): return "FastTravelUnableVisible";
 			case (Translation::FastTravelUnableDevices): return "FastTravelUnableDevices";
+			case (Translation::FastTravelUnableNamed): return "FastTravelUnableNamed";
+			case (Translation::QuestLFTrinketName): return "QuestLFTrinketName";
 			//CODEGEN_END_KEYNAME
 		}
 		log::error("Unable to find translation key name for id {}", static_cast<uint32_t>(key));

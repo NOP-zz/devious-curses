@@ -4,6 +4,7 @@
 #include "Devices.h"
 #include "Scripting.h"
 #include "Translation.h"
+#include "Utils.h"
 
 namespace DCURSES {
 	inline static REL::Relocation<decltype(CanFastTravelMap)>  _CanFastTravelMap;
@@ -42,6 +43,22 @@ namespace DCURSES {
 		auto player = RE::PlayerCharacter::GetSingleton();
 		auto scriptManager = ScriptingManager();
 		auto settings = Settings::GetSingleton();
+
+		auto inventory = player->GetInventory();
+		for (auto& [k, v] : inventory) {
+			if (v.second.get()->IsWorn()) {
+				RE::TESObjectARMO* wornArmor = k->As<RE::TESObjectARMO>();
+				if (!wornArmor) {
+					continue;
+				}
+
+				if (wornArmor->HasKeywordString("DCurses_RestrictFastTravel")) {
+					log::trace("Fast travel disabled because of {} {} {}", wornArmor->GetName(), wornArmor->GetFullName(), wornArmor->fullName);
+					scriptManager.DBGNotification(Translator(Translation::FastTravelUnableNamed, wornArmor->GetFullName()));
+					return false;
+				}
+			}
+		}
 
 		if (settings->restrictFastTravelFull) {
 			if (GetWornDeviceCount(player) > 0) {

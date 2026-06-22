@@ -504,7 +504,9 @@ namespace DCURSES {
 		bool hasUD = CheckUD();
 		if (!hasUD) {
 			settings->onlyUseUnforgivingDevices = false;
-			SetMCMBool("onlyUseUnforgivingDevices", false);
+			RE::BSScript::Variable var;
+			var.SetBool(false);
+			SetMCMSetting("onlyUseUnforgivingDevices", var, "Devious Curses.esp", "DCurses_MCM");
 		}
 
 		if (settings->onlyUseUnforgivingDevices) {
@@ -1135,8 +1137,8 @@ namespace DCURSES {
 		return count;
 	}
 
-	uint32_t GetItemCount(RE::Actor* actor, RE::TESForm* item) {
-		auto inventory = actor->GetInventory();
+	uint32_t GetItemCount(RE::TESObjectREFR* object, RE::TESForm* item) {
+		auto inventory = object->GetInventory();
 		for (auto const& [k, v] : inventory) {
 			if (k->formID == item->formID) {
 				return v.first;
@@ -1446,7 +1448,7 @@ namespace DCURSES {
 		if (leftHand || rightHand || shield) {
 			Util::ExecuteWithDelay(50ms, [akActor] {
 				akActor->DrawWeaponMagicHands(false);
-				});
+			});
 		}
 	}
 
