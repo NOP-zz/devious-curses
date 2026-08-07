@@ -32,13 +32,15 @@ jobs:
         VCPKG_FEATURE_FLAGS: "binarycaching"
         VCPKG_BINARY_SOURCES: "clear;files,${{ steps.vcpkg-cache.outputs.path }},readwrite"
       run: |
-        cmake --preset release -DOUTPUT_FOLDER=${{ github.workspace }}/dist
-        cmake --build
+        cmake --preset release
+        cmake --build build/release
+        cmake --install build/release
+        dir install/release
     
     - name: Create artifact
       uses: actions/upload-artifact@v4
       with:
         name: build_result
-        path: "${{ github.workspace }}/dist"
+        path: "${{ github.workspace }}/install/release"
         if-no-files-found: error
         overwrite: true
