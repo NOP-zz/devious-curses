@@ -627,7 +627,7 @@ function OnMCMOpened() global Native
 String Property LastPage = "Main" Auto Hidden
 """
 
-FullMCMFileGeneration(r"include\Quest\QuestSettings.h", r"src\Quest\QuestSettings.cpp", "DCurses_QuestMCM.psc", "translationData/Devious Curses - Quests_ENGLISH.txt", Head)
+# FullMCMFileGeneration(r"include\Quest\QuestSettings.h", r"src\Quest\QuestSettings.cpp", "DCurses_QuestMCM.psc", "translationData/Devious Curses - Quests_ENGLISH.txt", Head)
 
 
 #DeviceListNames

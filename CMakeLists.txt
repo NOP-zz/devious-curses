@@ -26,8 +26,6 @@ set(sources
         src/Translation.cpp
         src/Utils.cpp
         src/Sex.cpp
-
-        src/Quest/QuestSettings.cpp
 )
 
 
