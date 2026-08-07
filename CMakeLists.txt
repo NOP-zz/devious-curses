@@ -27,10 +27,7 @@ set(sources
         src/Utils.cpp
         src/Sex.cpp
 
-        src/Quest/Radiant.cpp
         src/Quest/QuestSettings.cpp
-        src/Quest/QuestEvents.cpp
-        src/Quest/Serialized.cpp
 )
 
 
@@ -44,3 +41,11 @@ target_link_libraries(${PROJECT_NAME} PRIVATE d3d11.dll)
 target_link_libraries(${PROJECT_NAME} PRIVATE Microsoft::DirectXTK)
 target_link_libraries(${PROJECT_NAME} PUBLIC CommonLibSSE::CommonLibSSE)
 target_include_directories(${PROJECT_NAME} PRIVATE include)
+
+add_custom_target(
+    Codegen ALL
+    COMMENT "Running Python Codegen"
+    COMMAND python CODEGEN.py
+    VERBATIM
+)
+add_dependencies(${PROJECT_NAME} Codegen)
