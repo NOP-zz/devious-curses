@@ -12,8 +12,8 @@
     },
     {
       "kind": "git",
-      "baseline": "aa6db1d21b631042af707a8ff7a5ac2c8e42abd6",
-      "repository": "https://github.com/Monitor221hz/modding-vcpkg-ports",
+      "baseline": "58f633a600eb54bda635b7cd01c45f229947e239",
+      "repository": "https://github.com/NOP-zz/modding-vcpkg-ports",
       "packages": [
         "commonlibsse-ng-fork"
       ]
