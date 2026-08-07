@@ -12,7 +12,7 @@
     },
     {
       "kind": "git",
-      "baseline": "cc28f72db6d910721a2bf246c214a32d5d44a506",
+      "baseline": "4025ee4bb9c63983bd5383912333ff59aa55563d",
       "repository": "https://github.com/NOP-zz/modding-vcpkg-ports",
       "packages": [
         "commonlibsse-ng-fork"
