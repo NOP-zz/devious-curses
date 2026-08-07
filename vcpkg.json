@@ -1,6 +1,6 @@
 {
   "dependencies": [
     "directxtk",
-    "commonlibsse-ng"
+    "commonlibsse-ng-fork"
   ]
 }

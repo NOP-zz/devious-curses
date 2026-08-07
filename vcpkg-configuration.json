@@ -10,12 +10,13 @@
       "location": "https://github.com/microsoft/vcpkg-ce-catalog/archive/refs/heads/main.zip",
       "name": "microsoft"
     },
-
     {
       "kind": "git",
-      "baseline": "4f6c6a1d8e130cbef76165e24781863382142774",
-      "repository": "https://gitlab.com/cybercheese/vcpkg-repo",
-      "packages": [ "commonlibsse-ng" ]
+      "baseline": "aa6db1d21b631042af707a8ff7a5ac2c8e42abd6",
+      "repository": "https://github.com/Monitor221hz/modding-vcpkg-ports",
+      "packages": [
+        "commonlibsse-ng-fork"
+      ]
     }
   ]
 }
