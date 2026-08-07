@@ -46,6 +46,7 @@ add_custom_target(
     Codegen ALL
     COMMENT "Running Python Codegen"
     COMMAND python CODEGEN.py
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     VERBATIM
 )
 add_dependencies(${PROJECT_NAME} Codegen)
